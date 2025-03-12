@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
@@ -10,11 +9,24 @@ interface MetricCardProps {
   description?: string;
   color: string;
   icon: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
 }
 
-export const MetricCard = ({ title, value, description, color, icon, ...props }: MetricCardProps) => {
+export const MetricCard = ({ 
+  title, 
+  value, 
+  description, 
+  color, 
+  icon, 
+  className,
+  onClick 
+}: MetricCardProps) => {
   return (
-    <Card className={cn("relative overflow-hidden group hover:shadow-lg transition-all", props.className)}>
+    <Card 
+      className={cn("relative overflow-hidden group hover:shadow-lg transition-all", className)}
+      onClick={onClick}
+    >
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className={`rounded-full p-2 ${color}`}>

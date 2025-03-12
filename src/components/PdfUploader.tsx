@@ -4,8 +4,13 @@ import { Upload, File, AlertCircle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { analyzePdf, AuditResult } from "@/services/pdfAnalyzer";
 
-export const PdfUploader = () => {
+interface PdfUploaderProps {
+  onAnalysisComplete: (result: AuditResult) => void;
+}
+
+export const PdfUploader = ({ onAnalysisComplete }: PdfUploaderProps) => {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,13 +46,16 @@ export const PdfUploader = () => {
     
     setLoading(true);
     try {
-      // Simular procesamiento con un timeout
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Procesar el PDF y extraer los datos
+      const analysisResult = await analyzePdf(file);
       
       toast({
         title: "¡Éxito!",
-        description: "PDF cargado correctamente. Listo para analizar.",
+        description: "PDF analizado correctamente. Visualizando resultados.",
       });
+      
+      // Enviar los resultados al componente padre
+      onAnalysisComplete(analysisResult);
     } catch (error) {
       toast({
         title: "Error",

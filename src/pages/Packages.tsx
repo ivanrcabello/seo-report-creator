@@ -66,10 +66,12 @@ const Packages = () => {
 
   // Handle form submission
   const handleSubmit = (data: PackFormValues) => {
-    // Ensure features is an array
+    // Ensure features is an array of strings
     const featuresArray = Array.isArray(data.features) 
       ? data.features 
-      : data.features.split('\n').map(item => item.trim()).filter(Boolean);
+      : typeof data.features === 'string' 
+        ? data.features.split('\n').map(item => item.trim()).filter(Boolean)
+        : [];
       
     if (editingPack) {
       updatePackMutation.mutate({

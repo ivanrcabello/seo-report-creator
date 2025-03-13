@@ -66,20 +66,14 @@ const Packages = () => {
 
   // Handle form submission
   const handleSubmit = (data: PackFormValues) => {
-    // Ensure features is an array of strings
-    const featuresArray = Array.isArray(data.features) 
-      ? data.features 
-      : typeof data.features === 'string' 
-        ? data.features.split('\n').map(item => item.trim()).filter(Boolean)
-        : [];
-      
+    // Features are now processed by the schema and will always be an array of strings
     if (editingPack) {
       updatePackMutation.mutate({
         ...editingPack,
         name: data.name,
         description: data.description,
         price: data.price,
-        features: featuresArray,
+        features: data.features,
         isActive: data.isActive
       });
     } else {
@@ -87,7 +81,7 @@ const Packages = () => {
         name: data.name,
         description: data.description,
         price: data.price,
-        features: featuresArray,
+        features: data.features,
         isActive: data.isActive
       });
     }

@@ -110,8 +110,7 @@ export const PackageForm = ({ editingPack, onSubmit, onCancel }: PackageFormProp
                   <Textarea 
                     placeholder="Escribe cada característica en una línea separada..." 
                     className="min-h-[120px]"
-                    value={typeof field.value === 'string' ? field.value : Array.isArray(field.value) ? field.value.join('\n') : ''}
-                    onChange={(e) => field.onChange(e.target.value)}
+                    {...field}
                   />
                 </FormControl>
                 <FormDescription>

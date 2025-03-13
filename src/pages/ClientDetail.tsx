@@ -6,18 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ClientForm } from "@/components/ClientForm";
 import { ClientReports } from "@/components/ClientReports";
+import { ClientDocuments } from "@/components/ClientDocuments";
 import { PdfUploader } from "@/components/PdfUploader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LocalSeoReportView } from "@/components/LocalSeoReportView";
 import { 
   getClient, 
   updateClient, 
   deleteClient, 
   getClientReports,
-  addReport
+  addReport,
+  getLocalSeoReports
 } from "@/services/clientService";
-import { Client, ClientReport } from "@/types/client";
+import { Client, ClientReport, SeoLocalReport, ClientDocument } from "@/types/client";
 import { AuditResult } from "@/services/pdfAnalyzer";
-import { ArrowLeft, Edit, Trash2, Mail, Phone, Building, Calendar, UserCog, FileText, UploadCloud } from "lucide-react";
+import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
+import { ArrowLeft, Edit, Trash2, Mail, Phone, Building, Calendar, UserCog, FileText, UploadCloud, MessageSquarePlus, Map } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -27,9 +31,12 @@ const ClientDetail = () => {
   const { toast } = useToast();
   const [client, setClient] = useState<Client | null>(null);
   const [reports, setReports] = useState<ClientReport[]>([]);
+  const [localSeoReports, setLocalSeoReports] = useState<SeoLocalReport[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [currentLocalSeoReport, setCurrentLocalSeoReport] = useState<SeoLocalReport | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -37,6 +44,7 @@ const ClientDetail = () => {
       if (foundClient) {
         setClient(foundClient);
         setReports(getClientReports(id));
+        setLocalSeoReports(getLocalSeoReports(id));
       }
       setIsLoading(false);
     }
@@ -132,6 +140,59 @@ const ClientDetail = () => {
     }
   };
 
+  const handleClientNotesUpdate = (updatedNotes: string[]) => {
+    if (client) {
+      const updatedClient: Client = {
+        ...client,
+        notes: updatedNotes
+      };
+      setClient(updatedClient);
+    }
+  };
+
+  const handleGenerateLocalSeoReport = async (documentIds: string[]) => {
+    if (client && id) {
+      try {
+        setIsGeneratingReport(true);
+        
+        // Mostrar mensaje inicial
+        toast({
+          title: "Generando informe",
+          description: "Analizando documentos y recopilando datos de SEO local...",
+        });
+        
+        // Generar análisis SEO local a partir de los documentos
+        const localSeoAnalysis = await generateLocalSeoAnalysis(documentIds, id, client.name);
+        
+        // Crear informe SEO local a partir del análisis
+        const newLocalSeoReport = await createLocalSeoReport(localSeoAnalysis, id, client.name);
+        
+        // Actualizar la lista de informes locales
+        setLocalSeoReports([...localSeoReports, newLocalSeoReport]);
+        
+        // Establecer el informe actual para mostrarlo
+        setCurrentLocalSeoReport(newLocalSeoReport);
+        
+        // Cambiar a la pestaña de informe local
+        setActiveTab("localseo");
+        
+        toast({
+          title: "Informe SEO local creado",
+          description: "El informe ha sido generado correctamente a partir de los documentos.",
+        });
+      } catch (error) {
+        console.error("Error al generar informe SEO local:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo generar el informe SEO local. Inténtalo de nuevo.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsGeneratingReport(false);
+      }
+    }
+  };
+
   if (isLoading) {
     return <div className="container mx-auto py-8">Cargando...</div>;
   }
@@ -215,10 +276,14 @@ const ClientDetail = () => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <TabsList className="mb-4 grid grid-cols-3 max-w-md">
+        <TabsList className="mb-4 grid grid-cols-5 max-w-3xl">
           <TabsTrigger value="profile" className="flex items-center gap-1">
             <UserCog className="h-4 w-4" />
             Perfil
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="flex items-center gap-1">
+            <FileText className="h-4 w-4" />
+            Documentos
           </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
@@ -227,6 +292,10 @@ const ClientDetail = () => {
           <TabsTrigger value="upload" className="flex items-center gap-1">
             <UploadCloud className="h-4 w-4" />
             Subir PDF
+          </TabsTrigger>
+          <TabsTrigger value="localseo" className="flex items-center gap-1">
+            <Map className="h-4 w-4" />
+            SEO Local
           </TabsTrigger>
         </TabsList>
         
@@ -270,6 +339,15 @@ const ClientDetail = () => {
           </Card>
         </TabsContent>
         
+        <TabsContent value="documents">
+          <ClientDocuments 
+            clientId={client.id}
+            notes={client.notes || []}
+            onNoteAdded={handleClientNotesUpdate}
+            onGenerateReport={handleGenerateLocalSeoReport}
+          />
+        </TabsContent>
+        
         <TabsContent value="reports">
           <ClientReports 
             reports={reports} 
@@ -293,6 +371,65 @@ const ClientDetail = () => {
               <PdfUploader onAnalysisComplete={handlePdfAnalysis} />
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="localseo">
+          {isGeneratingReport ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+                <p className="text-xl font-medium text-green-700 mb-3">Generando informe SEO local...</p>
+                <p className="text-gray-500 max-w-md text-center">
+                  Estamos analizando los documentos, extrayendo información relevante y consultando datos de posicionamiento local
+                </p>
+              </CardContent>
+            </Card>
+          ) : localSeoReports.length > 0 ? (
+            <div className="space-y-6">
+              {currentLocalSeoReport ? (
+                <LocalSeoReportView report={currentLocalSeoReport} />
+              ) : (
+                <LocalSeoReportView report={localSeoReports[localSeoReports.length - 1]} />
+              )}
+              
+              {localSeoReports.length > 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Informes SEO local anteriores</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {localSeoReports.slice(0, -1).map((report, index) => (
+                        <div key={report.id} className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setCurrentLocalSeoReport(report)}>
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">{report.title}</p>
+                              <p className="text-sm text-gray-500">{format(new Date(report.date), "d MMM yyyy", { locale: es })}</p>
+                            </div>
+                            <Button variant="ghost" size="sm">Ver</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center py-12">
+                <Map className="w-16 h-16 text-green-200 mb-4" />
+                <h3 className="text-xl font-semibold text-center mb-2">No hay informes SEO local</h3>
+                <p className="text-gray-500 text-center max-w-md mb-6">
+                  Para generar un informe SEO local, sube documentos relacionados con el negocio y haz clic en "Generar Informe"
+                </p>
+                <Button onClick={() => setActiveTab("documents")} variant="outline" className="gap-1">
+                  <FileText className="h-4 w-4" />
+                  Ir a Documentos
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>

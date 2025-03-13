@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -37,7 +36,7 @@ import { ClientReport } from "@/types/client";
 
 const formSchema = z.object({
   title: z.string().min(5, "El título debe tener al menos 5 caracteres"),
-  type: z.enum(["seo", "performance", "technical", "social"]),
+  type: z.enum(["seo", "performance", "technical", "social", "local-seo"]),
   date: z.string(),
   url: z.string().url("Por favor, introduce una URL válida").optional().or(z.literal("")),
   notes: z.string().optional(),
@@ -58,12 +57,11 @@ const ReportForm = () => {
   const [report, setReport] = useState<ClientReport | null>(null);
   const [isLoading, setIsLoading] = useState(id ? true : false);
 
-  // Setup form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      type: "seo", // Default to "seo" (fixed the type error)
+      type: "seo",
       date: new Date().toISOString().slice(0, 10),
       url: "",
       notes: "",
@@ -71,7 +69,6 @@ const ReportForm = () => {
     },
   });
 
-  // Fetch report data if editing
   useEffect(() => {
     if (id) {
       const existingReport = getReport(id);
@@ -93,7 +90,6 @@ const ReportForm = () => {
   const onSubmit = (values: FormValues) => {
     try {
       if (id && report) {
-        // Update existing report
         const updatedReport = updateReport({
           ...report,
           title: values.title,
@@ -110,7 +106,6 @@ const ReportForm = () => {
         
         navigate(`/reports/${updatedReport.id}`);
       } else {
-        // Create new report
         const newReport = addReport({
           title: values.title,
           type: values.type,
@@ -232,6 +227,7 @@ const ReportForm = () => {
                           <SelectItem value="performance">Rendimiento</SelectItem>
                           <SelectItem value="technical">Técnico</SelectItem>
                           <SelectItem value="social">Social</SelectItem>
+                          <SelectItem value="local-seo">SEO Local</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

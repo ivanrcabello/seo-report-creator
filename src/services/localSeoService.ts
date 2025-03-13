@@ -1,232 +1,121 @@
 
-import { AuditResult } from "./pdfAnalyzer";
 import { SeoLocalReport } from "@/types/client";
-import { addLocalSeoReport } from "./clientService";
+import { v4 as uuidv4 } from "uuid";
+import { AuditResult } from "./pdfAnalyzer";
 
-export interface LocalSeoAuditResult extends AuditResult {
-  localSeoScore: number;
-  googleBusinessProfile?: {
-    claimed: boolean;
-    completeness: number;
-    reviews: {
-      count: number;
-      averageRating: number;
-    };
-  };
-  localListings?: {
-    platform: string;
-    url?: string;
-    status: 'claimed' | 'unclaimed' | 'inconsistent';
-  }[];
-  keywordRankings?: {
-    keyword: string;
-    position: number;
-    localPosition?: number;
-  }[];
-  location?: string;
-}
-
-// Información empresarial extraída de los documentos
-export interface BusinessInfo {
-  name: string;
-  address?: string;
-  phone?: string;
-  website?: string;
-  businessHours?: string;
-  industry?: string;
-  targetLocations?: string[];
-}
-
-// Interfaz para el análisis de documentos de un cliente
-export interface DocumentAnalysis {
-  documentId: string;
-  documentName: string;
-  extractedInfo: string[];
-  keyInsights: string[];
-  relevantKeywords: string[];
-}
-
-// Simula el procesamiento de documentos y la generación de análisis
-export const analyzeClientDocuments = async (documentIds: string[], clientId: string): Promise<DocumentAnalysis[]> => {
-  console.log("Analizando documentos con IDs:", documentIds);
+// Función para analizar documentos y extraer información relevante
+export const generateLocalSeoAnalysis = async (
+  documentIds: string[],
+  clientId: string,
+  businessName: string
+): Promise<SeoLocalReport> => {
+  // En una implementación real, aquí se procesarían los documentos
+  // y se extraería información relevante, posiblemente usando una API de IA
   
-  // En una implementación real, aquí se procesarían los documentos PDF/imagen con servicios de OCR y NLP
-  await new Promise(resolve => setTimeout(resolve, 2000)); // Simulando procesamiento
+  // Para la simulación, generamos datos de ejemplo
+  console.log(`Analizando ${documentIds.length} documentos para el cliente ${clientId}`);
   
-  // Resultados simulados de análisis
-  const mockAnalyses: DocumentAnalysis[] = documentIds.map(docId => ({
-    documentId: docId,
-    documentName: `Documento ${docId.substring(0, 4)}`,
-    extractedInfo: [
-      "La empresa opera en múltiples ubicaciones",
-      "Público objetivo: pequeñas empresas locales",
-      "Competencia principal: agencias digitales de la zona",
-      "Actualmente sin presencia en Google Maps"
-    ],
-    keyInsights: [
-      "No tiene optimizado su perfil de Google Business",
-      "Inconsistencia en dirección y teléfono entre plataformas",
-      "Falta de reseñas en plataformas principales"
-    ],
-    relevantKeywords: [
-      "servicios digitales locales",
-      "agencia marketing madrid",
-      "posicionamiento web pymes",
-      "seo para negocios locales",
-      "marketing digital zona centro"
-    ]
-  }));
+  // Esperar para simular procesamiento
+  await new Promise(resolve => setTimeout(resolve, 2000));
   
-  return mockAnalyses;
-};
-
-// Extrae información empresarial de los documentos analizados
-export const extractBusinessInfo = async (analyses: DocumentAnalysis[]): Promise<BusinessInfo> => {
-  console.log("Extrayendo información empresarial de los análisis:", analyses);
-  
-  // En una implementación real, aquí se usaría NLP para extraer información específica
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulando procesamiento
-  
-  // Información empresarial simulada
   return {
-    name: "Negocio ABC",
-    address: "Calle Gran Vía 123, Madrid",
-    phone: "+34 912 345 678",
-    website: "https://negocioabc.es",
-    businessHours: "Lun-Vie: 9:00-18:00",
-    industry: "Servicios Digitales",
-    targetLocations: ["Madrid Centro", "Alcobendas", "Pozuelo"]
+    id: uuidv4(),
+    clientId,
+    title: `Informe SEO Local - ${businessName}`,
+    date: new Date().toISOString(),
+    businessName,
+    location: "Madrid, Centro",
+    googleMapsRanking: Math.floor(Math.random() * 20) + 1,
+    localListings: [
+      { platform: "Google Business Profile", status: "claimed" },
+      { platform: "Yelp", status: Math.random() > 0.5 ? "claimed" : "unclaimed" },
+      { platform: "TripAdvisor", url: "https://tripadvisor.com/business", status: "claimed" }
+    ],
+    keywordRankings: [
+      { keyword: "servicios seo madrid", position: Math.floor(Math.random() * 20) + 1, localPosition: Math.floor(Math.random() * 10) + 1 },
+      { keyword: "marketing digital local", position: Math.floor(Math.random() * 30) + 10, localPosition: Math.floor(Math.random() * 15) + 5 },
+      { keyword: "posicionamiento web local", position: Math.floor(Math.random() * 40) + 20, localPosition: Math.floor(Math.random() * 20) + 10 }
+    ],
+    recommendations: [
+      "Optimizar perfil de Google My Business con fotos actualizadas y horarios completos",
+      "Mejorar la consistencia NAP (Nombre, Dirección, Teléfono) en todos los directorios",
+      "Obtener más reseñas positivas de clientes satisfechos",
+      "Crear contenido local relevante para la página web"
+    ]
   };
 };
 
-// Genera un análisis SEO local basado en documentos analizados
-export const generateLocalSeoAnalysis = async (documentIds: string[], clientId: string, clientName: string): Promise<LocalSeoAuditResult> => {
-  console.log("Generando análisis SEO local para los documentos:", documentIds);
+// Función para crear un informe completo de SEO local
+export const createLocalSeoReport = async (
+  localSeoData: SeoLocalReport,
+  clientId: string,
+  businessName: string
+): Promise<SeoLocalReport> => {
+  // En una implementación real, aquí se procesarían los datos del análisis
+  // y se generaría un informe completo, posiblemente usando una API de IA
   
-  // Simular análisis de documentos
-  const documentAnalyses = await analyzeClientDocuments(documentIds, clientId);
+  console.log(`Creando informe SEO local para ${businessName}`);
   
-  // Simular extracción de información empresarial
-  const businessInfo = await extractBusinessInfo(documentAnalyses);
+  // Esperar para simular procesamiento
+  await new Promise(resolve => setTimeout(resolve, 1500));
   
-  // En una implementación real, aquí se utilizarían APIs de SEO para verificar rankings
-  await new Promise(resolve => setTimeout(resolve, 2500)); // Simulando consultas API
+  return localSeoData;
+};
+
+// Esta función simula la creación de un análisis SEO a partir de un PDF
+export const generateSeoAuditFromPdf = async (
+  pdfData: any,
+  clientId: string,
+  websiteUrl: string
+): Promise<AuditResult> => {
+  // En una implementación real, aquí se extraería información del PDF
+  // y se generaría un análisis SEO, posiblemente usando una API de IA
   
-  // Resultado de análisis SEO local simulado
-  const localSeoResult: LocalSeoAuditResult = {
-    seoScore: Math.floor(Math.random() * 30) + 40, // 40-70
-    webVisibility: Math.floor(Math.random() * 25) + 25, // 25-50
-    localSeoScore: Math.floor(Math.random() * 40) + 30, // 30-70
-    performance: Math.floor(Math.random() * 30) + 50, // 50-80
+  console.log(`Generando análisis SEO para ${websiteUrl}`);
+  
+  // Esperar para simular procesamiento
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  // Generamos datos de muestra para simular un análisis SEO
+  return {
+    seoScore: Math.floor(Math.random() * 30) + 50, // 50-80
+    webVisibility: Math.floor(Math.random() * 40) + 40, // 40-80
+    keywordsCount: Math.floor(Math.random() * 15) + 5, // 5-20
+    performance: Math.floor(Math.random() * 35) + 55, // 55-90
     technicalResults: {
+      technologies: ['WordPress', 'PHP', 'MySQL', 'jQuery', 'Google Analytics'],
       sslStatus: 'Válido',
       httpsRedirection: true,
       mobileOptimization: false,
       robotsTxt: false,
       sitemap: false
     },
-    performanceResults: {
-      pageSpeed: {
-        mobile: Math.floor(Math.random() * 40) + 30, // 30-70
-        desktop: Math.floor(Math.random() * 30) + 60 // 60-90
-      },
-      loadTime: `${(Math.random() * 5 + 2).toFixed(1)}s`
-    },
     seoResults: {
       metaTitle: true,
-      metaDescription: false,
+      metaDescription: Math.random() > 0.3,
       h1Tags: Math.floor(Math.random() * 3),
-      contentLength: Math.floor(Math.random() * 800) + 200,
-      keywordDensity: (Math.random() * 2).toFixed(1),
-      internalLinks: Math.floor(Math.random() * 15),
-      externalLinks: Math.floor(Math.random() * 5),
+      contentLength: Math.floor(Math.random() * 1500) + 500,
+      keywordDensity: parseFloat((Math.random() * 2 + 0.5).toFixed(1)),
+      internalLinks: Math.floor(Math.random() * 25) + 5,
+      externalLinks: Math.floor(Math.random() * 10),
       canonicalTag: Math.random() > 0.5
     },
+    performanceResults: {
+      pageSpeed: {
+        desktop: Math.floor(Math.random() * 20) + 75, // 75-95
+        mobile: Math.floor(Math.random() * 40) + 45  // 45-85
+      },
+      loadTime: `${(Math.random() * 3 + 0.8).toFixed(1)}s`,
+      resourceCount: Math.floor(Math.random() * 50) + 40,
+      imageOptimization: Math.random() > 0.4,
+      cacheImplementation: Math.random() > 0.3
+    },
     socialPresence: {
-      facebook: Math.random() > 0.6,
-      instagram: Math.random() > 0.5,
-      twitter: Math.random() > 0.7,
-      linkedin: Math.random() > 0.4,
-      youtube: Math.random() > 0.8
-    },
-    googleBusinessProfile: {
-      claimed: Math.random() > 0.5,
-      completeness: Math.floor(Math.random() * 60) + 20, // 20-80
-      reviews: {
-        count: Math.floor(Math.random() * 15),
-        averageRating: (Math.random() * 3 + 2).toFixed(1) // 2.0-5.0
-      }
-    },
-    localListings: [
-      { platform: "Google Business Profile", status: Math.random() > 0.6 ? 'claimed' : 'unclaimed' },
-      { platform: "Yelp", status: Math.random() > 0.7 ? 'claimed' : 'unclaimed' },
-      { platform: "TripAdvisor", url: "https://example.com", status: Math.random() > 0.5 ? 'claimed' : 'unclaimed' },
-      { platform: "Páginas Amarillas", status: Math.random() > 0.8 ? 'claimed' : 'unclaimed' },
-      { platform: "Facebook Local", status: Math.random() > 0.4 ? 'claimed' : 'inconsistent' }
-    ],
-    keywordRankings: [
-      { keyword: `${businessInfo.industry} ${businessInfo.targetLocations?.[0] || 'Madrid'}`, position: Math.floor(Math.random() * 50) + 10, localPosition: Math.floor(Math.random() * 20) + 1 },
-      { keyword: `servicios ${businessInfo.industry?.toLowerCase()} cerca de mí`, position: Math.floor(Math.random() * 70) + 20, localPosition: Math.floor(Math.random() * 20) + 1 },
-      { keyword: `${businessInfo.industry} mejor valorados ${businessInfo.targetLocations?.[0] || 'Madrid'}`, position: Math.floor(Math.random() * 90) + 30, localPosition: Math.floor(Math.random() * 30) + 1 }
-    ],
-    location: businessInfo.targetLocations?.[0] || "Madrid"
-  };
-  
-  return localSeoResult;
-};
-
-// Crea un informe SEO local a partir de un análisis
-export const createLocalSeoReport = async (analysis: LocalSeoAuditResult, clientId: string, clientName: string): Promise<SeoLocalReport> => {
-  console.log("Creando informe SEO local a partir del análisis:", analysis);
-  
-  // Generar recomendaciones basadas en el análisis
-  const recommendations: string[] = [];
-  
-  if (!analysis.googleBusinessProfile?.claimed) {
-    recommendations.push("Reclamar y optimizar el perfil de Google Business");
-  }
-  
-  if (analysis.googleBusinessProfile && analysis.googleBusinessProfile.completeness < 70) {
-    recommendations.push("Completar toda la información en el perfil de Google Business incluyendo fotos, servicios y horarios");
-  }
-  
-  if (analysis.googleBusinessProfile && analysis.googleBusinessProfile.reviews.count < 10) {
-    recommendations.push("Implementar estrategia de solicitud de reseñas a clientes satisfechos");
-  }
-  
-  analysis.localListings?.forEach(listing => {
-    if (listing.status === 'unclaimed') {
-      recommendations.push(`Reclamar perfil en ${listing.platform}`);
-    } else if (listing.status === 'inconsistent') {
-      recommendations.push(`Corregir información inconsistente en ${listing.platform}`);
+      facebook: true,
+      instagram: true,
+      linkedin: Math.random() > 0.3,
+      twitter: Math.random() > 0.5,
+      googleBusiness: Math.random() > 0.2
     }
-  });
-  
-  if (!analysis.seoResults.metaDescription) {
-    recommendations.push("Añadir meta descripciones optimizadas con keywords locales");
-  }
-  
-  if (analysis.seoResults.h1Tags < 1) {
-    recommendations.push("Implementar etiquetas H1 con términos locales relevantes");
-  }
-  
-  recommendations.push("Crear contenido específico para cada ubicación objetivo");
-  recommendations.push("Implementar schema markup para negocios locales");
-  recommendations.push("Obtener enlaces desde directorios locales relevantes");
-  
-  // Crear el informe SEO local
-  const localSeoReport: Omit<SeoLocalReport, "id"> = {
-    clientId,
-    title: `Informe SEO Local - ${clientName}`,
-    date: new Date().toISOString(),
-    businessName: clientName,
-    location: analysis.location || "Madrid",
-    googleMapsRanking: Math.floor(Math.random() * 20) + 1, // 1-20
-    localListings: analysis.localListings,
-    keywordRankings: analysis.keywordRankings,
-    recommendations
   };
-  
-  // Guardar y retornar el informe
-  return addLocalSeoReport(localSeoReport);
 };

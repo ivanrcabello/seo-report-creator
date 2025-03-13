@@ -13,6 +13,10 @@ import AllReports from "./pages/AllReports";
 import ReportForm from "./pages/ReportForm";
 import ReportDetail from "./pages/ReportDetail";
 import MainNavigation from "./components/MainNavigation";
+import Packages from "./pages/Packages";
+import Proposals from "./pages/Proposals";
+import ProposalForm from "./pages/ProposalForm";
+import ProposalDetail from "./pages/ProposalDetail";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +38,11 @@ const App = () => (
             <Route path="/reports/new" element={<ReportForm />} />
             <Route path="/reports/edit/:id" element={<ReportForm />} />
             <Route path="/reports/:id" element={<ReportDetail />} />
+            <Route path="/packages" element={<Packages />} />
+            <Route path="/proposals" element={<Proposals />} />
+            <Route path="/proposals/new" element={<ProposalForm />} />
+            <Route path="/proposals/edit/:id" element={<ProposalForm />} />
+            <Route path="/proposals/:id" element={<ProposalDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

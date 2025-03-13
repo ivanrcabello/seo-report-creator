@@ -53,3 +53,28 @@ export interface SeoLocalReport {
   }[];
   recommendations?: string[];
 }
+
+export interface SeoPack {
+  id: string;
+  name: string;
+  description: string;
+  price: number; // Precio en euros IVA incluido
+  features: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface Proposal {
+  id: string;
+  clientId: string;
+  title: string;
+  description: string;
+  packId: string;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+  expiresAt?: string;
+  customPrice?: number; // Precio personalizado si es diferente al del paquete
+  customFeatures?: string[]; // Características personalizadas si son diferentes
+}

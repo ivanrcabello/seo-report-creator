@@ -8,7 +8,9 @@ import {
   User, 
   BarChart,
   Menu,
-  X
+  X,
+  Package,
+  MailOpen
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -35,6 +37,18 @@ const MainNavigation = () => {
       label: "Informes", 
       icon: <FileText className="h-5 w-5" />,
       active: location.pathname.startsWith("/reports") || location.pathname === "/report"
+    },
+    { 
+      href: "/packages", 
+      label: "Paquetes", 
+      icon: <Package className="h-5 w-5" />,
+      active: location.pathname.startsWith("/packages")
+    },
+    { 
+      href: "/proposals", 
+      label: "Propuestas", 
+      icon: <MailOpen className="h-5 w-5" />,
+      active: location.pathname.startsWith("/proposals")
     },
   ];
 

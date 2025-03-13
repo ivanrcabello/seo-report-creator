@@ -54,20 +54,20 @@ let seoPacks: SeoPack[] = [
   }
 ];
 
-// Operaciones CRUD para paquetes
-export const getSeoPacks = (): SeoPack[] => {
+// Operaciones CRUD para paquetes - Modificadas para devolver Promesas
+export const getSeoPacks = async (): Promise<SeoPack[]> => {
   return seoPacks.filter(pack => pack.isActive);
 };
 
-export const getAllSeoPacks = (): SeoPack[] => {
+export const getAllSeoPacks = async (): Promise<SeoPack[]> => {
   return [...seoPacks];
 };
 
-export const getSeoPack = (id: string): SeoPack | undefined => {
+export const getSeoPack = async (id: string): Promise<SeoPack | undefined> => {
   return seoPacks.find(pack => pack.id === id);
 };
 
-export const addSeoPack = (pack: Omit<SeoPack, "id" | "createdAt">): SeoPack => {
+export const addSeoPack = async (pack: Omit<SeoPack, "id" | "createdAt">): Promise<SeoPack> => {
   const newPack: SeoPack = {
     id: uuidv4(),
     ...pack,
@@ -77,12 +77,12 @@ export const addSeoPack = (pack: Omit<SeoPack, "id" | "createdAt">): SeoPack => 
   return newPack;
 };
 
-export const updateSeoPack = (pack: SeoPack): SeoPack => {
+export const updateSeoPack = async (pack: SeoPack): Promise<SeoPack> => {
   seoPacks = seoPacks.map(p => p.id === pack.id ? pack : p);
   return pack;
 };
 
-export const deleteSeoPack = (id: string): void => {
+export const deleteSeoPack = async (id: string): Promise<void> => {
   // Marcamos como inactivo en lugar de eliminar
   seoPacks = seoPacks.map(pack => 
     pack.id === id ? { ...pack, isActive: false } : pack

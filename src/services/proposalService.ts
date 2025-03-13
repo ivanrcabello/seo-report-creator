@@ -42,20 +42,20 @@ let proposals: Proposal[] = [
   }
 ];
 
-// Operaciones CRUD para propuestas
-export const getClientProposals = (clientId: string): Proposal[] => {
+// Operaciones CRUD para propuestas - Modificadas para devolver Promesas
+export const getClientProposals = async (clientId: string): Promise<Proposal[]> => {
   return proposals.filter(proposal => proposal.clientId === clientId);
 };
 
-export const getAllProposals = (): Proposal[] => {
+export const getAllProposals = async (): Promise<Proposal[]> => {
   return [...proposals];
 };
 
-export const getProposal = (id: string): Proposal | undefined => {
+export const getProposal = async (id: string): Promise<Proposal | undefined> => {
   return proposals.find(proposal => proposal.id === id);
 };
 
-export const addProposal = (proposal: Omit<Proposal, "id" | "createdAt" | "updatedAt">): Proposal => {
+export const addProposal = async (proposal: Omit<Proposal, "id" | "createdAt" | "updatedAt">): Promise<Proposal> => {
   const now = new Date().toISOString();
   const newProposal: Proposal = {
     id: uuidv4(),
@@ -67,7 +67,7 @@ export const addProposal = (proposal: Omit<Proposal, "id" | "createdAt" | "updat
   return newProposal;
 };
 
-export const updateProposal = (proposal: Proposal): Proposal => {
+export const updateProposal = async (proposal: Proposal): Promise<Proposal> => {
   const updatedProposal = {
     ...proposal,
     updatedAt: new Date().toISOString()
@@ -76,7 +76,7 @@ export const updateProposal = (proposal: Proposal): Proposal => {
   return updatedProposal;
 };
 
-export const sendProposal = (id: string): Proposal | undefined => {
+export const sendProposal = async (id: string): Promise<Proposal | undefined> => {
   const proposal = proposals.find(p => p.id === id);
   if (proposal) {
     const now = new Date();
@@ -97,7 +97,7 @@ export const sendProposal = (id: string): Proposal | undefined => {
   return undefined;
 };
 
-export const acceptProposal = (id: string): Proposal | undefined => {
+export const acceptProposal = async (id: string): Promise<Proposal | undefined> => {
   const proposal = proposals.find(p => p.id === id);
   if (proposal) {
     const updatedProposal = {
@@ -112,7 +112,7 @@ export const acceptProposal = (id: string): Proposal | undefined => {
   return undefined;
 };
 
-export const rejectProposal = (id: string): Proposal | undefined => {
+export const rejectProposal = async (id: string): Promise<Proposal | undefined> => {
   const proposal = proposals.find(p => p.id === id);
   if (proposal) {
     const updatedProposal = {
@@ -127,34 +127,39 @@ export const rejectProposal = (id: string): Proposal | undefined => {
   return undefined;
 };
 
-export const deleteProposal = (id: string): void => {
+export const deleteProposal = async (id: string): Promise<void> => {
   proposals = proposals.filter(proposal => proposal.id !== id);
 };
 
 // Función para crear una propuesta basada en un paquete
-export const createProposalFromPack = (
+export const createProposalFromPack = async (
   clientId: string,
   packId: string,
   title: string,
   description: string,
   customPrice?: number,
   customFeatures?: string[]
-): Proposal | undefined => {
-  const pack = getSeoPack(packId);
-  
-  if (pack) {
-    const proposal: Omit<Proposal, "id" | "createdAt" | "updatedAt"> = {
-      clientId,
-      packId,
-      title,
-      description,
-      status: 'draft',
-      customPrice,
-      customFeatures
-    };
+): Promise<Proposal | undefined> => {
+  try {
+    const pack = await getSeoPack(packId);
     
-    return addProposal(proposal);
+    if (pack) {
+      const proposal: Omit<Proposal, "id" | "createdAt" | "updatedAt"> = {
+        clientId,
+        packId,
+        title,
+        description,
+        status: 'draft',
+        customPrice,
+        customFeatures
+      };
+      
+      return addProposal(proposal);
+    }
+    
+    return undefined;
+  } catch (error) {
+    console.error("Error creating proposal from pack:", error);
+    throw error;
   }
-  
-  return undefined;
 };

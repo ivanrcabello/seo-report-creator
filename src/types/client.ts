@@ -9,6 +9,8 @@ export interface Client {
   lastReport?: string;
   notes?: string[];
   documents?: ClientDocument[];
+  analyticsConnected?: boolean;
+  searchConsoleConnected?: boolean;
 }
 
 export interface ClientDocument {
@@ -31,6 +33,59 @@ export interface ClientReport {
   url?: string;
   notes?: string;
   documentIds?: string[];
+  shareToken?: string; // Token único para compartir el informe
+  sharedAt?: string; // Fecha en que se compartió el informe
+  includeInProposal?: boolean; // Indicador para incluir en propuestas
+  analyticsData?: AnalyticsData; // Datos de Google Analytics
+  searchConsoleData?: SearchConsoleData; // Datos de Search Console
+}
+
+export interface AnalyticsData {
+  sessionCount: number;
+  userCount: number;
+  pageViews: number;
+  bounceRate: number;
+  avgSessionDuration: number;
+  topPages: {
+    path: string;
+    views: number;
+    avgTimeOnPage: number;
+  }[];
+  trafficBySource: {
+    source: string;
+    sessions: number;
+    percentage: number;
+  }[];
+  conversionRate?: number;
+  timeRange: {
+    from: string;
+    to: string;
+  };
+}
+
+export interface SearchConsoleData {
+  totalClicks: number;
+  totalImpressions: number;
+  avgCtr: number;
+  avgPosition: number;
+  topQueries: {
+    query: string;
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+  }[];
+  topPages: {
+    page: string;
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+  }[];
+  timeRange: {
+    from: string;
+    to: string;
+  };
 }
 
 export interface SeoLocalReport {
@@ -52,6 +107,8 @@ export interface SeoLocalReport {
     localPosition?: number;
   }[];
   recommendations?: string[];
+  shareToken?: string; // Token único para compartir el informe
+  sharedAt?: string; // Fecha en que se compartió el informe
 }
 
 export interface SeoPack {
@@ -77,4 +134,6 @@ export interface Proposal {
   expiresAt?: string;
   customPrice?: number; // Precio personalizado si es diferente al del paquete
   customFeatures?: string[]; // Características personalizadas si son diferentes
+  reportIds?: string[]; // IDs de los informes incluidos en la propuesta
+  publicUrl?: string; // URL pública para que el cliente vea la propuesta
 }

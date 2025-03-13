@@ -17,6 +17,7 @@ import Packages from "./pages/Packages";
 import Proposals from "./pages/Proposals";
 import ProposalForm from "./pages/ProposalForm";
 import ProposalDetail from "./pages/ProposalDetail";
+import ProposalShare from "./pages/ProposalShare";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/proposals/new" element={<ProposalForm />} />
             <Route path="/proposals/edit/:id" element={<ProposalForm />} />
             <Route path="/proposals/:id" element={<ProposalDetail />} />
+            <Route path="/proposal-share/:id" element={<ProposalShare />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

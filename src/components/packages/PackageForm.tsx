@@ -36,7 +36,7 @@ export const PackageForm = ({ editingPack, onSubmit, onCancel }: PackageFormProp
       name: editingPack?.name || "",
       description: editingPack?.description || "",
       price: editingPack?.price || 0,
-      // Convert array to string with line breaks when editing
+      // For features, we pass it as a string (our schema will convert it to array)
       features: editingPack?.features ? editingPack.features.join("\n") : "",
       isActive: editingPack?.isActive !== undefined ? editingPack.isActive : true
     }

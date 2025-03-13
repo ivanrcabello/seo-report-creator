@@ -282,3 +282,16 @@ export const updateLocalSeoReport = (report: SeoLocalReport): SeoLocalReport => 
 export const deleteLocalSeoReport = (id: string): void => {
   localSeoReports = localSeoReports.filter(report => report.id !== id);
 };
+
+// Add the missing shareReport function
+export const shareReport = async (report: ClientReport): Promise<ClientReport> => {
+  if (!report.shareToken) {
+    report.shareToken = uuidv4();
+  }
+  report.sharedAt = new Date().toISOString();
+  
+  // Update the report in the collection
+  reports = reports.map(r => r.id === report.id ? report : r);
+  
+  return report;
+};

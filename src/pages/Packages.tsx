@@ -128,13 +128,18 @@ const Packages = () => {
 
   // Función para manejar el envío del formulario
   const onSubmit = (data: PackFormValues) => {
+    // Ensure features is an array
+    const featuresArray = typeof data.features === 'string' 
+      ? data.features.split('\n').map(item => item.trim()).filter(Boolean)
+      : data.features;
+      
     if (editingPack) {
       updatePackMutation.mutate({
         ...editingPack,
         name: data.name,
         description: data.description,
         price: data.price,
-        features: Array.isArray(data.features) ? data.features : data.features.split("\n").map(item => item.trim()).filter(Boolean),
+        features: featuresArray,
         isActive: data.isActive
       });
     } else {
@@ -142,7 +147,7 @@ const Packages = () => {
         name: data.name,
         description: data.description,
         price: data.price,
-        features: Array.isArray(data.features) ? data.features : data.features.split("\n").map(item => item.trim()).filter(Boolean),
+        features: featuresArray,
         isActive: data.isActive
       });
     }

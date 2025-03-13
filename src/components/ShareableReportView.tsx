@@ -33,7 +33,8 @@ import {
   TrendingUp,
   Eye,
   Clock,
-  Globe
+  Globe,
+  User
 } from "lucide-react";
 
 interface ShareableReportViewProps {
@@ -178,7 +179,7 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <RechartsPieChart>
                       <Pie
                         data={report.analyticsData.trafficBySource}
                         cx="50%"
@@ -195,10 +196,13 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value, name) => [`${value} sesiones (${entry.percentage.toFixed(1)}%)`, name]}
+                        formatter={(value, name, props) => [
+                          `${value} sesiones (${props.payload.percentage.toFixed(1)}%)`, 
+                          name
+                        ]}
                       />
                       <Legend />
-                    </PieChart>
+                    </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
@@ -215,14 +219,14 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={report.analyticsData.topPages}>
+                    <RechartsBarChart data={report.analyticsData.topPages}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="path" />
                       <YAxis />
                       <Tooltip />
                       <Legend />
                       <Bar dataKey="views" name="Visitas" fill="#4f46e5" />
-                    </BarChart>
+                    </RechartsBarChart>
                   </ResponsiveContainer>
                 </div>
                 
@@ -288,7 +292,7 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={[
+                    <RechartsLineChart data={[
                       {day: 1, clicks: report.searchConsoleData.totalClicks * 0.7, impressions: report.searchConsoleData.totalImpressions * 0.7},
                       {day: 2, clicks: report.searchConsoleData.totalClicks * 0.75, impressions: report.searchConsoleData.totalImpressions * 0.75},
                       {day: 3, clicks: report.searchConsoleData.totalClicks * 0.8, impressions: report.searchConsoleData.totalImpressions * 0.8},
@@ -305,7 +309,7 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
                       <Legend />
                       <Line yAxisId="left" type="monotone" dataKey="clicks" name="Clics" stroke="#4f46e5" />
                       <Line yAxisId="right" type="monotone" dataKey="impressions" name="Impresiones" stroke="#ef4444" />
-                    </LineChart>
+                    </RechartsLineChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>

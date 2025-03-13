@@ -14,28 +14,34 @@ import ProposalForm from "./pages/ProposalForm";
 import ProposalDetail from "./pages/ProposalDetail";
 import ReportShare from "./pages/ReportShare";
 import ProposalShare from "./pages/ProposalShare";
-import { Toaster } from "./components/ui/sonner"
+import { Toaster } from "./components/ui/sonner";
+import { AppLayout } from "./components/AppLayout";
 import "./App.css";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/clients/:id" element={<ClientDetail />} />
-        <Route path="/reports/:id" element={<ReportDetail />} />
-        <Route path="/reports/edit/:id" element={<ReportForm />} />
-        <Route path="/reports/new/:clientId" element={<ReportForm />} />
-        <Route path="/report" element={<SeoReport />} />
-        <Route path="/reports" element={<AllReports />} />
-        <Route path="/packages" element={<Packages />} />
-        <Route path="/proposals" element={<Proposals />} />
-        <Route path="/proposals/new/:clientId/:packId" element={<ProposalForm />} />
-        <Route path="/proposals/edit/:id" element={<ProposalForm />} />
-        <Route path="/proposals/:id" element={<ProposalDetail />} />
+        {/* Public routes without sidebar */}
         <Route path="/report-share/:id" element={<ReportShare />} />
         <Route path="/proposal-share/:id" element={<ProposalShare />} />
+        
+        {/* Protected routes with sidebar */}
+        <Route path="/" element={<AppLayout><Index /></AppLayout>} />
+        <Route path="/clients" element={<AppLayout><Clients /></AppLayout>} />
+        <Route path="/clients/:id" element={<AppLayout><ClientDetail /></AppLayout>} />
+        <Route path="/reports/:id" element={<AppLayout><ReportDetail /></AppLayout>} />
+        <Route path="/reports/edit/:id" element={<AppLayout><ReportForm /></AppLayout>} />
+        <Route path="/reports/new/:clientId" element={<AppLayout><ReportForm /></AppLayout>} />
+        <Route path="/report" element={<AppLayout><SeoReport /></AppLayout>} />
+        <Route path="/reports" element={<AppLayout><AllReports /></AppLayout>} />
+        <Route path="/packages" element={<AppLayout><Packages /></AppLayout>} />
+        <Route path="/proposals" element={<AppLayout><Proposals /></AppLayout>} />
+        <Route path="/proposals/new/:clientId/:packId" element={<AppLayout><ProposalForm /></AppLayout>} />
+        <Route path="/proposals/edit/:id" element={<AppLayout><ProposalForm /></AppLayout>} />
+        <Route path="/proposals/:id" element={<AppLayout><ProposalDetail /></AppLayout>} />
+        
+        {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />

@@ -37,11 +37,16 @@ export const PackageForm = ({ editingPack, onSubmit, onCancel }: PackageFormProp
       name: editingPack?.name || "",
       description: editingPack?.description || "",
       price: editingPack?.price || 0,
-      // Convert features array to newline-separated string for the textarea
+      // Handle features as a string in the form
       features: editingPack?.features ? editingPack.features.join("\n") : "",
       isActive: editingPack?.isActive !== undefined ? editingPack.isActive : true
     }
   });
+
+  const handleFormSubmit = (values: PackFormValues) => {
+    // Process the form data before passing it to onSubmit
+    onSubmit(values);
+  };
 
   return (
     <>
@@ -55,7 +60,7 @@ export const PackageForm = ({ editingPack, onSubmit, onCancel }: PackageFormProp
       </DialogHeader>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="name"

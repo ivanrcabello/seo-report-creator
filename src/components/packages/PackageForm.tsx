@@ -20,12 +20,12 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form";
-import { packFormSchema, PackFormValues } from "./PackageFormSchema";
+import { packFormSchema, PackFormValues, transformFormData } from "./PackageFormSchema";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface PackageFormProps {
   editingPack: SeoPack | null;
-  onSubmit: (data: PackFormValues) => void;
+  onSubmit: (data: SeoPack) => void;
   onCancel: () => void;
 }
 
@@ -37,15 +37,32 @@ export const PackageForm = ({ editingPack, onSubmit, onCancel }: PackageFormProp
       name: editingPack?.name || "",
       description: editingPack?.description || "",
       price: editingPack?.price || 0,
-      // Handle features as a string in the form
+      // Convert features array to string for the form
       features: editingPack?.features ? editingPack.features.join("\n") : "",
       isActive: editingPack?.isActive !== undefined ? editingPack.isActive : true
     }
   });
 
   const handleFormSubmit = (values: PackFormValues) => {
-    // Process the form data before passing it to onSubmit
-    onSubmit(values);
+    // Transform form values and prepare data for submission
+    const transformedData = transformFormData(values);
+    
+    // Prepare the data to match SeoPack type
+    const packData: Partial<SeoPack> = {
+      name: transformedData.name,
+      description: transformedData.description,
+      price: transformedData.price,
+      features: transformedData.features,
+      isActive: transformedData.isActive
+    };
+    
+    // Add id if editing
+    if (editingPack?.id) {
+      packData.id = editingPack.id;
+    }
+    
+    // Submit the transformed data
+    onSubmit(packData as SeoPack);
   };
 
   return (

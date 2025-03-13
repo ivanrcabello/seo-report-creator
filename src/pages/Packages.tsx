@@ -9,7 +9,6 @@ import { Plus, Package } from "lucide-react";
 import { toast } from "sonner";
 import { PackageList } from "@/components/packages/PackageList";
 import { PackageForm } from "@/components/packages/PackageForm";
-import { PackFormValues } from "@/components/packages/PackageFormSchema";
 
 const Packages = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,25 +64,11 @@ const Packages = () => {
   });
 
   // Handle form submission
-  const handleSubmit = (data: PackFormValues) => {
-    // Features are now processed by the schema and will always be an array of strings
+  const handleSubmit = (data: SeoPack) => {
     if (editingPack) {
-      updatePackMutation.mutate({
-        ...editingPack,
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        features: data.features,
-        isActive: data.isActive
-      });
+      updatePackMutation.mutate(data);
     } else {
-      addPackMutation.mutate({
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        features: data.features,
-        isActive: data.isActive
-      });
+      addPackMutation.mutate(data);
     }
   };
 

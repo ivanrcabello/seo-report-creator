@@ -21,6 +21,7 @@ import {
   FormMessage
 } from "@/components/ui/form";
 import { packFormSchema, PackFormValues } from "./PackageFormSchema";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PackageFormProps {
   editingPack: SeoPack | null;
@@ -127,11 +128,9 @@ export const PackageForm = ({ editingPack, onSubmit, onCancel }: PackageFormProp
             render={({ field }) => (
               <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                 <FormControl>
-                  <input
-                    type="checkbox"
+                  <Checkbox 
                     checked={field.value}
-                    onChange={field.onChange}
-                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    onCheckedChange={field.onChange}
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">

@@ -37,7 +37,7 @@ export const PackageForm = ({ editingPack, onSubmit, onCancel }: PackageFormProp
       name: editingPack?.name || "",
       description: editingPack?.description || "",
       price: editingPack?.price || 0,
-      // Convert features array to string for form input
+      // Convert features array to newline-separated string for the textarea
       features: editingPack?.features ? editingPack.features.join("\n") : "",
       isActive: editingPack?.isActive !== undefined ? editingPack.isActive : true
     }

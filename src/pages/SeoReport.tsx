@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, XCircle, AlertTriangle, FileDown, Printer, ArrowLeft, Globe, BarChart2, Search, Server, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { AIReportGenerator } from "@/components/AIReportGenerator";
 import "../styles/print.css";
 
 const SeoReport = () => {
@@ -329,6 +330,8 @@ const SeoReport = () => {
               </li>
             </ul>
           </div>
+
+          <AIReportGenerator auditResult={auditResult} />
 
           <div className="text-center pt-8 text-sm text-gray-500 print:hidden">
             <p>© {new Date().getFullYear()} Servicio de Análisis SEO</p>

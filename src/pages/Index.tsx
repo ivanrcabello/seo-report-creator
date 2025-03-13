@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -28,7 +27,7 @@ import {
   Server,
   Share2
 } from "lucide-react";
-import { getClients, getReports } from "@/services/clientService";
+import { getClients, getAllReports } from "@/services/clientService";
 import { ClientReport } from "@/types/client";
 import { format, subDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -41,7 +40,7 @@ type ReportTypeCount = {
 
 const Dashboard = () => {
   const [clients, setClients] = useState(getClients());
-  const [reports, setReports] = useState<ClientReport[]>(getReports());
+  const [reports, setReports] = useState<ClientReport[]>(getAllReports());
   const [recentReports, setRecentReports] = useState<ClientReport[]>([]);
   const [reportsByType, setReportsByType] = useState<ReportTypeCount[]>([]);
   const [reportsByMonth, setReportsByMonth] = useState<any[]>([]);

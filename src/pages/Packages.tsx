@@ -77,7 +77,7 @@ const Packages = () => {
       name: "",
       description: "",
       price: 0,
-      features: "",
+      features: "", // This is a string that will be transformed into an array
       isActive: true
     }
   });
@@ -134,7 +134,7 @@ const Packages = () => {
         name: data.name,
         description: data.description,
         price: data.price,
-        features: data.features,
+        features: Array.isArray(data.features) ? data.features : data.features.split("\n").map(item => item.trim()).filter(Boolean),
         isActive: data.isActive
       });
     } else {
@@ -142,7 +142,7 @@ const Packages = () => {
         name: data.name,
         description: data.description,
         price: data.price,
-        features: data.features,
+        features: Array.isArray(data.features) ? data.features : data.features.split("\n").map(item => item.trim()).filter(Boolean),
         isActive: data.isActive
       });
     }
@@ -155,7 +155,7 @@ const Packages = () => {
       name: pack.name,
       description: pack.description,
       price: pack.price,
-      features: pack.features.join("\n"),
+      features: pack.features.join("\n"), // Convert array to string with line breaks
       isActive: pack.isActive
     });
     setIsOpen(true);
@@ -168,7 +168,7 @@ const Packages = () => {
       name: "",
       description: "",
       price: 0,
-      features: "",
+      features: "", // Empty string for features
       isActive: true
     });
     setIsOpen(true);

@@ -6,14 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ClientForm } from "@/components/ClientForm";
 import { ClientReports } from "@/components/ClientReports";
+import { PdfUploader } from "@/components/PdfUploader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   getClient, 
   updateClient, 
   deleteClient, 
-  getClientReports
+  getClientReports,
+  addReport
 } from "@/services/clientService";
 import { Client, ClientReport } from "@/types/client";
-import { ArrowLeft, Edit, Trash2, Mail, Phone, Building, Calendar, UserCog } from "lucide-react";
+import { AuditResult } from "@/services/pdfAnalyzer";
+import { ArrowLeft, Edit, Trash2, Mail, Phone, Building, Calendar, UserCog, FileText, UploadCloud } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -25,6 +29,7 @@ const ClientDetail = () => {
   const [reports, setReports] = useState<ClientReport[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
     if (id) {
@@ -91,6 +96,40 @@ const ClientDetail = () => {
 
   const handleAddReport = () => {
     navigate(`/reports/new?clientId=${id}`);
+  };
+
+  const handlePdfAnalysis = (result: AuditResult) => {
+    if (client && id) {
+      try {
+        // Create a new report from the analysis result
+        const currentDate = new Date().toISOString();
+        const newReport = addReport({
+          title: `Auditoría SEO - ${format(new Date(), "d MMM yyyy", { locale: es })}`,
+          type: "seo", 
+          date: currentDate,
+          clientId: id,
+          notes: `Informe generado automáticamente a partir de un PDF el ${format(new Date(), "d MMMM yyyy", { locale: es })}`,
+        });
+        
+        // Update the reports list
+        setReports([...reports, newReport]);
+        
+        toast({
+          title: "Informe creado",
+          description: "Informe generado correctamente desde el PDF.",
+        });
+        
+        // Navigate to the report page with the audit data
+        navigate(`/report`, { state: { auditResult: result } });
+      } catch (error) {
+        console.error("Error al crear informe:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo crear el informe. Inténtalo de nuevo.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   if (isLoading) {
@@ -175,13 +214,87 @@ const ClientDetail = () => {
         </Card>
       )}
 
-      <div className="mt-8">
-        <ClientReports 
-          reports={reports} 
-          clientName={client.name}
-          onAddReport={handleAddReport}
-        />
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
+        <TabsList className="mb-4 grid grid-cols-3 max-w-md">
+          <TabsTrigger value="profile" className="flex items-center gap-1">
+            <UserCog className="h-4 w-4" />
+            Perfil
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-1">
+            <FileText className="h-4 w-4" />
+            Informes
+          </TabsTrigger>
+          <TabsTrigger value="upload" className="flex items-center gap-1">
+            <UploadCloud className="h-4 w-4" />
+            Subir PDF
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="profile">
+          <Card>
+            <CardHeader>
+              <CardTitle>Información del cliente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-medium text-gray-700">Nombre</h3>
+                  <p>{client.name}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-700">Email</h3>
+                  <p>{client.email}</p>
+                </div>
+                {client.phone && (
+                  <div>
+                    <h3 className="font-medium text-gray-700">Teléfono</h3>
+                    <p>{client.phone}</p>
+                  </div>
+                )}
+                {client.company && (
+                  <div>
+                    <h3 className="font-medium text-gray-700">Empresa</h3>
+                    <p>{client.company}</p>
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-medium text-gray-700">Fecha de registro</h3>
+                  <p>{format(new Date(client.createdAt), "d 'de' MMMM, yyyy", { locale: es })}</p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-700">Último informe</h3>
+                  <p>{client.lastReport ? format(new Date(client.lastReport), "d 'de' MMMM, yyyy", { locale: es }) : "Sin informes"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="reports">
+          <ClientReports 
+            reports={reports} 
+            clientName={client.name}
+            onAddReport={handleAddReport}
+          />
+        </TabsContent>
+        
+        <TabsContent value="upload">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UploadCloud className="h-5 w-5 text-blue-600" />
+                Subir informe PDF
+              </CardTitle>
+              <CardDescription>
+                Sube un PDF de auditoría para analizar y generar automáticamente un informe para {client.name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PdfUploader onAnalysisComplete={handlePdfAnalysis} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

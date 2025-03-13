@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SeoPack } from "@/types/client";
@@ -110,7 +109,8 @@ export const PackageForm = ({ editingPack, onSubmit, onCancel }: PackageFormProp
                   <Textarea 
                     placeholder="Escribe cada característica en una línea separada..." 
                     className="min-h-[120px]"
-                    {...field} 
+                    value={typeof field.value === 'string' ? field.value : field.value.join('\n')}
+                    onChange={(e) => field.onChange(e.target.value)}
                   />
                 </FormControl>
                 <FormDescription>

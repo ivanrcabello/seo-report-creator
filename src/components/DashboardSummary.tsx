@@ -1,9 +1,11 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { AuditDetailsPanel } from "./AuditDetailsPanel";
 import { MetricCard } from "./MetricCard";
-import { TrendingUp, Globe, Search, BarChart2, Server, Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Globe, Search, BarChart2, Server, Share2, FileText } from "lucide-react";
 
 interface DashboardSummaryProps {
   auditResult?: AuditResult;
@@ -77,9 +79,24 @@ export const DashboardSummary = ({ auditResult }: DashboardSummaryProps) => {
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">
-        Resultados del Análisis
-      </h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-gray-900">
+          Resultados del Análisis
+        </h2>
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2"
+          asChild
+        >
+          <Link 
+            to="/report" 
+            state={{ auditResult }}
+          >
+            <FileText className="w-4 h-4" />
+            Ver Informe Completo
+          </Link>
+        </Button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {metrics.map((metric) => (

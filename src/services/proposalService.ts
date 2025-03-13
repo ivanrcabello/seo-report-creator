@@ -1,7 +1,8 @@
-
-import { Proposal } from "@/types/client";
+import { Proposal, ClientReport } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
 import { getSeoPack } from "./packService";
+import { getReport, shareReport } from "./clientService";
+import { generatePublicProposalUrl } from "./reportSharingService";
 
 // Datos de ejemplo para propuestas
 let proposals: Proposal[] = [
@@ -129,6 +130,58 @@ export const rejectProposal = async (id: string): Promise<Proposal | undefined> 
 
 export const deleteProposal = async (id: string): Promise<void> => {
   proposals = proposals.filter(proposal => proposal.id !== id);
+};
+
+// Función para incluir un informe en una propuesta
+export const includeReportInProposal = async (proposalId: string, reportId: string): Promise<Proposal | undefined> => {
+  const proposal = proposals.find(p => p.id === proposalId);
+  if (proposal) {
+    // Si no existe un array de reportIds, lo creamos
+    if (!proposal.reportIds) {
+      proposal.reportIds = [];
+    }
+    
+    // Verificamos si el informe ya está incluido
+    if (!proposal.reportIds.includes(reportId)) {
+      proposal.reportIds.push(reportId);
+      proposal.updatedAt = new Date().toISOString();
+      
+      // Compartimos el informe si no está compartido
+      const report = getReport(reportId);
+      if (report && !report.sharedAt) {
+        await shareReport(report);
+      }
+    }
+    
+    return proposal;
+  }
+  return undefined;
+};
+
+// Función para eliminar un informe de una propuesta
+export const removeReportFromProposal = async (proposalId: string, reportId: string): Promise<Proposal | undefined> => {
+  const proposal = proposals.find(p => p.id === proposalId);
+  if (proposal && proposal.reportIds) {
+    proposal.reportIds = proposal.reportIds.filter(id => id !== reportId);
+    proposal.updatedAt = new Date().toISOString();
+    return proposal;
+  }
+  return undefined;
+};
+
+// Función para obtener los informes de una propuesta
+export const getProposalReports = async (proposalId: string): Promise<ClientReport[]> => {
+  const proposal = proposals.find(p => p.id === proposalId);
+  if (proposal && proposal.reportIds && proposal.reportIds.length > 0) {
+    return proposal.reportIds.map(reportId => {
+      const report = getReport(reportId);
+      if (!report) {
+        throw new Error(`Informe ${reportId} no encontrado`);
+      }
+      return report;
+    });
+  }
+  return [];
 };
 
 // Función para crear una propuesta basada en un paquete

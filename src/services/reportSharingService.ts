@@ -134,6 +134,12 @@ export const generateShareToken = (): string => {
   return uuidv4();
 };
 
+// Función para generar una URL pública para un informe
+export const generatePublicReportUrl = (reportId: string, token: string): string => {
+  // En una implementación real, esta URL apuntaría a un dominio público
+  return `${window.location.origin}/report-share/${reportId}?token=${token}`;
+};
+
 // Función para generar una URL pública para la propuesta
 export const generatePublicProposalUrl = (proposalId: string): string => {
   // En una implementación real, esta URL apuntaría a un dominio público
@@ -143,9 +149,11 @@ export const generatePublicProposalUrl = (proposalId: string): string => {
 // Función para compartir un informe SEO
 export const shareReport = async (report: ClientReport): Promise<ClientReport> => {
   const now = new Date().toISOString();
+  const shareToken = generateShareToken();
+  
   const updatedReport: ClientReport = {
     ...report,
-    shareToken: generateShareToken(),
+    shareToken,
     sharedAt: now
   };
   
@@ -155,13 +163,22 @@ export const shareReport = async (report: ClientReport): Promise<ClientReport> =
 // Función para compartir un informe SEO local
 export const shareLocalSeoReport = async (report: SeoLocalReport): Promise<SeoLocalReport> => {
   const now = new Date().toISOString();
+  const shareToken = generateShareToken();
+  
   const updatedReport: SeoLocalReport = {
     ...report,
-    shareToken: generateShareToken(),
+    shareToken,
     sharedAt: now
   };
   
   return updatedReport;
+};
+
+// Función para verificar si un token de compartir es válido para un informe
+export const verifyReportShareToken = async (reportId: string, token: string): Promise<boolean> => {
+  // En una implementación real, aquí se verificaría el token contra la base de datos
+  // Por ahora, simulamos una verificación simple
+  return token.length > 10;
 };
 
 // Función para obtener datos de Google Analytics

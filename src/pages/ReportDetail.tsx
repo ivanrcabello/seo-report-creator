@@ -16,7 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { 
   getReport, 
   getClient, 
-  deleteReport 
+  deleteReport,
+  updateReport 
 } from "@/services/clientService";
 import { ClientReport } from "@/types/client";
 import { 
@@ -30,10 +31,12 @@ import {
   ExternalLink,
   BarChart,
   Cog,
-  Share
+  Share,
+  Link2
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { shareReport, generatePublicReportUrl } from "@/services/reportSharingService";
 
 const ReportDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,6 +45,8 @@ const ReportDetail = () => {
   const [report, setReport] = useState<ClientReport | null>(null);
   const [clientName, setClientName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -52,6 +57,11 @@ const ReportDetail = () => {
         const client = getClient(foundReport.clientId);
         if (client) {
           setClientName(client.name);
+        }
+        
+        // Si el informe ya tiene un token de compartir, generamos la URL
+        if (foundReport.shareToken) {
+          setShareUrl(generatePublicReportUrl(foundReport.id, foundReport.shareToken));
         }
       }
       setIsLoading(false);
@@ -75,6 +85,56 @@ const ReportDetail = () => {
           variant: "destructive",
         });
       }
+    }
+  };
+
+  const handleShareReport = async () => {
+    if (!report) return;
+    
+    setIsSharing(true);
+    try {
+      const updatedReport = await shareReport(report);
+      updateReport(updatedReport);
+      setReport(updatedReport);
+      
+      const url = generatePublicReportUrl(updatedReport.id, updatedReport.shareToken!);
+      setShareUrl(url);
+      
+      // Copiar al portapapeles
+      await navigator.clipboard.writeText(url);
+      
+      toast({
+        title: "Informe compartido",
+        description: "Enlace copiado al portapapeles.",
+      });
+    } catch (error) {
+      console.error("Error al compartir informe:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo compartir el informe. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const copyShareLink = async () => {
+    if (!shareUrl) return;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Enlace copiado",
+        description: "Enlace copiado al portapapeles.",
+      });
+    } catch (error) {
+      console.error("Error al copiar enlace:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo copiar el enlace. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -166,6 +226,13 @@ const ReportDetail = () => {
                   <Badge variant="outline" className={`font-normal gap-1 ${getReportTypeColor(report.type)}`}>
                     {getReportTypeName(report.type)}
                   </Badge>
+                  
+                  {report.shareToken && (
+                    <Badge variant="outline" className="font-normal gap-1 bg-blue-100 text-blue-800 border-blue-200">
+                      <Link2 className="h-4 w-4" />
+                      Compartido
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-gray-500" />
@@ -195,6 +262,28 @@ const ReportDetail = () => {
             </CardDescription>
           </div>
           <div className="flex space-x-2">
+            {shareUrl ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={copyShareLink}
+                className="flex items-center gap-1"
+              >
+                <Share className="h-4 w-4" />
+                Copiar enlace
+              </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleShareReport}
+                disabled={isSharing}
+                className="flex items-center gap-1"
+              >
+                <Share className="h-4 w-4" />
+                {isSharing ? "Compartiendo..." : "Compartir"}
+              </Button>
+            )}
             <Link to={`/reports/edit/${report.id}`}>
               <Button variant="outline" size="sm" className="flex items-center gap-1">
                 <Edit className="h-4 w-4" />
@@ -219,6 +308,32 @@ const ReportDetail = () => {
             <div>
               <h3 className="text-lg font-medium mb-2">Notas</h3>
               <p className="text-gray-700 whitespace-pre-line">{report.notes}</p>
+            </div>
+          </CardContent>
+        )}
+        
+        {shareUrl && (
+          <CardContent>
+            <Separator className="my-4" />
+            <div>
+              <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+                <Share className="h-5 w-5 text-blue-500" />
+                Enlace para compartir
+              </h3>
+              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md border">
+                <input 
+                  type="text" 
+                  value={shareUrl} 
+                  readOnly 
+                  className="flex-1 bg-transparent border-none focus:outline-none text-sm text-gray-600"
+                />
+                <Button size="sm" variant="outline" onClick={copyShareLink}>
+                  Copiar
+                </Button>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Cualquier persona con este enlace podrá ver este informe sin necesidad de iniciar sesión.
+              </p>
             </div>
           </CardContent>
         )}

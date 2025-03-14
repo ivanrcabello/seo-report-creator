@@ -10,23 +10,9 @@ export interface Client {
   createdAt: string;
   lastReport?: string;
   notes?: string[];
-}
-
-export interface ClientReport {
-  id: string;
-  clientId: string;
-  title: string;
-  type: "seo" | "performance" | "technical" | "social" | "local-seo";
-  date: string;
-  url?: string;
-  notes?: string;
-  documentIds: string[];
-  shareToken: string | null;
-  sharedAt: string | null;
-  includeInProposal: boolean;
-  analyticsData?: any;
-  searchConsoleData?: any;
-  auditResult?: any;
+  documents?: ClientDocument[];
+  analyticsConnected?: boolean;
+  searchConsoleConnected?: boolean;
 }
 
 export interface ClientDocument {
@@ -38,6 +24,23 @@ export interface ClientDocument {
   uploadDate: string;
   analyzedStatus: "pending" | "analyzed" | "processed" | "error" | "failed";
   content?: string;
+}
+
+export interface ClientReport {
+  id: string;
+  clientId: string;
+  title: string;
+  date: string;
+  type: "seo" | "performance" | "technical" | "social" | "local-seo";
+  url?: string;
+  notes?: string;
+  documentIds: string[];
+  shareToken: string | null;
+  sharedAt: string | null;
+  includeInProposal: boolean;
+  analyticsData?: any;
+  searchConsoleData?: any;
+  auditResult?: any;
 }
 
 export interface SeoLocalReport {
@@ -57,6 +60,33 @@ export interface SeoLocalReport {
     url?: string;
   }[];
   recommendations: string[];
+}
+
+export interface SeoPack {
+  id: string;
+  name: string;
+  description: string;
+  price: number; // Precio en euros IVA incluido
+  features: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface Proposal {
+  id: string;
+  clientId: string;
+  title: string;
+  description: string;
+  packId: string;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+  expiresAt?: string;
+  customPrice?: number; // Precio personalizado si es diferente al del paquete
+  customFeatures?: string[]; // Características personalizadas si son diferentes
+  reportIds?: string[]; // IDs de los informes incluidos en la propuesta
+  publicUrl?: string; // URL pública para que el cliente vea la propuesta
 }
 
 export interface CompanySettings {
@@ -90,5 +120,3 @@ export interface Invoice {
   createdAt: string;
   updatedAt: string;
 }
-
-// ... other types if needed

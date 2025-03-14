@@ -1,3 +1,4 @@
+
 // Client types definitions
 
 export interface Client {
@@ -23,6 +24,9 @@ export interface ClientReport {
   shareToken: string | null;
   sharedAt: string | null;
   includeInProposal: boolean;
+  analyticsData?: any;
+  searchConsoleData?: any;
+  auditResult?: any;
 }
 
 export interface ClientDocument {

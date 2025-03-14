@@ -1,354 +1,282 @@
-
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardFooter 
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { getReport, deleteReport, updateReport } from "@/services/reportService";
+import { getClient } from "@/services/clientService";
+import { getSharedReportUrl } from "@/services/reportSharingService";
+import { Client, ClientReport } from "@/types/client";
+import { toast } from "sonner";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  getReport, 
-  getClient, 
-  deleteReport,
-  updateReport 
-} from "@/services/clientService";
-import { ClientReport } from "@/types/client";
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
-  Calendar, 
-  FileText, 
-  Globe, 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  ArrowLeft,
+  Edit,
+  Trash,
+  FileText,
   User,
-  ExternalLink,
-  BarChart,
-  Cog,
-  Share,
-  Link2
+  Calendar,
+  Link as LinkIcon,
+  ClipboardCopy,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { shareReport, generatePublicReportUrl } from "@/services/reportSharingService";
 
 const ReportDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [report, setReport] = useState<ClientReport | null>(null);
-  const [clientName, setClientName] = useState<string>("");
+  const [client, setClient] = useState<Client | null>(null);
+  const [sharedUrl, setSharedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [isSharing, setIsSharing] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const copyToClipboard = () => {
+    if (sharedUrl) {
+      navigator.clipboard.writeText(sharedUrl);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
+
+  const handleDeleteReport = async () => {
+    if (id) {
+      try {
+        await deleteReport(id);
+        toast.success("Informe eliminado correctamente");
+        navigate("/reports");
+      } catch (error) {
+        console.error("Error al eliminar el informe:", error);
+        toast.error("Error al eliminar el informe");
+      } finally {
+        setIsDeleteDialogOpen(false);
+      }
+    }
+  };
 
   useEffect(() => {
-    if (id) {
-      const foundReport = getReport(id);
-      if (foundReport) {
-        setReport(foundReport);
-        
-        const client = getClient(foundReport.clientId);
-        if (client) {
-          setClientName(client.name);
-        }
-        
-        // Si el informe ya tiene un token de compartir, generamos la URL
-        if (foundReport.shareToken) {
-          setShareUrl(generatePublicReportUrl(foundReport.id, foundReport.shareToken));
-        }
-      }
-      setIsLoading(false);
-    }
-  }, [id]);
-
-  const handleDeleteReport = () => {
-    if (report && window.confirm(`¿Estás seguro de eliminar este informe? Esta acción no se puede deshacer.`)) {
+    const loadReportData = async () => {
+      setIsLoading(true);
       try {
-        deleteReport(report.id);
-        toast({
-          title: "Informe eliminado",
-          description: `El informe ha sido eliminado correctamente.`,
-        });
-        navigate(`/clients/${report.clientId}`);
+        if (id) {
+          const reportData = await getReport(id);
+          if (reportData) {
+            setReport(reportData);
+            
+            // Obtener detalles del cliente
+            const clientData = await getClient(reportData.clientId);
+            if (clientData) {
+              setClient(clientData);
+            }
+            
+            // Obtener URL compartida si existe
+            if (reportData.shareToken) {
+              setSharedUrl(getSharedReportUrl(reportData.id, reportData.shareToken));
+            }
+          } else {
+            toast.error("No se encontró el informe");
+            navigate("/reports");
+          }
+        }
       } catch (error) {
-        console.error("Error al eliminar informe:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo eliminar el informe. Inténtalo de nuevo.",
-          variant: "destructive",
-        });
+        console.error("Error cargando informe:", error);
+        toast.error("Error al cargar el informe");
+      } finally {
+        setIsLoading(false);
       }
-    }
-  };
-
-  const handleShareReport = async () => {
-    if (!report) return;
+    };
     
-    setIsSharing(true);
-    try {
-      const updatedReport = await shareReport(report);
-      updateReport(updatedReport);
-      setReport(updatedReport);
-      
-      const url = generatePublicReportUrl(updatedReport.id, updatedReport.shareToken!);
-      setShareUrl(url);
-      
-      // Copiar al portapapeles
-      await navigator.clipboard.writeText(url);
-      
-      toast({
-        title: "Informe compartido",
-        description: "Enlace copiado al portapapeles.",
-      });
-    } catch (error) {
-      console.error("Error al compartir informe:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo compartir el informe. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
-  const copyShareLink = async () => {
-    if (!shareUrl) return;
-    
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: "Enlace copiado",
-        description: "Enlace copiado al portapapeles.",
-      });
-    } catch (error) {
-      console.error("Error al copiar enlace:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo copiar el enlace. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getReportIcon = (type: ClientReport['type']) => {
-    switch (type) {
-      case 'seo':
-        return <Globe className="h-5 w-5 text-green-600" />;
-      case 'performance':
-        return <BarChart className="h-5 w-5 text-purple-600" />;
-      case 'technical':
-        return <Cog className="h-5 w-5 text-blue-600" />;
-      case 'social':
-        return <Share className="h-5 w-5 text-orange-600" />;
-      default:
-        return <FileText className="h-5 w-5 text-gray-600" />;
-    }
-  };
-
-  const getReportTypeName = (type: ClientReport['type']) => {
-    switch (type) {
-      case 'seo':
-        return 'SEO';
-      case 'performance':
-        return 'Rendimiento';
-      case 'technical':
-        return 'Técnico';
-      case 'social':
-        return 'Social';
-      default:
-        return type;
-    }
-  };
-
-  const getReportTypeColor = (type: ClientReport['type']) => {
-    switch (type) {
-      case 'seo':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'performance':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'technical':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'social':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+    loadReportData();
+  }, [id, navigate]);
 
   if (isLoading) {
-    return <div className="container mx-auto py-8">Cargando...</div>;
+    return <div className="container mx-auto py-8">Cargando informe...</div>;
   }
 
-  if (!report) {
+  if (!report || !client) {
     return (
       <div className="container mx-auto py-8">
-        <Card>
-          <CardContent className="flex flex-col items-center py-10">
-            <p className="text-gray-500 mb-4">Informe no encontrado</p>
-            <Link to="/clients">
-              <Button variant="outline">Volver a Clientes</Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Informe no encontrado</h1>
+          <p className="mb-4">El informe que estás buscando no existe o no está disponible.</p>
+          <Button onClick={() => navigate("/reports")} variant="outline">
+            Volver a Informes
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex items-center mb-6">
-        <Link to={`/clients/${report.clientId}`} className="mr-4">
-          <Button variant="outline" size="icon" className="h-8 w-8">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate("/reports")} className="gap-1">
             <ArrowLeft className="h-4 w-4" />
+            Volver
           </Button>
-        </Link>
-        <h1 className="text-3xl font-bold">Detalle del Informe</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <FileText className="h-6 w-6 text-blue-600" />
+            Detalles del Informe
+          </h1>
+        </div>
+        <div>
+          {sharedUrl ? (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={copyToClipboard} disabled={isCopied} className="gap-1">
+                {isCopied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <ClipboardCopy className="h-4 w-4" />}
+                {isCopied ? "Copiado!" : "Copiar Enlace"}
+              </Button>
+              <a href={sharedUrl} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="gap-1">
+                  <LinkIcon className="h-4 w-4" />
+                  Ver Informe Compartido
+                </Button>
+              </a>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" disabled>
+              <Clock className="mr-2 h-4 w-4 animate-spin" />
+              Generando enlace...
+            </Button>
+          )}
+        </div>
       </div>
 
-      <Card className="mb-8">
-        <CardHeader className="flex flex-row items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              {getReportIcon(report.type)}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
               <CardTitle className="text-2xl">{report.title}</CardTitle>
-            </div>
-            <CardDescription className="text-base">
-              <div className="flex flex-col space-y-2 mt-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`font-normal gap-1 ${getReportTypeColor(report.type)}`}>
-                    {getReportTypeName(report.type)}
-                  </Badge>
-                  
-                  {report.shareToken && (
-                    <Badge variant="outline" className="font-normal gap-1 bg-blue-100 text-blue-800 border-blue-200">
-                      <Link2 className="h-4 w-4" />
-                      Compartido
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span>Creado el {format(new Date(report.date), "d 'de' MMMM, yyyy", { locale: es })}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-gray-500" />
-                  <Link to={`/clients/${report.clientId}`} className="text-blue-600 hover:underline">
-                    {clientName}
-                  </Link>
-                </div>
-                {report.url && (
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-gray-500" />
-                    <a 
-                      href={report.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      {report.url}
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
+              <CardDescription className="text-base mt-2">
+                Informe de {report.type} para {client.name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Detalles del Cliente</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-500" />
+                      <span className="font-medium">{client.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <span>{format(new Date(report.date), "d MMMM yyyy", { locale: es })}</span>
+                    </div>
                   </div>
-                )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Información del Informe</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-gray-500" />
+                      <span>Tipo: {report.type}</span>
+                    </div>
+                    {report.url && (
+                      <div className="flex items-center gap-2">
+                        <LinkIcon className="h-4 w-4 text-gray-500" />
+                        <a href={report.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                          Ver Documento
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </CardDescription>
-          </div>
-          <div className="flex space-x-2">
-            {shareUrl ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={copyShareLink}
-                className="flex items-center gap-1"
-              >
-                <Share className="h-4 w-4" />
-                Copiar enlace
-              </Button>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleShareReport}
-                disabled={isSharing}
-                className="flex items-center gap-1"
-              >
-                <Share className="h-4 w-4" />
-                {isSharing ? "Compartiendo..." : "Compartir"}
-              </Button>
-            )}
-            <Link to={`/reports/edit/${report.id}`}>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                <Edit className="h-4 w-4" />
-                Editar
-              </Button>
-            </Link>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleDeleteReport} 
-              className="flex items-center gap-1 text-red-600 hover:bg-red-50 hover:text-red-700"
-            >
-              <Trash2 className="h-4 w-4" />
-              Eliminar
-            </Button>
-          </div>
-        </CardHeader>
-        
-        {report.notes && (
-          <CardContent>
-            <Separator className="my-4" />
-            <div>
-              <h3 className="text-lg font-medium mb-2">Notas</h3>
-              <p className="text-gray-700 whitespace-pre-line">{report.notes}</p>
-            </div>
-          </CardContent>
-        )}
-        
-        {shareUrl && (
-          <CardContent>
-            <Separator className="my-4" />
-            <div>
-              <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
-                <Share className="h-5 w-5 text-blue-500" />
-                Enlace para compartir
-              </h3>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md border">
-                <input 
-                  type="text" 
-                  value={shareUrl} 
-                  readOnly 
-                  className="flex-1 bg-transparent border-none focus:outline-none text-sm text-gray-600"
-                />
-                <Button size="sm" variant="outline" onClick={copyShareLink}>
-                  Copiar
+
+              <Separator />
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Notas Adicionales</h3>
+                <p className="text-gray-600">{report.notes || "No hay notas adicionales para este informe."}</p>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between border-t pt-6">
+              <div>
+                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="gap-1 text-destructive border-destructive hover:bg-destructive/10">
+                      <Trash className="h-4 w-4" />
+                      Eliminar
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Se eliminará permanentemente este informe.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteReport} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Eliminar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => navigate(`/reports/edit/${report.id}`)} className="gap-1">
+                  <Edit className="h-4 w-4" />
+                  Editar
                 </Button>
               </div>
-              <p className="text-sm text-gray-500 mt-2">
-                Cualquier persona con este enlace podrá ver este informe sin necesidad de iniciar sesión.
-              </p>
-            </div>
-          </CardContent>
-        )}
-        
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => navigate(`/clients/${report.clientId}`)}>
-            Volver al Cliente
-          </Button>
-          <Link to="/report">
-            <Button>
-              Ver Panel de Informes SEO
-            </Button>
-          </Link>
-        </CardFooter>
-      </Card>
+            </CardFooter>
+          </Card>
+        </div>
+
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Información del Cliente</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Nombre</h3>
+                <p className="font-medium">{client.name}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Email</h3>
+                <p>{client.email}</p>
+              </div>
+              {client.phone && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Teléfono</h3>
+                  <p>{client.phone}</p>
+                </div>
+              )}
+              <div className="pt-2">
+                <Link to={`/clients/${client.id}`}>
+                  <Button variant="outline" className="w-full">
+                    Ver Perfil del Cliente
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

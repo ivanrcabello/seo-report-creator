@@ -1,31 +1,23 @@
-
-import { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { Client } from "@/types/client";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, UserPlus, Search, Calendar, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Client } from "@/types/client";
+import { Eye, Plus, User, Building, Mail, Calendar } from "lucide-react";
 
-interface ClientsListProps {
+export interface ClientsListProps {
   clients: Client[];
-  onAddClient?: () => void;
+  onAddClient: () => void;
+  isLoading?: boolean;
 }
 
-export const ClientsList = ({ clients, onAddClient }: ClientsListProps) => {
+export const ClientsList: React.FC<ClientsListProps> = ({ clients, onAddClient, isLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,7 +28,7 @@ export const ClientsList = ({ clients, onAddClient }: ClientsListProps) => {
     if (!dateString) return "No hay informes";
     return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
   };
-  
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">

@@ -8,6 +8,6 @@ export * from "./proposal/proposalReports";
 export * from "./proposal/proposalCreation";
 export * from "./proposal/proposalMappers";
 
-// Import generatePublicProposalUrl to maintain compatibility with existing code
+// Import generatePublicProposalUrl from the correct path
 import { generatePublicProposalUrl } from "./reportSharingService";
 export { generatePublicProposalUrl };

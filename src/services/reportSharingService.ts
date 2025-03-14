@@ -1,23 +1,37 @@
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 
-// This service handles report sharing functionality
+// Function to get the URL for a shared report
+export const getSharedReportUrl = async (reportId: string): Promise<string | null> => {
+  try {
+    // Here you would retrieve the share token from the database
+    // This is a placeholder implementation
+    const { data, error } = await supabase
+      .from('reports')
+      .select('share_token')
+      .eq('id', reportId)
+      .single();
+    
+    if (error || !data) {
+      console.error('Error retrieving share token:', error);
+      return null;
+    }
 
-/**
- * Generates a shareable URL for a report
- * @param reportId The ID of the report
- * @param shareToken The sharing token for the report
- * @returns The full URL that can be shared
- */
-export const getSharedReportUrl = (reportId: string, shareToken: string): string => {
-  const baseUrl = window.location.origin;
-  return `${baseUrl}/reports/share/${reportId}/${shareToken}`;
+    if (!data.share_token) {
+      return null;
+    }
+
+    // Construct the share URL
+    return `/report/share/${data.share_token}`;
+  } catch (error) {
+    console.error('Error getting shared report URL:', error);
+    return null;
+  }
 };
 
-/**
- * Creates a sharing token for a report
- * @returns A unique token for sharing
- */
-export const generateShareToken = (): string => {
-  return Math.random().toString(36).substring(2, 15) + 
-         Math.random().toString(36).substring(2, 15);
+// Function to generate a public proposal URL
+export const generatePublicProposalUrl = (proposalId: string, token: string): string => {
+  return `/proposal/share/${token}`;
 };
 
+// Other sharing-related functions can be added here

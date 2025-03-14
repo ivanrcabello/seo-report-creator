@@ -1,3 +1,4 @@
+
 // Este servicio simula la extracción de datos de un PDF de auditoría SEO
 // En una implementación real, se integraría con una biblioteca de análisis de PDF
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,7 @@ import { pdfToText } from "@/services/pdfAnalyzer";
 import { File, FileText, MoreVertical, Eye, Trash, Upload, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { AuditResult } from "@/services/pdfAnalyzer";
 
 interface ClientDocumentsProps {
   clientId: string;
@@ -75,7 +75,7 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
       const newDocument: Omit<ClientDocument, "id"> = {
         clientId: clientId,
         name: file.name,
-        type: "pdf", // Use enum value instead of string
+        type: "pdf", // Must match the allowed enum values
         url: fileURL,
         uploadDate: new Date().toISOString(),
         analyzedStatus: "pending",
@@ -98,6 +98,10 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleAnalysisResult = (result: AuditResult) => {
+    console.log("Audit result received:", result);
   };
 
   const handleDocumentDelete = async (documentId: string, documentName: string) => {
@@ -169,7 +173,7 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <PdfUploader 
-          onAnalysisComplete={handleDocumentUpload} 
+          onAnalysisComplete={handleAnalysisResult} 
           isLoading={isUploading} 
         />
 

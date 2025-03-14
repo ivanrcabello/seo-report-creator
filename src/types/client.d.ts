@@ -1,3 +1,4 @@
+
 // Client types definitions
 
 export interface Client {
@@ -32,7 +33,7 @@ export interface ClientDocument {
   type: "pdf" | "doc" | "image" | "text";
   url: string;
   uploadDate: string;
-  analyzedStatus: "pending" | "analyzed" | "error";
+  analyzedStatus: "pending" | "analyzed" | "processed" | "error" | "failed";
   content?: string;
 }
 

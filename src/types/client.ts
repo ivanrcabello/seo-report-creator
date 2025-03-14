@@ -20,7 +20,7 @@ export interface ClientDocument {
   type: 'pdf' | 'image' | 'doc' | 'text';
   url: string;
   uploadDate: string;
-  analyzedStatus?: 'pending' | 'processed' | 'failed';
+  analyzedStatus?: 'pending' | 'analyzed' | 'processed' | 'failed' | 'error';
   content?: string;
 }
 

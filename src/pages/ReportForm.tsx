@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
   PopoverContent,
@@ -26,7 +25,7 @@ import {
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { CalendarIcon } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker"
+import { DatePickerWithButton } from "@/components/ui/date-picker"
 
 const ReportForm = () => {
   const { id, clientId: clientIdParam } = useParams<{ id?: string; clientId?: string }>();
@@ -42,6 +41,15 @@ const ReportForm = () => {
   const [report, setReport] = useState<ClientReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Handle date selection with proper typing
+  const handleDateSelect = (selectedDate: Date | Date[] | undefined) => {
+    if (selectedDate instanceof Date) {
+      setDate(selectedDate);
+    } else if (Array.isArray(selectedDate) && selectedDate.length > 0) {
+      setDate(selectedDate[0]);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -52,7 +60,7 @@ const ReportForm = () => {
           if (reportData) {
             setReport(reportData);
             setTitle(reportData.title);
-            setType(reportData.type);
+            setType(reportData.type as "seo" | "performance" | "technical" | "social" | "local-seo");
             setDate(new Date(reportData.date));
             setUrl(reportData.url || "");
             setNotes(reportData.notes || "");
@@ -169,38 +177,27 @@ const ReportForm = () => {
             </div>
             <div>
               <Label htmlFor="type">Tipo</Label>
-              <Input
-                type="text"
-                id="type"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                placeholder="Tipo de informe"
-              />
+              <Select value={type} onValueChange={(value) => setType(value as "seo" | "performance" | "technical" | "social" | "local-seo")}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecciona un tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="seo">SEO</SelectItem>
+                  <SelectItem value="performance">Performance</SelectItem>
+                  <SelectItem value="technical">Technical</SelectItem>
+                  <SelectItem value="social">Social</SelectItem>
+                  <SelectItem value="local-seo">Local SEO</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Fecha</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <DatePicker
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <DatePickerWithButton
+                mode="single"
+                selected={date}
+                onSelect={handleDateSelect}
+                initialFocus
+              />
             </div>
             <div>
               <Label htmlFor="url">URL</Label>

@@ -1,4 +1,3 @@
-
 // Client types definitions
 
 export interface Client {
@@ -54,6 +53,38 @@ export interface SeoLocalReport {
     url?: string;
   }[];
   recommendations: string[];
+}
+
+export interface CompanySettings {
+  id: string;
+  companyName: string;
+  taxId: string; // CIF/NIF
+  address: string;
+  phone?: string;
+  email?: string;
+  logoUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  clientId: string;
+  issueDate: string;
+  dueDate?: string;
+  packId?: string;
+  proposalId?: string;
+  baseAmount: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  status: "pending" | "paid" | "cancelled";
+  paymentDate?: string;
+  notes?: string;
+  pdfUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ... other types if needed

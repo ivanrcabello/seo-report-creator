@@ -15,6 +15,9 @@ import ProposalForm from "./pages/ProposalForm";
 import ProposalDetail from "./pages/ProposalDetail";
 import ReportShare from "./pages/ReportShare";
 import ProposalShare from "./pages/ProposalShare";
+import Invoices from "./pages/Invoices";
+import InvoiceDetail from "./pages/InvoiceDetail";
+import CompanySettings from "./pages/CompanySettings";
 import { Toaster } from "./components/ui/sonner";
 import { AppLayout } from "./components/AppLayout";
 import "./App.css";
@@ -55,6 +58,15 @@ function App() {
           <Route path="/proposals/new/:clientId/:packId" element={<AppLayout><ProposalForm /></AppLayout>} />
           <Route path="/proposals/edit/:id" element={<AppLayout><ProposalForm /></AppLayout>} />
           <Route path="/proposals/:id" element={<AppLayout><ProposalDetail /></AppLayout>} />
+          
+          {/* New invoice routes */}
+          <Route path="/invoices" element={<AppLayout><Invoices /></AppLayout>} />
+          <Route path="/invoices/:id" element={<AppLayout><InvoiceDetail /></AppLayout>} />
+          <Route path="/invoices/new" element={<AppLayout><InvoiceDetail /></AppLayout>} />
+          <Route path="/invoices/edit/:id" element={<AppLayout><InvoiceDetail /></AppLayout>} />
+          
+          {/* Company settings */}
+          <Route path="/settings" element={<AppLayout><CompanySettings /></AppLayout>} />
           
           {/* 404 route */}
           <Route path="*" element={<NotFound />} />

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ClientReport } from "@/types/client";
@@ -47,12 +46,9 @@ const ReportShare = () => {
           includeInProposal: reportData.include_in_proposal,
           // Añadimos los datos de análisis si existen
           analyticsData: reportData.analytics_data,
-          searchConsoleData: reportData.search_console_data
+          searchConsoleData: reportData.search_console_data,
+          auditResult: reportData.audit_result
         };
-        
-        if (reportData.audit_result) {
-          (clientReport as any).auditResult = reportData.audit_result;
-        }
         
         setReport(clientReport);
         console.log("Report loaded successfully:", clientReport);

@@ -1,90 +1,91 @@
 
 import { SeoPack } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
+import { supabase } from "@/integrations/supabase/client";
 
-// Datos de ejemplo para paquetes SEO
-let seoPacks: SeoPack[] = [
-  {
-    id: "1",
-    name: "SEO Básico",
-    description: "Optimización básica para pequeñas empresas y negocios locales",
-    price: 299.99, // Precio en euros, IVA incluido
-    features: [
-      "Análisis SEO inicial",
-      "Optimización de 5 palabras clave",
-      "Informe mensual de rendimiento",
-      "Optimización básica on-page"
-    ],
-    isActive: true,
-    createdAt: "2024-01-15T10:00:00Z"
-  },
-  {
-    id: "2",
-    name: "SEO Profesional",
-    description: "Estrategia SEO completa para empresas en crecimiento",
-    price: 599.99, // Precio en euros, IVA incluido
-    features: [
-      "Análisis SEO completo",
-      "Optimización de 15 palabras clave",
-      "Informes quincenales de rendimiento",
-      "Optimización on-page avanzada",
-      "Estrategia de contenidos básica",
-      "Análisis de competencia"
-    ],
-    isActive: true,
-    createdAt: "2024-01-20T14:30:00Z"
-  },
-  {
-    id: "3",
-    name: "SEO Premium",
-    description: "Solución SEO integral para empresas que buscan dominar su nicho",
-    price: 1199.99, // Precio en euros, IVA incluido
-    features: [
-      "Auditoría SEO completa",
-      "Optimización de 30+ palabras clave",
-      "Informes semanales personalizados",
-      "Optimización on-page y off-page",
-      "Estrategia de contenidos avanzada",
-      "Análisis de competencia detallado",
-      "Link building premium",
-      "Soporte SEO dedicado"
-    ],
-    isActive: true,
-    createdAt: "2024-02-05T09:15:00Z"
-  }
-];
-
-// Operaciones CRUD para paquetes - Modificadas para devolver Promesas
+// Operaciones CRUD para paquetes - Modificadas para usar Supabase
 export const getSeoPacks = async (): Promise<SeoPack[]> => {
-  return seoPacks.filter(pack => pack.isActive);
+  const { data, error } = await supabase
+    .from('seo_packs')
+    .select('*')
+    .eq('is_active', true);
+  
+  if (error) {
+    console.error("Error fetching SEO packs:", error);
+    return [];
+  }
+  
+  return data || [];
 };
 
 export const getAllSeoPacks = async (): Promise<SeoPack[]> => {
-  return [...seoPacks];
+  const { data, error } = await supabase
+    .from('seo_packs')
+    .select('*');
+  
+  if (error) {
+    console.error("Error fetching all SEO packs:", error);
+    return [];
+  }
+  
+  return data || [];
 };
 
 export const getSeoPack = async (id: string): Promise<SeoPack | undefined> => {
-  return seoPacks.find(pack => pack.id === id);
+  const { data, error } = await supabase
+    .from('seo_packs')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  
+  if (error) {
+    console.error("Error fetching SEO pack:", error);
+    return undefined;
+  }
+  
+  return data || undefined;
 };
 
 export const addSeoPack = async (pack: Omit<SeoPack, "id" | "createdAt">): Promise<SeoPack> => {
-  const newPack: SeoPack = {
-    id: uuidv4(),
-    ...pack,
-    createdAt: new Date().toISOString()
-  };
-  seoPacks = [...seoPacks, newPack];
-  return newPack;
+  const { data, error } = await supabase
+    .from('seo_packs')
+    .insert([pack])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error adding SEO pack:", error);
+    throw error;
+  }
+  
+  return data;
 };
 
 export const updateSeoPack = async (pack: SeoPack): Promise<SeoPack> => {
-  seoPacks = seoPacks.map(p => p.id === pack.id ? pack : p);
-  return pack;
+  const { data, error } = await supabase
+    .from('seo_packs')
+    .update(pack)
+    .eq('id', pack.id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error updating SEO pack:", error);
+    throw error;
+  }
+  
+  return data;
 };
 
 export const deleteSeoPack = async (id: string): Promise<void> => {
-  // Marcamos como inactivo en lugar de eliminar
-  seoPacks = seoPacks.map(pack => 
-    pack.id === id ? { ...pack, isActive: false } : pack
-  );
+  // En lugar de eliminar, actualizamos is_active a false
+  const { error } = await supabase
+    .from('seo_packs')
+    .update({ is_active: false })
+    .eq('id', id);
+  
+  if (error) {
+    console.error("Error deleting SEO pack:", error);
+    throw error;
+  }
 };

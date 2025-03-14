@@ -9,7 +9,285 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      client_documents: {
+        Row: {
+          analyzed_status: string | null
+          client_id: string
+          content: string | null
+          id: string
+          name: string
+          type: string
+          upload_date: string
+          url: string
+        }
+        Insert: {
+          analyzed_status?: string | null
+          client_id: string
+          content?: string | null
+          id?: string
+          name: string
+          type: string
+          upload_date?: string
+          url: string
+        }
+        Update: {
+          analyzed_status?: string | null
+          client_id?: string
+          content?: string | null
+          id?: string
+          name?: string
+          type?: string
+          upload_date?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_reports: {
+        Row: {
+          client_id: string
+          date: string
+          document_ids: string[] | null
+          id: string
+          include_in_proposal: boolean | null
+          notes: string | null
+          share_token: string | null
+          shared_at: string | null
+          title: string
+          type: string
+          url: string | null
+        }
+        Insert: {
+          client_id: string
+          date?: string
+          document_ids?: string[] | null
+          id?: string
+          include_in_proposal?: boolean | null
+          notes?: string | null
+          share_token?: string | null
+          shared_at?: string | null
+          title: string
+          type: string
+          url?: string | null
+        }
+        Update: {
+          client_id?: string
+          date?: string
+          document_ids?: string[] | null
+          id?: string
+          include_in_proposal?: boolean | null
+          notes?: string | null
+          share_token?: string | null
+          shared_at?: string | null
+          title?: string
+          type?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          analytics_connected: boolean | null
+          company: string | null
+          created_at: string
+          email: string
+          id: string
+          last_report: string | null
+          name: string
+          notes: string[] | null
+          phone: string | null
+          search_console_connected: boolean | null
+        }
+        Insert: {
+          analytics_connected?: boolean | null
+          company?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          last_report?: string | null
+          name: string
+          notes?: string[] | null
+          phone?: string | null
+          search_console_connected?: boolean | null
+        }
+        Update: {
+          analytics_connected?: boolean | null
+          company?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          last_report?: string | null
+          name?: string
+          notes?: string[] | null
+          phone?: string | null
+          search_console_connected?: boolean | null
+        }
+        Relationships: []
+      }
+      proposals: {
+        Row: {
+          client_id: string
+          created_at: string
+          custom_features: string[] | null
+          custom_price: number | null
+          description: string
+          expires_at: string | null
+          id: string
+          pack_id: string
+          public_url: string | null
+          report_ids: string[] | null
+          sent_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          custom_features?: string[] | null
+          custom_price?: number | null
+          description: string
+          expires_at?: string | null
+          id?: string
+          pack_id: string
+          public_url?: string | null
+          report_ids?: string[] | null
+          sent_at?: string | null
+          status: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          custom_features?: string[] | null
+          custom_price?: number | null
+          description?: string
+          expires_at?: string | null
+          id?: string
+          pack_id?: string
+          public_url?: string | null
+          report_ids?: string[] | null
+          sent_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "seo_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_local_reports: {
+        Row: {
+          business_name: string
+          client_id: string
+          date: string
+          google_maps_ranking: number | null
+          id: string
+          keyword_rankings: Json | null
+          local_listings: Json | null
+          location: string
+          recommendations: string[] | null
+          share_token: string | null
+          shared_at: string | null
+          title: string
+        }
+        Insert: {
+          business_name: string
+          client_id: string
+          date?: string
+          google_maps_ranking?: number | null
+          id?: string
+          keyword_rankings?: Json | null
+          local_listings?: Json | null
+          location: string
+          recommendations?: string[] | null
+          share_token?: string | null
+          shared_at?: string | null
+          title: string
+        }
+        Update: {
+          business_name?: string
+          client_id?: string
+          date?: string
+          google_maps_ranking?: number | null
+          id?: string
+          keyword_rankings?: Json | null
+          local_listings?: Json | null
+          location?: string
+          recommendations?: string[] | null
+          share_token?: string | null
+          shared_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_local_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_packs: {
+        Row: {
+          created_at: string
+          description: string
+          features: string[]
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          features: string[]
+          id?: string
+          is_active?: boolean
+          name: string
+          price: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          features?: string[]
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

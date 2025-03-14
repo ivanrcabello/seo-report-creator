@@ -20,7 +20,14 @@ import { AppLayout } from "./components/AppLayout";
 import "./App.css";
 
 // Create a client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
@@ -28,8 +35,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public routes without sidebar */}
-          <Route path="/report-share/:id" element={<ReportShare />} />
-          <Route path="/proposal-share/:id" element={<ProposalShare />} />
+          <Route path="/report-share/:token" element={<ReportShare />} />
+          <Route path="/proposal-share/:token" element={<ProposalShare />} />
           
           {/* Protected routes with sidebar */}
           <Route path="/" element={<AppLayout><Index /></AppLayout>} />
@@ -37,6 +44,7 @@ function App() {
           <Route path="/clients/:id" element={<AppLayout><ClientDetail /></AppLayout>} />
           <Route path="/reports/:id" element={<AppLayout><ReportDetail /></AppLayout>} />
           <Route path="/reports/edit/:id" element={<AppLayout><ReportForm /></AppLayout>} />
+          <Route path="/reports/new" element={<AppLayout><ReportForm /></AppLayout>} />
           <Route path="/reports/new/:clientId" element={<AppLayout><ReportForm /></AppLayout>} />
           <Route path="/report" element={<AppLayout><SeoReport /></AppLayout>} />
           <Route path="/reports" element={<AppLayout><AllReports /></AppLayout>} />

@@ -61,18 +61,29 @@ export const getAllReports = async (): Promise<ClientReport[]> => {
 };
 
 export const getReport = async (id: string): Promise<ClientReport | undefined> => {
-  const { data, error } = await supabase
-    .from('client_reports')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-  
-  if (error) {
-    console.error("Error fetching report:", error);
+  // Si el ID no es válido (como "new"), devolvemos undefined inmediatamente
+  if (!id || id === "new") {
+    console.log("Invalid report ID:", id);
     return undefined;
   }
-  
-  return data ? mapReportFromDB(data) : undefined;
+
+  try {
+    const { data, error } = await supabase
+      .from('client_reports')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Error fetching report:", error);
+      return undefined;
+    }
+    
+    return data ? mapReportFromDB(data) : undefined;
+  } catch (error) {
+    console.error("Error in getReport:", error);
+    return undefined;
+  }
 };
 
 export const addReport = async (report: Omit<ClientReport, "id">): Promise<ClientReport> => {

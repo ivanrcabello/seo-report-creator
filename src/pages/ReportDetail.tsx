@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getReport, deleteReport, updateReport } from "@/services/reportService";
@@ -38,6 +39,7 @@ import {
   ClipboardCopy,
   CheckCircle,
   Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -51,12 +53,14 @@ const ReportDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const copyToClipboard = () => {
     if (sharedUrl) {
-      navigator.clipboard.writeText(sharedUrl);
+      navigator.clipboard.writeText(window.location.origin + sharedUrl);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
+      toast.success("Enlace copiado al portapapeles");
     }
   };
 
@@ -78,31 +82,46 @@ const ReportDetail = () => {
   useEffect(() => {
     const loadReportData = async () => {
       setIsLoading(true);
+      setError(null);
+      
       try {
-        if (id) {
-          const reportData = await getReport(id);
-          if (reportData) {
-            setReport(reportData);
-            
-            // Obtener detalles del cliente
-            const clientData = await getClient(reportData.clientId);
-            if (clientData) {
-              setClient(clientData);
-            }
-            
-            // Obtener URL compartida si existe
-            if (reportData.shareToken) {
-              const shareUrl = await getSharedReportUrl(reportData.id);
-              setSharedUrl(shareUrl);
-            }
+        if (!id) {
+          setError("ID de informe no válido");
+          setIsLoading(false);
+          return;
+        }
+        
+        // Verificar si el ID es "new" o no es un valor válido
+        if (id === "new") {
+          setError("ID de informe no válido");
+          setIsLoading(false);
+          return;
+        }
+
+        const reportData = await getReport(id);
+        
+        if (reportData) {
+          setReport(reportData);
+          
+          // Obtener detalles del cliente
+          const clientData = await getClient(reportData.clientId);
+          if (clientData) {
+            setClient(clientData);
           } else {
-            toast.error("No se encontró el informe");
-            navigate("/reports");
+            setError("No se encontró el cliente asociado");
           }
+          
+          // Obtener URL compartida si existe
+          if (reportData.shareToken) {
+            const shareUrl = await getSharedReportUrl(reportData.id);
+            setSharedUrl(shareUrl);
+          }
+        } else {
+          setError("No se encontró el informe");
         }
       } catch (error) {
         console.error("Error cargando informe:", error);
-        toast.error("Error al cargar el informe");
+        setError("Error al cargar el informe");
       } finally {
         setIsLoading(false);
       }
@@ -115,16 +134,23 @@ const ReportDetail = () => {
     return <div className="container mx-auto py-8">Cargando informe...</div>;
   }
 
-  if (!report || !client) {
+  if (error || !report || !client) {
     return (
       <div className="container mx-auto py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Informe no encontrado</h1>
-          <p className="mb-4">El informe que estás buscando no existe o no está disponible.</p>
-          <Button onClick={() => navigate("/reports")} variant="outline">
-            Volver a Informes
-          </Button>
-        </div>
+        <Card className="max-w-lg mx-auto">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="mb-4">{error || "El informe que estás buscando no existe o no está disponible."}</p>
+            <Button onClick={() => navigate("/reports")} variant="outline">
+              Volver a Informes
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

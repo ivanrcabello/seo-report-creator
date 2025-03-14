@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getAllReports } from "@/services/reportService";
@@ -31,7 +32,8 @@ import {
   AlertTriangle,
   File,
   Building,
-  Mail
+  Mail,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -43,10 +45,13 @@ const AllReports = () => {
   const [selectedType, setSelectedType] = useState("");
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
+      
       try {
         const reportsData = await getAllReports();
         const clientsData = await getClients();
@@ -54,10 +59,15 @@ const AllReports = () => {
         setReports(reportsData);
         setClients(clientsData);
         
-        const types = Array.from(new Set(reportsData.map(report => report.type)));
+        // Extraer tipos únicos de informes
+        const types = Array.from(
+          new Set(reportsData.map(report => report.type))
+        ).filter(Boolean); // Eliminar valores vacíos o nulos
+        
         setAvailableTypes(types);
       } catch (error) {
         console.error("Error fetching reports:", error);
+        setError("Error al cargar los informes");
       } finally {
         setIsLoading(false);
       }
@@ -72,14 +82,17 @@ const AllReports = () => {
   };
 
   const filteredReports = reports.filter((report) => {
+    if (!report || !report.clientId) return false;
+    
     const clientName = getClientName(report.clientId).toLowerCase();
     const reportTitle = report.title.toLowerCase();
     const searchTerm = search.toLowerCase();
 
     return (
-      clientName.includes(searchTerm) ||
-      reportTitle.includes(searchTerm)
-    ) && (selectedType === "" || report.type === selectedType);
+      (clientName.includes(searchTerm) ||
+      reportTitle.includes(searchTerm)) &&
+      (selectedType === "" || report.type === selectedType)
+    );
   });
 
   return (
@@ -113,25 +126,45 @@ const AllReports = () => {
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-md"
             />
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos los tipos</SelectItem>
-                {availableTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {availableTypes.length > 0 && (
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos los tipos</SelectItem>
+                  {availableTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type === "seo" ? "SEO" :
+                       type === "performance" ? "Rendimiento" :
+                       type === "technical" ? "Técnico" :
+                       type === "social" ? "Social" :
+                       type === "local-seo" ? "SEO Local" : type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {isLoading ? (
-            <div className="animate-pulse">
-              <div className="h-10 bg-gray-100 rounded mb-4"></div>
-              <div className="h-20 bg-gray-100 rounded"></div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
+              <p className="text-gray-500">Cargando informes...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-10">
+              <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-4" />
+              <p className="text-gray-700 mb-2 font-medium">{error}</p>
+              <p className="text-gray-500 mb-4">No se pudieron cargar los informes</p>
+              <Button 
+                variant="outline" 
+                className="gap-1"
+                onClick={() => window.location.reload()}
+              >
+                <Plus className="h-4 w-4" />
+                Reintentar
+              </Button>
             </div>
           ) : filteredReports.length === 0 ? (
             <div className="text-center py-10">
@@ -164,7 +197,13 @@ const AllReports = () => {
                       </div>
                     </TableCell>
                     <TableCell>{report.title}</TableCell>
-                    <TableCell>{report.type}</TableCell>
+                    <TableCell>
+                      {report.type === "seo" ? "SEO" :
+                       report.type === "performance" ? "Rendimiento" :
+                       report.type === "technical" ? "Técnico" :
+                       report.type === "social" ? "Social" :
+                       report.type === "local-seo" ? "SEO Local" : report.type}
+                    </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-gray-500" />

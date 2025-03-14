@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,7 +8,7 @@ export const getSharedReportUrl = async (reportId: string): Promise<string | nul
     // Here you would retrieve the share token from the database
     // This is a placeholder implementation
     const { data, error } = await supabase
-      .from('reports')
+      .from('client_reports')
       .select('share_token')
       .eq('id', reportId)
       .single();

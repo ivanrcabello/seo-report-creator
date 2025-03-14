@@ -8,9 +8,10 @@ import { analyzePdf, AuditResult } from "@/services/pdfAnalyzer";
 
 interface PdfUploaderProps {
   onAnalysisComplete: (result: AuditResult) => void;
+  isLoading?: boolean; // Make isLoading optional
 }
 
-export const PdfUploader = ({ onAnalysisComplete }: PdfUploaderProps) => {
+export const PdfUploader = ({ onAnalysisComplete, isLoading = false }: PdfUploaderProps) => {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -75,6 +76,9 @@ export const PdfUploader = ({ onAnalysisComplete }: PdfUploaderProps) => {
     setFilePreview(null);
   };
 
+  // Use the passed isLoading prop or the local loading state
+  const isUploadLoading = isLoading || loading;
+
   return (
     <Card className="p-6 w-full max-w-3xl mx-auto bg-white/50 backdrop-blur-sm border border-gray-200 rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl animate-fadeIn">
       <div className="flex flex-col items-center gap-4">
@@ -135,9 +139,9 @@ export const PdfUploader = ({ onAnalysisComplete }: PdfUploaderProps) => {
               <Button
                 onClick={handleUpload}
                 className="w-full max-w-md bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-                disabled={loading}
+                disabled={isUploadLoading}
               >
-                {loading ? "Procesando..." : "Analizar PDF"}
+                {isUploadLoading ? "Procesando..." : "Analizar PDF"}
               </Button>
             </div>
           </div>

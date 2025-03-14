@@ -29,7 +29,7 @@ export function DatePicker({
   return (
     <div className={cn("grid gap-2", className)}>
       <Calendar
-        mode={mode === "range" ? "range" : mode === "multiple" ? "multiple" : "single"}
+        mode={mode as "single"}
         selected={selected}
         onSelect={onSelect}
         initialFocus={initialFocus}
@@ -65,7 +65,7 @@ export function DatePickerWithButton({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
-          mode={mode === "range" ? "range" : mode === "multiple" ? "multiple" : "single"}
+          mode={mode as "single"}
           selected={selected}
           onSelect={onSelect}
           initialFocus={initialFocus}

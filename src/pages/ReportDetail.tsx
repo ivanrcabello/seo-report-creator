@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getReport, deleteReport, updateReport } from "@/services/reportService";
@@ -12,7 +11,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter, // Add missing import
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,8 +36,8 @@ import {
   Calendar,
   Link as LinkIcon,
   ClipboardCopy,
-  CheckCircle, // Add missing import
-  Clock, // Add missing import
+  CheckCircle,
+  Clock,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -93,7 +92,8 @@ const ReportDetail = () => {
             
             // Obtener URL compartida si existe
             if (reportData.shareToken) {
-              setSharedUrl(getSharedReportUrl(reportData.id, reportData.shareToken));
+              const shareUrl = await getSharedReportUrl(reportData.id);
+              setSharedUrl(shareUrl);
             }
           } else {
             toast.error("No se encontró el informe");

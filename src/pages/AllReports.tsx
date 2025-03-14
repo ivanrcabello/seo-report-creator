@@ -24,7 +24,8 @@ import {
   Globe,
   BarChart,
   Cog,
-  Share
+  Share,
+  Loader2
 } from "lucide-react";
 import { 
   Select,
@@ -35,24 +36,39 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { getAllReports, getClient } from "@/services/clientService";
+import { getAllReports } from "@/services/reportService";
+import { getClient } from "@/services/clientService";
 import { ClientReport } from "@/types/client";
 
 const AllReports = () => {
   const [reports, setReports] = useState<(ClientReport & { clientName: string })[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const allReports = getAllReports();
-    const reportsWithClientNames = allReports.map(report => {
-      const client = getClient(report.clientId);
-      return {
-        ...report,
-        clientName: client?.name || "Cliente desconocido"
-      };
-    });
-    setReports(reportsWithClientNames);
+    const fetchReports = async () => {
+      try {
+        setIsLoading(true);
+        const allReports = await getAllReports();
+        const reportsWithClientNames = await Promise.all(
+          allReports.map(async (report) => {
+            const client = await getClient(report.clientId);
+            return {
+              ...report,
+              clientName: client?.name || "Cliente desconocido"
+            };
+          })
+        );
+        setReports(reportsWithClientNames);
+      } catch (error) {
+        console.error("Error loading reports:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchReports();
   }, []);
 
   const filteredReports = reports.filter(report => {
@@ -158,7 +174,12 @@ const AllReports = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredReports.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <span className="ml-3 text-lg">Cargando informes...</span>
+            </div>
+          ) : filteredReports.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-gray-500 mb-4">No se encontraron informes</p>
               <Link to="/reports/new">

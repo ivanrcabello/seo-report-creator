@@ -13,15 +13,14 @@ import { LocalSeoReportView } from "@/components/LocalSeoReportView";
 import { 
   getClient, 
   updateClient, 
-  deleteClient, 
-  getClientReports,
-  addReport,
-  getLocalSeoReports
+  deleteClient 
 } from "@/services/clientService";
+import { getClientReports, addReport } from "@/services/reportService";
+import { getLocalSeoReports } from "@/services/localSeoReportService";
 import { Client, ClientReport, SeoLocalReport, ClientDocument } from "@/types/client";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
-import { ArrowLeft, Edit, Trash2, Mail, Phone, Building, Calendar, UserCog, FileText, UploadCloud, MessageSquarePlus, Map } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Mail, Phone, Building, Calendar, UserCog, FileText, UploadCloud, MessageSquarePlus, Map, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -39,16 +38,33 @@ const ClientDetail = () => {
   const [currentLocalSeoReport, setCurrentLocalSeoReport] = useState<SeoLocalReport | null>(null);
 
   useEffect(() => {
-    if (id) {
-      const foundClient = getClient(id);
-      if (foundClient) {
-        setClient(foundClient);
-        setReports(getClientReports(id));
-        setLocalSeoReports(getLocalSeoReports(id));
+    const fetchClientData = async () => {
+      if (id) {
+        try {
+          setIsLoading(true);
+          const clientData = await getClient(id);
+          if (clientData) {
+            setClient(clientData);
+            const reportData = await getClientReports(id);
+            setReports(reportData);
+            const localSeoData = await getLocalSeoReports(id);
+            setLocalSeoReports(localSeoData);
+          }
+        } catch (error) {
+          console.error("Error fetching client data:", error);
+          toast({
+            title: "Error",
+            description: "No se pudo cargar los datos del cliente",
+            variant: "destructive"
+          });
+        } finally {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
-    }
-  }, [id]);
+    };
+
+    fetchClientData();
+  }, [id, toast]);
 
   const handleEditClient = () => {
     setIsEditing(true);
@@ -58,10 +74,10 @@ const ClientDetail = () => {
     setIsEditing(false);
   };
 
-  const handleUpdateClient = (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
+  const handleUpdateClient = async (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
     if (client) {
       try {
-        const updatedClient = updateClient({
+        const updatedClient = await updateClient({
           ...client,
           ...clientData
         });
@@ -82,10 +98,10 @@ const ClientDetail = () => {
     }
   };
 
-  const handleDeleteClient = () => {
+  const handleDeleteClient = async () => {
     if (client && window.confirm(`¿Estás seguro de eliminar a ${client.name}? Esta acción no se puede deshacer.`)) {
       try {
-        deleteClient(client.id);
+        await deleteClient(client.id);
         toast({
           title: "Cliente eliminado",
           description: `${client.name} ha sido eliminado correctamente.`,
@@ -106,12 +122,12 @@ const ClientDetail = () => {
     navigate(`/reports/new?clientId=${id}`);
   };
 
-  const handlePdfAnalysis = (result: AuditResult) => {
+  const handlePdfAnalysis = async (result: AuditResult) => {
     if (client && id) {
       try {
         // Create a new report from the analysis result
         const currentDate = new Date().toISOString();
-        const newReport = addReport({
+        const newReport = await addReport({
           title: `Auditoría SEO - ${format(new Date(), "d MMM yyyy", { locale: es })}`,
           type: "seo", 
           date: currentDate,
@@ -194,7 +210,12 @@ const ClientDetail = () => {
   };
 
   if (isLoading) {
-    return <div className="container mx-auto py-8">Cargando...</div>;
+    return (
+      <div className="container mx-auto py-8 flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500 mr-3" />
+        <span className="text-lg">Cargando datos del cliente...</span>
+      </div>
+    );
   }
 
   if (!client) {

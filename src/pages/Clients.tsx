@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ClientsList } from "@/components/ClientsList";
 import { ClientForm } from "@/components/ClientForm";
@@ -9,7 +9,29 @@ import { Client } from "@/types/client";
 const Clients = () => {
   const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [clients, setClients] = useState<Client[]>(getClients());
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedClients = await getClients();
+        setClients(fetchedClients);
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los clientes. Inténtalo de nuevo.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchClients();
+  }, [toast]);
 
   const handleAddClient = () => {
     setShowAddForm(true);
@@ -19,9 +41,9 @@ const Clients = () => {
     setShowAddForm(false);
   };
 
-  const handleClientSubmit = (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
+  const handleClientSubmit = async (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
     try {
-      const newClient = addClient(clientData);
+      const newClient = await addClient(clientData);
       setClients([...clients, newClient]);
       setShowAddForm(false);
       toast({
@@ -52,7 +74,8 @@ const Clients = () => {
       ) : (
         <ClientsList 
           clients={clients} 
-          onAddClient={handleAddClient} 
+          onAddClient={handleAddClient}
+          isLoading={isLoading}
         />
       )}
     </div>

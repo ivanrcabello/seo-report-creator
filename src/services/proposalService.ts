@@ -2,7 +2,7 @@
 import { Proposal, ClientReport } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
 import { getSeoPack } from "./packService";
-import { getReport, shareReport } from "./clientService";
+import { getReport, shareReport } from "./reportService";
 import { generatePublicProposalUrl } from "./reportSharingService";
 import { supabase } from "@/integrations/supabase/client";
 

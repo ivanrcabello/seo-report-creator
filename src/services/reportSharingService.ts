@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -28,7 +27,7 @@ export const getSharedReportUrl = async (reportId: string): Promise<string | nul
       return null;
     }
 
-    // Construct the share URL
+    // Construct the share URL with the token
     return `/report-share/${data.share_token}`;
   } catch (error) {
     console.error('Error getting shared report URL:', error);
@@ -57,6 +56,32 @@ export const generateShareToken = async (reportId: string): Promise<string | nul
     return token;
   } catch (error) {
     console.error('Error in generateShareToken:', error);
+    return null;
+  }
+};
+
+// Function to get a report by its share token
+export const getReportByShareToken = async (token: string): Promise<any | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('client_reports')
+      .select('*')
+      .eq('share_token', token)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Error retrieving report by share token:', error);
+      return null;
+    }
+    
+    if (!data) {
+      console.log("No report found with share token:", token);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in getReportByShareToken:', error);
     return null;
   }
 };

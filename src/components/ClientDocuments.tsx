@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -21,10 +22,12 @@ import { ClientDocument } from "@/types/client";
 import { PdfUploader } from "@/components/PdfUploader";
 import { getClientDocuments, addDocument, deleteDocument } from "@/services/documentService";
 import { pdfToText } from "@/services/pdfAnalyzer";
-import { File, FileText, MoreVertical, Eye, Trash, Upload, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { File, FileText, MoreVertical, Eye, Trash, Upload, AlertTriangle, CheckCircle, Clock, Map } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AuditResult } from "@/services/pdfAnalyzer";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast as sonnerToast } from "sonner";
 
 interface ClientDocumentsProps {
   clientId: string;
@@ -44,6 +47,7 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -95,7 +99,7 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
         description: "No se pudo subir el documento. Inténtalo de nuevo.",
         variant: "destructive",
       });
-    } finally {
+    } finally { 
       setIsUploading(false);
     }
   };
@@ -108,6 +112,7 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
     try {
       await deleteDocument(documentId);
       setDocuments(documents.filter((doc) => doc.id !== documentId));
+      setSelectedDocuments(selectedDocuments.filter(id => id !== documentId));
       toast({
         title: "Documento eliminado",
         description: `${documentName} ha sido eliminado correctamente.`,
@@ -151,15 +156,48 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
     }
   };
 
-  const handleAnalyzeDocuments = () => {
-    if (onGenerateReport && selectedDocuments.length > 0) {
-      onGenerateReport(selectedDocuments);
+  const toggleDocumentSelection = (documentId: string) => {
+    if (selectedDocuments.includes(documentId)) {
+      setSelectedDocuments(selectedDocuments.filter(id => id !== documentId));
     } else {
-      toast({
-        title: "Selecciona documentos",
-        description: "Debes seleccionar al menos un documento para generar un informe.",
-        variant: "destructive",
-      });
+      setSelectedDocuments([...selectedDocuments, documentId]);
+    }
+  };
+
+  const handleAnalyzeDocuments = async () => {
+    if (onGenerateReport && selectedDocuments.length > 0) {
+      setIsGenerating(true);
+      
+      try {
+        sonnerToast("Generando informe SEO local...", {
+          description: "Analizando los documentos seleccionados...",
+          duration: 2000,
+        });
+        
+        // Marcamos documentos como analizados
+        const updatedDocs = documents.map(doc => {
+          if (selectedDocuments.includes(doc.id)) {
+            return { ...doc, analyzedStatus: "analyzed" };
+          }
+          return doc;
+        });
+        setDocuments(updatedDocs);
+        
+        await new Promise(r => setTimeout(r, 1000)); // Pequeña espera para la animación
+        
+        // Llamar a la función para generar informe
+        onGenerateReport(selectedDocuments);
+        
+        // Limpiar selección
+        setSelectedDocuments([]);
+      } catch (error) {
+        console.error("Error generating report:", error);
+        sonnerToast.error("Error al generar el informe");
+      } finally {
+        setIsGenerating(false);
+      }
+    } else {
+      sonnerToast.error("Selecciona al menos un documento para generar un informe");
     }
   };
 
@@ -188,61 +226,109 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
             <p className="text-gray-500">No hay documentos disponibles</p>
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {documents.map((document) => {
-              const statusInfo = getStatusInfo(document.analyzedStatus);
-              return (
-                <Card key={document.id}>
-                  <CardHeader className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium flex items-center gap-1">
-                      <File className="h-4 w-4" />
-                      {document.name}
-                    </CardTitle>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-6 w-6 p-0">
-                          <span className="sr-only">Abrir menú</span>
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.open(document.url, "_blank")}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Ver
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDocumentDelete(document.id, document.name)} className="text-red-500 focus:text-red-500">
-                          <Trash className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Upload className="h-3 w-3" />
-                      Subido el {format(new Date(document.uploadDate), "d MMM yyyy", { locale: es })}
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm text-gray-500">
+                {selectedDocuments.length > 0 ? (
+                  <span>{selectedDocuments.length} documentos seleccionados</span>
+                ) : (
+                  <span>Selecciona documentos para generar un informe SEO local</span>
+                )}
+              </div>
+              
+              {selectedDocuments.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedDocuments([])}
+                >
+                  Limpiar selección
+                </Button>
+              )}
+            </div>
+            
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {documents.map((document) => {
+                const statusInfo = getStatusInfo(document.analyzedStatus);
+                const isSelected = selectedDocuments.includes(document.id);
+                
+                return (
+                  <Card 
+                    key={document.id} 
+                    className={`relative ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
+                  >
+                    <div className="absolute top-2 left-2">
+                      <Checkbox 
+                        checked={isSelected}
+                        onCheckedChange={() => toggleDocumentSelection(document.id)}
+                        className="h-4 w-4"
+                      />
                     </div>
-                    <Badge 
-                      variant="outline" 
-                      className={`mt-2 font-normal flex gap-1 items-center w-fit ${statusInfo.badge}`}
-                    >
-                      {statusInfo.icon}
-                      {statusInfo.text}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                    
+                    <CardHeader className="flex items-center justify-between pt-8">
+                      <CardTitle className="text-sm font-medium flex items-center gap-1">
+                        <File className="h-4 w-4" />
+                        {document.name}
+                      </CardTitle>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-6 w-6 p-0">
+                            <span className="sr-only">Abrir menú</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => window.open(document.url, "_blank")}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDocumentDelete(document.id, document.name)} className="text-red-500 focus:text-red-500">
+                            <Trash className="h-4 w-4 mr-2" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Upload className="h-3 w-3" />
+                        Subido el {format(new Date(document.uploadDate), "d MMM yyyy", { locale: es })}
+                      </div>
+                      <Badge 
+                        variant="outline" 
+                        className={`mt-2 font-normal flex gap-1 items-center w-fit ${statusInfo.badge}`}
+                      >
+                        {statusInfo.icon}
+                        {statusInfo.text}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {documents.length > 0 && onGenerateReport && (
-          <div className="flex justify-end mt-6">
-            <Button onClick={handleAnalyzeDocuments} className="gap-1">
-              <FileText className="h-4 w-4" />
-              Generar Informe
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={handleAnalyzeDocuments} 
+              className="gap-2"
+              disabled={selectedDocuments.length === 0 || isGenerating}
+            >
+              {isGenerating ? (
+                <>
+                  <Clock className="h-4 w-4 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Map className="h-4 w-4" />
+                  Generar Informe SEO Local
+                </>
+              )}
             </Button>
           </div>
         )}

@@ -17,6 +17,8 @@ export const PdfUploader = ({ onAnalysisComplete, isLoading = false }: PdfUpload
   const [loading, setLoading] = useState(false);
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
+  const MAX_FILE_SIZE_MB = 25; // Aumentado a 25 MB
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     
@@ -29,6 +31,18 @@ export const PdfUploader = ({ onAnalysisComplete, isLoading = false }: PdfUpload
         });
         return;
       }
+
+      // Verificar el tamaño del archivo
+      const fileSizeMB = selectedFile.size / 1024 / 1024;
+      if (fileSizeMB > MAX_FILE_SIZE_MB) {
+        toast({
+          title: "Error",
+          description: `El archivo excede el tamaño máximo permitido de ${MAX_FILE_SIZE_MB} MB`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setFile(selectedFile);
       
       // Crear URL para vista previa
@@ -37,7 +51,7 @@ export const PdfUploader = ({ onAnalysisComplete, isLoading = false }: PdfUpload
 
       toast({
         title: "Archivo seleccionado",
-        description: `${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)`,
+        description: `${selectedFile.name} (${(fileSizeMB).toFixed(2)} MB)`,
       });
     }
   };
@@ -149,7 +163,7 @@ export const PdfUploader = ({ onAnalysisComplete, isLoading = false }: PdfUpload
 
         <div className="flex items-center gap-2 text-amber-600 text-sm mt-2">
           <AlertCircle className="w-4 h-4" />
-          <span>Tamaño máximo: 10MB</span>
+          <span>Tamaño máximo: {MAX_FILE_SIZE_MB}MB</span>
         </div>
       </div>
     </Card>

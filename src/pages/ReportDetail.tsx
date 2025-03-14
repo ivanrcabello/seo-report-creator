@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { getReport, deleteReport, updateReport } from "@/services/reportService";
+import { getReport, deleteReport, shareReport } from "@/services/reportService";
 import { getClient } from "@/services/clientService";
 import { getSharedReportUrl } from "@/services/reportSharingService";
 import { Client, ClientReport } from "@/types/client";
@@ -40,6 +40,7 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
+  Share2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -53,6 +54,7 @@ const ReportDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const copyToClipboard = () => {
@@ -61,6 +63,24 @@ const ReportDetail = () => {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
       toast.success("Enlace copiado al portapapeles");
+    }
+  };
+
+  const handleShareReport = async () => {
+    if (report) {
+      try {
+        setIsSharing(true);
+        const updatedReport = await shareReport(report);
+        setReport(updatedReport);
+        const shareUrl = await getSharedReportUrl(updatedReport.id);
+        setSharedUrl(shareUrl);
+        toast.success("Informe compartido correctamente");
+      } catch (error) {
+        console.error("Error al compartir el informe:", error);
+        toast.error("Error al compartir el informe");
+      } finally {
+        setIsSharing(false);
+      }
     }
   };
 
@@ -183,9 +203,24 @@ const ReportDetail = () => {
               </a>
             </div>
           ) : (
-            <Button variant="outline" size="sm" disabled>
-              <Clock className="mr-2 h-4 w-4 animate-spin" />
-              Generando enlace...
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleShareReport} 
+              disabled={isSharing}
+              className="gap-1"
+            >
+              {isSharing ? (
+                <>
+                  <Clock className="h-4 w-4 animate-spin" />
+                  Generando enlace...
+                </>
+              ) : (
+                <>
+                  <Share2 className="h-4 w-4" />
+                  Compartir Informe
+                </>
+              )}
             </Button>
           )}
         </div>

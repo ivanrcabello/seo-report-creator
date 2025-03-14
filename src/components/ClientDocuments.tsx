@@ -177,10 +177,14 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
         // Marcamos documentos como analizados
         const updatedDocs = documents.map(doc => {
           if (selectedDocuments.includes(doc.id)) {
-            return { ...doc, analyzedStatus: "analyzed" };
+            return { 
+              ...doc, 
+              analyzedStatus: "analyzed" as "pending" | "analyzed" | "processed" | "failed" | "error" 
+            };
           }
           return doc;
         });
+        
         setDocuments(updatedDocs);
         
         await new Promise(r => setTimeout(r, 1000)); // Pequeña espera para la animación

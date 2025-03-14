@@ -3,6 +3,26 @@ import { SeoPack } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/integrations/supabase/client";
 
+// Función para convertir datos de Supabase al formato de la aplicación
+const mapPackFromDB = (pack: any): SeoPack => ({
+  id: pack.id,
+  name: pack.name,
+  description: pack.description,
+  price: pack.price,
+  features: pack.features,
+  isActive: pack.is_active,
+  createdAt: pack.created_at,
+});
+
+// Función para convertir datos de la aplicación al formato de Supabase
+const mapPackToDB = (pack: Partial<SeoPack>) => ({
+  name: pack.name,
+  description: pack.description,
+  price: pack.price,
+  features: pack.features,
+  is_active: pack.isActive,
+});
+
 // Operaciones CRUD para paquetes - Modificadas para usar Supabase
 export const getSeoPacks = async (): Promise<SeoPack[]> => {
   const { data, error } = await supabase
@@ -15,7 +35,7 @@ export const getSeoPacks = async (): Promise<SeoPack[]> => {
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapPackFromDB);
 };
 
 export const getAllSeoPacks = async (): Promise<SeoPack[]> => {
@@ -28,7 +48,7 @@ export const getAllSeoPacks = async (): Promise<SeoPack[]> => {
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapPackFromDB);
 };
 
 export const getSeoPack = async (id: string): Promise<SeoPack | undefined> => {
@@ -43,13 +63,13 @@ export const getSeoPack = async (id: string): Promise<SeoPack | undefined> => {
     return undefined;
   }
   
-  return data || undefined;
+  return data ? mapPackFromDB(data) : undefined;
 };
 
 export const addSeoPack = async (pack: Omit<SeoPack, "id" | "createdAt">): Promise<SeoPack> => {
   const { data, error } = await supabase
     .from('seo_packs')
-    .insert([pack])
+    .insert([mapPackToDB(pack)])
     .select()
     .single();
   
@@ -58,13 +78,13 @@ export const addSeoPack = async (pack: Omit<SeoPack, "id" | "createdAt">): Promi
     throw error;
   }
   
-  return data;
+  return mapPackFromDB(data);
 };
 
 export const updateSeoPack = async (pack: SeoPack): Promise<SeoPack> => {
   const { data, error } = await supabase
     .from('seo_packs')
-    .update(pack)
+    .update(mapPackToDB(pack))
     .eq('id', pack.id)
     .select()
     .single();
@@ -74,7 +94,7 @@ export const updateSeoPack = async (pack: SeoPack): Promise<SeoPack> => {
     throw error;
   }
   
-  return data;
+  return mapPackFromDB(data);
 };
 
 export const deleteSeoPack = async (id: string): Promise<void> => {

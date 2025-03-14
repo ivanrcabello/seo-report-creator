@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ClientDocument } from "@/types/client";
 import { 
   Table, 
@@ -50,12 +50,28 @@ export const ClientDocuments = ({
   onGenerateReport
 }: ClientDocumentsProps) => {
   const { toast } = useToast();
-  const [documents, setDocuments] = useState<ClientDocument[]>(getClientDocuments(clientId));
+  const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [newNote, setNewNote] = useState('');
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [documentName, setDocumentName] = useState('');
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const docs = await getClientDocuments(clientId);
+        setDocuments(docs);
+      } catch (error) {
+        console.error("Error loading documents:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, [clientId]);
 
   const getDocumentIcon = (type: ClientDocument['type']) => {
     switch (type) {
@@ -105,15 +121,15 @@ export const ClientDocuments = ({
     }
   };
 
-  const handleNoteSubmit = (e: React.FormEvent) => {
+  const handleNoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (newNote.trim()) {
       try {
-        addClientNote(clientId, newNote.trim());
+        const updatedClient = await addClientNote(clientId, newNote.trim());
         
-        if (onNoteAdded) {
-          onNoteAdded([...notes, newNote.trim()]);
+        if (updatedClient && onNoteAdded) {
+          onNoteAdded(updatedClient.notes || []);
         }
         
         setNewNote('');
@@ -133,82 +149,83 @@ export const ClientDocuments = ({
     }
   };
 
-  const handleDocumentSubmit = (e: React.FormEvent) => {
+  const handleDocumentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulando la subida de archivos
-    setTimeout(() => {
-      try {
-        if (documentFile) {
-          // Determinar el tipo de documento basado en la extensión del archivo
-          const fileName = documentFile.name;
-          const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+    try {
+      if (documentFile) {
+        // Determinar el tipo de documento basado en la extensión del archivo
+        const fileName = documentFile.name;
+        const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+        
+        let docType: ClientDocument['type'] = 'text';
+        if (['pdf'].includes(fileExtension)) {
+          docType = 'pdf';
+        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
+          docType = 'image';
+        } else if (['doc', 'docx'].includes(fileExtension)) {
+          docType = 'doc';
+        }
+        
+        // En una implementación real, aquí se subiría el archivo a un servidor
+        // y se obtendría la URL. Para la simulación, creamos una URL ficticia
+        const mockUrl = `/uploads/${clientId}/${fileName.replace(/\s/g, '_')}`;
+        
+        const newDocument = await addDocument({
+          clientId,
+          name: documentName || fileName,
+          type: docType,
+          url: mockUrl,
+          uploadDate: new Date().toISOString(),
+          analyzedStatus: 'pending'
+        });
+        
+        setDocuments([...documents, newDocument]);
+        
+        if (onDocumentAdded) {
+          onDocumentAdded(newDocument);
+        }
+        
+        // Resetear formulario
+        setDocumentName('');
+        setDocumentFile(null);
+        
+        toast({
+          title: "Documento subido",
+          description: "El documento se está procesando para análisis",
+        });
+        
+        // Simular procesamiento del documento
+        setTimeout(async () => {
+          const updatedDoc = {...newDocument, analyzedStatus: 'processed' as const};
+          await updateDocument(updatedDoc);
           
-          let docType: ClientDocument['type'] = 'text';
-          if (['pdf'].includes(fileExtension)) {
-            docType = 'pdf';
-          } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
-            docType = 'image';
-          } else if (['doc', 'docx'].includes(fileExtension)) {
-            docType = 'doc';
-          }
-          
-          // En una implementación real, aquí se subiría el archivo a un servidor
-          // y se obtendría la URL. Para la simulación, creamos una URL ficticia
-          const mockUrl = `/uploads/${clientId}/${fileName.replace(/\s/g, '_')}`;
-          
-          const newDocument = addDocument({
-            clientId,
-            name: documentName || fileName,
-            type: docType,
-            url: mockUrl,
-            uploadDate: new Date().toISOString(),
-            analyzedStatus: 'pending'
-          });
-          
-          setDocuments([...documents, newDocument]);
-          
-          if (onDocumentAdded) {
-            onDocumentAdded(newDocument);
-          }
-          
-          // Resetear formulario
-          setDocumentName('');
-          setDocumentFile(null);
+          setDocuments(prev => prev.map(doc => 
+            doc.id === newDocument.id ? updatedDoc : doc
+          ));
           
           toast({
-            title: "Documento subido",
-            description: "El documento se está procesando para análisis",
+            title: "Documento analizado",
+            description: "El documento ha sido procesado correctamente",
           });
-          
-          // Simular procesamiento del documento
-          setTimeout(() => {
-            newDocument.analyzedStatus = 'processed';
-            setDocuments([...documents, newDocument]);
-            
-            toast({
-              title: "Documento analizado",
-              description: "El documento ha sido procesado correctamente",
-            });
-          }, 2000);
-        }
-      } catch (error) {
-        console.error("Error al subir documento:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo subir el documento. Inténtalo de nuevo.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSubmitting(false);
+        }, 2000);
       }
-    }, 1500);
+    } catch (error) {
+      console.error("Error al subir documento:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo subir el documento. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteDocument = (id: string) => {
+  const handleDeleteDocument = async (id: string) => {
     try {
-      deleteDocument(id);
+      await deleteDocument(id);
       setDocuments(documents.filter(doc => doc.id !== id));
       setSelectedDocuments(selectedDocuments.filter(docId => docId !== id));
       
@@ -252,6 +269,25 @@ export const ClientDocuments = ({
       onGenerateReport(selectedDocuments);
     }
   };
+
+  // Función auxiliar para actualizar un documento (simulación)
+  const updateDocument = async (document: ClientDocument) => {
+    // Esta función es solo para la simulación
+    return document;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <Card>
+          <CardContent className="flex justify-center items-center p-8">
+            <div className="w-8 h-8 border-t-2 border-b-2 border-gray-500 rounded-full animate-spin"></div>
+            <span className="ml-2">Cargando documentos...</span>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

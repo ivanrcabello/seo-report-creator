@@ -2,6 +2,109 @@
 import { Client, ClientReport, ClientDocument, SeoLocalReport } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
+
+// Funciones de mapeo para convertir entre formatos
+const mapClientFromDB = (client: any): Client => ({
+  id: client.id,
+  name: client.name,
+  email: client.email,
+  phone: client.phone,
+  company: client.company,
+  createdAt: client.created_at,
+  lastReport: client.last_report,
+  notes: client.notes,
+  documents: [],
+  analyticsConnected: client.analytics_connected,
+  searchConsoleConnected: client.search_console_connected
+});
+
+const mapClientToDB = (client: Partial<Client>) => ({
+  name: client.name,
+  email: client.email,
+  phone: client.phone,
+  company: client.company,
+  notes: client.notes,
+  analytics_connected: client.analyticsConnected,
+  search_console_connected: client.searchConsoleConnected
+});
+
+const mapReportFromDB = (report: any): ClientReport => ({
+  id: report.id,
+  clientId: report.client_id,
+  title: report.title,
+  date: report.date,
+  type: report.type,
+  url: report.url,
+  notes: report.notes,
+  documentIds: report.document_ids,
+  shareToken: report.share_token,
+  sharedAt: report.shared_at,
+  includeInProposal: report.include_in_proposal
+});
+
+const mapReportToDB = (report: Partial<ClientReport>) => ({
+  client_id: report.clientId,
+  title: report.title,
+  date: report.date,
+  type: report.type,
+  url: report.url,
+  notes: report.notes,
+  document_ids: report.documentIds,
+  share_token: report.shareToken,
+  shared_at: report.sharedAt,
+  include_in_proposal: report.includeInProposal
+});
+
+const mapDocumentFromDB = (doc: any): ClientDocument => ({
+  id: doc.id,
+  clientId: doc.client_id,
+  name: doc.name,
+  type: doc.type,
+  url: doc.url,
+  uploadDate: doc.upload_date,
+  analyzedStatus: doc.analyzed_status,
+  content: doc.content
+});
+
+const mapDocumentToDB = (doc: Partial<ClientDocument>) => ({
+  client_id: doc.clientId,
+  name: doc.name,
+  type: doc.type,
+  url: doc.url,
+  upload_date: doc.uploadDate,
+  analyzed_status: doc.analyzedStatus,
+  content: doc.content
+});
+
+const mapLocalSeoReportFromDB = (report: any): SeoLocalReport => ({
+  id: report.id,
+  clientId: report.client_id,
+  title: report.title,
+  date: report.date,
+  businessName: report.business_name,
+  location: report.location,
+  googleMapsRanking: report.google_maps_ranking,
+  localListings: report.local_listings,
+  keywordRankings: report.keyword_rankings,
+  recommendations: report.recommendations,
+  shareToken: report.share_token,
+  sharedAt: report.shared_at
+});
+
+const mapLocalSeoReportToDB = (report: Partial<SeoLocalReport>) => ({
+  client_id: report.clientId,
+  title: report.title,
+  date: report.date,
+  business_name: report.businessName,
+  location: report.location,
+  google_maps_ranking: report.googleMapsRanking,
+  local_listings: report.localListings as Json,
+  keyword_rankings: report.keywordRankings as Json,
+  recommendations: report.recommendations,
+  share_token: report.shareToken,
+  shared_at: report.sharedAt
+});
 
 // Client CRUD operations
 export const getClients = async (): Promise<Client[]> => {
@@ -14,7 +117,7 @@ export const getClients = async (): Promise<Client[]> => {
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapClientFromDB);
 };
 
 export const getClient = async (id: string): Promise<Client | undefined> => {
@@ -29,13 +132,13 @@ export const getClient = async (id: string): Promise<Client | undefined> => {
     return undefined;
   }
   
-  return data || undefined;
+  return data ? mapClientFromDB(data) : undefined;
 };
 
 export const addClient = async (client: Omit<Client, "id" | "createdAt">): Promise<Client> => {
   const { data, error } = await supabase
     .from('clients')
-    .insert([client])
+    .insert([mapClientToDB(client)])
     .select()
     .single();
   
@@ -44,13 +147,13 @@ export const addClient = async (client: Omit<Client, "id" | "createdAt">): Promi
     throw error;
   }
   
-  return data;
+  return mapClientFromDB(data);
 };
 
 export const updateClient = async (client: Client): Promise<Client> => {
   const { data, error } = await supabase
     .from('clients')
-    .update(client)
+    .update(mapClientToDB(client))
     .eq('id', client.id)
     .select()
     .single();
@@ -60,7 +163,7 @@ export const updateClient = async (client: Client): Promise<Client> => {
     throw error;
   }
   
-  return data;
+  return mapClientFromDB(data);
 };
 
 export const deleteClient = async (id: string): Promise<void> => {
@@ -87,7 +190,7 @@ export const getClientReports = async (clientId: string): Promise<ClientReport[]
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapReportFromDB);
 };
 
 export const getAllReports = async (): Promise<ClientReport[]> => {
@@ -100,7 +203,7 @@ export const getAllReports = async (): Promise<ClientReport[]> => {
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapReportFromDB);
 };
 
 export const getReport = async (id: string): Promise<ClientReport | undefined> => {
@@ -115,13 +218,13 @@ export const getReport = async (id: string): Promise<ClientReport | undefined> =
     return undefined;
   }
   
-  return data || undefined;
+  return data ? mapReportFromDB(data) : undefined;
 };
 
 export const addReport = async (report: Omit<ClientReport, "id">): Promise<ClientReport> => {
   const { data, error } = await supabase
     .from('client_reports')
-    .insert([report])
+    .insert([mapReportToDB(report)])
     .select()
     .single();
   
@@ -136,13 +239,13 @@ export const addReport = async (report: Omit<ClientReport, "id">): Promise<Clien
     .update({ last_report: report.date })
     .eq('id', report.clientId);
   
-  return data;
+  return mapReportFromDB(data);
 };
 
 export const updateReport = async (report: ClientReport): Promise<ClientReport> => {
   const { data, error } = await supabase
     .from('client_reports')
-    .update(report)
+    .update(mapReportToDB(report))
     .eq('id', report.id)
     .select()
     .single();
@@ -152,7 +255,7 @@ export const updateReport = async (report: ClientReport): Promise<ClientReport> 
     throw error;
   }
   
-  return data;
+  return mapReportFromDB(data);
 };
 
 export const deleteReport = async (id: string): Promise<void> => {
@@ -179,7 +282,7 @@ export const getClientDocuments = async (clientId: string): Promise<ClientDocume
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapDocumentFromDB);
 };
 
 export const getAllDocuments = async (): Promise<ClientDocument[]> => {
@@ -192,7 +295,7 @@ export const getAllDocuments = async (): Promise<ClientDocument[]> => {
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapDocumentFromDB);
 };
 
 export const getDocument = async (id: string): Promise<ClientDocument | undefined> => {
@@ -207,13 +310,13 @@ export const getDocument = async (id: string): Promise<ClientDocument | undefine
     return undefined;
   }
   
-  return data || undefined;
+  return data ? mapDocumentFromDB(data) : undefined;
 };
 
 export const addDocument = async (document: Omit<ClientDocument, "id">): Promise<ClientDocument> => {
   const { data, error } = await supabase
     .from('client_documents')
-    .insert([document])
+    .insert([mapDocumentToDB(document)])
     .select()
     .single();
   
@@ -222,13 +325,13 @@ export const addDocument = async (document: Omit<ClientDocument, "id">): Promise
     throw error;
   }
   
-  return data;
+  return mapDocumentFromDB(data);
 };
 
 export const updateDocument = async (document: ClientDocument): Promise<ClientDocument> => {
   const { data, error } = await supabase
     .from('client_documents')
-    .update(document)
+    .update(mapDocumentToDB(document))
     .eq('id', document.id)
     .select()
     .single();
@@ -238,7 +341,7 @@ export const updateDocument = async (document: ClientDocument): Promise<ClientDo
     throw error;
   }
   
-  return data;
+  return mapDocumentFromDB(data);
 };
 
 export const deleteDocument = async (id: string): Promise<void> => {
@@ -281,7 +384,7 @@ export const addClientNote = async (clientId: string, note: string): Promise<Cli
     throw error;
   }
   
-  return data;
+  return mapClientFromDB(data);
 };
 
 export const removeClientNote = async (clientId: string, index: number): Promise<Client | undefined> => {
@@ -313,7 +416,7 @@ export const removeClientNote = async (clientId: string, index: number): Promise
     throw error;
   }
   
-  return data;
+  return mapClientFromDB(data);
 };
 
 // Local SEO report operations
@@ -328,7 +431,7 @@ export const getLocalSeoReports = async (clientId: string): Promise<SeoLocalRepo
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapLocalSeoReportFromDB);
 };
 
 export const getLocalSeoReport = async (id: string): Promise<SeoLocalReport | undefined> => {
@@ -343,13 +446,13 @@ export const getLocalSeoReport = async (id: string): Promise<SeoLocalReport | un
     return undefined;
   }
   
-  return data || undefined;
+  return data ? mapLocalSeoReportFromDB(data) : undefined;
 };
 
 export const addLocalSeoReport = async (report: Omit<SeoLocalReport, "id">): Promise<SeoLocalReport> => {
   const { data, error } = await supabase
     .from('seo_local_reports')
-    .insert([report])
+    .insert([mapLocalSeoReportToDB(report)])
     .select()
     .single();
   
@@ -364,13 +467,13 @@ export const addLocalSeoReport = async (report: Omit<SeoLocalReport, "id">): Pro
     .update({ last_report: report.date })
     .eq('id', report.clientId);
   
-  return data;
+  return mapLocalSeoReportFromDB(data);
 };
 
 export const updateLocalSeoReport = async (report: SeoLocalReport): Promise<SeoLocalReport> => {
   const { data, error } = await supabase
     .from('seo_local_reports')
-    .update(report)
+    .update(mapLocalSeoReportToDB(report))
     .eq('id', report.id)
     .select()
     .single();
@@ -380,7 +483,7 @@ export const updateLocalSeoReport = async (report: SeoLocalReport): Promise<SeoL
     throw error;
   }
   
-  return data;
+  return mapLocalSeoReportFromDB(data);
 };
 
 export const deleteLocalSeoReport = async (id: string): Promise<void> => {
@@ -415,5 +518,5 @@ export const shareReport = async (report: ClientReport): Promise<ClientReport> =
     throw error;
   }
   
-  return data;
+  return mapReportFromDB(data);
 };

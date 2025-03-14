@@ -6,6 +6,39 @@ import { getReport, shareReport } from "./clientService";
 import { generatePublicProposalUrl } from "./reportSharingService";
 import { supabase } from "@/integrations/supabase/client";
 
+// Función para convertir datos de Supabase al formato de la aplicación
+const mapProposalFromDB = (proposal: any): Proposal => ({
+  id: proposal.id,
+  clientId: proposal.client_id,
+  packId: proposal.pack_id,
+  title: proposal.title,
+  description: proposal.description,
+  status: proposal.status,
+  createdAt: proposal.created_at,
+  updatedAt: proposal.updated_at,
+  sentAt: proposal.sent_at,
+  expiresAt: proposal.expires_at,
+  customPrice: proposal.custom_price,
+  customFeatures: proposal.custom_features,
+  reportIds: proposal.report_ids,
+  publicUrl: proposal.public_url,
+});
+
+// Función para convertir datos de la aplicación al formato de Supabase
+const mapProposalToDB = (proposal: Partial<Proposal>) => ({
+  client_id: proposal.clientId,
+  pack_id: proposal.packId,
+  title: proposal.title,
+  description: proposal.description,
+  status: proposal.status,
+  sent_at: proposal.sentAt,
+  expires_at: proposal.expiresAt,
+  custom_price: proposal.customPrice,
+  custom_features: proposal.customFeatures,
+  report_ids: proposal.reportIds,
+  public_url: proposal.publicUrl,
+});
+
 // Operaciones CRUD para propuestas usando Supabase
 export const getClientProposals = async (clientId: string): Promise<Proposal[]> => {
   const { data, error } = await supabase
@@ -18,7 +51,7 @@ export const getClientProposals = async (clientId: string): Promise<Proposal[]> 
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapProposalFromDB);
 };
 
 export const getAllProposals = async (): Promise<Proposal[]> => {
@@ -31,7 +64,7 @@ export const getAllProposals = async (): Promise<Proposal[]> => {
     return [];
   }
   
-  return data || [];
+  return (data || []).map(mapProposalFromDB);
 };
 
 export const getProposal = async (id: string): Promise<Proposal | undefined> => {
@@ -46,20 +79,20 @@ export const getProposal = async (id: string): Promise<Proposal | undefined> => 
     return undefined;
   }
   
-  return data || undefined;
+  return data ? mapProposalFromDB(data) : undefined;
 };
 
 export const addProposal = async (proposal: Omit<Proposal, "id" | "createdAt" | "updatedAt">): Promise<Proposal> => {
   const now = new Date().toISOString();
-  const newProposal = {
-    ...proposal,
+  const dbProposal = {
+    ...mapProposalToDB(proposal),
     created_at: now,
     updated_at: now
   };
   
   const { data, error } = await supabase
     .from('proposals')
-    .insert([newProposal])
+    .insert([dbProposal])
     .select()
     .single();
   
@@ -68,18 +101,18 @@ export const addProposal = async (proposal: Omit<Proposal, "id" | "createdAt" | 
     throw error;
   }
   
-  return data;
+  return mapProposalFromDB(data);
 };
 
 export const updateProposal = async (proposal: Proposal): Promise<Proposal> => {
-  const updatedProposal = {
-    ...proposal,
+  const dbProposal = {
+    ...mapProposalToDB(proposal),
     updated_at: new Date().toISOString()
   };
   
   const { data, error } = await supabase
     .from('proposals')
-    .update(updatedProposal)
+    .update(dbProposal)
     .eq('id', proposal.id)
     .select()
     .single();
@@ -89,7 +122,7 @@ export const updateProposal = async (proposal: Proposal): Promise<Proposal> => {
     throw error;
   }
   
-  return data;
+  return mapProposalFromDB(data);
 };
 
 export const sendProposal = async (id: string): Promise<Proposal | undefined> => {
@@ -114,7 +147,7 @@ export const sendProposal = async (id: string): Promise<Proposal | undefined> =>
     throw error;
   }
   
-  return data;
+  return mapProposalFromDB(data);
 };
 
 export const acceptProposal = async (id: string): Promise<Proposal | undefined> => {
@@ -133,7 +166,7 @@ export const acceptProposal = async (id: string): Promise<Proposal | undefined> 
     throw error;
   }
   
-  return data;
+  return mapProposalFromDB(data);
 };
 
 export const rejectProposal = async (id: string): Promise<Proposal | undefined> => {
@@ -152,7 +185,7 @@ export const rejectProposal = async (id: string): Promise<Proposal | undefined> 
     throw error;
   }
   
-  return data;
+  return mapProposalFromDB(data);
 };
 
 export const deleteProposal = async (id: string): Promise<void> => {
@@ -206,7 +239,7 @@ export const includeReportInProposal = async (proposalId: string, reportId: stri
     await shareReport(report);
   }
   
-  return data;
+  return mapProposalFromDB(data);
 };
 
 // Función para eliminar un informe de una propuesta
@@ -239,7 +272,7 @@ export const removeReportFromProposal = async (proposalId: string, reportId: str
     throw error;
   }
   
-  return data;
+  return mapProposalFromDB(data);
 };
 
 // Función para obtener los informes de una propuesta

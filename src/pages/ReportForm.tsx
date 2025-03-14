@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { addReport, updateReport, getReport } from "@/services/reportService";
@@ -32,7 +33,7 @@ const ReportForm = () => {
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
-  const [type, setType] = useState("");
+  const [type, setType] = useState<"seo" | "performance" | "technical" | "social" | "local-seo">("seo");
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [url, setUrl] = useState("");
   const [notes, setNotes] = useState("");

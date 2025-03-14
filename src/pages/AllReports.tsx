@@ -54,7 +54,6 @@ const AllReports = () => {
         setReports(reportsData);
         setClients(clientsData);
         
-        // Initialize filters with all available types
         const types = Array.from(new Set(reportsData.map(report => report.type)));
         setAvailableTypes(types);
       } catch (error) {
@@ -87,7 +86,7 @@ const AllReports = () => {
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <FileSpreadsheet className="h-8 w-8 text-purple-600" />
+          <FileText className="h-8 w-8 text-purple-600" />
           Informes
         </h1>
         <Link to="/reports/new">

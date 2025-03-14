@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ClientForm } from "@/components/ClientForm";
 import { ClientReports } from "@/components/ClientReports";
-import { ClientDocuments } from "@/components/ClientDocuments";
+import ClientDocuments from "@/components/ClientDocuments"; // Fixed import
 import { PdfUploader } from "@/components/PdfUploader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LocalSeoReportView } from "@/components/LocalSeoReportView";

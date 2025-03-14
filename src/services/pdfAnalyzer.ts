@@ -1,4 +1,3 @@
-
 // Este servicio simula la extracción de datos de un PDF de auditoría SEO
 // En una implementación real, se integraría con una biblioteca de análisis de PDF
 
@@ -103,4 +102,20 @@ export const analyzePdf = async (file: File): Promise<AuditResult> => {
       googleBusiness: Math.random() > 0.2
     }
   };
+};
+
+// Function to extract text from a PDF file
+export const pdfToText = async (fileUrl: string): Promise<string> => {
+  console.log("Extracting text from PDF:", fileUrl);
+  
+  // In a real implementation, you would use a library like pdf.js to extract text
+  // For this example, we'll return a mock text content
+  
+  // Simulate async processing
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  return `This is extracted text content from the PDF document.
+Sample SEO audit report for a website.
+Multiple issues found including missing meta descriptions, slow page load times, and mobile optimization problems.
+The website needs improvements in technical SEO aspects.`;
 };

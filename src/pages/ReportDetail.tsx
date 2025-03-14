@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getReport, deleteReport, updateReport } from "@/services/reportService";
@@ -11,6 +12,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter, // Add missing import
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +37,8 @@ import {
   Calendar,
   Link as LinkIcon,
   ClipboardCopy,
+  CheckCircle, // Add missing import
+  Clock, // Add missing import
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";

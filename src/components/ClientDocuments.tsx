@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -27,13 +28,22 @@ import { es } from "date-fns/locale";
 
 interface ClientDocumentsProps {
   clientId: string;
+  notes?: string[];
+  onNoteAdded?: (updatedNotes: string[]) => void;
+  onGenerateReport?: (documentIds: string[]) => void;
 }
 
-const ClientDocuments: React.FC<ClientDocumentsProps> = ({ clientId }) => {
+const ClientDocuments: React.FC<ClientDocumentsProps> = ({ 
+  clientId, 
+  notes = [],
+  onNoteAdded,
+  onGenerateReport 
+}) => {
   const { toast } = useToast();
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -65,7 +75,7 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({ clientId }) => {
       const newDocument: Omit<ClientDocument, "id"> = {
         clientId: clientId,
         name: file.name,
-        type: file.type,
+        type: "pdf", // Use enum value instead of string
         url: fileURL,
         uploadDate: new Date().toISOString(),
         analyzedStatus: "pending",
@@ -137,6 +147,18 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({ clientId }) => {
     }
   };
 
+  const handleAnalyzeDocuments = () => {
+    if (onGenerateReport && selectedDocuments.length > 0) {
+      onGenerateReport(selectedDocuments);
+    } else {
+      toast({
+        title: "Selecciona documentos",
+        description: "Debes seleccionar al menos un documento para generar un informe.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -146,7 +168,10 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({ clientId }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <PdfUploader onDocumentUpload={handleDocumentUpload} isUploading={isUploading} />
+        <PdfUploader 
+          onAnalysisComplete={handleDocumentUpload} 
+          isLoading={isUploading} 
+        />
 
         {isLoading ? (
           <div className="animate-pulse">
@@ -206,6 +231,15 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({ clientId }) => {
                 </Card>
               );
             })}
+          </div>
+        )}
+
+        {documents.length > 0 && onGenerateReport && (
+          <div className="flex justify-end mt-6">
+            <Button onClick={handleAnalyzeDocuments} className="gap-1">
+              <FileText className="h-4 w-4" />
+              Generar Informe
+            </Button>
           </div>
         )}
       </CardContent>

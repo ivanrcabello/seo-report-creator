@@ -6,7 +6,8 @@ import { getClient } from "@/services/clientService";
 import { getSeoPack } from "@/services/packService";
 import { toast } from "sonner";
 import { isAfter } from "date-fns";
-import { ArrowLeft, Separator } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 

@@ -18,7 +18,9 @@ import {
   FileText, 
   Package, 
   MailOpen,
-  BarChart
+  BarChart,
+  FileSpreadsheet,
+  Settings
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -54,6 +56,18 @@ export function AppSidebar() {
       label: "Propuestas", 
       icon: <MailOpen className="h-5 w-5" />,
       active: location.pathname.startsWith("/proposals")
+    },
+    { 
+      href: "/invoices", 
+      label: "Facturas", 
+      icon: <FileSpreadsheet className="h-5 w-5" />,
+      active: location.pathname.startsWith("/invoices")
+    },
+    { 
+      href: "/settings", 
+      label: "Configuración", 
+      icon: <Settings className="h-5 w-5" />,
+      active: location.pathname.startsWith("/settings")
     },
   ];
 

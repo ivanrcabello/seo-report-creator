@@ -5,12 +5,13 @@ import {
   Home, 
   Users, 
   FileText, 
-  User, 
   BarChart,
   Menu,
   X,
   Package,
-  MailOpen
+  MailOpen,
+  FileSpreadsheet,
+  Settings
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,18 @@ const MainNavigation = () => {
       label: "Propuestas", 
       icon: <MailOpen className="h-5 w-5" />,
       active: location.pathname.startsWith("/proposals")
+    },
+    { 
+      href: "/invoices", 
+      label: "Facturas", 
+      icon: <FileSpreadsheet className="h-5 w-5" />,
+      active: location.pathname.startsWith("/invoices")
+    },
+    { 
+      href: "/settings", 
+      label: "Configuración", 
+      icon: <Settings className="h-5 w-5" />,
+      active: location.pathname.startsWith("/settings")
     },
   ];
 
@@ -97,7 +110,7 @@ const MainNavigation = () => {
       {/* Mobile Navigation */}
       <div className={cn(
         "md:hidden border-t overflow-hidden transition-all duration-300 ease-in-out",
-        mobileMenuOpen ? "max-h-60" : "max-h-0"
+        mobileMenuOpen ? "max-h-80" : "max-h-0"
       )}>
         <nav className="flex flex-col py-2 px-4 space-y-1">
           {links.map((link) => (

@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils"
 export interface DatePickerProps {
   className?: string;
   mode?: "single" | "range" | "multiple";
-  selected?: Date | Date[] | undefined;
-  onSelect?: (date: Date | Date[] | undefined) => void;
+  selected?: Date | Date[] | { from: Date; to: Date };
+  onSelect?: (date: Date | Date[] | { from: Date; to: Date } | undefined) => void;
   initialFocus?: boolean;
 }
 

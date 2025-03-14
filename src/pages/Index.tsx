@@ -1,185 +1,218 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { DashboardSummary } from "@/components/DashboardSummary";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { getClients } from "@/services/clientService";
 import { getAllReports } from "@/services/reportService";
 import { ClientReport, Client } from "@/types/client";
-import { CalendarRange, FileSpreadsheet, BarChart3, Activity, ChevronRight, Clock, User } from "lucide-react";
+import { 
+  BarChart3, 
+  Users, 
+  FileText, 
+  TrendingUp, 
+  Activity, 
+  ArrowUp, 
+  ArrowDown,
+  ChevronRight 
+} from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { ActiveUsers } from "@/components/dashboard/ActiveUsers";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { UsageMetrics } from "@/components/dashboard/UsageMetrics";
 
 const Index = () => {
   const [recentReports, setRecentReports] = useState<ClientReport[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Modify the useEffect blocks to properly handle async data
   useEffect(() => {
-    const loadRecentReports = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        const reports = await getAllReports();
+        const [reports, loadedClients] = await Promise.all([
+          getAllReports(),
+          getClients()
+        ]);
+        
         setRecentReports(reports.slice(0, 5));
-      } catch (error) {
-        console.error("Error loading reports:", error);
-      }
-    };
-    
-    loadRecentReports();
-  }, []);
-
-  useEffect(() => {
-    const loadClients = async () => {
-      try {
-        const loadedClients = await getClients();
         setClients(loadedClients);
       } catch (error) {
-        console.error("Error loading clients:", error);
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    loadClients();
+    loadData();
   }, []);
 
-  // Función para obtener el nombre del cliente por ID
+  // Function to get client name by ID
   const getClientName = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
     return client ? client.name : "Cliente desconocido";
   };
 
+  // Calculate stats
+  const totalClients = clients.length;
+  const totalReports = recentReports.length;
+  const clientsWithReports = new Set(recentReports.map(r => r.clientId)).size;
+  const clientsPercentage = totalClients > 0 ? (clientsWithReports / totalClients) * 100 : 0;
+
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+    <div className="container mx-auto py-4">
+      <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Panel de Control</h1>
+        <div className="flex space-x-2 mt-2 md:mt-0">
+          <Button variant="outline" size="sm">
+            <FileText className="mr-2 h-4 w-4" />
+            Ver Informes
+          </Button>
+          <Button size="sm">
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Análisis
+          </Button>
+        </div>
+      </div>
       
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="overview" className="gap-2">
-            <Activity className="h-4 w-4" />
-            Resumen
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2">
-            <FileSpreadsheet className="h-4 w-4" />
-            Informes
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Analíticas
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="gap-2">
-            <CalendarRange className="h-4 w-4" />
-            Calendario
-          </TabsTrigger>
-        </TabsList>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-pulse">
+          {[1, 2, 3, 4].map((item) => (
+            <Card key={item} className="h-32"></Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard 
+            title="Clientes" 
+            value={totalClients.toString()}
+            change={"+7.5%"}
+            trend="up"
+            icon={<Users className="h-5 w-5 text-blue-500" />}
+            color="bg-blue-100"
+          />
+          <StatCard 
+            title="Informes" 
+            value={totalReports.toString()}
+            change={"+12.2%"}
+            trend="up"
+            icon={<FileText className="h-5 w-5 text-green-500" />}
+            color="bg-green-100"
+          />
+          <StatCard 
+            title="Propuestas" 
+            value="8"
+            change={"-2.4%"}
+            trend="down"
+            icon={<Activity className="h-5 w-5 text-red-500" />}
+            color="bg-red-100"
+          />
+          <StatCard 
+            title="Rendimiento" 
+            value="89%"
+            change={"+4.7%"}
+            trend="up"
+            icon={<BarChart3 className="h-5 w-5 text-purple-500" />}
+            color="bg-purple-100"
+          />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Uso por Cliente</CardTitle>
+            <CardDescription>
+              Actividad y distribución de servicios
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UsageMetrics />
+          </CardContent>
+        </Card>
         
-        <TabsContent value="overview">
-          <DashboardSummary />
-          
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold mb-4">Informes Recientes</h2>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Últimos informes generados</CardTitle>
-                <CardDescription>
-                  Revisa los últimos informes creados para tus clientes
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {recentReports.length === 0 ? (
-                  <div className="text-center py-6">
-                    <p className="text-gray-500 mb-4">No hay informes recientes</p>
-                    <Link to="/reports/new">
-                      <Button variant="outline">Crear Nuevo Informe</Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {recentReports.map((report) => (
-                      <div key={report.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
-                        <div>
-                          <h3 className="font-medium">{report.title}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <User className="h-3.5 w-3.5 text-gray-500" />
-                            <span className="text-sm text-gray-600">{getClientName(report.clientId)}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5 text-gray-500" />
-                            <span className="text-sm text-gray-600">
-                              {format(new Date(report.date), "d MMM yyyy", { locale: es })}
-                            </span>
-                          </div>
-                          <Badge variant="outline" className="font-normal">
-                            {report.type}
-                          </Badge>
-                          <Link to={`/reports/${report.id}`}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="border-t pt-4">
-                <Link to="/reports" className="w-full">
-                  <Button variant="outline" className="w-full">Ver Todos los Informes</Button>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Clientes Activos</CardTitle>
+            <CardDescription>
+              Últimos 30 días
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ActiveUsers clients={clients.slice(0, 5)} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Informes Recientes</CardTitle>
+              <CardDescription>
+                Últimos informes generados
+              </CardDescription>
+            </div>
+            <Link to="/reports">
+              <Button variant="ghost" size="sm">
+                Ver todos
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {recentReports.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-gray-500 mb-4">No hay informes recientes</p>
+                <Link to="/reports/new">
+                  <Button variant="outline">Crear Nuevo Informe</Button>
                 </Link>
-              </CardFooter>
-            </Card>
-          </div>
-        </TabsContent>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentReports.map((report) => (
+                  <div key={report.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                    <div>
+                      <h3 className="font-medium">{report.title}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm text-gray-600">{getClientName(report.clientId)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-gray-600">
+                        {format(new Date(report.date), "d MMM yyyy", { locale: es })}
+                      </span>
+                      <Badge variant={report.type === 'seo' ? "default" : "outline"} className="font-normal">
+                        {report.type}
+                      </Badge>
+                      <Link to={`/reports/${report.id}`}>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
         
-        <TabsContent value="reports">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informes</CardTitle>
-              <CardDescription>
-                Gestiona todos los informes de tus clientes
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p>Contenido de la pestaña de informes...</p>
-              <Link to="/reports">
-                <Button>Ver Informes</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="analytics">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analíticas</CardTitle>
-              <CardDescription>
-                Visualiza estadísticas y métricas de rendimiento
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Contenido de la pestaña de analíticas...</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="calendar">
-          <Card>
-            <CardHeader>
-              <CardTitle>Calendario</CardTitle>
-              <CardDescription>
-                Visualiza y gestiona eventos y fechas importantes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Contenido de la pestaña de calendario...</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Actividad Reciente</CardTitle>
+            <CardDescription>
+              Últimas acciones realizadas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RecentActivity />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

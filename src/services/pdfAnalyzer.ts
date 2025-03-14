@@ -2,13 +2,55 @@
 // Este servicio simula la extracción de datos de un PDF de auditoría SEO
 // En una implementación real, se integraría con una biblioteca de análisis de PDF
 
+export interface SeoResult {
+  metaTitle: boolean;
+  metaDescription: boolean;
+  h1Tags: number;
+  canonicalTag: boolean;
+  keywordDensity: number;
+  contentLength: number;
+  internalLinks: number;
+  externalLinks: number;
+}
+
+export interface TechnicalResult {
+  sslStatus: 'Válido' | 'Inválido' | 'No implementado';
+  httpsRedirection: boolean;
+  mobileOptimization: boolean;
+  robotsTxt: boolean;
+  sitemap: boolean;
+  technologies: string[];
+}
+
+export interface PerformanceResult {
+  pageSpeed: {
+    desktop: number;
+    mobile: number;
+  };
+  loadTime: string;
+  resourceCount: number;
+  imageOptimization: boolean;
+  cacheImplementation: boolean;
+}
+
+export interface SocialPresence {
+  facebook: boolean;
+  instagram: boolean;
+  twitter: boolean;
+  linkedin: boolean;
+  googleBusiness: boolean;
+}
+
 export interface AuditResult {
   url?: string;
   score?: number;
+  seoScore: number;
   performanceScore?: number;
   accessibilityScore?: number;
   bestPracticesScore?: number;
-  seoScore?: number;
+  webVisibility: number;
+  performance: number;
+  keywordsCount: number;
   loadTime?: number;
   firstContentfulPaint?: number;
   largestContentfulPaint?: number;
@@ -18,6 +60,10 @@ export interface AuditResult {
   warnings?: string[];
   keywords?: { word: string; count: number }[];
   metadata?: Record<string, string>;
+  seoResults: SeoResult;
+  technicalResults: TechnicalResult;
+  performanceResults: PerformanceResult;
+  socialPresence: SocialPresence;
 }
 
 // Función para extraer texto de un PDF (simulada)
@@ -39,10 +85,13 @@ export const analyzePdf = async (file: File): Promise<AuditResult> => {
       resolve({
         url: "https://example.com",
         score: 85,
+        seoScore: 94,
         performanceScore: 90,
         accessibilityScore: 88,
         bestPracticesScore: 82,
-        seoScore: 94,
+        webVisibility: 78,
+        performance: 87,
+        keywordsCount: 18,
         loadTime: 2.3,
         firstContentfulPaint: 0.8,
         largestContentfulPaint: 1.2,
@@ -70,6 +119,41 @@ export const analyzePdf = async (file: File): Promise<AuditResult> => {
           title: "Ejemplo de Auditoría SEO",
           description: "Resultados del análisis SEO para example.com",
           author: "Herramienta de Auditoría SEO"
+        },
+        seoResults: {
+          metaTitle: true,
+          metaDescription: true,
+          h1Tags: 2,
+          canonicalTag: true,
+          keywordDensity: 2.5,
+          contentLength: 1450,
+          internalLinks: 23,
+          externalLinks: 7
+        },
+        technicalResults: {
+          sslStatus: 'Válido',
+          httpsRedirection: true,
+          mobileOptimization: true,
+          robotsTxt: true,
+          sitemap: true,
+          technologies: ['WordPress', 'PHP', 'MySQL', 'jQuery']
+        },
+        performanceResults: {
+          pageSpeed: {
+            desktop: 88,
+            mobile: 72
+          },
+          loadTime: '2.3s',
+          resourceCount: 45,
+          imageOptimization: false,
+          cacheImplementation: true
+        },
+        socialPresence: {
+          facebook: true,
+          instagram: true,
+          twitter: true,
+          linkedin: false,
+          googleBusiness: true
         }
       });
     }, 2000);

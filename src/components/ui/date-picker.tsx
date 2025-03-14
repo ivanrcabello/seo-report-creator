@@ -28,13 +28,33 @@ export function DatePicker({
 }: DatePickerProps) {
   return (
     <div className={cn("grid gap-2", className)}>
-      <Calendar
-        mode={mode as "single"}
-        selected={selected}
-        onSelect={onSelect}
-        initialFocus={initialFocus}
-        className="pointer-events-auto"
-      />
+      {mode === "single" && (
+        <Calendar
+          mode="single"
+          selected={selected as Date}
+          onSelect={onSelect as (date: Date | undefined) => void}
+          initialFocus={initialFocus}
+          className="pointer-events-auto"
+        />
+      )}
+      {mode === "range" && (
+        <Calendar
+          mode="range"
+          selected={selected as { from: Date; to: Date }}
+          onSelect={onSelect as (date: { from: Date; to: Date } | undefined) => void}
+          initialFocus={initialFocus}
+          className="pointer-events-auto"
+        />
+      )}
+      {mode === "multiple" && (
+        <Calendar
+          mode="multiple"
+          selected={selected as Date[]}
+          onSelect={onSelect as (date: Date[] | undefined) => void}
+          initialFocus={initialFocus}
+          className="pointer-events-auto"
+        />
+      )}
     </div>
   );
 }
@@ -64,13 +84,33 @@ export function DatePickerWithButton({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode={mode as "single"}
-          selected={selected}
-          onSelect={onSelect}
-          initialFocus={initialFocus}
-          className="pointer-events-auto"
-        />
+        {mode === "single" && (
+          <Calendar
+            mode="single"
+            selected={selected as Date}
+            onSelect={onSelect as (date: Date | undefined) => void}
+            initialFocus={initialFocus}
+            className="pointer-events-auto"
+          />
+        )}
+        {mode === "range" && (
+          <Calendar
+            mode="range"
+            selected={selected as { from: Date; to: Date }}
+            onSelect={onSelect as (date: { from: Date; to: Date } | undefined) => void}
+            initialFocus={initialFocus}
+            className="pointer-events-auto"
+          />
+        )}
+        {mode === "multiple" && (
+          <Calendar
+            mode="multiple"
+            selected={selected as Date[]}
+            onSelect={onSelect as (date: Date[] | undefined) => void}
+            initialFocus={initialFocus}
+            className="pointer-events-auto"
+          />
+        )}
       </PopoverContent>
     </Popover>
   );

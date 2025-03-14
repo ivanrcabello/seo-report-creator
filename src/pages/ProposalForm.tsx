@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getProposal, 
@@ -40,7 +40,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, 
@@ -70,10 +69,12 @@ const proposalFormSchema = z.object({
 type ProposalFormValues = z.infer<typeof proposalFormSchema>;
 
 const ProposalForm = () => {
-  const { id } = useParams();
+  const { id, clientId, packId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [selectedPack, setSelectedPack] = useState<SeoPack | null>(null);
+  const isNew = !id || id === "new";
 
   // Obtener todos los clientes
   const { data: clients = [], isLoading: isLoadingClients } = useQuery({
@@ -91,15 +92,15 @@ const ProposalForm = () => {
   const { data: proposal, isLoading: isLoadingProposal } = useQuery({
     queryKey: ["proposal", id],
     queryFn: () => getProposal(id!),
-    enabled: !!id
+    enabled: !!id && id !== "new"
   });
 
   // Formulario para crear/editar propuestas
   const form = useForm<ProposalFormValues>({
     resolver: zodResolver(proposalFormSchema),
     defaultValues: {
-      clientId: "",
-      packId: "",
+      clientId: clientId || "",
+      packId: packId || "",
       title: "",
       description: "",
       useCustomPrice: false,
@@ -111,7 +112,8 @@ const ProposalForm = () => {
 
   // Actualizar el formulario cuando se carga la propuesta
   useEffect(() => {
-    if (proposal) {
+    // Si estamos en modo edición y tenemos una propuesta
+    if (!isNew && proposal) {
       form.reset({
         clientId: proposal.clientId,
         packId: proposal.packId,
@@ -129,7 +131,22 @@ const ProposalForm = () => {
         setSelectedPack(pack);
       }
     }
-  }, [proposal, packages, form]);
+    // Si estamos en modo creación con clientId y packId en params
+    else if (isNew && clientId && packId) {
+      form.setValue("clientId", clientId);
+      form.setValue("packId", packId);
+      
+      // Establecer el paquete seleccionado
+      const pack = packages.find(p => p.id === packId);
+      if (pack) {
+        setSelectedPack(pack);
+        const client = clients.find(c => c.id === clientId);
+        if (client && pack) {
+          form.setValue("title", `Propuesta ${pack.name} para ${client.name}`);
+        }
+      }
+    }
+  }, [proposal, packages, clients, form, isNew, clientId, packId]);
 
   // Mutación para crear una propuesta
   const createProposalMutation = useMutation({
@@ -206,7 +223,7 @@ const ProposalForm = () => {
 
   // Función para manejar el envío del formulario
   const onSubmit = (data: ProposalFormValues) => {
-    if (id) {
+    if (!isNew) {
       updateProposalMutation.mutate(data);
     } else {
       createProposalMutation.mutate(data);
@@ -225,8 +242,8 @@ const ProposalForm = () => {
     const pack = packages.find(p => p.id === packId);
     setSelectedPack(pack || null);
     
-    // Si hay un paquete seleccionado y no estamos editando, actualizar el título
-    if (pack && !id) {
+    // Si hay un paquete seleccionado y estamos creando, actualizar el título
+    if (pack && isNew) {
       const client = clients.find(c => c.id === form.getValues("clientId"));
       if (client) {
         form.setValue("title", `Propuesta ${pack.name} para ${client.name}`);
@@ -235,7 +252,7 @@ const ProposalForm = () => {
   };
 
   // Carga de la página
-  const isLoading = isLoadingClients || isLoadingPackages || (id && isLoadingProposal);
+  const isLoading = isLoadingClients || isLoadingPackages || (!isNew && isLoadingProposal);
 
   if (isLoading) {
     return (
@@ -261,7 +278,7 @@ const ProposalForm = () => {
           Volver
         </Button>
         <h1 className="text-3xl font-bold">
-          {id ? "Editar Propuesta" : "Nueva Propuesta"}
+          {!isNew ? "Editar Propuesta" : "Nueva Propuesta"}
         </h1>
       </div>
 
@@ -290,11 +307,12 @@ const ProposalForm = () => {
                               // Actualizar el título si hay un cliente y paquete seleccionados
                               const pack = packages.find(p => p.id === form.getValues("packId"));
                               const client = clients.find(c => c.id === value);
-                              if (pack && client && !id) {
+                              if (pack && client && isNew) {
                                 form.setValue("title", `Propuesta ${pack.name} para ${client.name}`);
                               }
                             }}
                             defaultValue={field.value}
+                            value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -326,6 +344,7 @@ const ProposalForm = () => {
                               onPackChange(value);
                             }}
                             defaultValue={field.value}
+                            value={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -500,7 +519,7 @@ const ProposalForm = () => {
                   <Save className="h-4 w-4" />
                   Guardar
                 </Button>
-                {id && proposal?.status === "draft" && (
+                {!isNew && proposal?.status === "draft" && (
                   <Button 
                     onClick={handleSendProposal}
                     className="gap-1"

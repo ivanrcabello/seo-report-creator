@@ -1,4 +1,3 @@
-
 import { Proposal } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 import { mapProposalFromDB, mapProposalToDB } from "./proposalMappers";
@@ -32,18 +31,29 @@ export const getAllProposals = async (): Promise<Proposal[]> => {
 };
 
 export const getProposal = async (id: string): Promise<Proposal | undefined> => {
-  const { data, error } = await supabase
-    .from('proposals')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-  
-  if (error) {
-    console.error("Error fetching proposal:", error);
+  // Si el ID no es válido (como "new"), devolvemos undefined inmediatamente
+  if (!id || id === "new") {
+    console.log("Invalid proposal ID or new proposal:", id);
     return undefined;
   }
-  
-  return data ? mapProposalFromDB(data) : undefined;
+
+  try {
+    const { data, error } = await supabase
+      .from('proposals')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Error fetching proposal:", error);
+      return undefined;
+    }
+    
+    return data ? mapProposalFromDB(data) : undefined;
+  } catch (error) {
+    console.error("Error in getProposal:", error);
+    return undefined;
+  }
 };
 
 export const addProposal = async (proposal: Omit<Proposal, "id" | "createdAt" | "updatedAt">): Promise<Proposal> => {

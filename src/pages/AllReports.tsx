@@ -26,13 +26,8 @@ import {
   Calendar,
   User,
   Eye,
-  Download,
   Plus,
-  Share2,
   AlertTriangle,
-  File,
-  Building,
-  Mail,
   Loader2
 } from "lucide-react";
 import { format } from "date-fns";
@@ -132,7 +127,7 @@ const AllReports = () => {
                   <SelectValue placeholder="Filtrar por tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los tipos</SelectItem>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
                   {availableTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {type === "seo" ? "SEO" :

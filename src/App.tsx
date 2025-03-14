@@ -25,6 +25,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutos
     },
   },
 });
@@ -50,6 +51,7 @@ function App() {
           <Route path="/reports" element={<AppLayout><AllReports /></AppLayout>} />
           <Route path="/packages" element={<AppLayout><Packages /></AppLayout>} />
           <Route path="/proposals" element={<AppLayout><Proposals /></AppLayout>} />
+          <Route path="/proposals/new" element={<AppLayout><ProposalForm /></AppLayout>} />
           <Route path="/proposals/new/:clientId/:packId" element={<AppLayout><ProposalForm /></AppLayout>} />
           <Route path="/proposals/edit/:id" element={<AppLayout><ProposalForm /></AppLayout>} />
           <Route path="/proposals/:id" element={<AppLayout><ProposalDetail /></AppLayout>} />

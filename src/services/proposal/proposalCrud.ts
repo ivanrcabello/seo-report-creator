@@ -1,3 +1,4 @@
+
 import { Proposal } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 import { mapProposalFromDB, mapProposalToDB } from "./proposalMappers";
@@ -49,7 +50,30 @@ export const getProposal = async (id: string): Promise<Proposal | undefined> => 
       return undefined;
     }
     
-    return data ? mapProposalFromDB(data) : undefined;
+    if (!data) {
+      console.log("No proposal found with ID:", id);
+      return undefined;
+    }
+    
+    // Ensure customPrice has a default value if null
+    if (data.custom_price === null && data.pack_id) {
+      try {
+        // Get the pack to use its price
+        const { data: packData } = await supabase
+          .from('seo_packs')
+          .select('price')
+          .eq('id', data.pack_id)
+          .single();
+          
+        if (packData) {
+          data.custom_price = packData.price;
+        }
+      } catch (packError) {
+        console.error("Error fetching pack price:", packError);
+      }
+    }
+    
+    return mapProposalFromDB(data);
   } catch (error) {
     console.error("Error in getProposal:", error);
     return undefined;

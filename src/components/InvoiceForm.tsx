@@ -7,37 +7,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Invoice, Client } from "@/types/client";
 import { getInvoice, createInvoice, updateInvoice } from "@/services/invoiceService";
 import { getClient } from "@/services/clientService";
-import { getSeoPack } from "@/services/packService";
-import { getProposal } from "@/services/proposal/proposalCrud";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
-import { 
-  FileSpreadsheet, 
-  Save, 
-  ArrowLeft,
-  Calendar,
-  Euro
-} from "lucide-react";
+import { FileSpreadsheet, Save, ArrowLeft } from "lucide-react";
 import { format, addDays } from "date-fns";
+import { ClientSelection } from "./invoice/ClientSelection";
+import { InvoiceStatus } from "./invoice/InvoiceStatus";
+import { DateFields } from "./invoice/DateFields";
+import { AmountFields } from "./invoice/AmountFields";
+import { AmountSummary } from "./invoice/AmountSummary";
+import { NotesField } from "./invoice/NotesField";
 
 // Schema de validación para las facturas
 const invoiceSchema = z.object({
@@ -203,162 +184,31 @@ export const InvoiceForm = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Campo de Cliente */}
-              <FormField
-                control={form.control}
-                name="clientId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cliente</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="ID del cliente"
-                        disabled={!isNewInvoice || isLoading}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          handleClientChange(e.target.value);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              {/* Cliente y Estado */}
+              <ClientSelection 
+                form={form} 
+                isNewInvoice={isNewInvoice} 
+                isLoading={isLoading} 
+                onClientChange={handleClientChange} 
               />
+              <InvoiceStatus form={form} />
               
-              {/* Campo de Estado */}
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estado</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un estado" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="pending">Pendiente</SelectItem>
-                        <SelectItem value="paid">Pagada</SelectItem>
-                        <SelectItem value="cancelled">Cancelada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              {/* Fechas */}
+              <DateFields form={form} />
+              
+              {/* Importes */}
+              <AmountFields form={form} />
+              
+              {/* Resumen de Importes */}
+              <AmountSummary 
+                baseAmount={baseAmount} 
+                taxRate={taxRate} 
+                taxAmount={taxAmount} 
+                totalAmount={totalAmount} 
               />
-              
-              {/* Fecha de Emisión */}
-              <FormField
-                control={form.control}
-                name="issueDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha de Emisión</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {/* Fecha de Vencimiento */}
-              <FormField
-                control={form.control}
-                name="dueDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha de Vencimiento</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field} 
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {/* Importe Base */}
-              <FormField
-                control={form.control}
-                name="baseAmount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Importe Base (€)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.01"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {/* Tipo de IVA */}
-              <FormField
-                control={form.control}
-                name="taxRate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de IVA (%)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.1"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {/* Resumen de Importes (solo visual) */}
-              <div className="md:col-span-2 p-4 bg-gray-50 rounded-md space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Base Imponible:</span>
-                  <span className="font-medium">{baseAmount.toFixed(2)} €</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">IVA ({taxRate}%):</span>
-                  <span className="font-medium">{taxAmount.toFixed(2)} €</span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-gray-200">
-                  <span className="text-gray-800 font-semibold">Total:</span>
-                  <span className="text-blue-700 font-bold text-lg">{totalAmount.toFixed(2)} €</span>
-                </div>
-              </div>
               
               {/* Notas */}
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Notas</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Notas o comentarios adicionales para la factura"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <NotesField form={form} />
             </div>
             
             <Button 

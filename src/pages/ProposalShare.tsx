@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Proposal } from "@/types/client";
@@ -28,7 +27,6 @@ const ProposalShare = () => {
       
       setIsLoading(true);
       try {
-        // Fetch proposal using the shared token
         const proposalData = await getProposalByShareToken(token);
         
         if (!proposalData) {
@@ -38,7 +36,6 @@ const ProposalShare = () => {
         
         setProposal(proposalData);
         
-        // Fetch associated client and package
         const clientData = await getClient(proposalData.clientId);
         setClient(clientData);
         

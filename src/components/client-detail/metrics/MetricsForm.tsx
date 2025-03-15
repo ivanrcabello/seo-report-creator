@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +22,10 @@ export const MetricsForm = ({
   userRole,
   isAdmin
 }: MetricsFormProps) => {
+  if (!currentMetric) {
+    return <div>No hay datos de métricas disponibles.</div>;
+  }
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {process.env.NODE_ENV === 'development' && (
@@ -38,7 +41,7 @@ export const MetricsForm = ({
           <Input 
             id="month" 
             type="month" 
-            value={currentMetric?.month || ''} 
+            value={currentMetric.month || ''} 
             onChange={(e) => 
               handleInputChange('month', e.target.value)
             }
@@ -46,12 +49,12 @@ export const MetricsForm = ({
         </div>
         
         <div>
-          <Label htmlFor="web_visits">Visitas Web</Label>
+          <Label htmlFor="web_visits">Visitas Web (%)</Label>
           <Input 
             id="web_visits" 
             type="number" 
             min="0"
-            value={currentMetric?.web_visits || 0} 
+            value={currentMetric.web_visits || 0} 
             onChange={(e) => handleInputChange('web_visits', e.target.value)}
           />
         </div>
@@ -62,7 +65,7 @@ export const MetricsForm = ({
             id="keywords_top10" 
             type="number" 
             min="0"
-            value={currentMetric?.keywords_top10 || 0} 
+            value={currentMetric.keywords_top10 || 0} 
             onChange={(e) => handleInputChange('keywords_top10', e.target.value)}
           />
         </div>
@@ -70,12 +73,12 @@ export const MetricsForm = ({
       
       <div className="space-y-4">
         <div>
-          <Label htmlFor="conversions">Aumento Clics</Label>
+          <Label htmlFor="conversions">Conversiones</Label>
           <Input 
             id="conversions" 
             type="number" 
             min="0"
-            value={currentMetric?.conversions || 0} 
+            value={currentMetric.conversions || 0} 
             onChange={(e) => handleInputChange('conversions', e.target.value)}
           />
         </div>
@@ -85,8 +88,8 @@ export const MetricsForm = ({
           <Input 
             id="conversion_goal" 
             type="number" 
-            min="0"
-            value={currentMetric?.conversion_goal || 30} 
+            min="1"
+            value={currentMetric.conversion_goal || 30} 
             onChange={(e) => handleInputChange('conversion_goal', e.target.value)}
           />
         </div>

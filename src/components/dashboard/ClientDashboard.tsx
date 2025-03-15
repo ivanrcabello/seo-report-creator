@@ -10,18 +10,12 @@ import { SeoPerformanceCharts } from "./SeoPerformanceCharts";
 import { DocumentCenter } from "./DocumentCenter";
 import { FeedbackForm } from "./FeedbackForm";
 import { BarChart2, TrendingUp, MessageSquare } from "lucide-react";
-
-interface ClientMetrics {
-  web_visits: number;
-  keywords_top10: number;
-  conversions: number;
-  conversion_goal: number;
-  month: string;
-}
+import { toast } from "sonner";
+import { ClientMetric, getClientMetrics } from "@/services/clientMetricsService";
 
 export function ClientDashboard() {
   const { user } = useAuth();
-  const [metrics, setMetrics] = useState<ClientMetrics | null>(null);
+  const [metrics, setMetrics] = useState<ClientMetric | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [companyName, setCompanyName] = useState("Su Empresa");
 
@@ -32,41 +26,54 @@ export function ClientDashboard() {
       try {
         setIsLoading(true);
         
-        // Fetch most recent metrics
-        const { data: metricsData, error: metricsError } = await supabase
-          .from('client_metrics')
-          .select('*')
-          .eq('client_id', user.id)
-          .order('month', { ascending: false })
-          .limit(1)
-          .single();
-        
-        if (metricsError && metricsError.code !== 'PGRST116') {
-          console.error("Error fetching metrics:", metricsError);
-        }
-        
-        if (metricsData) {
-          setMetrics(metricsData as ClientMetrics);
-        } else {
-          // Set default metrics if none exist
-          setMetrics({
-            web_visits: 35,
-            keywords_top10: 18,
-            conversions: 22,
-            conversion_goal: 30,
-            month: new Date().toISOString().substring(0, 10)
-          });
+        // Fetch most recent metrics using the dedicated service
+        if (user?.id) {
+          try {
+            const metricsData = await getClientMetrics(user.id);
+            console.log("Client metrics fetched:", metricsData);
+            
+            if (metricsData && metricsData.length > 0) {
+              setMetrics(metricsData[0]);
+            } else {
+              // Set default metrics if none exist
+              setMetrics({
+                id: "",
+                month: new Date().toISOString().substring(0, 7),
+                web_visits: 35,
+                keywords_top10: 18,
+                conversions: 22,
+                conversion_goal: 30
+              });
+            }
+          } catch (error) {
+            console.error("Error fetching client metrics:", error);
+            toast.error("No se pudieron cargar las métricas. Por favor, inténtalo de nuevo más tarde.");
+            
+            // Set default metrics on error
+            setMetrics({
+              id: "",
+              month: new Date().toISOString().substring(0, 7),
+              web_visits: 35,
+              keywords_top10: 18,
+              conversions: 22,
+              conversion_goal: 30
+            });
+          }
         }
         
         // Fetch client profile to get company name
-        const { data: profileData } = await supabase
-          .from('clients')
-          .select('company')
-          .eq('id', user.id)
-          .single();
-        
-        if (profileData?.company) {
-          setCompanyName(profileData.company);
+        try {
+          const { data: profileData } = await supabase
+            .from('clients')
+            .select('company')
+            .eq('id', user.id)
+            .single();
+          
+          if (profileData?.company) {
+            setCompanyName(profileData.company);
+          }
+        } catch (error) {
+          console.error("Error fetching client profile:", error);
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Map, Clock } from "lucide-react";
@@ -33,12 +34,12 @@ export const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({
           duration: 2000,
         });
         
-        // Marcamos documentos como analizados
+        // Marked documents as analyzed with the right type
         const updatedDocs = documents.map(doc => {
           if (selectedDocuments.includes(doc.id)) {
             return { 
               ...doc, 
-              analyzedStatus: "analyzed" 
+              analyzedStatus: "analyzed" as "pending" | "analyzed" | "processed" | "failed" | "error"
             };
           }
           return doc;
@@ -46,12 +47,12 @@ export const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({
         
         setDocuments(updatedDocs);
         
-        await new Promise(r => setTimeout(r, 1000)); // Pequeña espera para la animación
+        await new Promise(r => setTimeout(r, 1000)); // Small wait for animation
         
-        // Llamar a la función para generar informe
+        // Call the function to generate report
         onGenerateReport(selectedDocuments);
         
-        // Limpiar selección
+        // Clear selection
         setSelectedDocuments([]);
       } catch (error) {
         console.error("Error generating report:", error);

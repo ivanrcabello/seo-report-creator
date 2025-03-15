@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ClientMetric {
@@ -28,6 +29,8 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
       ...metric,
       month: metric.month ? new Date(metric.month).toISOString().substring(0, 7) : ''
     })) || [];
+    
+    console.log("Received metrics data:", formattedData);
     
     return formattedData;
   } catch (error) {
@@ -77,10 +80,18 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         throw new Error(`Error al actualizar métricas: ${error.message}`);
       }
       
+      console.log("Successfully updated metrics");
+      
       // Return the formatted metric without querying the database again
       return formattedMetric;
     } else {
       // Insert a new metric
+      console.log("Inserting new metric with data:", {
+        p_client_id: clientId,
+        p_month: metric.month,
+        ...metricData
+      });
+      
       const { data, error } = await supabase
         .rpc('insert_client_metric', {
           p_client_id: clientId,
@@ -96,6 +107,8 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         console.log("Error details:", JSON.stringify(error));
         throw new Error(`Error al guardar métricas: ${error.message}`);
       }
+      
+      console.log("Successfully inserted new metric, returned ID:", data);
       
       // Set the ID from the returned value if available, otherwise use a placeholder
       formattedMetric.id = data || formattedMetric.id;

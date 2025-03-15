@@ -24,8 +24,10 @@ export const useClientMetrics = (clientId: string) => {
       setMetrics(data);
       
       if (data.length > 0) {
+        console.log("Setting current metric to first item:", data[0]);
         setCurrentMetric(data[0]);
       } else {
+        console.log("No metrics found, creating default metric");
         const today = new Date();
         const defaultMonth = format(today, 'yyyy-MM');
         
@@ -37,6 +39,7 @@ export const useClientMetrics = (clientId: string) => {
           conversions: 0,
           conversion_goal: 30
         };
+        console.log("Default metric created:", newMetric);
         setCurrentMetric(newMetric);
       }
     } catch (error) {
@@ -54,7 +57,10 @@ export const useClientMetrics = (clientId: string) => {
   };
 
   const handleSaveMetrics = async () => {
-    if (!currentMetric) return;
+    if (!currentMetric) {
+      console.error("Cannot save metrics: currentMetric is null");
+      return;
+    }
     
     try {
       setIsSaving(true);
@@ -79,8 +85,10 @@ export const useClientMetrics = (clientId: string) => {
       console.log("Metric saved successfully:", updatedMetric);
       
       if (currentMetric.id) {
+        console.log("Updating existing metric in state");
         setMetrics(metrics.map(m => m.id === updatedMetric.id ? updatedMetric : m));
       } else {
+        console.log("Adding new metric to state");
         setMetrics([updatedMetric, ...metrics]);
       }
       
@@ -111,7 +119,12 @@ export const useClientMetrics = (clientId: string) => {
   };
 
   const handleInputChange = (field: keyof ClientMetric, value: string) => {
-    if (!currentMetric) return;
+    if (!currentMetric) {
+      console.error("Cannot update field: currentMetric is null");
+      return;
+    }
+    
+    console.log(`Updating field ${field} with value:`, value);
     
     let processedValue: any = value;
     if (['web_visits', 'keywords_top10', 'conversions', 'conversion_goal'].includes(field as string)) {

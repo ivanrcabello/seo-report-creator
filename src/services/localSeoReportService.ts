@@ -1,114 +1,78 @@
 
-import { SeoLocalReport } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
+import { SeoLocalReport } from "@/types/client";
 
-// Función para convertir datos de Supabase al formato de la aplicación
-const mapLocalSeoReportFromDB = (report: any): SeoLocalReport => ({
-  id: report.id,
-  clientId: report.client_id,
-  title: report.title,
-  date: report.date,
-  businessName: report.business_name,
-  location: report.location,
-  googleMapsRanking: report.google_maps_ranking,
-  localListings: report.local_listings,
-  keywordRankings: report.keyword_rankings,
-  recommendations: report.recommendations,
-  shareToken: report.share_token,
-  sharedAt: report.shared_at
-});
+export const getSeoLocalReports = async (clientId: string): Promise<SeoLocalReport[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('seo_local_reports')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('date', { ascending: false });
 
-// Función para convertir datos de la aplicación al formato de Supabase
-const mapLocalSeoReportToDB = (report: Partial<SeoLocalReport>) => ({
-  client_id: report.clientId,
-  title: report.title,
-  date: report.date,
-  business_name: report.businessName,
-  location: report.location,
-  google_maps_ranking: report.googleMapsRanking,
-  local_listings: report.localListings as Json,
-  keyword_rankings: report.keywordRankings as Json,
-  recommendations: report.recommendations,
-  share_token: report.shareToken,
-  shared_at: report.sharedAt
-});
+    if (error) {
+      console.error("Error fetching local SEO reports:", error);
+      return [];
+    }
 
-// Local SEO report operations
-export const getLocalSeoReports = async (clientId: string): Promise<SeoLocalReport[]> => {
-  const { data, error } = await supabase
-    .from('seo_local_reports')
-    .select('*')
-    .eq('client_id', clientId);
-  
-  if (error) {
-    console.error("Error fetching local SEO reports:", error);
+    return data.map(item => ({
+      id: item.id,
+      clientId: item.client_id,
+      title: item.title,
+      date: item.date,
+      businessName: item.business_name,
+      address: item.address,
+      location: item.location,
+      phone: item.phone || '+34 91 XXX XX XX', // Ensure phone is never null
+      website: item.website || 'www.example.com', // Ensure website is never null
+      googleBusinessUrl: item.google_business_url,
+      googleMapsRanking: item.google_maps_ranking,
+      googleReviewsCount: item.google_reviews_count,
+      keywordRankings: item.keyword_rankings,
+      localListings: item.local_listings,
+      shareToken: item.share_token,
+      sharedAt: item.shared_at,
+      recommendations: item.recommendations
+    }));
+  } catch (error) {
+    console.error("Error in getSeoLocalReports:", error);
     return [];
   }
-  
-  return (data || []).map(mapLocalSeoReportFromDB);
 };
 
-export const getLocalSeoReport = async (id: string): Promise<SeoLocalReport | undefined> => {
-  const { data, error } = await supabase
-    .from('seo_local_reports')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-  
-  if (error) {
-    console.error("Error fetching local SEO report:", error);
-    return undefined;
-  }
-  
-  return data ? mapLocalSeoReportFromDB(data) : undefined;
-};
+export const createSeoLocalReport = async (report: Omit<SeoLocalReport, "id">): Promise<string> => {
+  try {
+    const { data, error } = await supabase
+      .from('seo_local_reports')
+      .insert({
+        client_id: report.clientId,
+        title: report.title || 'Informe SEO Local',
+        date: report.date || new Date().toISOString(),
+        business_name: report.businessName,
+        address: report.address,
+        location: report.location,
+        phone: report.phone,
+        website: report.website,
+        google_business_url: report.googleBusinessUrl,
+        google_maps_ranking: report.googleMapsRanking,
+        google_reviews_count: report.googleReviewsCount,
+        keyword_rankings: report.keywordRankings,
+        local_listings: report.localListings,
+        share_token: report.shareToken,
+        shared_at: report.sharedAt,
+        recommendations: report.recommendations
+      })
+      .select('id')
+      .single();
 
-export const addLocalSeoReport = async (report: Omit<SeoLocalReport, "id">): Promise<SeoLocalReport> => {
-  const { data, error } = await supabase
-    .from('seo_local_reports')
-    .insert([mapLocalSeoReportToDB(report)])
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Error adding local SEO report:", error);
-    throw error;
-  }
-  
-  // Update client's lastReport date
-  await supabase
-    .from('clients')
-    .update({ last_report: report.date })
-    .eq('id', report.clientId);
-  
-  return mapLocalSeoReportFromDB(data);
-};
+    if (error) {
+      console.error("Error creating local SEO report:", error);
+      throw new Error(`Error al crear informe SEO local: ${error.message}`);
+    }
 
-export const updateLocalSeoReport = async (report: SeoLocalReport): Promise<SeoLocalReport> => {
-  const { data, error } = await supabase
-    .from('seo_local_reports')
-    .update(mapLocalSeoReportToDB(report))
-    .eq('id', report.id)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Error updating local SEO report:", error);
-    throw error;
-  }
-  
-  return mapLocalSeoReportFromDB(data);
-};
-
-export const deleteLocalSeoReport = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('seo_local_reports')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
-    console.error("Error deleting local SEO report:", error);
+    return data.id;
+  } catch (error) {
+    console.error("Exception in createSeoLocalReport:", error);
     throw error;
   }
 };

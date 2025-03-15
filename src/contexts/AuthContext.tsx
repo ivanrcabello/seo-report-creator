@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchUserRole = async (userId: string) => {
       try {
+        // Use the non-recursive function we just created
         const { data, error } = await supabase
           .rpc('get_user_role')
           .single();

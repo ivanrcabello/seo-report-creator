@@ -4,6 +4,8 @@
  */
 
 import jsPDF from "jspdf";
+// Make sure jspdf-autotable is imported here as well
+import "jspdf-autotable";
 import { Invoice } from "@/types/invoice";
 import { getStatusText, getStatusColor } from "./pdfStyles";
 import { formatDate, formatCurrency } from "../invoiceFormatters";
@@ -139,7 +141,8 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice) => {
     ]
   ];
   
-  // Add the items table using the imported autoTable
+  // Add the items table using autoTable
+  // Use type casting to access the autoTable plugin
   (doc as any).autoTable({
     head: [tableColumn],
     body: tableRows,

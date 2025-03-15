@@ -4,6 +4,7 @@
  */
 
 import jsPDF from "jspdf";
+// Import jsPDF-autotable properly
 import "jspdf-autotable";
 import { Invoice } from "@/types/invoice";
 import { getClient } from "@/services/clientService";

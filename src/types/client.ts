@@ -1,3 +1,4 @@
+import { Invoice as InvoiceType } from './invoice';
 
 export interface Client {
   id: string;
@@ -25,25 +26,7 @@ export interface ClientDocument {
   content?: string;
 }
 
-export interface Invoice {
-  id: string;
-  clientId: string;
-  invoiceNumber: string;
-  issueDate: string;
-  dueDate?: string;
-  baseAmount: number;
-  taxRate: number;
-  taxAmount: number;
-  totalAmount: number;
-  status: "draft" | "pending" | "paid" | "cancelled";
-  notes?: string;
-  pdfUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-  packId?: string;
-  proposalId?: string;
-  paymentDate?: string;
-}
+export type Invoice = InvoiceType;
 
 export interface Proposal {
   id: string;

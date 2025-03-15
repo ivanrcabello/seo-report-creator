@@ -13,23 +13,23 @@ export interface InvoiceItem {
 export interface Invoice {
   id: string;
   number: string;
-  invoiceNumber?: string;  // For backward compatibility
+  invoiceNumber: string;  // For backward compatibility
   clientId: string;
   clientName: string;
   date: string;
-  issueDate?: string;      // For backward compatibility
+  issueDate: string;      // For backward compatibility
   dueDate: string;
   packId?: string;
   proposalId?: string;
   status: InvoiceStatus;
   items: InvoiceItem[];
   subtotal: number;
-  baseAmount?: number;      // For backward compatibility
+  baseAmount: number;      // For backward compatibility
   tax: number;
-  taxRate?: number;         // For backward compatibility
-  taxAmount?: number;       // For backward compatibility
+  taxRate: number;         // For backward compatibility
+  taxAmount: number;       // For backward compatibility
   total: number;
-  totalAmount?: number;     // For backward compatibility
+  totalAmount: number;     // For backward compatibility
   notes?: string;
   createdAt: string;
   updatedAt: string;

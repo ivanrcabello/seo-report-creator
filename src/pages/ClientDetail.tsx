@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,7 +8,7 @@ import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
 import { ClientDocumentsView } from "@/components/client-documents";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
-import { getClient } from "@/services/clientService";
+import { getClient, updateClientActiveStatus } from "@/services/clientService";
 import { getSeoLocalReports } from "@/services/localSeoReportService";
 import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
 import { useToast } from "@/hooks/use-toast";
@@ -141,8 +142,29 @@ export default function ClientDetail() {
   }
 
   const handleEdit = () => navigate(`/clients/edit/${client.id}`);
-  const handleDelete = () => console.log("Delete client:", client.id);
-  const handleToggleActive = (isActive: boolean) => console.log("Toggle active:", isActive);
+  
+  const handleDelete = () => {
+    console.log("Delete client:", client.id);
+    // Implement actual delete functionality
+  };
+  
+  const handleToggleActive = async (isActive: boolean) => {
+    try {
+      await updateClientActiveStatus(client.id, isActive);
+      setClient({ ...client, isActive });
+      toast({
+        title: isActive ? "Cliente activado" : "Cliente desactivado",
+        description: `El cliente ha sido ${isActive ? "activado" : "desactivado"} correctamente.`
+      });
+    } catch (error) {
+      console.error("Error toggling client status:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo cambiar el estado del cliente.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div>
@@ -176,7 +198,7 @@ export default function ClientDetail() {
         </TabsContent>
         <TabsContent value="documents">
           <ClientDocumentsView
-            clientId={client.id}
+            documents={client.documents || []}
             selectedDocuments={selectedDocuments}
             onDocumentSelect={handleDocumentSelect}
           />

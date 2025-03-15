@@ -6,13 +6,11 @@ import { getClients } from "@/services/clientService";
 import { ClientSummary } from "@/types/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { MoreVertical, Users, Mail, Building, Calendar } from "lucide-react";
+import { MoreVertical, Mail, Building, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { format, isValid } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
   return clients.map(client => ({
@@ -62,9 +60,18 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {clientSummaries.map((client) => (
-          <ClientCard key={client.id} client={client} />
-        ))}
+        {clientSummaries.length > 0 ? (
+          clientSummaries.map((client) => (
+            <ClientCard key={client.id} client={client} />
+          ))
+        ) : (
+          <div className="col-span-full text-center py-8">
+            <p className="text-muted-foreground">No hay clientes registrados.</p>
+            <Link to="/clients/new">
+              <Button className="mt-4">Añadir Cliente</Button>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -74,13 +81,18 @@ const ClientCard = ({ client }: { client: ClientSummary }) => {
   // Safely format the date or provide a fallback
   const formatCreatedAt = () => {
     try {
-      const date = new Date(client.createdAt);
+      if (!client.createdAt) return "Fecha desconocida";
+      
+      const date = typeof client.createdAt === 'string' 
+        ? parseISO(client.createdAt)
+        : new Date(client.createdAt);
+        
       if (isValid(date)) {
         return format(date, 'dd/MM/yyyy', { locale: es });
       }
       return "Fecha desconocida";
     } catch (error) {
-      console.error("Error formatting date:", error);
+      console.error("Error formatting date:", error, client.createdAt);
       return "Fecha desconocida";
     }
   };
@@ -135,6 +147,14 @@ const ClientCard = ({ client }: { client: ClientSummary }) => {
         </DropdownMenu>
       </CardContent>
     </Card>
+  );
+};
+
+const Button = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
+  return (
+    <button className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded ${className}`}>
+      {children}
+    </button>
   );
 };
 

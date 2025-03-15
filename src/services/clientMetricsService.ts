@@ -12,7 +12,7 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
-    // Simplify query to avoid RLS policy issues
+    // Simplified query with more detailed error logging
     const { data, error } = await supabase
       .from('client_metrics')
       .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
@@ -21,12 +21,13 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
     
     if (error) {
       console.error("Error fetching client metrics:", error);
+      console.log("Error details:", JSON.stringify(error));
       return []; // Return empty array instead of throwing
     }
     
     return data || [];
   } catch (error) {
-    console.error("Error fetching client metrics:", error);
+    console.error("Exception in getClientMetrics:", error);
     return []; // Return empty array on any error
   }
 };
@@ -57,6 +58,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       
       if (error) {
         console.error("Error updating client metric:", error);
+        console.log("Error details:", JSON.stringify(error));
         throw error;
       }
       
@@ -71,6 +73,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       
       if (error) {
         console.error("Error inserting client metric:", error);
+        console.log("Error details:", JSON.stringify(error));
         throw error;
       }
       
@@ -79,9 +82,9 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
     
     return result;
   } catch (error) {
-    console.error("Error in updateClientMetrics:", error);
+    console.error("Exception in updateClientMetrics:", error);
+    console.log("Error details:", error.message);
     
-    // Check if it's the infinite recursion error
     if (error.message && error.message.includes("infinite recursion")) {
       throw new Error("Error de acceso a la base de datos. Contacte al administrador del sistema.");
     }

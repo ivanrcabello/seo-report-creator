@@ -589,7 +589,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      get_user_role_safe: {
+      get_user_role_direct: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

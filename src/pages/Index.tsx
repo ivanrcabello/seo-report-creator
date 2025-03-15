@@ -43,7 +43,12 @@ const Index = () => {
                     Iniciar Sesión
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white/10 hover:text-white">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  asChild 
+                  className="border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
+                >
                   <Link to="/register">
                     <UserPlus className="mr-2 h-5 w-5" />
                     Registrarse
@@ -133,7 +138,12 @@ const Index = () => {
                 Crear Cuenta Gratis
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white/10 hover:text-white">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              asChild 
+              className="border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
               <Link to="/login">
                 Ya tengo una cuenta
               </Link>

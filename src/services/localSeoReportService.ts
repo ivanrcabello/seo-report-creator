@@ -21,18 +21,18 @@ export const getSeoLocalReports = async (clientId: string): Promise<SeoLocalRepo
       title: item.title,
       date: item.date,
       businessName: item.business_name,
-      address: item.address,
+      address: item.address || '',
       location: item.location,
-      phone: item.phone || '+34 91 XXX XX XX', // Ensure phone is never null
-      website: item.website || 'www.example.com', // Ensure website is never null
-      googleBusinessUrl: item.google_business_url,
-      googleMapsRanking: item.google_maps_ranking,
-      googleReviewsCount: item.google_reviews_count,
-      keywordRankings: item.keyword_rankings,
-      localListings: item.local_listings,
+      phone: item.phone || '+34 91 XXX XX XX', // Default phone if null
+      website: item.website || 'www.example.com', // Default website if null
+      googleBusinessUrl: item.google_business_url || '',
+      googleMapsRanking: item.google_maps_ranking || 0,
+      googleReviewsCount: item.google_reviews_count || 0,
+      keywordRankings: item.keyword_rankings || [],
+      localListings: item.local_listings || [],
       shareToken: item.share_token,
       sharedAt: item.shared_at,
-      recommendations: item.recommendations
+      recommendations: item.recommendations || []
     }));
   } catch (error) {
     console.error("Error in getSeoLocalReports:", error);
@@ -49,18 +49,18 @@ export const createSeoLocalReport = async (report: Omit<SeoLocalReport, "id">): 
         title: report.title || 'Informe SEO Local',
         date: report.date || new Date().toISOString(),
         business_name: report.businessName,
-        address: report.address,
-        location: report.location,
-        phone: report.phone,
-        website: report.website,
-        google_business_url: report.googleBusinessUrl,
-        google_maps_ranking: report.googleMapsRanking,
-        google_reviews_count: report.googleReviewsCount,
-        keyword_rankings: report.keywordRankings,
-        local_listings: report.localListings,
-        share_token: report.shareToken,
-        shared_at: report.sharedAt,
-        recommendations: report.recommendations
+        address: report.address || '',
+        location: report.location || '',
+        phone: report.phone || '',
+        website: report.website || '',
+        google_business_url: report.googleBusinessUrl || '',
+        google_maps_ranking: report.googleMapsRanking || 0,
+        google_reviews_count: report.googleReviewsCount || 0,
+        keyword_rankings: report.keywordRankings || [],
+        local_listings: report.localListings || [],
+        share_token: report.shareToken || null,
+        shared_at: report.sharedAt || null,
+        recommendations: report.recommendations || []
       })
       .select('id')
       .single();

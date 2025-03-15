@@ -7,7 +7,7 @@ import { Client, ClientReport, SeoLocalReport } from "@/types/client";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { getClient, updateClient, deleteClient, updateClientActiveStatus } from "@/services/clientService";
 import { getClientReports, addReport } from "@/services/reportService";
-import { getLocalSeoReports } from "@/services/localSeoReportService";
+import { getSeoLocalReports } from "@/services/localSeoReportService";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, UserCog, FileText, UploadCloud, Map, FileSignature, BarChart, FileSpreadsheet } from "lucide-react";
@@ -49,7 +49,7 @@ const ClientDetail = () => {
             setClient(clientData);
             const reportData = await getClientReports(id);
             setReports(reportData);
-            const localSeoData = await getLocalSeoReports(id);
+            const localSeoData = await getSeoLocalReports(id);
             setLocalSeoReports(localSeoData);
           }
         } catch (error) {

@@ -25,9 +25,11 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
         title: 'Informe SEO Local',
         date: new Date().toISOString(),
         businessName: 'Tu Negocio Local',
+        address: '',
         location: 'Madrid, España',
         phone: '+34 91 XXX XX XX',
         website: 'www.tunegocio.es',
+        googleBusinessUrl: '',
         googleMapsRanking: 4,
         googleReviewsCount: 15,
         localListings: [
@@ -57,15 +59,15 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
       id: data.id,
       clientId: data.client_id,
       businessName: data.business_name,
-      address: data.address,
+      address: data.address || '',
       phone: data.phone || '+34 91 XXX XX XX', // Ensure phone is never null
       website: data.website || 'www.example.com', // Ensure website is never null
-      googleBusinessUrl: data.google_business_url,
-      googleMapsRanking: data.google_maps_ranking,
-      googleReviewsCount: data.google_reviews_count,
-      keywordRankings: data.keyword_rankings,
-      localListings: data.local_listings,
-      recommendations: data.recommendations,
+      googleBusinessUrl: data.google_business_url || '',
+      googleMapsRanking: data.google_maps_ranking || 0,
+      googleReviewsCount: data.google_reviews_count || 0,
+      keywordRankings: data.keyword_rankings || [],
+      localListings: data.local_listings || [],
+      recommendations: data.recommendations || [],
       title: data.title,
       date: data.date,
       location: data.location,
@@ -77,3 +79,71 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
     return null;
   }
 };
+
+// Add the missing functions
+export const generateLocalSeoAnalysis = async (documentIds: string[], clientId: string, clientName: string) => {
+  console.log("Generating local SEO analysis for documents:", documentIds);
+  
+  // This function would normally analyze documents and generate SEO data
+  // For now, we'll simulate it with a placeholder
+  
+  const sampleAnalysis: Omit<SeoLocalReport, "id"> = {
+    clientId: clientId,
+    title: `Informe SEO Local - ${clientName}`,
+    date: new Date().toISOString(),
+    businessName: clientName,
+    address: "Calle Principal 123",
+    location: "Madrid, España",
+    phone: "+34 91 123 45 67",
+    website: "www.example.com",
+    googleBusinessUrl: "https://business.google.com/example",
+    googleMapsRanking: 4,
+    googleReviewsCount: 12,
+    keywordRankings: [
+      { keyword: "negocio local madrid", position: 15 },
+      { keyword: "servicios profesionales madrid", position: 22 },
+      { keyword: `${clientName.toLowerCase()} madrid`, position: 8 }
+    ],
+    localListings: [
+      { platform: "Google Business", status: "Verificado" },
+      { platform: "Yelp", status: "Listado" },
+      { platform: "TripAdvisor", status: "No listado" }
+    ],
+    recommendations: [
+      "Optimizar perfil de Google Business",
+      "Conseguir más reseñas de clientes",
+      "Mejorar presencia en directorios locales",
+      "Crear contenido orientado a palabras clave locales"
+    ]
+  };
+  
+  console.log("Generated sample analysis:", sampleAnalysis);
+  
+  return sampleAnalysis;
+};
+
+export const createLocalSeoReport = async (
+  analysis: Omit<SeoLocalReport, "id">, 
+  clientId: string, 
+  clientName: string
+): Promise<SeoLocalReport> => {
+  console.log("Creating local SEO report for client:", clientId, clientName);
+  
+  try {
+    // Use the createSeoLocalReport function from localSeoReportService
+    const id = await createSeoLocalReport(analysis);
+    
+    console.log("Created local SEO report with ID:", id);
+    
+    return {
+      ...analysis,
+      id
+    };
+  } catch (error) {
+    console.error("Error creating local SEO report:", error);
+    throw error;
+  }
+};
+
+// Import the function to avoid circular dependency
+import { createSeoLocalReport } from "./localSeoReportService";

@@ -290,301 +290,290 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
       return undefined;
     }
 
+    // Buscar nombre del pack si existe
+    let packName = null;
+    if (invoice.packId) {
+      const pack = await getSeoPack(invoice.packId);
+      if (pack) {
+        packName = pack.name;
+      }
+    }
+
     // Crear documento PDF
     const doc = new jsPDF();
-    
-    // Paleta de colores moderna y profesional
-    const primaryColor = [80, 82, 209]; // Azul moderno #5052D1
-    const secondaryColor = [247, 250, 252]; // Gris muy claro #F7FAFC
-    const accentColor = [113, 128, 150]; // Gris medio #7180BF
-    const darkColor = [45, 55, 72]; // Gris oscuro #2D3748
-    const successColor = [56, 161, 105]; // Verde #38A169
     
     // Configuración de la página
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
     const margin = 15;
     
-    // Fondo superior con degradado
-    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(0, 0, pageWidth, 40, 'F');
+    // Calcular colores
+    const primaryBlue = [32, 78, 207]; // color seo-blue
+    const primaryPurple = [126, 34, 206]; // color seo-purple
+    const pendingColor = [234, 179, 8]; // yellow-500
+    const paidColor = [34, 197, 94]; // green-500
+    const cancelledColor = [239, 68, 68]; // red-500
     
-    // Franja decorativa
-    doc.setFillColor(240, 240, 240);
-    doc.rect(0, 40, pageWidth, 8, 'F');
+    // ---- Título y cabecera ----
+    // Fondo de cabecera con gradiente
+    doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+    doc.rect(margin, margin, pageWidth - margin * 2, 25, 'F');
     
-    // Logo y nombre de la empresa
-    if (company.logoUrl) {
-      try {
-        doc.addImage(company.logoUrl, 'JPEG', margin, 10, 30, 20);
-      } catch (e) {
-        // Si falla la carga del logo, usar texto como respaldo
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text(company.companyName.toUpperCase(), margin, 25);
-      }
-    } else {
-      // Nombre de la empresa como texto
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text(company.companyName.toUpperCase(), margin, 25);
-    }
-    
-    // Título "FACTURA" y número
+    // Título "Factura" y número
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text("FACTURA", pageWidth - margin - 90, 25);
+    doc.text(`Factura ${invoice.invoiceNumber}`, margin + 30, margin + 16);
     
-    doc.setFontSize(12);
-    doc.text(`#${invoice.invoiceNumber}`, pageWidth - margin - 40, 25);
-    
-    // Datos de la empresa
-    doc.setDrawColor(230, 230, 230);
-    doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    doc.roundedRect(margin, 58, (pageWidth / 2) - margin - 10, 60, 3, 3, 'F');
-    
-    doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text("DE", margin + 10, 70);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text(company.companyName, margin + 10, 80);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(`CIF/NIF: ${company.taxId}`, margin + 10, 88);
-    doc.text(company.address, margin + 10, 96);
-    if (company.phone) doc.text(`Tel: ${company.phone}`, margin + 10, 104);
-    if (company.email) doc.text(`Email: ${company.email}`, margin + 10, 112);
-    
-    // Datos del cliente
-    doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    doc.roundedRect(pageWidth / 2 + 10, 58, (pageWidth / 2) - margin - 10, 60, 3, 3, 'F');
-    
-    doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text("PARA", pageWidth / 2 + 20, 70);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text(client.name, pageWidth / 2 + 20, 80);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    if (client.company) doc.text(client.company, pageWidth / 2 + 20, 88);
-    const yStartClient = client.company ? 96 : 88;
-    doc.text(`Email: ${client.email}`, pageWidth / 2 + 20, yStartClient);
-    if (client.phone) doc.text(`Tel: ${client.phone}`, pageWidth / 2 + 20, yStartClient + 8);
-    
-    // Información de la factura (fechas, estado)
-    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2], 0.1); // Color primario con transparencia
-    doc.roundedRect(margin, 130, pageWidth - (margin * 2), 35, 3, 3, 'F');
-    
-    // Fecha de emisión
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-    doc.text("FECHA EMISIÓN", margin + 15, 142);
-    doc.setFont('helvetica', 'normal');
-    doc.text(formatDate(invoice.issueDate, false), margin + 15, 152);
-    
-    // Fecha de vencimiento
-    doc.setFont('helvetica', 'bold');
-    doc.text("FECHA VENCIMIENTO", margin + (pageWidth - margin * 2) / 3 + 15, 142);
-    doc.setFont('helvetica', 'normal');
-    const dueDateStr = invoice.dueDate 
-      ? formatDate(invoice.dueDate, false) 
-      : "N/A";
-    doc.text(dueDateStr, margin + (pageWidth - margin * 2) / 3 + 15, 152);
-    
-    // Estado de la factura
-    doc.setFont('helvetica', 'bold');
-    doc.text("ESTADO", margin + (pageWidth - margin * 2) * 2 / 3 + 15, 142);
-    
-    doc.setFont('helvetica', 'normal');
+    // Badge de estado
     const statusText = {
-      pending: "PENDIENTE",
-      paid: "PAGADA",
-      cancelled: "CANCELADA"
+      pending: "Pendiente",
+      paid: "Pagada",
+      cancelled: "Cancelada"
     }[invoice.status];
     
-    // Color según el estado
+    // Status badge oval
     const statusColors = {
-      pending: [226, 160, 63],  // Naranja #E2A03F
-      paid: [56, 161, 105],     // Verde #38A169
-      cancelled: [229, 62, 62]  // Rojo #E53E3E
+      pending: pendingColor,
+      paid: paidColor,
+      cancelled: cancelledColor
     };
     
-    const statusColor = statusColors[invoice.status] || [113, 128, 150];
+    const statusColor = statusColors[invoice.status] || pendingColor;
+    const statusX = margin + 160;
+    const statusY = margin + 12;
+    
+    // Dibujamos el badge de estado
+    doc.setFillColor(statusColor[0], statusColor[1], statusColor[2], 0.2);
+    doc.roundedRect(statusX, statusY, 40, 12, 6, 6, 'F');
     doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
-    doc.text(statusText, margin + (pageWidth - margin * 2) * 2 / 3 + 15, 152);
-    
-    // Volver al color normal
-    doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-    
-    // Tabla de conceptos
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text("Detalles", margin, 180);
+    doc.text(statusText, statusX + 20, statusY + 8, { align: 'center' });
     
-    // Estilos para la tabla
-    const tableHeaders = [
-      { header: 'Descripción', dataKey: 'description' },
-      { header: 'Precio', dataKey: 'price' },
-      { header: 'Cant.', dataKey: 'quantity' },
-      { header: 'Importe', dataKey: 'amount' }
-    ];
+    // ---- Contenido principal ----
+    // Dividimos en dos columnas: Detalles factura (izq, 2/3) e Información de pago (der, 1/3)
+    const columnMargin = 5;
+    const mainY = margin + 35;
+    const detailsWidth = (pageWidth - margin * 2) * 0.65;
+    const paymentWidth = (pageWidth - margin * 2) * 0.3;
     
-    // Preparar los datos para la tabla
-    const tableData = [];
+    // Recuadro de detalles de factura
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(240, 240, 240);
+    doc.roundedRect(margin, mainY, detailsWidth, pageHeight - mainY - margin * 2, 3, 3, 'FD');
     
-    // Si hay un pack asociado
-    if (invoice.packId) {
-      const pack = await getSeoPack(invoice.packId);
-      if (pack) {
-        tableData.push({
-          description: pack.name,
-          price: formatCurrency(invoice.baseAmount),
-          quantity: '1',
-          amount: formatCurrency(invoice.baseAmount)
-        });
-      }
-    } else {
-      // Si no hay pack, usar la descripción de las notas o texto por defecto
-      tableData.push({
-        description: invoice.notes || "Servicios profesionales",
-        price: formatCurrency(invoice.baseAmount),
-        quantity: '1',
-        amount: formatCurrency(invoice.baseAmount)
-      });
+    // Título de detalles
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Detalles de la Factura", margin + 10, mainY + 15);
+    
+    // Datos del emisor
+    const emisorY = mainY + 35;
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Datos del Emisor", margin + 10, emisorY);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    let emisorContentY = emisorY + 10;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text(company.companyName, margin + 10, emisorContentY);
+    emisorContentY += 6;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`CIF/NIF: ${company.taxId}`, margin + 10, emisorContentY);
+    emisorContentY += 6;
+    
+    doc.text(`${company.address}`, margin + 10, emisorContentY);
+    emisorContentY += 6;
+    
+    if (company.phone) {
+      doc.text(`Tel: ${company.phone}`, margin + 10, emisorContentY);
+      emisorContentY += 6;
     }
     
-    // Aplicar autoTable con estilos modernos
-    autoTable(doc, {
-      startY: 185,
-      head: [['Descripción', 'Precio', 'Cant.', 'Importe']],
-      body: tableData.map(row => [row.description, row.price, row.quantity, row.amount]),
-      theme: 'grid',
-      headStyles: { 
-        fillColor: primaryColor as [number, number, number],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        halign: 'left',
-        valign: 'middle'
-      },
-      alternateRowStyles: {
-        fillColor: [249, 250, 251]
-      },
-      styles: { 
-        fontSize: 9,
+    if (company.email) {
+      doc.text(`Email: ${company.email}`, margin + 10, emisorContentY);
+    }
+    
+    // Datos del cliente
+    const clientX = margin + detailsWidth / 2;
+    const clientY = mainY + 35;
+    
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Datos del Cliente", clientX, clientY);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    let clientContentY = clientY + 10;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text(client.name, clientX, clientContentY);
+    clientContentY += 6;
+    
+    doc.setFont('helvetica', 'normal');
+    if (client.company) {
+      doc.text(client.company, clientX, clientContentY);
+      clientContentY += 6;
+    }
+    
+    doc.text(`Email: ${client.email}`, clientX, clientContentY);
+    clientContentY += 6;
+    
+    if (client.phone) {
+      doc.text(`Tel: ${client.phone}`, clientX, clientContentY);
+    }
+    
+    // Sección de conceptos
+    const conceptosY = emisorContentY + 25;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Conceptos", margin + detailsWidth / 2, conceptosY, { align: 'center' });
+    
+    // Tabla de conceptos
+    // Usar autotable para generar la tabla de conceptos
+    doc.autoTable({
+      startY: conceptosY + 10,
+      head: [['Concepto', 'Importe']],
+      body: [
+        [
+          {
+            content: packName || "Servicios Profesionales", 
+            styles: { fontStyle: 'bold' }
+          },
+          {
+            content: formatCurrency(invoice.baseAmount),
+            styles: { halign: 'right', fontStyle: 'bold' }
+          }
+        ],
+        ...(invoice.notes ? [
+          [
+            {
+              content: invoice.notes,
+              styles: { fontStyle: 'normal', textColor: [100, 100, 100] }
+            },
+            { content: '' }
+          ]
+        ] : []),
+        [
+          { 
+            content: 'Base Imponible',
+            styles: { halign: 'right', fontStyle: 'bold' }
+          },
+          {
+            content: formatCurrency(invoice.baseAmount),
+            styles: { halign: 'right', fontStyle: 'bold' }
+          }
+        ],
+        [
+          {
+            content: `IVA (${invoice.taxRate}%)`,
+            styles: { halign: 'right', fontStyle: 'bold' }
+          },
+          {
+            content: formatCurrency(invoice.taxAmount),
+            styles: { halign: 'right', fontStyle: 'bold' }
+          }
+        ],
+        [
+          {
+            content: 'Total',
+            styles: { halign: 'right', fontStyle: 'bold' }
+          },
+          {
+            content: formatCurrency(invoice.totalAmount),
+            styles: { halign: 'right', fontStyle: 'bold', textColor: [32, 78, 207] }
+          }
+        ]
+      ],
+      theme: 'plain',
+      styles: {
+        fontSize: 10,
         cellPadding: 6
       },
       columnStyles: {
-        0: { cellWidth: pageWidth - 180 - (2 * margin) },
-        1: { cellWidth: 50, halign: 'right' },
-        2: { cellWidth: 30, halign: 'center' },
-        3: { cellWidth: 50, halign: 'right' }
+        0: { cellWidth: detailsWidth * 0.6 },
+        1: { cellWidth: detailsWidth * 0.4, halign: 'right' }
       },
-      margin: { left: margin, right: margin }
+      margin: { left: margin + 5 },
+      tableWidth: detailsWidth - 10,
     });
     
-    // Obtener la posición Y final de la tabla
-    const finalY = doc.lastAutoTable.finalY + 15;
+    // Recuadro de información de pago
+    const paymentX = margin + detailsWidth + columnMargin;
+    doc.setFillColor(248, 250, 252); // bg-gray-50
+    doc.roundedRect(paymentX, mainY, paymentWidth, 200, 3, 3, 'F');
     
-    // Totales - Caja con estilo
-    doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    doc.roundedRect(pageWidth - 120 - margin, finalY, 120, 70, 3, 3, 'F');
-    
-    // Subtotal
-    doc.setFontSize(9);
-    doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-    doc.setFont('helvetica', 'normal');
-    doc.text("Subtotal", pageWidth - 110 - margin, finalY + 15);
+    // Título de información de pago
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text(formatCurrency(invoice.baseAmount), pageWidth - margin - 20, finalY + 15, { align: 'right' });
-    
-    // IVA
-    doc.setFont('helvetica', 'normal');
-    doc.text(`IVA (${invoice.taxRate}%)`, pageWidth - 110 - margin, finalY + 30);
-    doc.setFont('helvetica', 'bold');
-    doc.text(formatCurrency(invoice.taxAmount), pageWidth - margin - 20, finalY + 30, { align: 'right' });
-    
-    // Línea separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.5);
-    doc.line(pageWidth - 110 - margin, finalY + 40, pageWidth - margin - 10, finalY + 40);
-    
-    // Total
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text("TOTAL", pageWidth - 110 - margin, finalY + 55);
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.setFontSize(14);
-    doc.text(formatCurrency(invoice.totalAmount), pageWidth - margin - 20, finalY + 55, { align: 'right' });
+    doc.setTextColor(32, 78, 207); // text-seo-blue
+    doc.text("Información de", paymentX + paymentWidth / 2, mainY + 20, { align: 'center' });
+    doc.text("Pago", paymentX + paymentWidth / 2, mainY + 35, { align: 'center' });
     
     // Información de pago
-    const paymentY = finalY + 100;
-    doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text("INSTRUCCIONES DE PAGO", margin, paymentY);
+    doc.setTextColor(0, 0, 0);
+    let paymentContentY = mainY + 60;
     
-    // Línea decorativa bajo el título
-    doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.setLineWidth(0.5);
-    doc.line(margin, paymentY + 5, margin + 80, paymentY + 5);
-    
-    // Método de pago - Transferencia
-    doc.setFontSize(9);
+    // Estado
     doc.setFont('helvetica', 'normal');
-    doc.text("Por favor, realice el pago mediante transferencia bancaria a la siguiente cuenta:", margin, paymentY + 15);
+    doc.text("Estado:", paymentX + 10, paymentContentY);
     
-    // Datos bancarios
+    // Status badge para la sección de pago
+    const smallStatusX = paymentX + paymentWidth - 10 - 40;
+    const smallStatusY = paymentContentY - 8;
+    
+    doc.setFillColor(statusColor[0], statusColor[1], statusColor[2], 0.2);
+    doc.roundedRect(smallStatusX, smallStatusY, 40, 12, 6, 6, 'F');
+    doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    const bankAccount = company.bankAccount || "ES00 0000 0000 0000 0000 0000";
-    doc.text(bankAccount, margin, paymentY + 25);
+    doc.text(statusText, smallStatusX + 20, smallStatusY + 8, { align: 'center' });
     
-    // Referencia
+    // Resto de información
+    paymentContentY += 20;
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Incluya como referencia el número de factura: ${invoice.invoiceNumber}`, margin, paymentY + 35);
+    doc.text("Nº Factura:", paymentX + 10, paymentContentY);
+    doc.setFont('helvetica', 'bold');
+    doc.text(invoice.invoiceNumber, paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
     
-    // Notas
-    if (invoice.notes) {
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text("NOTAS", margin, paymentY + 50);
-      
-      // Línea decorativa bajo el título
-      doc.setLineWidth(0.5);
-      doc.line(margin, paymentY + 55, margin + 30, paymentY + 55);
-      
+    paymentContentY += 20;
+    doc.setFont('helvetica', 'normal');
+    doc.text("Fecha Emisión:", paymentX + 10, paymentContentY);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formatDate(invoice.issueDate), paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
+    
+    if (invoice.dueDate) {
+      paymentContentY += 20;
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      
-      // Dividir el texto en líneas para evitar que se salga de la página
-      const splitNotes = doc.splitTextToSize(invoice.notes, pageWidth - (2 * margin));
-      doc.text(splitNotes, margin, paymentY + 65);
+      doc.text("Fecha Vencimiento:", paymentX + 10, paymentContentY);
+      doc.setFont('helvetica', 'bold');
+      doc.text(formatDate(invoice.dueDate), paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
     }
     
-    // Pie de página
-    const footerY = pageHeight - 25;
+    if (invoice.status === "paid" && invoice.paymentDate) {
+      paymentContentY += 20;
+      doc.setFont('helvetica', 'normal');
+      doc.text("Fecha Pago:", paymentX + 10, paymentContentY);
+      doc.setFont('helvetica', 'bold');
+      doc.text(formatDate(invoice.paymentDate), paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
+    }
     
-    // Línea separadora
-    doc.setDrawColor(230, 230, 230);
-    doc.setLineWidth(0.5);
-    doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
-    
-    // Texto de agradecimiento
-    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.text("Gracias por su confianza. Para cualquier consulta, no dude en contactarnos.", pageWidth / 2, footerY, { align: 'center' });
+    // Total a pagar destacado
+    paymentContentY += 30;
+    doc.setFont('helvetica', 'normal');
+    doc.text("Total a Pagar:", paymentX + 10, paymentContentY);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(126, 34, 206); // text-seo-purple
+    doc.setFontSize(12);
+    doc.text(formatCurrency(invoice.totalAmount), paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
     
     // Devolver el blob del PDF
     return doc.output('blob');

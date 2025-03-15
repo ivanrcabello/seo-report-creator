@@ -26,14 +26,16 @@ export async function getSeoLocalReports(clientId: string): Promise<SeoLocalRepo
       date: report.date,
       businessName: report.business_name,
       location: report.location,
-      address: report.address || report.location, // Back-compatibility
-      phone: report.phone || null,
-      website: report.website || null,
-      googleBusinessUrl: report.google_business_url || null,
+      address: report.location, // Using location as address since address doesn't exist in DB
+      phone: null, // These fields don't exist in DB, set defaults
+      website: null,
+      googleBusinessUrl: null,
       googleMapsRanking: report.google_maps_ranking || 0,
-      googleReviewsCount: report.google_reviews_count || 0,
-      keywordRankings: report.keyword_rankings ? (Array.isArray(report.keyword_rankings) ? report.keyword_rankings : []) : [],
-      localListings: report.local_listings ? (Array.isArray(report.local_listings) ? report.local_listings : []) : [],
+      googleReviewsCount: 0, // Field doesn't exist in DB
+      keywordRankings: Array.isArray(report.keyword_rankings) ? report.keyword_rankings : 
+                      (typeof report.keyword_rankings === 'string' ? JSON.parse(report.keyword_rankings) : []),
+      localListings: Array.isArray(report.local_listings) ? report.local_listings : 
+                    (typeof report.local_listings === 'string' ? JSON.parse(report.local_listings) : []),
       shareToken: report.share_token,
       sharedAt: report.shared_at,
       recommendations: report.recommendations || []
@@ -69,14 +71,16 @@ export async function getSeoLocalReportById(reportId: string): Promise<SeoLocalR
       date: data.date,
       businessName: data.business_name,
       location: data.location,
-      address: data.address || data.location,
-      phone: data.phone || null,
-      website: data.website || null,
-      googleBusinessUrl: data.google_business_url || null,
+      address: data.location, // Use location as address
+      phone: null, // These fields don't exist in DB
+      website: null,
+      googleBusinessUrl: null,
       googleMapsRanking: data.google_maps_ranking || 0,
-      googleReviewsCount: data.google_reviews_count || 0,
-      keywordRankings: data.keyword_rankings ? (Array.isArray(data.keyword_rankings) ? data.keyword_rankings : []) : [],
-      localListings: data.local_listings ? (Array.isArray(data.local_listings) ? data.local_listings : []) : [],
+      googleReviewsCount: 0, // Field doesn't exist in DB
+      keywordRankings: Array.isArray(data.keyword_rankings) ? data.keyword_rankings : 
+                      (typeof data.keyword_rankings === 'string' ? JSON.parse(data.keyword_rankings) : []),
+      localListings: Array.isArray(data.local_listings) ? data.local_listings : 
+                    (typeof data.local_listings === 'string' ? JSON.parse(data.local_listings) : []),
       shareToken: data.share_token,
       sharedAt: data.shared_at,
       recommendations: data.recommendations || []

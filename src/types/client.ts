@@ -1,4 +1,5 @@
 
+
 // Client types definitions
 
 export interface Client {
@@ -13,6 +14,15 @@ export interface Client {
   documents?: ClientDocument[];
   analyticsConnected?: boolean;
   searchConsoleConnected?: boolean;
+  isActive?: boolean;
+}
+
+export interface ClientSummary {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+  createdAt: string;
   isActive?: boolean;
 }
 
@@ -137,6 +147,10 @@ export interface CompanySettings {
   phone?: string;
   email?: string;
   logoUrl?: string;
+  bankAccount?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -144,7 +158,7 @@ export interface CompanySettings {
 export interface Invoice {
   id: string;
   invoiceNumber: string;
-  number?: string;
+  number: string;  // Make it non-optional to match the Invoice from invoice.ts
   clientId: string;
   clientName?: string;
   issueDate: string;
@@ -167,3 +181,4 @@ export interface Invoice {
   createdAt: string;
   updatedAt: string;
 }
+

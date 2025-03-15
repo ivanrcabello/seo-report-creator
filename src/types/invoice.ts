@@ -1,4 +1,5 @@
 
+
 export type InvoiceStatus = "pending" | "paid" | "cancelled" | "draft";
 
 export interface InvoiceItem {
@@ -47,6 +48,10 @@ export interface CompanySettings {
   email?: string;
   logoUrl?: string;
   bankAccount?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
   createdAt: string;
   updatedAt: string;
 }
+

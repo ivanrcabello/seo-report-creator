@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
  */
 export const mapInvoiceFromDB = (invoice: any): Invoice => ({
   id: invoice.id,
-  number: invoice.invoice_number || '',
+  number: invoice.invoice_number || '',  // Ensure number is always set
   invoiceNumber: invoice.invoice_number,
   clientId: invoice.client_id,
   clientName: invoice.client_name || 'Unknown Client',

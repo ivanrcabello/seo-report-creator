@@ -1,5 +1,5 @@
 
-import { CompanySettings } from "@/types/client";
+import { CompanySettings } from "@/types/invoice";
 import { supabase } from "@/integrations/supabase/client";
 
 // Función para convertir datos de Supabase al formato de la aplicación

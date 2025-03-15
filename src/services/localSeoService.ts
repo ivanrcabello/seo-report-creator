@@ -103,15 +103,17 @@ export async function createLocalSeoReport(
       title: data.title,
       date: data.date,
       businessName: data.business_name,
-      address: data.address || data.location,
+      address: data.location, // Use location as address
       location: data.location,
-      phone: data.phone || null,
-      website: data.website || null,
-      googleBusinessUrl: data.google_business_url || null,
+      phone: null, // Field doesn't exist in DB
+      website: null, 
+      googleBusinessUrl: null,
       googleMapsRanking: data.google_maps_ranking || 0,
-      googleReviewsCount: data.google_reviews_count || 0,
-      keywordRankings: data.keyword_rankings ? (Array.isArray(data.keyword_rankings) ? data.keyword_rankings : []) : [],
-      localListings: data.local_listings ? (Array.isArray(data.local_listings) ? data.local_listings : []) : [],
+      googleReviewsCount: 0, // Field doesn't exist in DB
+      keywordRankings: Array.isArray(data.keyword_rankings) ? data.keyword_rankings : 
+                      (typeof data.keyword_rankings === 'string' ? JSON.parse(data.keyword_rankings) : []),
+      localListings: Array.isArray(data.local_listings) ? data.local_listings : 
+                    (typeof data.local_listings === 'string' ? JSON.parse(data.local_listings) : []),
       recommendations: data.recommendations || [],
       shareToken: null,
       sharedAt: null
@@ -135,13 +137,9 @@ export async function updateLocalSeoReport(
     
     if (updates.title) reportData.title = updates.title;
     if (updates.businessName) reportData.business_name = updates.businessName;
-    if (updates.address) reportData.address = updates.address;
+    if (updates.address) reportData.location = updates.address; // Map address to location
     if (updates.location) reportData.location = updates.location;
-    if (updates.phone) reportData.phone = updates.phone;
-    if (updates.website) reportData.website = updates.website;
-    if (updates.googleBusinessUrl) reportData.google_business_url = updates.googleBusinessUrl;
     if (updates.googleMapsRanking) reportData.google_maps_ranking = updates.googleMapsRanking;
-    if (updates.googleReviewsCount) reportData.google_reviews_count = updates.googleReviewsCount;
     if (updates.keywordRankings) reportData.keyword_rankings = updates.keywordRankings;
     if (updates.localListings) reportData.local_listings = updates.localListings;
     if (updates.recommendations) reportData.recommendations = updates.recommendations;

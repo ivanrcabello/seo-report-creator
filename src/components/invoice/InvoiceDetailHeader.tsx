@@ -51,13 +51,13 @@ export const InvoiceDetailHeader = ({
           variant="outline" 
           size="sm"
           onClick={onGoBack}
-          className="gap-1"
+          className="gap-1 bg-white text-seo-blue hover:bg-gray-100"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver
         </Button>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <FileSpreadsheet className="h-6 w-6 text-blue-600" />
+          <FileSpreadsheet className="h-6 w-6 text-white" />
           Factura {invoice.invoiceNumber}
         </h1>
         {statusBadge}
@@ -67,7 +67,7 @@ export const InvoiceDetailHeader = ({
         <Button
           onClick={onDownloadPdf}
           variant="outline"
-          className="gap-1"
+          className="gap-1 bg-white text-seo-blue hover:bg-gray-100"
         >
           <Download className="h-4 w-4" />
           Descargar PDF
@@ -76,7 +76,7 @@ export const InvoiceDetailHeader = ({
         <Button
           onClick={onSendEmail}
           variant="outline"
-          className="gap-1"
+          className="gap-1 bg-white text-seo-blue hover:bg-gray-100"
         >
           <Mail className="h-4 w-4" />
           Enviar por Email
@@ -86,7 +86,7 @@ export const InvoiceDetailHeader = ({
           <Button
             onClick={onMarkAsPaid}
             variant="secondary"
-            className="gap-1"
+            className="gap-1 bg-white text-seo-purple font-medium hover:bg-gray-100"
           >
             <Check className="h-4 w-4" />
             Marcar como Pagada
@@ -94,7 +94,7 @@ export const InvoiceDetailHeader = ({
         )}
         
         <Link to={`/invoices/edit/${invoice.id}`}>
-          <Button variant="outline" className="gap-1">
+          <Button variant="outline" className="gap-1 bg-white text-seo-blue hover:bg-gray-100">
             <Edit className="h-4 w-4" />
             Editar
           </Button>
@@ -102,7 +102,7 @@ export const InvoiceDetailHeader = ({
         
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="icon">
+            <Button variant="destructive" size="icon" className="bg-white text-red-600 hover:bg-gray-100 hover:text-red-700">
               <Trash2 className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>

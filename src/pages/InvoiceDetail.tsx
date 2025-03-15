@@ -196,7 +196,7 @@ export const InvoiceDetail = () => {
   return (
     <div className="container py-8">
       <div className="invoice-container bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="invoice-header bg-gradient-to-r from-seo-blue to-seo-purple text-white p-6">
+        <div className="invoice-header bg-gradient-to-r from-seo-blue to-seo-purple p-6">
           <InvoiceDetailHeader 
             invoice={invoice}
             onDelete={handleDelete}

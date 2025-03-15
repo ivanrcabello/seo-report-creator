@@ -6,40 +6,24 @@ import { mapProposalFromDB } from "./proposal/proposalMappers";
 // Fetch a shared proposal using its token
 export const getProposalByShareToken = async (token: string): Promise<Proposal | null> => {
   try {
-    // Specify the explicit table type to avoid deep type instantiation
+    // Use a simpler approach with .single() and handle potential errors
     const { data, error } = await supabase
       .from("proposals")
-      .select("*")
+      .select()
       .eq("share_token", token)
-      .maybeSingle<{
-        id: string;
-        client_id: string;
-        title: string;
-        description: string;
-        pack_id: string;
-        status: string;
-        created_at: string;
-        updated_at: string;
-        sent_at: string | null;
-        expires_at: string | null;
-        custom_price: number | null;
-        custom_features: string[] | null;
-        report_ids: string[] | null;
-        public_url: string | null;
-        share_token: string | null;
-      }>();
-
+      .limit(1);
+    
     if (error) {
       console.error("Error fetching proposal by share token:", error);
       return null;
     }
 
-    if (!data) {
+    if (!data || data.length === 0) {
       return null;
     }
 
     // Map from database format to application format using the existing mapper
-    return mapProposalFromDB(data);
+    return mapProposalFromDB(data[0]);
   } catch (error) {
     console.error("Error in getProposalByShareToken:", error);
     return null;

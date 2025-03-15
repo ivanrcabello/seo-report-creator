@@ -133,17 +133,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       console.log("Attempting to sign up:", email);
+      
+      // Check if the user already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('email', email)
+        .maybeSingle();
+      
+      if (checkError && !checkError.message.includes('No rows found')) {
+        console.error("Error checking existing user:", checkError);
+      }
+      
+      // Define role - set admin for specific email addresses
+      const adminEmails = ['ivan@soyseolocal.com', 'admin@example.com']; // Add your admin emails here
+      const role = adminEmails.includes(email.toLowerCase()) ? 'admin' : 'client';
+      console.log(`Setting role for ${email} to ${role}`);
+      
+      // Proceed with signup
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
-          data: { name }
+          data: { 
+            name,
+            role // Include role in user metadata
+          }
         }
       });
       
       if (error) {
         console.error("Sign up error:", error);
         throw error;
+      }
+      
+      // If the user already exists in profiles but is trying to re-register
+      if (existingUser) {
+        console.log("User already exists in profiles, updating role if needed");
+        if (existingUser.role !== role) {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ role })
+            .eq('email', email);
+            
+          if (updateError) {
+            console.error("Error updating existing user role:", updateError);
+          }
+        }
       }
       
       console.log("Sign up successful:", data);

@@ -189,9 +189,13 @@ export const generateSeoReportPdf = async (report: AIReport, auditData: AuditRes
         startY: yPos + 5,
         body: technicalData,
         theme: "plain",
-        styles: { fontSize: 10 },
-        rowStyles: (row) => {
-          return { fillColor: row % 2 === 0 ? [240, 240, 240] : undefined };
+        styles: { 
+          fontSize: 10,
+          cellPadding: 4,
+          // Apply zebra striping effect directly within styles
+          fillColor: function(cell, data) {
+            return data.row % 2 === 0 ? [240, 240, 240] : null;
+          }
         }
       });
       
@@ -216,9 +220,13 @@ export const generateSeoReportPdf = async (report: AIReport, auditData: AuditRes
         startY: yPos + 5,
         body: localSeoData,
         theme: "plain",
-        styles: { fontSize: 10 },
-        rowStyles: (row) => {
-          return { fillColor: row % 2 === 0 ? [240, 240, 240] : undefined };
+        styles: { 
+          fontSize: 10,
+          cellPadding: 4,
+          // Apply zebra striping effect directly within styles
+          fillColor: function(cell, data) {
+            return data.row % 2 === 0 ? [240, 240, 240] : null;
+          }
         }
       });
       
@@ -243,9 +251,13 @@ export const generateSeoReportPdf = async (report: AIReport, auditData: AuditRes
         startY: yPos + 5,
         body: contentData,
         theme: "plain",
-        styles: { fontSize: 10 },
-        rowStyles: (row) => {
-          return { fillColor: row % 2 === 0 ? [240, 240, 240] : undefined };
+        styles: { 
+          fontSize: 10,
+          cellPadding: 4,
+          // Apply zebra striping effect directly within styles
+          fillColor: function(cell, data) {
+            return data.row % 2 === 0 ? [240, 240, 240] : null;
+          }
         }
       });
       

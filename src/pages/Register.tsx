@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,6 +23,9 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { BarChart } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 interface RegisterFormValues {
   name: string;
@@ -35,6 +38,9 @@ export default function Register() {
   const { signUp, signInWithGoogle, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string>("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const location = useLocation();
 
   const form = useForm<RegisterFormValues>({
     defaultValues: {
@@ -45,6 +51,18 @@ export default function Register() {
     },
   });
 
+  // Check for error parameters in URL
+  useEffect(() => {
+    // Parse error from URL hash if present
+    const hashParams = new URLSearchParams(location.hash.substring(1));
+    const error = hashParams.get("error");
+    const errorDescription = hashParams.get("error_description");
+    
+    if (error === "access_denied" && errorDescription?.includes("Email link is invalid or has expired")) {
+      setAuthError("El enlace de verificación de correo electrónico ha expirado o es inválido. Por favor, solicita un nuevo correo de verificación.");
+    }
+  }, [location]);
+
   const onSubmit = async (data: RegisterFormValues) => {
     try {
       if (data.password !== data.confirmPassword) {
@@ -53,6 +71,7 @@ export default function Register() {
       }
 
       setAuthError(null);
+      setRegisteredEmail(data.email);
       await signUp(data.email, data.password, data.name);
       setSuccess(true);
       form.reset();
@@ -70,6 +89,34 @@ export default function Register() {
     await signInWithGoogle();
   };
 
+  const handleResendVerification = async () => {
+    try {
+      setResendLoading(true);
+      
+      if (!registeredEmail) {
+        setAuthError("No hay dirección de correo electrónico para reenviar la verificación.");
+        return;
+      }
+      
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: registeredEmail,
+      });
+      
+      if (error) {
+        console.error("Error resending verification email:", error);
+        throw error;
+      }
+      
+      toast.success("Se ha enviado un nuevo correo de verificación. Por favor, revisa tu bandeja de entrada.");
+    } catch (error: any) {
+      console.error("Resend verification exception:", error);
+      setAuthError(error.message || "Error al enviar el correo de verificación. Por favor, intenta de nuevo.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md">
@@ -85,10 +132,21 @@ export default function Register() {
           </CardHeader>
           <CardContent>
             {success ? (
-              <div className="py-4 text-center">
-                <div className="text-green-500 mb-4">
-                  ¡Registro exitoso! Por favor verifica tu correo electrónico para activar tu cuenta.
-                </div>
+              <div className="py-4 text-center space-y-4">
+                <Alert className="mb-4 bg-green-50 border-green-200">
+                  <AlertTitle>¡Registro exitoso!</AlertTitle>
+                  <AlertDescription>
+                    Por favor verifica tu correo electrónico para activar tu cuenta. Si no lo recibes, puedes solicitar un nuevo correo de verificación.
+                  </AlertDescription>
+                </Alert>
+                <Button 
+                  variant="outline" 
+                  onClick={handleResendVerification}
+                  disabled={resendLoading}
+                  className="mb-4"
+                >
+                  {resendLoading ? "Enviando..." : "Reenviar correo de verificación"}
+                </Button>
                 <Link to="/login">
                   <Button>Ir a Iniciar Sesión</Button>
                 </Link>
@@ -96,6 +154,20 @@ export default function Register() {
             ) : (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  {authError && authError.includes("expirado") && (
+                    <Alert className="mb-4 bg-amber-50 border-amber-200">
+                      <AlertTitle>Enlace expirado</AlertTitle>
+                      <AlertDescription className="space-y-4">
+                        <p>{authError}</p>
+                        <Link to="/login">
+                          <Button variant="outline" size="sm">
+                            Ir a Iniciar Sesión
+                          </Button>
+                        </Link>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   <FormField
                     control={form.control}
                     name="name"
@@ -126,7 +198,14 @@ export default function Register() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="correo@ejemplo.com" {...field} />
+                          <Input 
+                            placeholder="correo@ejemplo.com" 
+                            {...field} 
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setRegisteredEmail(e.target.value);
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -169,7 +248,7 @@ export default function Register() {
                     )}
                   />
 
-                  {authError && (
+                  {authError && !authError.includes("expirado") && (
                     <div className="text-sm text-red-500 px-1">{authError}</div>
                   )}
 

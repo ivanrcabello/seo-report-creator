@@ -1,5 +1,3 @@
-
-
 // Client types definitions
 
 export interface Client {
@@ -158,27 +156,26 @@ export interface CompanySettings {
 export interface Invoice {
   id: string;
   invoiceNumber: string;
-  number: string;  // Make it non-optional to match the Invoice from invoice.ts
+  number: string;
   clientId: string;
-  clientName?: string;
+  clientName: string;
   issueDate: string;
-  date?: string;
-  dueDate?: string;
+  date: string;
+  dueDate: string;
   packId?: string;
   proposalId?: string;
   baseAmount: number;
-  subtotal?: number;
+  subtotal: number;
   taxRate: number;
-  tax?: number;
+  tax: number;
   taxAmount: number;
   totalAmount: number;
-  total?: number;
+  total: number;
   status: "pending" | "paid" | "cancelled" | "draft";
   paymentDate?: string;
-  paidAt?: string;
+  paidAt?: string | null;
   notes?: string;
   pdfUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
-

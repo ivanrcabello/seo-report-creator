@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Invoice } from "@/types/client";
+import { Invoice } from "@/types/invoice";
 import { getClientInvoices } from "@/services/invoiceService";
 import { ClientInvoices } from "@/components/ClientInvoices";
 import { Card, CardContent } from "@/components/ui/card";

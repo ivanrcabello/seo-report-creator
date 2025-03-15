@@ -176,20 +176,32 @@ export const InvoiceForm = () => {
       if (isNewInvoice) {
         result = await createInvoice({
           ...data,
+          clientName: client?.name || 'Unknown Client',
+          date: data.issueDate,
+          number: data.invoiceNumber || '',
           baseAmount: baseAmountValue,
+          subtotal: baseAmountValue,
           taxRate: taxRateValue,
+          tax: taxRateValue,
           taxAmount,
           totalAmount,
+          total: totalAmount,
         } as any);
       } else {
         result = await updateInvoice({
           ...invoice,
           ...data,
+          clientName: client?.name || invoice?.clientName || 'Unknown Client',
+          date: data.issueDate,
+          number: data.invoiceNumber || invoice?.invoiceNumber || '',
           baseAmount: baseAmountValue,
+          subtotal: baseAmountValue,
           taxRate: taxRateValue,
+          tax: taxRateValue,
           taxAmount,
           totalAmount,
-        } as Invoice);
+          total: totalAmount,
+        } as any);
       }
       
       if (result) {

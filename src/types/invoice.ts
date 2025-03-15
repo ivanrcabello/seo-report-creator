@@ -1,5 +1,4 @@
 
-
 export type InvoiceStatus = "pending" | "paid" | "cancelled" | "draft";
 
 export interface InvoiceItem {
@@ -54,4 +53,3 @@ export interface CompanySettings {
   createdAt: string;
   updatedAt: string;
 }
-

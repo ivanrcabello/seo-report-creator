@@ -44,6 +44,7 @@ export const mapInvoiceToDB = (invoice: Partial<Invoice>) => {
     id,
     invoice_number: invoice.invoiceNumber || invoice.number,
     client_id: invoice.clientId,
+    client_name: invoice.clientName || 'Unknown Client',
     issue_date: invoice.issueDate || invoice.date,
     due_date: invoice.dueDate,
     pack_id: invoice.packId,

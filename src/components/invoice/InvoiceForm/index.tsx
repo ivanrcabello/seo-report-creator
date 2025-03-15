@@ -40,7 +40,6 @@ export const InvoiceForm = () => {
 
   const isNewInvoice = !id || id === "new";
   
-  // Get clientId from query params if available
   const queryParams = new URLSearchParams(location.search);
   const clientIdFromQuery = queryParams.get('clientId');
 
@@ -58,17 +57,14 @@ export const InvoiceForm = () => {
     },
   });
 
-  // Calcular automáticamente el IVA y total cuando cambia el importe base
   const baseAmount = form.watch("baseAmount");
   const taxRate = form.watch("taxRate");
   
-  // Ensure values are numbers for calculations
   const baseAmountNum = Number(baseAmount) || 0;
   const taxRateNum = Number(taxRate) || 0;
   const taxAmount = (baseAmountNum * taxRateNum) / 100;
   const totalAmount = baseAmountNum + taxAmount;
 
-  // Load clients
   useEffect(() => {
     const loadClients = async () => {
       try {
@@ -77,7 +73,6 @@ export const InvoiceForm = () => {
         console.log("Clients loaded:", clients);
         setAvailableClients(clients);
         
-        // Load client data if clientId is in URL and creating new invoice
         if (clientIdFromQuery && isNewInvoice) {
           console.log("Loading client data for:", clientIdFromQuery);
           const clientData = await getClient(clientIdFromQuery);
@@ -97,7 +92,6 @@ export const InvoiceForm = () => {
     loadClients();
   }, [clientIdFromQuery, isNewInvoice]);
 
-  // Load invoice data if editing
   useEffect(() => {
     const loadInvoiceData = async () => {
       if (isNewInvoice) {
@@ -112,13 +106,11 @@ export const InvoiceForm = () => {
         if (data) {
           console.log("Retrieved invoice data:", data);
           setInvoice(data);
-          // Load client data
           const clientData = await getClient(data.clientId);
           if (clientData) {
             setClient(clientData);
           }
           
-          // Format dates properly
           const issueDate = data.issueDate ? format(new Date(data.issueDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd");
           const dueDate = data.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd") : format(addDays(new Date(), 30), "yyyy-MM-dd");
           
@@ -160,7 +152,6 @@ export const InvoiceForm = () => {
     loadInvoiceData();
   }, [id, isNewInvoice, form]);
   
-  // Handle client selection change
   const handleClientChange = async (clientId: string) => {
     if (!clientId || clientId === "no-clients") return;
     
@@ -176,7 +167,6 @@ export const InvoiceForm = () => {
     }
   };
 
-  // Form submission handler
   const onSubmit = async (data: FormValues) => {
     if (!data.clientId || data.clientId === "no-clients") {
       toast.error("Debe seleccionar un cliente");
@@ -187,7 +177,6 @@ export const InvoiceForm = () => {
     try {
       let result;
       
-      // Calculate tax and total
       const baseAmountValue = Number(data.baseAmount) || 0;
       const taxRateValue = Number(data.taxRate) || 0;
       const taxAmount = (baseAmountValue * taxRateValue) / 100;
@@ -197,12 +186,10 @@ export const InvoiceForm = () => {
       console.log("Form data:", data);
       
       if (isNewInvoice) {
-        // Create new invoice
-        console.log("Creating new invoice with data:", data);
         const invoiceData = {
           ...data,
           number: data.invoiceNumber || '',
-          clientName: client?.name || '',
+          clientName: client?.name || 'Unknown Client',
           baseAmount: baseAmountValue,
           subtotal: baseAmountValue,
           tax: taxRateValue,
@@ -210,24 +197,22 @@ export const InvoiceForm = () => {
           taxAmount,
           totalAmount,
           total: totalAmount,
+          date: data.issueDate,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
         
-        result = await createInvoice(invoiceData as Invoice);
+        result = await createInvoice(invoiceData as any);
       } else {
         if (!id) {
           throw new Error("Missing invoice ID for update");
         }
         
-        // Ensure we're passing the full invoice object with the ID
-        console.log("Updating invoice with ID:", id);
-        
-        // Make sure to include the ID in the update data and preserve existing fields
-        const updateData: Invoice = {
+        const updateData = {
           ...(invoice || {}),
           id,
           clientId: data.clientId,
+          clientName: client?.name || invoice?.clientName || 'Unknown Client',
           packId: data.packId,
           proposalId: data.proposalId,
           baseAmount: baseAmountValue,
@@ -240,8 +225,8 @@ export const InvoiceForm = () => {
           status: data.status,
           issueDate: data.issueDate,
           date: data.issueDate,
-          dueDate: data.dueDate || null,
-          notes: data.notes || null,
+          dueDate: data.dueDate || '',
+          notes: data.notes || '',
           invoiceNumber: data.invoiceNumber || invoice?.invoiceNumber || "",
           number: data.invoiceNumber || invoice?.invoiceNumber || "",
           paymentDate: invoice?.paymentDate || null,
@@ -251,8 +236,7 @@ export const InvoiceForm = () => {
           updatedAt: new Date().toISOString()
         };
         
-        console.log("Updating invoice with full data:", updateData);
-        result = await updateInvoice(updateData);
+        result = await updateInvoice(updateData as any);
       }
       
       if (result) {
@@ -277,7 +261,6 @@ export const InvoiceForm = () => {
     return <InvoiceFormError error={error} onGoBack={() => navigate(-1)} />;
   }
 
-  // If creating a new invoice and no clients available
   if (isNewInvoice && availableClients.length === 0) {
     return <InvoiceFormNoClients onGoBack={() => navigate(-1)} />;
   }
@@ -296,7 +279,6 @@ export const InvoiceForm = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Cliente y Estado */}
               <ClientSelection 
                 form={form} 
                 isNewInvoice={isNewInvoice} 
@@ -306,7 +288,6 @@ export const InvoiceForm = () => {
               />
               <InvoiceStatus form={form} />
               
-              {/* Número de factura */}
               {!isNewInvoice && (
                 <InvoiceNumberField 
                   form={form} 
@@ -315,13 +296,10 @@ export const InvoiceForm = () => {
                 />
               )}
               
-              {/* Fechas */}
               <DateFields form={form} />
               
-              {/* Importes */}
               <AmountFields form={form} />
               
-              {/* Resumen de Importes */}
               <AmountSummary 
                 baseAmount={baseAmountNum} 
                 taxRate={taxRateNum} 
@@ -329,7 +307,6 @@ export const InvoiceForm = () => {
                 totalAmount={totalAmount} 
               />
               
-              {/* Notas */}
               <NotesField form={form} />
             </div>
             

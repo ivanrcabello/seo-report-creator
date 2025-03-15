@@ -68,8 +68,12 @@ export const InvoiceForm = () => {
   // Calcular automáticamente el IVA y total cuando cambia el importe base
   const baseAmount = form.watch("baseAmount");
   const taxRate = form.watch("taxRate");
-  const taxAmount = (baseAmount * taxRate) / 100;
-  const totalAmount = baseAmount + taxAmount;
+  
+  // Ensure values are numbers for calculations
+  const baseAmountNum = Number(baseAmount) || 0;
+  const taxRateNum = Number(taxRate) || 0;
+  const taxAmount = (baseAmountNum * taxRateNum) / 100;
+  const totalAmount = baseAmountNum + taxAmount;
 
   // Cargar la lista de clientes disponibles
   useEffect(() => {
@@ -174,14 +178,18 @@ export const InvoiceForm = () => {
       let result;
       
       // Calcular impuestos
-      const taxAmount = (data.baseAmount * data.taxRate) / 100;
-      const totalAmount = data.baseAmount + taxAmount;
+      const baseAmountValue = Number(data.baseAmount) || 0;
+      const taxRateValue = Number(data.taxRate) || 0;
+      const taxAmount = (baseAmountValue * taxRateValue) / 100;
+      const totalAmount = baseAmountValue + taxAmount;
       
       if (isNewInvoice) {
         // Crear nueva factura
         console.log("Creating new invoice with data:", data);
         result = await createInvoice({
           ...data,
+          baseAmount: baseAmountValue,
+          taxRate: taxRateValue,
           taxAmount,
           totalAmount,
         } as any);
@@ -191,6 +199,8 @@ export const InvoiceForm = () => {
         result = await updateInvoice({
           ...invoice,
           ...data,
+          baseAmount: baseAmountValue,
+          taxRate: taxRateValue,
           taxAmount,
           totalAmount,
         } as Invoice);
@@ -360,8 +370,8 @@ export const InvoiceForm = () => {
               
               {/* Resumen de Importes */}
               <AmountSummary 
-                baseAmount={baseAmount} 
-                taxRate={taxRate} 
+                baseAmount={baseAmountNum} 
+                taxRate={taxRateNum} 
                 taxAmount={taxAmount} 
                 totalAmount={totalAmount} 
               />

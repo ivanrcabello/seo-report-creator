@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ClientMetric {
@@ -52,12 +51,12 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
     let result;
     
     if (metric.id && metric.id.trim() !== '') {
-      // Update existing metric - convert month string to proper date format for the database
+      // Update existing metric
       const { data, error } = await supabase
         .rpc('update_client_metric', {
           p_id: metric.id,
           p_client_id: clientId,
-          p_month: metric.month, // Send as proper date format
+          p_month: metric.month, // Function now properly handles conversion to date
           p_web_visits: metricData.web_visits,
           p_keywords_top10: metricData.keywords_top10,
           p_conversions: metricData.conversions,
@@ -88,11 +87,11 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         month: updatedData.month ? new Date(updatedData.month).toISOString().substring(0, 7) : ''
       };
     } else {
-      // Insert a new metric - convert month string to proper date format for the database
+      // Insert a new metric
       const { data, error } = await supabase
         .rpc('insert_client_metric', {
           p_client_id: clientId,
-          p_month: metric.month, // Send as proper date format
+          p_month: metric.month, // Function now properly handles conversion to date
           p_web_visits: metricData.web_visits,
           p_keywords_top10: metricData.keywords_top10,
           p_conversions: metricData.conversions,
@@ -110,7 +109,6 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         .from('client_metrics')
         .select('*')
         .eq('client_id', clientId)
-        .eq('month', metric.month.substring(0, 10)) // Convert to date format
         .order('created_at', { ascending: false })
         .limit(1)
         .single();

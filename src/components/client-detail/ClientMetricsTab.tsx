@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Save, AlertTriangle, Info } from "lucide-react";
 import { getClientMetrics, updateClientMetrics } from "@/services/clientMetricsService";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ClientMetric {
   id: string;
@@ -32,6 +33,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const [error, setError] = useState<string | null>(null);
   const [isAdminError, setIsAdminError] = useState(false);
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     fetchMetrics();
@@ -80,6 +82,13 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const handleSaveMetrics = async () => {
     if (!currentMetric) return;
     
+    // Display a warning for non-admin users instead of allowing them to attempt an action that will fail
+    if (!isAdmin) {
+      setIsAdminError(true);
+      setError("Solo los administradores pueden modificar métricas de clientes.");
+      return;
+    }
+    
     try {
       setIsSaving(true);
       setError(null);
@@ -123,7 +132,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       // Check if it's a database permissions error
       if (error instanceof Error && error.message.includes("permisos en la base de datos")) {
         setIsAdminError(true);
-        setError("Error de permisos: Solo los administradores pueden modificar métricas. Por favor, contacte al administrador.");
+        setError("Solo los administradores pueden modificar métricas de clientes.");
       } else {
         setError(error instanceof Error ? error.message : "No se pudieron guardar las métricas del cliente");
       }
@@ -180,7 +189,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       )}
       
       {isAdminError && (
-        <Alert variant="warning" className="bg-amber-50 border-amber-200">
+        <Alert variant="default" className="bg-amber-50 border-amber-200 text-amber-800">
           <Info className="h-4 w-4" />
           <AlertTitle>Acceso restringido</AlertTitle>
           <AlertDescription>
@@ -206,6 +215,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   onChange={(e) => 
                     setCurrentMetric(prev => prev ? {...prev, month: e.target.value} : prev)
                   }
+                  disabled={!isAdmin}
                 />
               </div>
               
@@ -217,6 +227,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.web_visits || 0} 
                   onChange={(e) => handleInputChange('web_visits', e.target.value)}
+                  disabled={!isAdmin}
                 />
               </div>
               
@@ -228,6 +239,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.keywords_top10 || 0} 
                   onChange={(e) => handleInputChange('keywords_top10', e.target.value)}
+                  disabled={!isAdmin}
                 />
               </div>
             </div>
@@ -241,6 +253,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.conversions || 0} 
                   onChange={(e) => handleInputChange('conversions', e.target.value)}
+                  disabled={!isAdmin}
                 />
               </div>
               
@@ -252,13 +265,14 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.conversion_goal || 30} 
                   onChange={(e) => handleInputChange('conversion_goal', e.target.value)}
+                  disabled={!isAdmin}
                 />
               </div>
               
               <Button 
                 className="w-full mt-4"
                 onClick={handleSaveMetrics}
-                disabled={isSaving}
+                disabled={isSaving || !isAdmin}
               >
                 {isSaving ? (
                   <>
@@ -276,6 +290,13 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
           </div>
         </CardContent>
       </Card>
+      
+      {!isAdmin && (
+        <div className="mt-4 text-center text-gray-500 text-sm">
+          Las métricas solo pueden ser editadas por administradores. 
+          Si necesita realizar cambios, por favor contacte a un administrador.
+        </div>
+      )}
     </div>
   );
 };

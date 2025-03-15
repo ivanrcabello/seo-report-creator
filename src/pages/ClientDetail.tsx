@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ClientForm } from "@/components/ClientForm";
 import { ClientReports } from "@/components/ClientReports";
-import ClientDocuments from "@/components/ClientDocuments"; // Fixed import
+import ClientDocuments from "@/components/ClientDocuments";
 import { PdfUploader } from "@/components/PdfUploader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LocalSeoReportView } from "@/components/LocalSeoReportView";
+import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { 
   getClient, 
   updateClient, 
@@ -20,7 +21,22 @@ import { getLocalSeoReports } from "@/services/localSeoReportService";
 import { Client, ClientReport, SeoLocalReport, ClientDocument } from "@/types/client";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
-import { ArrowLeft, Edit, Trash2, Mail, Phone, Building, Calendar, UserCog, FileText, UploadCloud, MessageSquarePlus, Map, Loader2 } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Edit, 
+  Trash2, 
+  Mail, 
+  Phone, 
+  Building, 
+  Calendar, 
+  UserCog, 
+  FileText, 
+  UploadCloud, 
+  MessageSquarePlus, 
+  Map, 
+  Loader2,
+  FileSpreadsheet
+} from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -297,7 +313,7 @@ const ClientDetail = () => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <TabsList className="mb-4 grid grid-cols-5 max-w-3xl">
+        <TabsList className="mb-4 grid grid-cols-6 max-w-4xl">
           <TabsTrigger value="profile" className="flex items-center gap-1">
             <UserCog className="h-4 w-4" />
             Perfil
@@ -309,6 +325,10 @@ const ClientDetail = () => {
           <TabsTrigger value="reports" className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
             Informes
+          </TabsTrigger>
+          <TabsTrigger value="invoices" className="flex items-center gap-1">
+            <FileSpreadsheet className="h-4 w-4" />
+            Facturas
           </TabsTrigger>
           <TabsTrigger value="upload" className="flex items-center gap-1">
             <UploadCloud className="h-4 w-4" />
@@ -375,6 +395,10 @@ const ClientDetail = () => {
             clientName={client.name}
             onAddReport={handleAddReport}
           />
+        </TabsContent>
+
+        <TabsContent value="invoices">
+          <ClientInvoicesTab clientId={client.id} clientName={client.name} />
         </TabsContent>
         
         <TabsContent value="upload">

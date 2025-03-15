@@ -3,10 +3,10 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Invoice, Client } from "@/types/client";
 import { getInvoice, createInvoice, updateInvoice } from "@/services/invoiceService";
-import { getClient } from "@/services/clientService";
+import { getClient, getClients } from "@/services/clientService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -38,17 +38,23 @@ type FormValues = z.infer<typeof invoiceSchema>;
 export const InvoiceForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
+  const [availableClients, setAvailableClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isNewInvoice = !id || id === "new";
+  
+  // Get clientId from query params if available
+  const queryParams = new URLSearchParams(location.search);
+  const clientIdFromQuery = queryParams.get('clientId');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
-      clientId: "",
+      clientId: clientIdFromQuery || "",
       baseAmount: 0,
       taxRate: 21,
       status: "pending",
@@ -63,6 +69,30 @@ export const InvoiceForm = () => {
   const taxRate = form.watch("taxRate");
   const taxAmount = (baseAmount * taxRate) / 100;
   const totalAmount = baseAmount + taxAmount;
+
+  // Cargar la lista de clientes disponibles
+  useEffect(() => {
+    const loadClients = async () => {
+      try {
+        const clients = await getClients();
+        setAvailableClients(clients);
+        
+        // Si hay un clientId en la URL y estamos creando una nueva factura,
+        // cargar los datos del cliente
+        if (clientIdFromQuery && isNewInvoice) {
+          const clientData = await getClient(clientIdFromQuery);
+          if (clientData) {
+            setClient(clientData);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading clients:", error);
+        toast.error("No se pudieron cargar los clientes");
+      }
+    };
+    
+    loadClients();
+  }, [clientIdFromQuery, isNewInvoice]);
 
   // Cargar datos de la factura si se está editando
   useEffect(() => {
@@ -188,7 +218,8 @@ export const InvoiceForm = () => {
               <ClientSelection 
                 form={form} 
                 isNewInvoice={isNewInvoice} 
-                isLoading={isLoading} 
+                isLoading={isLoading}
+                availableClients={availableClients}
                 onClientChange={handleClientChange} 
               />
               <InvoiceStatus form={form} />

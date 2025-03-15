@@ -1,3 +1,4 @@
+
 import { Invoice } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 import { getSeoPack } from "./packService";
@@ -5,12 +6,13 @@ import { getProposal } from "./proposal/proposalCrud";
 import { getClient } from "./clientService";
 import { getCompanySettings } from "./settingsService";
 import { jsPDF } from "jspdf";
-import 'jspdf-autotable';
 import { toast } from "sonner";
+// Import jspdf-autotable default
+import autoTable from 'jspdf-autotable';
 
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: any) => any;
+    autoTable: typeof autoTable;
     lastAutoTable: {
       finalY: number;
     };
@@ -292,8 +294,8 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     const doc = new jsPDF();
     
     // Estilos y configuración
-    const primaryColor = [0, 102, 204] as [number, number, number]; // Azul corporativo
-    const grayColor = [120, 120, 120] as [number, number, number];
+    const primaryColor: [number, number, number] = [0, 102, 204]; // Azul corporativo
+    const grayColor: [number, number, number] = [120, 120, 120];
     doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.setFillColor(240, 240, 240);
     
@@ -334,20 +336,20 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     doc.setFontSize(9);
     doc.text(client.name, 115, 65);
     if (client.company) doc.text(client.company, 115, 70);
-    const clientAddress = client.company ? client.company : "N/A";
+    const clientAddress = client.company || "N/A";
     doc.text(clientAddress, 115, 75);
     doc.text(`Tel: ${client.phone || "N/A"}`, 115, 80);
     doc.text(`Email: ${client.email}`, 115, 85);
     
     // Estado de la factura
     let statusText = "PENDIENTE";
-    let statusColor = [255, 150, 0] as [number, number, number]; // Naranja para pendiente
+    let statusColor: [number, number, number] = [255, 150, 0]; // Naranja para pendiente
     if (invoice.status === "paid") {
       statusText = "PAGADA";
-      statusColor = [0, 170, 0] as [number, number, number]; // Verde para pagada
+      statusColor = [0, 170, 0]; // Verde para pagada
     } else if (invoice.status === "cancelled") {
       statusText = "CANCELADA";
-      statusColor = [200, 0, 0] as [number, number, number]; // Rojo para cancelada
+      statusColor = [200, 0, 0]; // Rojo para cancelada
     }
     
     doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
@@ -361,8 +363,8 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     doc.setFontSize(11);
     doc.text("CONCEPTOS", 20, 105);
     
-    // Usar autoTable para crear la tabla de conceptos
-    doc.autoTable({
+    // Aplicar autoTable al documento
+    autoTable(doc, {
       startY: 110,
       head: [['Concepto', 'Importe']],
       body: [
@@ -370,7 +372,7 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
       ],
       theme: 'grid',
       headStyles: { 
-        fillColor: [primaryColor[0], primaryColor[1], primaryColor[2]], 
+        fillColor: primaryColor, 
         textColor: [255, 255, 255],
         fontSize: 10 
       },

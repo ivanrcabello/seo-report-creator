@@ -1,12 +1,12 @@
-
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getProposal, sendProposal, acceptProposal, rejectProposal, deleteProposal } from "@/services/proposalService";
+import { downloadProposalPdf } from "@/services/proposalPdfService";
 import { getClient } from "@/services/clientService";
 import { getSeoPack } from "@/services/packService";
 import { toast } from "sonner";
 import { isAfter } from "date-fns";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { 
@@ -111,6 +111,22 @@ const ProposalDetail = () => {
     }
   });
 
+  // Mutation para descargar la propuesta como PDF
+  const downloadPdfMutation = useMutation({
+    mutationFn: () => downloadProposalPdf(id!),
+    onSuccess: (success) => {
+      if (success) {
+        toast.success("Propuesta descargada como PDF");
+      } else {
+        toast.error("Error al descargar la propuesta");
+      }
+    },
+    onError: (error) => {
+      toast.error("Error al generar el PDF");
+      console.error(error);
+    }
+  });
+
   // Loading state
   const isLoading = isLoadingProposal || isLoadingClient || isLoadingPack;
 
@@ -143,17 +159,29 @@ const ProposalDetail = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex items-center gap-2 mb-6">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => navigate("/proposals")}
+      <div className="flex items-center justify-between gap-2 mb-6">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate("/proposals")}
+            className="gap-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Button>
+          <ProposalStatusBadge status={proposal.status} expired={proposalExpired} />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => downloadPdfMutation.mutate()}
+          disabled={downloadPdfMutation.isPending}
           className="gap-1"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Volver
+          <FileDown className="h-4 w-4" />
+          Descargar PDF
         </Button>
-        <ProposalStatusBadge status={proposal.status} expired={proposalExpired} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getReport, deleteReport, shareReport } from "@/services/reportService";
+import { downloadReportPdf } from "@/services/reportPdfService";
 import { getClient } from "@/services/clientService";
 import { getSharedReportUrl } from "@/services/reportSharingService";
 import { Client, ClientReport } from "@/types/client";
@@ -41,6 +41,7 @@ import {
   Clock,
   AlertTriangle,
   Share2,
+  FileDown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -55,6 +56,7 @@ const ReportDetail = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const copyToClipboard = () => {
@@ -63,6 +65,26 @@ const ReportDetail = () => {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
       toast.success("Enlace copiado al portapapeles");
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!id || !report) return;
+    
+    try {
+      setIsProcessing(true);
+      toast.info("Generando PDF del informe...");
+      const success = await downloadReportPdf(id);
+      if (success) {
+        toast.success("PDF generado correctamente");
+      } else {
+        throw new Error("No se pudo generar el PDF");
+      }
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error("Error al generar el PDF del informe");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -111,7 +133,6 @@ const ReportDetail = () => {
           return;
         }
         
-        // Verificar si el ID es "new" o no es un valor válido
         if (id === "new") {
           setError("ID de informe no válido");
           setIsLoading(false);
@@ -123,7 +144,6 @@ const ReportDetail = () => {
         if (reportData) {
           setReport(reportData);
           
-          // Obtener detalles del cliente
           const clientData = await getClient(reportData.clientId);
           if (clientData) {
             setClient(clientData);
@@ -131,7 +151,6 @@ const ReportDetail = () => {
             setError("No se encontró el cliente asociado");
           }
           
-          // Obtener URL compartida si existe
           if (reportData.shareToken) {
             const shareUrl = await getSharedReportUrl(reportData.id);
             setSharedUrl(shareUrl);
@@ -188,7 +207,17 @@ const ReportDetail = () => {
             Detalles del Informe
           </h1>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleDownloadPdf}
+            disabled={isProcessing}
+            className="gap-1"
+          >
+            <FileDown className="h-4 w-4" />
+            Descargar PDF
+          </Button>
           {sharedUrl ? (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={copyToClipboard} disabled={isCopied} className="gap-1">

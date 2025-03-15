@@ -5,12 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Download, Eye, FileCheck, Scroll } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { downloadReportPdf } from "@/services/reportPdfService";
-import { downloadProposalPdf } from "@/services/proposalPdfService";
 import { v4 as uuidv4 } from "uuid";
+import { downloadDocumentPdf, viewDocument } from "@/services/document/pdfOperations";
 
 interface Document {
   id: string;
@@ -21,7 +18,6 @@ interface Document {
 
 export function DocumentCenter() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,77 +83,23 @@ export function DocumentCenter() {
   const handleDownload = async (doc: Document) => {
     setDownloadingId(doc.id);
     try {
-      console.log(`Starting download for ${doc.type} with ID: ${doc.id}`);
-      
-      // For demo purposes, we'll simulate successful downloads instead of trying to access non-existent documents
-      let success = true;
-      
-      switch (doc.type) {
-        case 'report':
-          // In a real app, this would be downloadReportPdf(doc.id)
-          // For demo, we'll simulate success without making the API call
-          console.log(`Simulating report download for ID: ${doc.id}`);
-          // success = await downloadReportPdf(doc.id);
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
-          break;
-        case 'proposal':
-          // In a real app, this would be downloadProposalPdf(doc.id)
-          // For demo, we'll simulate success without making the API call
-          console.log(`Simulating proposal download for ID: ${doc.id}`);
-          // success = await downloadProposalPdf(doc.id);
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
-          break;
-        case 'contract':
-          // Navigate to contract detail page which has download functionality
-          navigate(`/contracts/${doc.id}`);
-          return;
+      if (doc.type === 'contract') {
+        // Para contratos, navegamos a la página de detalle que tiene la funcionalidad de descarga
+        navigate(`/contracts/${doc.id}`);
+        return;
       }
       
-      if (success) {
-        toast({
-          title: "Descarga simulada",
-          description: `El documento "${doc.name}" se ha descargado (simulación).`,
-        });
-      } else {
-        toast({
-          title: "Error al descargar",
-          description: "No se pudo descargar el documento. Inténtalo de nuevo.",
-          variant: "destructive",
-        });
-      }
+      // Para informes y propuestas, usamos el servicio centralizado
+      await downloadDocumentPdf(doc.id, doc.name, doc.type);
     } catch (error) {
       console.error(`Error downloading ${doc.type}:`, error);
-      toast({
-        title: "Error al descargar",
-        description: "Ocurrió un error al descargar el documento.",
-        variant: "destructive",
-      });
     } finally {
       setDownloadingId(null);
     }
   };
 
   const handleView = (doc: Document) => {
-    toast({
-      title: "Visualización simulada",
-      description: `Visualizando documento: ${doc.name}`,
-    });
-    
-    // In a real app, you would navigate to the actual document
-    // For demo purposes, we'll show a toast instead
-    /*
-    switch (doc.type) {
-      case 'report':
-        navigate(`/reports/${doc.id}`);
-        break;
-      case 'proposal':
-        navigate(`/proposals/${doc.id}`);
-        break;
-      case 'contract':
-        navigate(`/contracts/${doc.id}`);
-        break;
-    }
-    */
+    viewDocument(doc.id, doc.name, doc.type);
   };
 
   return (

@@ -11,15 +11,21 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { format, isValid, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
+  if (!Array.isArray(clients)) {
+    console.error("Expected clients to be an array, got:", clients);
+    return [];
+  }
+
   return clients.map(client => ({
     id: client.id,
-    name: client.name,
-    email: client.email,
+    name: client.name || 'Cliente sin nombre',
+    email: client.email || 'Sin email',
     company: client.company,
-    createdAt: client.created_at,
-    isActive: client.is_active || false
+    createdAt: client.created_at || new Date().toISOString(),
+    isActive: client.is_active !== undefined ? client.is_active : true
   }));
 };
 
@@ -32,8 +38,13 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (clients) {
-      const summaries = mapClientsToSummary(clients);
-      setClientSummaries(summaries);
+      try {
+        const summaries = mapClientsToSummary(clients);
+        console.log("Mapped client summaries:", summaries);
+        setClientSummaries(summaries);
+      } catch (error) {
+        console.error("Error mapping clients:", error);
+      }
     }
   }, [clients]);
 
@@ -55,7 +66,9 @@ const AdminDashboard = () => {
           </p>
         </div>
         <div className="space-x-2">
-          {/* Add any admin-specific actions here */}
+          <Button asChild>
+            <Link to="/clients/new">Añadir Cliente</Link>
+          </Button>
         </div>
       </div>
 
@@ -147,14 +160,6 @@ const ClientCard = ({ client }: { client: ClientSummary }) => {
         </DropdownMenu>
       </CardContent>
     </Card>
-  );
-};
-
-const Button = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
-  return (
-    <button className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded ${className}`}>
-      {children}
-    </button>
   );
 };
 

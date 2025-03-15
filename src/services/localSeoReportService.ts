@@ -1,86 +1,88 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { SeoLocalReport } from "@/types/client";
+import { supabaseClient } from '@/integrations/supabase/client';
+import { SeoLocalReport } from '@/types/client';
 
-export const getSeoLocalReports = async (clientId: string): Promise<SeoLocalReport[]> => {
+/**
+ * Fetches all local SEO reports for a specific client
+ */
+export async function getSeoLocalReports(clientId: string): Promise<SeoLocalReport[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('seo_local_reports')
       .select('*')
       .eq('client_id', clientId)
       .order('date', { ascending: false });
 
     if (error) {
-      console.error("Error fetching local SEO reports:", error);
-      return [];
+      console.error('Error fetching SEO local reports:', error);
+      throw new Error('Failed to fetch SEO local reports');
     }
 
-    return data.map(item => ({
-      id: item.id,
-      clientId: item.client_id,
-      title: item.title || 'Informe SEO Local',
-      date: item.date || new Date().toISOString(),
-      businessName: item.business_name || '',
-      address: item.address || '',
-      location: item.location || '',
-      phone: item.phone || '+34 91 XXX XX XX',
-      website: item.website || 'www.example.com',
-      googleBusinessUrl: item.google_business_url || '',
-      googleMapsRanking: item.google_maps_ranking || 0,
-      googleReviewsCount: item.google_reviews_count || 0,
-      keywordRankings: Array.isArray(item.keyword_rankings) 
-        ? item.keyword_rankings 
-        : typeof item.keyword_rankings === 'string'
-          ? JSON.parse(item.keyword_rankings)
-          : [],
-      localListings: Array.isArray(item.local_listings) 
-        ? item.local_listings 
-        : typeof item.local_listings === 'string'
-          ? JSON.parse(item.local_listings)
-          : [],
-      shareToken: item.share_token || null,
-      sharedAt: item.shared_at || null,
-      recommendations: Array.isArray(item.recommendations) ? item.recommendations : []
+    // Map the database structure to our application model
+    return data.map(report => ({
+      id: report.id,
+      clientId: report.client_id,
+      title: report.title,
+      date: report.date,
+      businessName: report.business_name,
+      address: report.address || report.location, // Back-compatibility
+      location: report.location,
+      phone: report.phone,
+      website: report.website,
+      googleBusinessUrl: report.google_business_url,
+      googleMapsRanking: report.google_maps_ranking,
+      googleReviewsCount: report.google_reviews_count,
+      keywordRankings: report.keyword_rankings,
+      localListings: report.local_listings,
+      shareToken: report.share_token,
+      sharedAt: report.shared_at,
+      recommendations: report.recommendations || []
     }));
   } catch (error) {
-    console.error("Error in getSeoLocalReports:", error);
+    console.error('Error in getSeoLocalReports:', error);
     return [];
   }
-};
+}
 
-export const createSeoLocalReport = async (report: Omit<SeoLocalReport, "id">): Promise<string> => {
+/**
+ * Fetch a specific SEO local report by ID
+ */
+export async function getSeoLocalReportById(reportId: string): Promise<SeoLocalReport | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('seo_local_reports')
-      .insert({
-        client_id: report.clientId,
-        title: report.title || 'Informe SEO Local',
-        date: report.date || new Date().toISOString(),
-        business_name: report.businessName || '',
-        address: report.address || '',
-        location: report.location || '',
-        phone: report.phone || '',
-        website: report.website || '',
-        google_business_url: report.googleBusinessUrl || '',
-        google_maps_ranking: report.googleMapsRanking || 0,
-        google_reviews_count: report.googleReviewsCount || 0,
-        keyword_rankings: Array.isArray(report.keywordRankings) ? report.keywordRankings : [],
-        local_listings: Array.isArray(report.localListings) ? report.localListings : [],
-        share_token: report.shareToken || null,
-        shared_at: report.sharedAt || null,
-        recommendations: Array.isArray(report.recommendations) ? report.recommendations : []
-      })
-      .select('id')
+      .select('*')
+      .eq('id', reportId)
       .single();
 
     if (error) {
-      console.error("Error creating local SEO report:", error);
-      throw new Error(`Error al crear informe SEO local: ${error.message}`);
+      console.error('Error fetching SEO local report:', error);
+      return null;
     }
 
-    return data.id;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      clientId: data.client_id,
+      title: data.title,
+      date: data.date,
+      businessName: data.business_name,
+      address: data.address || data.location,
+      location: data.location,
+      phone: data.phone,
+      website: data.website,
+      googleBusinessUrl: data.google_business_url,
+      googleMapsRanking: data.google_maps_ranking,
+      googleReviewsCount: data.google_reviews_count,
+      keywordRankings: data.keyword_rankings,
+      localListings: data.local_listings,
+      shareToken: data.share_token,
+      sharedAt: data.shared_at,
+      recommendations: data.recommendations || []
+    };
   } catch (error) {
-    console.error("Exception in createSeoLocalReport:", error);
-    throw error;
+    console.error('Error in getSeoLocalReportById:', error);
+    return null;
   }
-};
+}

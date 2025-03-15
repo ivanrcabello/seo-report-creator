@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ClientMetric {
@@ -23,7 +24,13 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
       throw new Error(`Error fetching metrics: ${error.message}`);
     }
     
-    return data || [];
+    // Transform date objects to strings in yyyy-MM format for the UI
+    const formattedData = data?.map(metric => ({
+      ...metric,
+      month: metric.month ? new Date(metric.month).toISOString().substring(0, 7) : ''
+    })) || [];
+    
+    return formattedData;
   } catch (error) {
     console.error("Exception in getClientMetrics:", error);
     throw error; // Re-throw to handle in the calling function
@@ -45,12 +52,12 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
     let result;
     
     if (metric.id && metric.id.trim() !== '') {
-      // Update existing metric
+      // Update existing metric - convert month string to proper date format for the database
       const { data, error } = await supabase
         .rpc('update_client_metric', {
           p_id: metric.id,
           p_client_id: clientId,
-          p_month: metric.month,
+          p_month: metric.month, // Send as proper date format
           p_web_visits: metricData.web_visits,
           p_keywords_top10: metricData.keywords_top10,
           p_conversions: metricData.conversions,
@@ -75,13 +82,17 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         throw new Error(`Error al obtener métricas actualizadas: ${fetchError.message}`);
       }
       
-      result = updatedData;
+      // Format the month as string for the UI
+      result = {
+        ...updatedData,
+        month: updatedData.month ? new Date(updatedData.month).toISOString().substring(0, 7) : ''
+      };
     } else {
-      // Insert a new metric
+      // Insert a new metric - convert month string to proper date format for the database
       const { data, error } = await supabase
         .rpc('insert_client_metric', {
           p_client_id: clientId,
-          p_month: metric.month,
+          p_month: metric.month, // Send as proper date format
           p_web_visits: metricData.web_visits,
           p_keywords_top10: metricData.keywords_top10,
           p_conversions: metricData.conversions,
@@ -99,7 +110,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         .from('client_metrics')
         .select('*')
         .eq('client_id', clientId)
-        .eq('month', metric.month)
+        .eq('month', metric.month.substring(0, 10)) // Convert to date format
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -109,7 +120,11 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         throw new Error(`Error al obtener nueva métrica: ${fetchError.message}`);
       }
       
-      result = newData;
+      // Format the month as string for the UI
+      result = {
+        ...newData,
+        month: newData.month ? new Date(newData.month).toISOString().substring(0, 7) : ''
+      };
     }
     
     return result;

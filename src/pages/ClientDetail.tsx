@@ -179,7 +179,9 @@ export default function ClientDetail() {
         </TabsContent>
         <TabsContent value="documents">
           <ClientDocumentsView
-            client={client}
+            clientId={client.id}
+            selectedDocuments={selectedDocuments}
+            onDocumentSelect={handleDocumentSelect}
           />
           {isAdmin && (
             <div className="mt-4">

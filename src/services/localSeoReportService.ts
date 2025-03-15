@@ -23,8 +23,8 @@ export const getSeoLocalReports = async (clientId: string): Promise<SeoLocalRepo
       businessName: item.business_name || '',
       address: item.address || '',
       location: item.location || '',
-      phone: item.phone || '+34 91 XXX XX XX', // Default phone if not available
-      website: item.website || 'www.example.com', // Default website if not available
+      phone: item.phone || '+34 91 XXX XX XX',
+      website: item.website || 'www.example.com',
       googleBusinessUrl: item.google_business_url || '',
       googleMapsRanking: item.google_maps_ranking || 0,
       googleReviewsCount: item.google_reviews_count || 0,

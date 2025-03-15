@@ -52,7 +52,9 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
           'Optimizar listados en directorios principales',
           'Crear contenido específico para búsquedas locales',
           'Implementar schema markup para negocio local'
-        ]
+        ],
+        shareToken: null,
+        sharedAt: null
       };
     }
 
@@ -61,8 +63,9 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
       clientId: data.client_id,
       businessName: data.business_name || '',
       address: data.address || '',
-      phone: data.phone || '+34 91 XXX XX XX', // Ensure phone is never null
-      website: data.website || 'www.example.com', // Ensure website is never null
+      location: data.location || '',
+      phone: data.phone || '+34 91 XXX XX XX',
+      website: data.website || 'www.example.com',
       googleBusinessUrl: data.google_business_url || '',
       googleMapsRanking: data.google_maps_ranking || 0,
       googleReviewsCount: data.google_reviews_count || 0,
@@ -79,7 +82,6 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
       recommendations: Array.isArray(data.recommendations) ? data.recommendations : [],
       title: data.title || '',
       date: data.date || '',
-      location: data.location || '',
       shareToken: data.share_token || null,
       sharedAt: data.shared_at || null
     };
@@ -123,7 +125,9 @@ export const generateLocalSeoAnalysis = async (documentIds: string[], clientId: 
       "Conseguir más reseñas de clientes",
       "Mejorar presencia en directorios locales",
       "Crear contenido orientado a palabras clave locales"
-    ]
+    ],
+    shareToken: null,
+    sharedAt: null
   };
   
   console.log("Generated sample analysis:", sampleAnalysis);

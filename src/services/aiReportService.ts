@@ -1,4 +1,6 @@
+
 import { AuditResult } from "./pdfAnalyzer";
+import { getSeoPacks } from "./packService";
 
 export interface AIReport {
   summary: string;
@@ -7,6 +9,28 @@ export interface AIReport {
   strengths: string[];
   weaknesses: string[];
   recommendations: string[];
+  // Campos adicionales para el informe ampliado
+  companyIntroduction: string;
+  webAnalysis: {
+    authorityScore: number;
+    organicTraffic: number;
+    keywordsRanked: number;
+    backlinks: number;
+    qualityScore: number;
+    priorityKeywords: Array<{keyword: string, position: number, volume: number, difficulty: number, recommendation: string}>;
+    competitors: Array<{name: string, score: number, traffic: number, keywords: number, comparison: string}>;
+  };
+  strategy: {
+    technicalOptimization: string[];
+    localSeo: string[];
+    contentCreation: string[];
+  };
+  conclusion: string;
+  contactInfo: {
+    email: string;
+    phone: string;
+  };
+  estimatedResultsTime: number; // en meses
 }
 
 export const generateAIReport = async (auditResult: AuditResult): Promise<AIReport> => {
@@ -17,6 +41,9 @@ export const generateAIReport = async (auditResult: AuditResult): Promise<AIRepo
   
   // Esperar para simular procesamiento de IA
   await new Promise(resolve => setTimeout(resolve, 3000));
+  
+  // Obtener paquetes SEO disponibles para mostrarlos en el informe
+  const seoPacks = await getSeoPacks();
   
   // Generar un resumen basado en la puntuación SEO
   const seoQuality = auditResult.seoScore < 60 ? "deficiente" : 
@@ -92,6 +119,77 @@ export const generateAIReport = async (auditResult: AuditResult): Promise<AIRepo
     recommendations.push("Reseñas: Implementar estrategia para conseguir más reseñas positivas en Google");
   }
   
+  // Generar palabras clave de ejemplo basadas en el análisis
+  const exampleKeywords = [
+    {
+      keyword: auditResult.technicalResults.technologies.includes("WordPress") ? "wordpress seo " + auditResult.domain : "agencia seo " + auditResult.domain,
+      position: Math.floor(Math.random() * 30) + 10,
+      volume: Math.floor(Math.random() * 500) + 100,
+      difficulty: Math.floor(Math.random() * 60) + 20,
+      recommendation: "Optimizar meta títulos y crear contenido especializado"
+    },
+    {
+      keyword: "servicios " + (auditResult.companyType || "profesionales") + " " + auditResult.location,
+      position: Math.floor(Math.random() * 20) + 5,
+      volume: Math.floor(Math.random() * 800) + 200,
+      difficulty: Math.floor(Math.random() * 40) + 30,
+      recommendation: "Crear página específica optimizada para esta keyword"
+    },
+    {
+      keyword: "mejor " + (auditResult.companyType || "empresa") + " " + auditResult.location,
+      position: Math.floor(Math.random() * 50) + 15,
+      volume: Math.floor(Math.random() * 1000) + 300,
+      difficulty: Math.floor(Math.random() * 70) + 40,
+      recommendation: "Obtener más reseñas y mejorar perfil de Google Business"
+    }
+  ];
+  
+  // Generar competidores de ejemplo
+  const exampleCompetitors = [
+    {
+      name: "competidor1.com",
+      score: Math.floor(Math.random() * 30) + 40,
+      traffic: Math.floor(Math.random() * 5000) + 1000,
+      keywords: Math.floor(Math.random() * 500) + 100,
+      comparison: "Su competidor tiene mayor autoridad pero menos contenido optimizado"
+    },
+    {
+      name: "competidor2.com",
+      score: Math.floor(Math.random() * 20) + 30,
+      traffic: Math.floor(Math.random() * 3000) + 800,
+      keywords: Math.floor(Math.random() * 300) + 80,
+      comparison: "Tiene mejor optimización técnica pero menor presencia en redes sociales"
+    }
+  ];
+  
+  // Estrategias de optimización técnica
+  const technicalOptimization = [
+    "Rediseño de la arquitectura web para mejorar la indexabilidad de páginas relevantes",
+    "Optimización de metaetiquetas (title, description) para aumentar CTR en resultados de búsqueda",
+    "Mejora de la velocidad de carga, especialmente en móviles (objetivo PageSpeed >80)",
+    "Implementación de etiquetas de datos estructurados para destacar en resultados con rich snippets",
+    "Corrección de enlaces rotos y redirecciones incorrectas"
+  ];
+  
+  // Estrategias de SEO local
+  const localSeo = [
+    `Creación/optimización de perfil Google Business en ${auditResult.location}`,
+    `Desarrollo de páginas específicas para localidades cercanas a ${auditResult.location}`,
+    "Implementación de schema markup local para mejorar resultados en búsquedas geográficas",
+    "Estrategia de reseñas para aumentar valoración y visibilidad local",
+    "Creación de contenido local relevante (eventos, noticias, colaboraciones)"
+  ];
+  
+  // Estrategias de creación de contenido
+  const contentCreation = [
+    "Desarrollo de blog con publicación semanal de artículos optimizados para keywords relevantes",
+    "Creación de guías y recursos descargables para generar leads",
+    `Contenido específico para resolver problemáticas habituales en ${auditResult.companyType || "su sector"}`,
+    "Optimización y expansión de páginas de servicios existentes",
+    "Implementación de calendario editorial con temáticas estacionales relevantes"
+  ];
+  
+  // Generar el informe completo
   return {
     summary: `El análisis SEO muestra un rendimiento ${seoQuality} con una puntuación de ${auditResult.seoScore}/100. La visibilidad web es ${auditResult.webVisibility}/100 y el rendimiento general del sitio es ${auditResult.performance}/100.`,
     
@@ -132,6 +230,34 @@ Presencia Social: La marca tiene presencia en ${Object.values(auditResult.social
       "Optimización técnica: Mejorar aspectos técnicos como la velocidad de carga y la estructura de la web",
       "Contenido SEO: Desarrollar contenido optimizado para palabras clave relevantes",
       "Estrategia local: Implementar una estrategia de SEO local completa"
-    ]
+    ],
+    
+    // Nuevos campos para el informe ampliado
+    companyIntroduction: `${auditResult.companyName || "Su empresa"} se dedica a ofrecer servicios de ${auditResult.companyType || "profesionales"} en ${auditResult.location || "su área geográfica"}. Este informe tiene como objetivo analizar su presencia online actual y proponer una estrategia SEO completa para mejorar su visibilidad en buscadores, aumentar el tráfico orgánico y local, y convertir más visitantes en potenciales clientes. Implementando las recomendaciones de este informe, su negocio podrá destacar entre la competencia y captar una mayor cuota de mercado en su sector.`,
+    
+    webAnalysis: {
+      authorityScore: Math.floor(auditResult.seoScore * 0.8),
+      organicTraffic: Math.floor(Math.random() * 1000) + 100,
+      keywordsRanked: Math.floor(Math.random() * 50) + 10,
+      backlinks: Math.floor(Math.random() * 100) + 5,
+      qualityScore: Math.floor(Math.random() * 70) + 30,
+      priorityKeywords: exampleKeywords,
+      competitors: exampleCompetitors
+    },
+    
+    strategy: {
+      technicalOptimization: technicalOptimization,
+      localSeo: localSeo,
+      contentCreation: contentCreation
+    },
+    
+    conclusion: `Basándonos en el análisis realizado, recomendamos implementar un plan ${auditResult.seoScore < 60 ? "Completo" : auditResult.seoScore < 75 ? "Avanzado" : "Estándar"} de SEO para su sitio web. Este enfoque permitirá abordar las principales áreas de mejora identificadas y potenciar sus fortalezas actuales. Los primeros resultados comenzarán a ser visibles a partir del tercer mes de implementación, con mejoras progresivas en posicionamiento y tráfico a medida que Google reconozca los cambios realizados. Para objetivos más ambiciosos o resultados más rápidos, considere el plan ${auditResult.seoScore < 70 ? "Premium" : "Completo"}.`,
+    
+    contactInfo: {
+      email: "seo@tuagencia.com",
+      phone: "+34 612 345 678"
+    },
+    
+    estimatedResultsTime: 3 // resultados visibles a partir del tercer mes
   };
 };

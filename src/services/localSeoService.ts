@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { SeoLocalReport } from "@/types/client";
+import { createSeoLocalReport as createLocalSeoReportFromService } from "./localSeoReportService";
 
 export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport | null> => {
   try {
@@ -58,21 +59,21 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
     return {
       id: data.id,
       clientId: data.client_id,
-      businessName: data.business_name,
+      businessName: data.business_name || '',
       address: data.address || '',
       phone: data.phone || '+34 91 XXX XX XX', // Ensure phone is never null
       website: data.website || 'www.example.com', // Ensure website is never null
       googleBusinessUrl: data.google_business_url || '',
       googleMapsRanking: data.google_maps_ranking || 0,
       googleReviewsCount: data.google_reviews_count || 0,
-      keywordRankings: data.keyword_rankings || [],
-      localListings: data.local_listings || [],
-      recommendations: data.recommendations || [],
-      title: data.title,
-      date: data.date,
-      location: data.location,
-      shareToken: data.share_token,
-      sharedAt: data.shared_at
+      keywordRankings: Array.isArray(data.keyword_rankings) ? data.keyword_rankings : [],
+      localListings: Array.isArray(data.local_listings) ? data.local_listings : [],
+      recommendations: Array.isArray(data.recommendations) ? data.recommendations : [],
+      title: data.title || '',
+      date: data.date || '',
+      location: data.location || '',
+      shareToken: data.share_token || null,
+      sharedAt: data.shared_at || null
     };
   } catch (error) {
     console.error('Error in getLocalSeoData:', error);
@@ -84,8 +85,8 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
 export const generateLocalSeoAnalysis = async (documentIds: string[], clientId: string, clientName: string) => {
   console.log("Generating local SEO analysis for documents:", documentIds);
   
-  // This function would normally analyze documents and generate SEO data
-  // For now, we'll simulate it with a placeholder
+  // This function analyzes documents and generates SEO data
+  // For now, we'll use a placeholder
   
   const sampleAnalysis: Omit<SeoLocalReport, "id"> = {
     clientId: clientId,
@@ -131,7 +132,7 @@ export const createLocalSeoReport = async (
   
   try {
     // Use the createSeoLocalReport function from localSeoReportService
-    const id = await createSeoLocalReport(analysis);
+    const id = await createLocalSeoReportFromService(analysis);
     
     console.log("Created local SEO report with ID:", id);
     
@@ -144,6 +145,3 @@ export const createLocalSeoReport = async (
     throw error;
   }
 };
-
-// Import the function to avoid circular dependency
-import { createSeoLocalReport } from "./localSeoReportService";

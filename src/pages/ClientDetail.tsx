@@ -1,349 +1,237 @@
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Client, ClientReport, SeoLocalReport } from "@/types/client";
-import { AuditResult } from "@/services/pdfAnalyzer";
-import { getClient, updateClient, deleteClient, updateClientActiveStatus } from "@/services/clientService";
-import { getClientReports, addReport } from "@/services/reportService";
-import { getSeoLocalReports } from "@/services/localSeoReportService";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { Loader2, UserCog, FileText, UploadCloud, Map, FileSignature, BarChart, FileSpreadsheet } from "lucide-react";
-
-// Import refactored components
+import { Button } from "@/components/ui/button";
 import { ClientHeader } from "@/components/client-detail/ClientHeader";
-import { ClientForm } from "@/components/ClientForm";
 import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
+import { ClientDocuments } from "@/components/client-documents";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
-import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
 import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
-import ClientDocuments from "@/components/client-documents/ClientDocuments";
+import { getClient } from "@/services/clientService";
+import { getSeoLocalReports } from "@/services/localSeoReportService";
+import { useToast } from "@/hooks/use-toast";
+import { Client, ClientReport } from "@/types/client";
+import { createReport } from "@/services/reportService";
+import { ClientReports } from "@/components/ClientReports";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
+import { ClientInvoices } from "@/components/ClientInvoices";
+import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
+import { useAuth } from "@/contexts/AuthContext";
+import { Plus, ArrowLeft } from "lucide-react";
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
-import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
 
-const ClientDetail = () => {
+export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const [client, setClient] = useState<Client | null>(null);
   const [reports, setReports] = useState<ClientReport[]>([]);
-  const [localSeoReports, setLocalSeoReports] = useState<SeoLocalReport[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("profile");
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [currentLocalSeoReport, setCurrentLocalSeoReport] = useState<SeoLocalReport | null>(null);
-  const [refreshMetrics, setRefreshMetrics] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
+    if (!id) {
+      console.error("Client ID is missing.");
+      return;
+    }
+
     const fetchClientData = async () => {
-      if (id) {
-        try {
-          setIsLoading(true);
-          const clientData = await getClient(id);
-          if (clientData) {
-            setClient(clientData);
-            const reportData = await getClientReports(id);
-            setReports(reportData);
-            const localSeoData = await getSeoLocalReports(id);
-            setLocalSeoReports(localSeoData);
-          }
-        } catch (error) {
-          console.error("Error fetching client data:", error);
+      try {
+        setLoading(true);
+        const clientData = await getClient(id);
+        if (clientData) {
+          setClient(clientData);
+        } else {
           toast({
             title: "Error",
-            description: "No se pudo cargar los datos del cliente",
-            variant: "destructive"
+            description: "Client not found.",
+            variant: "destructive",
           });
-        } finally {
-          setIsLoading(false);
+          navigate("/clients");
         }
+      } catch (error) {
+        console.error("Failed to fetch client:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch client data.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchClientData();
-  }, [id, toast, refreshMetrics]);
+  }, [id, navigate, toast]);
 
-  const handleEditClient = () => {
-    setIsEditing(true);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
-
-  const handleUpdateClient = async (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
-    if (client) {
-      try {
-        const updatedClient = await updateClient({
-          ...client,
-          ...clientData
-        });
-        setClient(updatedClient);
-        setIsEditing(false);
-        setRefreshMetrics(prev => prev + 1);
-        toast({
-          title: "Cliente actualizado",
-          description: `Los datos de ${updatedClient.name} han sido actualizados.`,
-        });
-      } catch (error) {
-        console.error("Error al actualizar cliente:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo actualizar el cliente. Inténtalo de nuevo.",
-          variant: "destructive",
-        });
+  useEffect(() => {
+    const fetchReports = async () => {
+      if (id) {
+        try {
+          const reportsData = await getSeoLocalReports(id);
+          setReports(reportsData);
+        } catch (error) {
+          console.error("Failed to fetch reports:", error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch reports.",
+            variant: "destructive",
+          });
+        }
       }
-    }
-  };
+    };
 
-  const handleToggleActiveStatus = async (isActive: boolean) => {
-    if (client && id) {
-      try {
-        const updatedClient = await updateClientActiveStatus(id, isActive);
-        setClient(updatedClient);
-        setRefreshMetrics(prev => prev + 1);
-        toast({
-          title: "Estado actualizado",
-          description: `El cliente ahora está ${isActive ? 'activo' : 'inactivo'}.`,
-        });
-      } catch (error) {
-        console.error("Error al actualizar estado del cliente:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo actualizar el estado del cliente. Inténtalo de nuevo.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
+    fetchReports();
+  }, [id, toast]);
 
-  const handleDeleteClient = async () => {
-    if (client && window.confirm(`¿Estás seguro de eliminar a ${client.name}? Esta acción no se puede deshacer.`)) {
-      try {
-        await deleteClient(client.id);
-        toast({
-          title: "Cliente eliminado",
-          description: `${client.name} ha sido eliminado correctamente.`,
-        });
-        navigate("/clients");
-      } catch (error) {
-        console.error("Error al eliminar cliente:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo eliminar el cliente. Inténtalo de nuevo.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handlePdfAnalysis = async (result: AuditResult) => {
-    if (client && id) {
-      try {
-        const currentDate = new Date().toISOString();
-        const newReport = await addReport({
-          title: `Auditoría SEO - ${format(new Date(), "d MMM yyyy", { locale: es })}`,
-          type: "seo", 
-          date: currentDate,
-          clientId: id,
-          notes: `Informe generado automáticamente a partir de un PDF el ${format(new Date(), "d MMMM yyyy", { locale: es })}`,
-        });
-        
-        setReports([...reports, newReport]);
-        
-        toast({
-          title: "Informe creado",
-          description: "Informe generado correctamente desde el PDF.",
-        });
-        
-        navigate(`/report`, { state: { auditResult: result } });
-      } catch (error) {
-        console.error("Error al crear informe:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo crear el informe. Inténtalo de nuevo.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleClientNotesUpdate = (updatedNotes: string[]) => {
-    if (client) {
-      const updatedClient: Client = {
-        ...client,
-        notes: updatedNotes
-      };
-      setClient(updatedClient);
-    }
-  };
-
-  const handleGenerateLocalSeoReport = async (documentIds: string[]) => {
-    if (client && id) {
-      try {
-        setIsGeneratingReport(true);
-        
-        toast({
-          title: "Generando informe",
-          description: "Analizando documentos y recopilando datos de SEO local...",
-        });
-        
-        const localSeoAnalysis = await generateLocalSeoAnalysis(documentIds, id, client.name);
-        
-        const newLocalSeoReport = await createLocalSeoReport(localSeoAnalysis, id, client.name);
-        
-        setLocalSeoReports([...localSeoReports, newLocalSeoReport]);
-        
-        setCurrentLocalSeoReport(newLocalSeoReport);
-        
-        setActiveTab("localseo");
-        
-        toast({
-          title: "Informe SEO local creado",
-          description: "El informe ha sido generado correctamente a partir de los documentos.",
-        });
-      } catch (error) {
-        console.error("Error al generar informe SEO local:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo generar el informe SEO local. Inténtalo de nuevo.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsGeneratingReport(false);
-      }
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-8 flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500 mr-3" />
-        <span className="text-lg">Cargando datos del cliente...</span>
-      </div>
+  const handleDocumentSelect = (documentId: string) => {
+    setSelectedDocuments((prev) =>
+      prev.includes(documentId)
+        ? prev.filter((id) => id !== documentId)
+        : [...prev, documentId]
     );
+  };
+
+  const handleGenerateReport = async () => {
+    if (!client) {
+      toast({
+        title: "Error",
+        description: "Client data not loaded.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedDocuments.length === 0) {
+      toast({
+        title: "Warning",
+        description: "Please select at least one document to generate the report.",
+      });
+      return;
+    }
+
+    try {
+      const analysis = await generateLocalSeoAnalysis(selectedDocuments, client.id, client.name);
+      const newReport = await createLocalSeoReport(analysis, client.id, client.name);
+
+      setReports((prevReports) => [...prevReports, newReport]);
+      toast({
+        title: "Success",
+        description: "Local SEO report generated successfully!",
+      });
+    } catch (error) {
+      console.error("Error generating local SEO report:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate local SEO report.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
   if (!client) {
-    return (
-      <div className="container mx-auto py-8">
-        <p className="text-center text-gray-500">Cliente no encontrado</p>
-      </div>
-    );
+    return <div>Client not found</div>;
   }
 
   return (
-    <div className="container mx-auto py-8">
-      {isEditing ? (
-        <div className="mb-8">
-          <ClientForm 
-            client={client}
-            onSubmit={handleUpdateClient}
-            onCancel={handleCancelEdit}
-          />
-        </div>
-      ) : (
-        <ClientHeader 
-          client={client} 
-          onEdit={handleEditClient} 
-          onDelete={handleDeleteClient}
-          onToggleActive={handleToggleActiveStatus}
-        />
-      )}
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <TabsList className="mb-4 grid grid-cols-8 max-w-4xl">
-          <TabsTrigger value="profile" className="flex items-center gap-1">
-            <UserCog className="h-4 w-4" />
-            Perfil
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-1">
-            <FileText className="h-4 w-4" />
-            Documentos
-          </TabsTrigger>
-          <TabsTrigger value="metrics" className="flex items-center gap-1">
-            <BarChart className="h-4 w-4" />
-            Métricas
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="flex items-center gap-1">
-            <FileSpreadsheet className="h-4 w-4" />
-            Facturas
-          </TabsTrigger>
-          <TabsTrigger value="proposals-list" className="flex items-center gap-1">
-            <FileText className="h-4 w-4" />
-            Propuestas
-          </TabsTrigger>
-          <TabsTrigger value="contracts" className="flex items-center gap-1">
-            <FileSignature className="h-4 w-4" />
-            Contratos
-          </TabsTrigger>
-          <TabsTrigger value="upload" className="flex items-center gap-1">
-            <UploadCloud className="h-4 w-4" />
-            Subir PDF
-          </TabsTrigger>
-          <TabsTrigger value="localseo" className="flex items-center gap-1">
-            <Map className="h-4 w-4" />
-            SEO Local
-          </TabsTrigger>
+    <div>
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/clients")}
+        className="mb-4"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Volver a Clientes
+      </Button>
+      <ClientHeader client={client} />
+      <Tabs defaultValue="profile" className="w-full space-y-4">
+        <TabsList>
+          <TabsTrigger value="profile">Perfil</TabsTrigger>
+          <TabsTrigger value="documents">Documentos</TabsTrigger>
+          <TabsTrigger value="metrics">Métricas</TabsTrigger>
+          <TabsTrigger value="reports">Informes</TabsTrigger>
+          <TabsTrigger value="proposals">Propuestas</TabsTrigger>
+          <TabsTrigger value="invoices">Facturas</TabsTrigger>
+          <TabsTrigger value="contracts">Contratos</TabsTrigger>
+          {isAdmin && <TabsTrigger value="local-seo">SEO Local</TabsTrigger>}
         </TabsList>
-        
         <TabsContent value="profile">
           <ClientProfileTab client={client} />
         </TabsContent>
-        
         <TabsContent value="documents">
-          <ClientDocuments 
+          <ClientDocuments
             clientId={client.id}
-            notes={client.notes || []}
-            onNoteAdded={handleClientNotesUpdate}
-            onGenerateReport={handleGenerateLocalSeoReport}
+            onDocumentSelect={handleDocumentSelect}
+            selectedDocuments={selectedDocuments}
           />
+          {isAdmin && (
+            <div className="mt-4">
+              <Button onClick={handleGenerateReport} disabled={selectedDocuments.length === 0}>
+                Generar Informe SEO Local
+              </Button>
+            </div>
+          )}
         </TabsContent>
-        
         <TabsContent value="metrics">
-          <ClientMetricsTab 
-            clientId={client.id} 
-            clientName={client.name} 
-            key={`metrics-${refreshMetrics}`}
-          />
+          <ClientMetricsTab clientId={client.id} />
         </TabsContent>
-        
-        <TabsContent value="invoices">
-          <ClientInvoicesTab clientId={client.id} clientName={client.name} />
+        <TabsContent value="reports">
+          <ClientReports clientId={client.id} reports={reports} />
+          {isAdmin && (
+            <Button asChild>
+              <a href={`/reports/new/${client.id}`} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Crear Informe
+              </a>
+            </Button>
+          )}
         </TabsContent>
-        
-        <TabsContent value="proposals-list">
+        <TabsContent value="proposals">
           <ClientProposalsList clientId={client.id} />
+          {isAdmin && (
+            <Button asChild>
+              <a href={`/proposals/new/${client.id}`} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Crear Propuesta
+              </a>
+            </Button>
+          )}
         </TabsContent>
-        
+        <TabsContent value="invoices">
+          <ClientInvoices clientId={client.id} />
+          {isAdmin && (
+            <Button asChild>
+              <a href={`/invoices/new?clientId=${client.id}`} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Crear Factura
+              </a>
+            </Button>
+          )}
+        </TabsContent>
         <TabsContent value="contracts">
-          <ClientContractsTab clientName={client.name} />
+          <ClientContractsTab clientId={client.id} />
+          {isAdmin && (
+            <Button asChild>
+              <a href={`/contracts/new/${client.id}`} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Crear Contrato
+              </a>
+            </Button>
+          )}
         </TabsContent>
-        
-        <TabsContent value="upload">
-          <PdfUploadTab 
-            clientName={client.name}
-            onAnalysisComplete={handlePdfAnalysis}
-          />
-        </TabsContent>
-        
-        <TabsContent value="localseo">
-          <LocalSeoTab 
-            isGeneratingReport={isGeneratingReport}
-            localSeoReports={localSeoReports}
-            currentLocalSeoReport={currentLocalSeoReport}
-            setCurrentLocalSeoReport={setCurrentLocalSeoReport}
-            setActiveTab={setActiveTab}
-          />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="local-seo">
+            <LocalSeoTab clientId={client.id} clientName={client.name} />
+            <PdfUploadTab clientId={client.id} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
-};
-
-export default ClientDetail;
+}

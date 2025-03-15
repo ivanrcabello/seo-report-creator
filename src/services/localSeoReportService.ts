@@ -18,21 +18,21 @@ export const getSeoLocalReports = async (clientId: string): Promise<SeoLocalRepo
     return data.map(item => ({
       id: item.id,
       clientId: item.client_id,
-      title: item.title,
-      date: item.date,
-      businessName: item.business_name,
+      title: item.title || 'Informe SEO Local',
+      date: item.date || new Date().toISOString(),
+      businessName: item.business_name || '',
       address: item.address || '',
-      location: item.location,
+      location: item.location || '',
       phone: item.phone || '+34 91 XXX XX XX', // Default phone if null
       website: item.website || 'www.example.com', // Default website if null
       googleBusinessUrl: item.google_business_url || '',
       googleMapsRanking: item.google_maps_ranking || 0,
       googleReviewsCount: item.google_reviews_count || 0,
-      keywordRankings: item.keyword_rankings || [],
-      localListings: item.local_listings || [],
-      shareToken: item.share_token,
-      sharedAt: item.shared_at,
-      recommendations: item.recommendations || []
+      keywordRankings: Array.isArray(item.keyword_rankings) ? item.keyword_rankings : [],
+      localListings: Array.isArray(item.local_listings) ? item.local_listings : [],
+      shareToken: item.share_token || null,
+      sharedAt: item.shared_at || null,
+      recommendations: Array.isArray(item.recommendations) ? item.recommendations : []
     }));
   } catch (error) {
     console.error("Error in getSeoLocalReports:", error);
@@ -48,7 +48,7 @@ export const createSeoLocalReport = async (report: Omit<SeoLocalReport, "id">): 
         client_id: report.clientId,
         title: report.title || 'Informe SEO Local',
         date: report.date || new Date().toISOString(),
-        business_name: report.businessName,
+        business_name: report.businessName || '',
         address: report.address || '',
         location: report.location || '',
         phone: report.phone || '',
@@ -56,11 +56,11 @@ export const createSeoLocalReport = async (report: Omit<SeoLocalReport, "id">): 
         google_business_url: report.googleBusinessUrl || '',
         google_maps_ranking: report.googleMapsRanking || 0,
         google_reviews_count: report.googleReviewsCount || 0,
-        keyword_rankings: report.keywordRankings || [],
-        local_listings: report.localListings || [],
+        keyword_rankings: Array.isArray(report.keywordRankings) ? report.keywordRankings : [],
+        local_listings: Array.isArray(report.localListings) ? report.localListings : [],
         share_token: report.shareToken || null,
         shared_at: report.sharedAt || null,
-        recommendations: report.recommendations || []
+        recommendations: Array.isArray(report.recommendations) ? report.recommendations : []
       })
       .select('id')
       .single();

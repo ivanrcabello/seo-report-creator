@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoreVertical, Users, Mail, Building, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
@@ -71,7 +71,21 @@ const AdminDashboard = () => {
 };
 
 const ClientCard = ({ client }: { client: ClientSummary }) => {
-  const createdAtDate = format(new Date(client.createdAt), 'dd/MM/yyyy', { locale: es });
+  // Safely format the date or provide a fallback
+  const formatCreatedAt = () => {
+    try {
+      const date = new Date(client.createdAt);
+      if (isValid(date)) {
+        return format(date, 'dd/MM/yyyy', { locale: es });
+      }
+      return "Fecha desconocida";
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Fecha desconocida";
+    }
+  };
+  
+  const createdAtDate = formatCreatedAt();
   
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">

@@ -1,3 +1,4 @@
+export type InvoiceStatus = "pending" | "paid" | "cancelled" | "draft";
 
 export interface Invoice {
   id: string;
@@ -11,7 +12,7 @@ export interface Invoice {
   taxRate: number;
   taxAmount: number;
   totalAmount: number;
-  status: "draft" | "pending" | "paid" | "cancelled";
+  status: InvoiceStatus;
   paymentDate?: string;
   notes?: string;
   pdfUrl?: string;

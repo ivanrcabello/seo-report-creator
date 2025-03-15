@@ -5,11 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ClientHeader } from "@/components/client-detail/ClientHeader";
 import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
-import ClientDocuments from "@/components/ClientDocuments";
+import { ClientDocumentsView } from "@/components/client-documents";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
 import { getClient } from "@/services/clientService";
 import { getSeoLocalReports } from "@/services/localSeoReportService";
+import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
 import { useToast } from "@/hooks/use-toast";
 import { Client, ClientReport, SeoLocalReport } from "@/types/client";
 import { ClientReports } from "@/components/ClientReports";
@@ -113,12 +114,11 @@ export default function ClientDetail() {
     }
 
     try {
-      // We will implement these functions in the next step
       const analysis = await generateLocalSeoAnalysis(selectedDocuments, client.id, client.name);
       const newReport = await createLocalSeoReport(analysis, client.id, client.name);
 
       // Add the new report to state
-      setLocalSeoReports((prevReports) => [...prevReports, newReport]);
+      setLocalSeoReports((prevReports) => [newReport, ...prevReports]);
       
       toast({
         title: "Success",
@@ -142,7 +142,7 @@ export default function ClientDetail() {
     return <div>Client not found</div>;
   }
 
-  // Mock functions for ClientHeader requirements
+  // Funciones para los requisitos de ClientHeader
   const handleEdit = () => navigate(`/clients/edit/${client.id}`);
   const handleDelete = () => console.log("Delete client:", client.id);
   const handleToggleActive = (isActive: boolean) => console.log("Toggle active:", isActive);
@@ -178,10 +178,9 @@ export default function ClientDetail() {
           <ClientProfileTab client={client} />
         </TabsContent>
         <TabsContent value="documents">
-          <ClientDocuments
+          <ClientDocumentsView
             clientId={client.id}
             notes={client.notes}
-            onGenerateReport={handleGenerateReport}
           />
           {isAdmin && (
             <div className="mt-4">
@@ -195,7 +194,7 @@ export default function ClientDetail() {
           <ClientMetricsTab clientId={client.id} clientName={client.name} />
         </TabsContent>
         <TabsContent value="reports">
-          <ClientReports reports={reports} />
+          <ClientReports reports={[]} />
           {isAdmin && (
             <Button asChild>
               <a href={`/reports/new/${client.id}`} className="flex items-center gap-2">
@@ -256,72 +255,4 @@ export default function ClientDetail() {
       </Tabs>
     </div>
   );
-}
-
-// Helper functions to generate SEO reports
-async function generateLocalSeoAnalysis(documentIds: string[], clientId: string, clientName: string): Promise<Omit<SeoLocalReport, "id">> {
-  console.log("Generating local SEO analysis for documents:", documentIds);
-  
-  // This function analyzes documents and generates SEO data
-  // For now, we'll use a placeholder
-  
-  const sampleAnalysis: Omit<SeoLocalReport, "id"> = {
-    clientId: clientId,
-    title: `Informe SEO Local - ${clientName}`,
-    date: new Date().toISOString(),
-    businessName: clientName,
-    address: "Calle Principal 123",
-    location: "Madrid, España",
-    phone: "+34 91 123 45 67",
-    website: "www.example.com",
-    googleBusinessUrl: "https://business.google.com/example",
-    googleMapsRanking: 4,
-    googleReviewsCount: 12,
-    keywordRankings: [
-      { keyword: "negocio local madrid", position: 15 },
-      { keyword: "servicios profesionales madrid", position: 22 },
-      { keyword: `${clientName.toLowerCase()} madrid`, position: 8 }
-    ],
-    localListings: [
-      { platform: "Google Business", status: "Verificado" },
-      { platform: "Yelp", status: "Listado" },
-      { platform: "TripAdvisor", status: "No listado" }
-    ],
-    recommendations: [
-      "Optimizar perfil de Google Business",
-      "Conseguir más reseñas de clientes",
-      "Mejorar presencia en directorios locales",
-      "Crear contenido orientado a palabras clave locales"
-    ]
-  };
-  
-  console.log("Generated sample analysis:", sampleAnalysis);
-  
-  return sampleAnalysis;
-}
-
-async function createLocalSeoReport(
-  analysis: Omit<SeoLocalReport, "id">, 
-  clientId: string, 
-  clientName: string
-): Promise<SeoLocalReport> {
-  console.log("Creating local SEO report for client:", clientId, clientName);
-  
-  try {
-    // Import the createSeoLocalReport function from localSeoReportService
-    const { createSeoLocalReport } = await import("@/services/localSeoReportService");
-    
-    // Create the report
-    const id = await createSeoLocalReport(analysis);
-    
-    console.log("Created local SEO report with ID:", id);
-    
-    return {
-      ...analysis,
-      id
-    };
-  } catch (error) {
-    console.error("Error creating local SEO report:", error);
-    throw error;
-  }
 }

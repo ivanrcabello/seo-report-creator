@@ -11,9 +11,9 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
       .eq('client_id', clientId)
       .order('date', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error fetching local SEO data:', error);
       return null;
     }
@@ -89,12 +89,12 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
   }
 };
 
-// Implementation of missing functions
+// Implementación de las funciones utilizadas en ClientDetail.tsx
 export const generateLocalSeoAnalysis = async (documentIds: string[], clientId: string, clientName: string): Promise<Omit<SeoLocalReport, "id">> => {
   console.log("Generating local SEO analysis for documents:", documentIds);
   
-  // This function analyzes documents and generates SEO data
-  // For now, we'll use a placeholder
+  // Esta función analiza documentos y genera datos SEO
+  // Por ahora, usaremos un marcador de posición
   
   const sampleAnalysis: Omit<SeoLocalReport, "id"> = {
     clientId: clientId,

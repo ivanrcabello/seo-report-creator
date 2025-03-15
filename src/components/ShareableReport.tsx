@@ -9,8 +9,8 @@ interface ShareableReportProps {
 
 export const ShareableReport = ({ report }: ShareableReportProps) => {
   return (
-    <Card>
-      <CardContent className="p-4">
+    <Card className="border shadow-md rounded-lg overflow-hidden">
+      <CardContent className="p-0">
         <ReportShareView report={report} />
       </CardContent>
     </Card>

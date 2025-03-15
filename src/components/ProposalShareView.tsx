@@ -11,7 +11,11 @@ import {
   User, 
   Clock,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  Globe,
+  TrendingUp,
+  Search,
+  LineChart
 } from "lucide-react";
 
 interface ProposalShareViewProps {
@@ -34,7 +38,7 @@ export const ProposalShareView = ({ proposal, client, pack }: ProposalShareViewP
       {/* Header */}
       <div className="bg-blue-600 text-white p-8 rounded-t-lg">
         <h1 className="text-3xl font-bold text-center mb-2">
-          Propuesta SEO para {client?.name || "Cliente"}
+          Propuesta SEO para {client?.company || client?.name || "Cliente"}
         </h1>
         <p className="text-center text-blue-100">
           Propuesta enviada el {formattedDate || "N/A"}
@@ -44,7 +48,7 @@ export const ProposalShareView = ({ proposal, client, pack }: ProposalShareViewP
       {/* Recipient Badge */}
       <div className="flex justify-end -mt-4 mr-4">
         <div className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium">
-          Para: {client?.name || "Cliente"}
+          Para: {client?.company || client?.name || "Cliente"}
         </div>
       </div>
 
@@ -78,7 +82,9 @@ export const ProposalShareView = ({ proposal, client, pack }: ProposalShareViewP
                         <User className="h-5 w-5 text-gray-400" />
                         <span className="font-medium">{client?.name || "N/A"}</span>
                       </div>
-                      <p className="text-gray-600 ml-7">{client?.company || ""}</p>
+                      {client?.company && (
+                        <p className="text-gray-600 ml-7">{client.company}</p>
+                      )}
                     </div>
                     
                     <div>

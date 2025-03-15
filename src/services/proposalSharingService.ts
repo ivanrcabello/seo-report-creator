@@ -6,7 +6,7 @@ import { mapProposalFromDB } from "./proposal/proposalMappers";
 // Fetch a shared proposal using its token
 export const getProposalByShareToken = async (token: string): Promise<Proposal | null> => {
   try {
-    // Use explicit type annotation for the data to avoid deep type instantiation
+    // Explicitly specify the return type for the Supabase query
     const { data, error } = await supabase
       .from("proposals")
       .select("*")

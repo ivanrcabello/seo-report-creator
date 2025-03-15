@@ -4,20 +4,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Users, Activity, FileText, Settings, PlusCircle, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { BarChart, Users, Activity, FileText, Settings, PlusCircle, ArrowRight, Mail, Phone, Calendar } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface ClientSummary {
   id: string;
   name: string;
   company: string;
   email: string;
+  phone?: string;
+  created_at: string;
   lastActivity?: string;
 }
 
 export function AdminDashboard() {
   const [clients, setClients] = useState<ClientSummary[]>([]);
+  const [recentClients, setRecentClients] = useState<ClientSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [metrics, setMetrics] = useState({
+    totalClients: 0,
+    newClientsThisMonth: 0,
+    totalReports: 0,
+    activeProposals: 0
+  });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -28,15 +40,32 @@ export function AdminDashboard() {
         const { data, error } = await supabase
           .from('clients')
           .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5);
+          .order('created_at', { ascending: false });
         
         if (error) {
           console.error("Error fetching clients:", error);
           return;
         }
         
-        setClients(data as ClientSummary[]);
+        const formattedClients = data as ClientSummary[];
+        setClients(formattedClients);
+        setRecentClients(formattedClients.slice(0, 5));
+        
+        // Calculate metrics
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        const newClientsCount = formattedClients.filter(client => {
+          const createdAt = new Date(client.created_at);
+          return createdAt >= firstDayOfMonth;
+        }).length;
+        
+        setMetrics({
+          totalClients: formattedClients.length,
+          newClientsThisMonth: newClientsCount,
+          totalReports: 24, // This would be replaced with actual data from reports table
+          activeProposals: 7  // This would be replaced with actual data from proposals table
+        });
       } catch (error) {
         console.error("Error in clients fetch:", error);
       } finally {
@@ -47,6 +76,14 @@ export function AdminDashboard() {
     fetchClients();
   }, []);
 
+  const handleAddClient = () => {
+    navigate('/clients/new');
+  };
+
+  const handleOpenSettings = () => {
+    navigate('/settings');
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
@@ -55,18 +92,18 @@ export function AdminDashboard() {
           <p className="text-gray-500">Gestiona clientes, informes y más</p>
         </div>
         <div className="flex gap-3 mt-4 md:mt-0">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleOpenSettings}>
             <Settings className="mr-2 h-4 w-4" />
             Configuración
           </Button>
-          <Button>
+          <Button onClick={handleAddClient}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Nuevo Cliente
           </Button>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center">
@@ -75,10 +112,10 @@ export function AdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{clients.length}</div>
+            <div className="text-3xl font-bold">{metrics.totalClients}</div>
             <div className="text-sm text-gray-500 mt-1">
               <Badge className="bg-green-100 text-green-700">
-                +2 este mes
+                +{metrics.newClientsThisMonth} este mes
               </Badge>
             </div>
           </CardContent>
@@ -92,7 +129,7 @@ export function AdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">24</div>
+            <div className="text-3xl font-bold">{metrics.totalReports}</div>
             <div className="text-sm text-gray-500 mt-1">
               <Badge className="bg-purple-100 text-purple-700">
                 +8 este mes
@@ -109,27 +146,10 @@ export function AdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">7</div>
+            <div className="text-3xl font-bold">{metrics.activeProposals}</div>
             <div className="text-sm text-gray-500 mt-1">
               <Badge className="bg-orange-100 text-orange-700">
                 3 pendientes de revisión
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <BarChart className="h-5 w-5 mr-2 text-green-500" />
-              Conversiones Totales
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">142</div>
-            <div className="text-sm text-gray-500 mt-1">
-              <Badge className="bg-green-100 text-green-700">
-                +15% vs mes anterior
               </Badge>
             </div>
           </CardContent>
@@ -145,26 +165,46 @@ export function AdminDashboard() {
                 Últimos clientes añadidos a la plataforma
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm">
-              Ver todos
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/clients">
+                Ver todos
+              </Link>
             </Button>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-center py-4 text-gray-500">Cargando clientes...</div>
-            ) : clients.length === 0 ? (
+            ) : recentClients.length === 0 ? (
               <div className="text-center py-4 text-gray-500">No hay clientes disponibles</div>
             ) : (
               <div className="space-y-4">
-                {clients.map(client => (
+                {recentClients.map(client => (
                   <div key={client.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
                         {client.name.charAt(0)}
                       </div>
-                      <div>
+                      <div className="space-y-1">
                         <h4 className="font-medium">{client.name}</h4>
-                        <p className="text-sm text-gray-500">{client.company || client.email}</p>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Mail className="h-3 w-3 mr-1" />
+                          {client.email}
+                        </div>
+                        {client.phone && (
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Phone className="h-3 w-3 mr-1" />
+                            {client.phone}
+                          </div>
+                        )}
+                        {client.company && (
+                          <div className="text-sm text-gray-500">
+                            {client.company}
+                          </div>
+                        )}
+                        <div className="flex items-center text-xs text-gray-400">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {format(new Date(client.created_at), "d 'de' MMMM, yyyy", { locale: es })}
+                        </div>
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" asChild>
@@ -187,8 +227,10 @@ export function AdminDashboard() {
                 Últimas acciones en la plataforma
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm">
-              Ver todo
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/reports">
+                Ver todo
+              </Link>
             </Button>
           </CardHeader>
           <CardContent>

@@ -110,3 +110,50 @@ export const deleteDocument = async (id: string): Promise<void> => {
     throw error;
   }
 };
+
+// Util function to determine file type
+export const getFileType = (file: File): "pdf" | "image" | "doc" | "text" => {
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  
+  if (extension === 'pdf') return "pdf";
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension || '')) return "image";
+  if (['doc', 'docx'].includes(extension || '')) return "doc";
+  return "text";
+};
+
+// Function to extract content from files for analysis
+export const extractFileContent = async (file: File): Promise<string> => {
+  const fileType = getFileType(file);
+  
+  if (fileType === "pdf") {
+    // For PDFs, we'll use the existing pdfToText functionality
+    const { pdfToText } = await import("@/services/pdfAnalyzer");
+    const fileURL = URL.createObjectURL(file);
+    try {
+      return await pdfToText(fileURL);
+    } catch (error) {
+      console.error("Error extracting text from PDF:", error);
+      return "";
+    } finally {
+      URL.revokeObjectURL(fileURL);
+    }
+  }
+  
+  if (fileType === "image") {
+    // For images, we just return a placeholder text
+    return `[Image: ${file.name}]`;
+  }
+  
+  if (fileType === "doc") {
+    // For Word documents, just a placeholder for now
+    return `[Document: ${file.name}]`;
+  }
+  
+  // For other text files
+  try {
+    return await file.text();
+  } catch (error) {
+    console.error("Error reading text file:", error);
+    return "";
+  }
+};

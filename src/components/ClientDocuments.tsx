@@ -17,15 +17,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ClientDocument } from "@/types/client";
-import { PdfUploader } from "@/components/PdfUploader";
+import { FileUploader } from "@/components/FileUploader";
 import { getClientDocuments, addDocument, deleteDocument } from "@/services/documentService";
-import { pdfToText } from "@/services/pdfAnalyzer";
-import { File, FileText, MoreVertical, Eye, Trash, Upload, AlertTriangle, CheckCircle, Clock, Map } from "lucide-react";
+import { File, FileText, MoreVertical, Eye, Trash, Upload, AlertTriangle, CheckCircle, Clock, Map, Image, FilePlus, FileArchive, StickyNote } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { AuditResult } from "@/services/pdfAnalyzer";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast as sonnerToast } from "sonner";
 
@@ -48,6 +48,13 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState<"documents" | "notes">("documents");
+  const [newNote, setNewNote] = useState("");
+  const [clientNotes, setClientNotes] = useState<string[]>(notes);
+
+  useEffect(() => {
+    setClientNotes(notes);
+  }, [notes]);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -70,20 +77,19 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
     fetchDocuments();
   }, [clientId, toast]);
 
-  const handleDocumentUpload = async (file: File) => {
+  const handleFileUpload = async (file: File, content: string, type: "pdf" | "image" | "doc" | "text") => {
     setIsUploading(true);
     try {
       const fileURL = URL.createObjectURL(file);
-      const textContent = await pdfToText(fileURL);
 
       const newDocument: Omit<ClientDocument, "id"> = {
         clientId: clientId,
         name: file.name,
-        type: "pdf", // Must match the allowed enum values
+        type: type,
         url: fileURL,
         uploadDate: new Date().toISOString(),
         analyzedStatus: "pending",
-        content: textContent,
+        content: content,
       };
 
       const uploadedDocument = await addDocument(newDocument);
@@ -102,10 +108,6 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
     } finally { 
       setIsUploading(false);
     }
-  };
-
-  const handleAnalysisResult = (result: AuditResult) => {
-    console.log("Audit result received:", result);
   };
 
   const handleDocumentDelete = async (documentId: string, documentName: string) => {
@@ -156,6 +158,21 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
     }
   };
 
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case "pdf":
+        return <FileText className="h-4 w-4" />;
+      case "image":
+        return <Image className="h-4 w-4" />;
+      case "doc":
+        return <FileArchive className="h-4 w-4" />;
+      case "text":
+        return <File className="h-4 w-4" />;
+      default:
+        return <File className="h-4 w-4" />;
+    }
+  };
+
   const toggleDocumentSelection = (documentId: string) => {
     if (selectedDocuments.includes(documentId)) {
       setSelectedDocuments(selectedDocuments.filter(id => id !== documentId));
@@ -169,7 +186,7 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
       setIsGenerating(true);
       
       try {
-        sonnerToast("Generando informe SEO local...", {
+        sonnerToast("Generando informe...", {
           description: "Analizando los documentos seleccionados...",
           duration: 2000,
         });
@@ -205,137 +222,238 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
     }
   };
 
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
+
+    const updatedNotes = [...clientNotes, newNote.trim()];
+    setClientNotes(updatedNotes);
+    setNewNote("");
+    
+    if (onNoteAdded) {
+      onNoteAdded(updatedNotes);
+    }
+    
+    toast({
+      title: "Nota añadida",
+      description: "La nota ha sido añadida correctamente.",
+    });
+  };
+
+  const handleDeleteNote = (index: number) => {
+    const updatedNotes = [...clientNotes];
+    updatedNotes.splice(index, 1);
+    setClientNotes(updatedNotes);
+    
+    if (onNoteAdded) {
+      onNoteAdded(updatedNotes);
+    }
+    
+    toast({
+      title: "Nota eliminada",
+      description: "La nota ha sido eliminada correctamente.",
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Documentos del Cliente</CardTitle>
         <CardDescription>
-          Gestiona los documentos asociados a este cliente
+          Gestiona los documentos y notas asociados a este cliente
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <PdfUploader 
-          onAnalysisComplete={handleAnalysisResult} 
-          isLoading={isUploading} 
-        />
+        <Tabs defaultValue="documents" value={activeTab} onValueChange={(value) => setActiveTab(value as "documents" | "notes")}>
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="documents" className="flex items-center gap-1.5">
+              <FilePlus className="h-4 w-4" />
+              Documentos
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="flex items-center gap-1.5">
+              <StickyNote className="h-4 w-4" />
+              Notas
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="documents" className="space-y-6">
+            <FileUploader 
+              onFileUpload={handleFileUpload}
+              isLoading={isUploading}
+              allowedTypes={[".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx", ".txt"]}
+              maxSizeMB={25}
+            />
 
-        {isLoading ? (
-          <div className="animate-pulse">
-            <div className="h-10 bg-gray-100 rounded mb-4"></div>
-            <div className="h-20 bg-gray-100 rounded"></div>
-          </div>
-        ) : documents.length === 0 ? (
-          <div className="text-center py-10">
-            <FileText className="h-10 w-10 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">No hay documentos disponibles</p>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-gray-500">
-                {selectedDocuments.length > 0 ? (
-                  <span>{selectedDocuments.length} documentos seleccionados</span>
-                ) : (
-                  <span>Selecciona documentos para generar un informe SEO local</span>
-                )}
+            {isLoading ? (
+              <div className="animate-pulse">
+                <div className="h-10 bg-gray-100 rounded mb-4"></div>
+                <div className="h-20 bg-gray-100 rounded"></div>
+              </div>
+            ) : documents.length === 0 ? (
+              <div className="text-center py-10">
+                <FileText className="h-10 w-10 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-500">No hay documentos disponibles</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-sm text-gray-500">
+                    {selectedDocuments.length > 0 ? (
+                      <span>{selectedDocuments.length} documentos seleccionados</span>
+                    ) : (
+                      <span>Selecciona documentos para generar un informe</span>
+                    )}
+                  </div>
+                  
+                  {selectedDocuments.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedDocuments([])}
+                    >
+                      Limpiar selección
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {documents.map((document) => {
+                    const statusInfo = getStatusInfo(document.analyzedStatus || "pending");
+                    const isSelected = selectedDocuments.includes(document.id);
+                    const fileIcon = getFileIcon(document.type);
+                    
+                    return (
+                      <Card 
+                        key={document.id} 
+                        className={`relative ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
+                      >
+                        <div className="absolute top-2 left-2">
+                          <Checkbox 
+                            checked={isSelected}
+                            onCheckedChange={() => toggleDocumentSelection(document.id)}
+                            className="h-4 w-4"
+                          />
+                        </div>
+                        
+                        <CardHeader className="flex items-center justify-between pt-8">
+                          <CardTitle className="text-sm font-medium flex items-center gap-1">
+                            {fileIcon}
+                            {document.name}
+                          </CardTitle>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-6 w-6 p-0">
+                                <span className="sr-only">Abrir menú</span>
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => window.open(document.url, "_blank")}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Ver
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleDocumentDelete(document.id, document.name)} className="text-red-500 focus:text-red-500">
+                                <Trash className="h-4 w-4 mr-2" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Upload className="h-3 w-3" />
+                            Subido el {format(new Date(document.uploadDate), "d MMM yyyy", { locale: es })}
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge 
+                              variant="outline" 
+                              className={`font-normal flex gap-1 items-center w-fit ${statusInfo.badge}`}
+                            >
+                              {statusInfo.icon}
+                              {statusInfo.text}
+                            </Badge>
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-normal">
+                              {document.type.toUpperCase()}
+                            </Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {documents.length > 0 && onGenerateReport && (
+              <div className="flex justify-center mt-6">
+                <Button 
+                  onClick={handleAnalyzeDocuments} 
+                  className="gap-2"
+                  disabled={selectedDocuments.length === 0 || isGenerating}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Clock className="h-4 w-4 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <Map className="h-4 w-4" />
+                      Generar Informe
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="notes" className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex flex-col space-y-2">
+                <Textarea
+                  placeholder="Añade una nueva nota..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  className="resize-y min-h-[100px]"
+                />
+                <Button onClick={handleAddNote} className="self-end mt-2">
+                  Añadir Nota
+                </Button>
               </div>
               
-              {selectedDocuments.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedDocuments([])}
-                >
-                  Limpiar selección
-                </Button>
-              )}
-            </div>
-            
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {documents.map((document) => {
-                const statusInfo = getStatusInfo(document.analyzedStatus);
-                const isSelected = selectedDocuments.includes(document.id);
-                
-                return (
-                  <Card 
-                    key={document.id} 
-                    className={`relative ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
-                  >
-                    <div className="absolute top-2 left-2">
-                      <Checkbox 
-                        checked={isSelected}
-                        onCheckedChange={() => toggleDocumentSelection(document.id)}
-                        className="h-4 w-4"
-                      />
-                    </div>
-                    
-                    <CardHeader className="flex items-center justify-between pt-8">
-                      <CardTitle className="text-sm font-medium flex items-center gap-1">
-                        <File className="h-4 w-4" />
-                        {document.name}
-                      </CardTitle>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-6 w-6 p-0">
-                            <span className="sr-only">Abrir menú</span>
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => window.open(document.url, "_blank")}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleDocumentDelete(document.id, document.name)} className="text-red-500 focus:text-red-500">
-                            <Trash className="h-4 w-4 mr-2" />
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Upload className="h-3 w-3" />
-                        Subido el {format(new Date(document.uploadDate), "d MMM yyyy", { locale: es })}
-                      </div>
-                      <Badge 
-                        variant="outline" 
-                        className={`mt-2 font-normal flex gap-1 items-center w-fit ${statusInfo.badge}`}
-                      >
-                        {statusInfo.icon}
-                        {statusInfo.text}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {documents.length > 0 && onGenerateReport && (
-          <div className="flex justify-center mt-6">
-            <Button 
-              onClick={handleAnalyzeDocuments} 
-              className="gap-2"
-              disabled={selectedDocuments.length === 0 || isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <Clock className="h-4 w-4 animate-spin" />
-                  Generando...
-                </>
+              {clientNotes.length === 0 ? (
+                <div className="text-center py-8">
+                  <StickyNote className="h-10 w-10 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-500">No hay notas disponibles</p>
+                </div>
               ) : (
-                <>
-                  <Map className="h-4 w-4" />
-                  Generar Informe SEO Local
-                </>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Notas ({clientNotes.length})</h3>
+                  {clientNotes.map((note, index) => (
+                    <Card key={index} className="overflow-hidden">
+                      <div className="flex">
+                        <div className="p-4 flex-grow whitespace-pre-wrap">
+                          {note}
+                        </div>
+                        <div className="p-2 bg-gray-50 flex flex-col items-center justify-center">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDeleteNote(index)}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               )}
-            </Button>
-          </div>
-        )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );

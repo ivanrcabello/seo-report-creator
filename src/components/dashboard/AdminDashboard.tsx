@@ -4,10 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Users, Activity, FileText, Settings, PlusCircle, ArrowRight, Mail, Phone, Calendar } from "lucide-react";
+import { BarChart as BarChartIcon, Users, Activity, FileText, Settings, PlusCircle, ArrowRight, Mail, Phone, Calendar, DollarSign } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip } from "recharts";
+import { formatCurrency } from "@/services/invoice/invoiceFormatters";
+import { StatCard } from "./StatCard";
 
 interface ClientSummary {
   id: string;
@@ -19,15 +23,23 @@ interface ClientSummary {
   lastActivity?: string;
 }
 
+interface MonthlyBillingData {
+  month: string;
+  amount: number;
+}
+
 export function AdminDashboard() {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [recentClients, setRecentClients] = useState<ClientSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [monthlyBilling, setMonthlyBilling] = useState<MonthlyBillingData[]>([]);
   const [metrics, setMetrics] = useState({
     totalClients: 0,
+    activeClients: 0,
     newClientsThisMonth: 0,
     totalReports: 0,
-    activeProposals: 0
+    activeProposals: 0,
+    totalMonthlyBilling: 0
   });
   const navigate = useNavigate();
 
@@ -60,12 +72,35 @@ export function AdminDashboard() {
           return createdAt >= firstDayOfMonth;
         }).length;
         
-        setMetrics({
-          totalClients: formattedClients.length,
-          newClientsThisMonth: newClientsCount,
-          totalReports: 24, // This would be replaced with actual data from reports table
-          activeProposals: 7  // This would be replaced with actual data from proposals table
-        });
+        // Fetch invoice data for billing statistics
+        const { data: invoiceData, error: invoiceError } = await supabase
+          .from('invoices')
+          .select('*')
+          .order('issue_date', { ascending: true });
+          
+        if (invoiceError) {
+          console.error("Error fetching invoices:", invoiceError);
+        } else {
+          const monthlyData = processMonthlyBillingData(invoiceData || []);
+          setMonthlyBilling(monthlyData);
+          
+          // Calculate total monthly billing (sum of the latest month)
+          const latestMonthData = monthlyData[monthlyData.length - 1];
+          const totalMonthlyBilling = latestMonthData ? latestMonthData.amount : 0;
+          
+          setMetrics({
+            totalClients: formattedClients.length,
+            activeClients: formattedClients.filter(client => {
+              // Consider a client active if they had a report in the last 60 days
+              return client.lastActivity || 
+                     (client.created_at && new Date(client.created_at) > new Date(Date.now() - 60 * 24 * 60 * 60 * 1000));
+            }).length,
+            newClientsThisMonth: newClientsCount,
+            totalReports: 24, // This would be replaced with actual data from reports table
+            activeProposals: 7,  // This would be replaced with actual data from proposals table
+            totalMonthlyBilling
+          });
+        }
       } catch (error) {
         console.error("Error in clients fetch:", error);
       } finally {
@@ -75,6 +110,58 @@ export function AdminDashboard() {
 
     fetchClients();
   }, []);
+
+  const processMonthlyBillingData = (invoices: any[]): MonthlyBillingData[] => {
+    // Group invoices by month and sum the amounts
+    const monthlyData: { [key: string]: number } = {};
+    
+    invoices.forEach(invoice => {
+      const date = new Date(invoice.issue_date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = 0;
+      }
+      
+      monthlyData[monthKey] += Number(invoice.total_amount) || 0;
+    });
+    
+    // Convert to array format for the chart
+    const result = Object.entries(monthlyData).map(([month, amount]) => ({
+      month: formatMonthLabel(month),
+      amount
+    }));
+    
+    // Add empty data if we have less than 6 months
+    const minMonths = 6;
+    if (result.length < minMonths) {
+      const lastDate = new Date();
+      for (let i = result.length; i < minMonths; i++) {
+        lastDate.setMonth(lastDate.getMonth() - 1);
+        const monthKey = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthlyData[monthKey]) {
+          result.unshift({
+            month: formatMonthLabel(monthKey),
+            amount: 0
+          });
+        }
+      }
+    }
+    
+    // Sort by date
+    return result.sort((a, b) => {
+      const [yearA, monthA] = a.month.split('-');
+      const [yearB, monthB] = b.month.split('-');
+      return new Date(parseInt(yearA), parseInt(monthA) - 1).getTime() - 
+             new Date(parseInt(yearB), parseInt(monthB) - 1).getTime();
+    }).slice(-6); // Keep only the last 6 months
+  };
+  
+  const formatMonthLabel = (monthKey: string): string => {
+    const [year, month] = monthKey.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+  };
 
   const handleAddClient = () => {
     navigate('/clients/new');
@@ -103,60 +190,96 @@ export function AdminDashboard() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <Users className="h-5 w-5 mr-2 text-blue-500" />
-              Clientes Activos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{metrics.totalClients}</div>
-            <div className="text-sm text-gray-500 mt-1">
-              <Badge className="bg-green-100 text-green-700">
-                +{metrics.newClientsThisMonth} este mes
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="Clientes Activos"
+          value={`${metrics.activeClients}/${metrics.totalClients}`}
+          change={`+${metrics.newClientsThisMonth} este mes`}
+          trend="up"
+          icon={<Users className="h-5 w-5 text-white" />}
+          color="bg-blue-100 text-blue-700"
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <FileText className="h-5 w-5 mr-2 text-purple-500" />
-              Informes Generados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{metrics.totalReports}</div>
-            <div className="text-sm text-gray-500 mt-1">
-              <Badge className="bg-purple-100 text-purple-700">
-                +8 este mes
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Facturación Mensual"
+          value={formatCurrency(metrics.totalMonthlyBilling)}
+          trend="neutral"
+          icon={<DollarSign className="h-5 w-5 text-white" />}
+          color="bg-green-100 text-green-700"
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-orange-500" />
-              Propuestas Activas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{metrics.activeProposals}</div>
-            <div className="text-sm text-gray-500 mt-1">
-              <Badge className="bg-orange-100 text-orange-700">
-                3 pendientes de revisión
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Informes Generados"
+          value={metrics.totalReports.toString()}
+          change="+8 este mes"
+          trend="up"
+          icon={<FileText className="h-5 w-5 text-white" />}
+          color="bg-purple-100 text-purple-700"
+        />
+        
+        <StatCard
+          title="Propuestas Activas"
+          value={metrics.activeProposals.toString()}
+          change="3 pendientes"
+          trend="neutral"
+          icon={<Activity className="h-5 w-5 text-white" />}
+          color="bg-orange-100 text-orange-700"
+        />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Facturación Mensual</CardTitle>
+            <CardDescription>
+              Evolución de la facturación en los últimos 6 meses
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ChartContainer 
+              config={{
+                revenue: {
+                  label: "Facturación",
+                  theme: {
+                    light: "#3b82f6",
+                    dark: "#60a5fa"
+                  }
+                }
+              }}
+            >
+              <BarChart data={monthlyBilling}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis 
+                  tickFormatter={(value) => 
+                    new Intl.NumberFormat('es-ES', { 
+                      style: 'currency', 
+                      currency: 'EUR',
+                      maximumFractionDigits: 0
+                    }).format(value)
+                  } 
+                />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white p-2 border shadow rounded">
+                          <p className="text-sm font-medium">{payload[0].payload.month}</p>
+                          <p className="text-sm text-gray-600">
+                            {formatCurrency(payload[0].value as number)}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="amount" name="revenue" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
@@ -218,7 +341,9 @@ export function AdminDashboard() {
             )}
           </CardContent>
         </Card>
-        
+      </div>
+      
+      <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>

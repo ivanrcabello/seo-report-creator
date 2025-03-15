@@ -43,6 +43,7 @@ export interface SocialPresence {
 
 export interface AuditResult {
   url?: string;
+  domain?: string; // Añadido para referir al dominio del sitio web
   score?: number;
   seoScore: number;
   performanceScore?: number;
@@ -64,6 +65,10 @@ export interface AuditResult {
   technicalResults: TechnicalResult;
   performanceResults: PerformanceResult;
   socialPresence: SocialPresence;
+  // Campos adicionales para información del cliente
+  companyName?: string;
+  companyType?: string;
+  location?: string;
 }
 
 // Función para extraer texto de un PDF (simulada)
@@ -84,6 +89,7 @@ export const analyzePdf = async (file: File): Promise<AuditResult> => {
     setTimeout(() => {
       resolve({
         url: "https://example.com",
+        domain: "example.com", // Añadido
         score: 85,
         seoScore: 94,
         performanceScore: 90,
@@ -154,7 +160,11 @@ export const analyzePdf = async (file: File): Promise<AuditResult> => {
           twitter: true,
           linkedin: false,
           googleBusiness: true
-        }
+        },
+        // Campos adicionales simulados
+        companyName: "Empresa Ejemplo",
+        companyType: "Comercio electrónico",
+        location: "Madrid"
       });
     }, 2000);
   });

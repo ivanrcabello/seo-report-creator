@@ -24,13 +24,27 @@ export interface AIReport {
     technicalOptimization: string[];
     localSeo: string[];
     contentCreation: string[];
+    linkBuilding?: string[]; // Añadido para estrategia de linkbuilding
+  };
+  metrics: { // Añadido para métricas y KPIs
+    trafficIncrease: string;
+    positionImprovement: string;
+    conversionIncrease: string;
+    timeframe: string;
   };
   conclusion: string;
   contactInfo: {
     email: string;
     phone: string;
+    responsiblePerson?: string; // Añadido para el responsable del proyecto
   };
   estimatedResultsTime: number; // en meses
+  cronogram?: { // Añadido para el cronograma
+    audit: string;
+    implementation: string;
+    review: string;
+    reporting: string;
+  };
 }
 
 export const generateAIReport = async (auditResult: AuditResult): Promise<AIReport> => {
@@ -122,21 +136,21 @@ export const generateAIReport = async (auditResult: AuditResult): Promise<AIRepo
   // Generar palabras clave de ejemplo basadas en el análisis
   const exampleKeywords = [
     {
-      keyword: auditResult.technicalResults.technologies.includes("WordPress") ? "wordpress seo " + auditResult.domain : "agencia seo " + auditResult.domain,
+      keyword: auditResult.technicalResults.technologies.includes("WordPress") ? "wordpress seo " + (auditResult.domain || "example.com") : "agencia seo " + (auditResult.domain || "example.com"),
       position: Math.floor(Math.random() * 30) + 10,
       volume: Math.floor(Math.random() * 500) + 100,
       difficulty: Math.floor(Math.random() * 60) + 20,
       recommendation: "Optimizar meta títulos y crear contenido especializado"
     },
     {
-      keyword: "servicios " + (auditResult.companyType || "profesionales") + " " + auditResult.location,
+      keyword: "servicios " + (auditResult.companyType || "profesionales") + " " + (auditResult.location || "Madrid"),
       position: Math.floor(Math.random() * 20) + 5,
       volume: Math.floor(Math.random() * 800) + 200,
       difficulty: Math.floor(Math.random() * 40) + 30,
       recommendation: "Crear página específica optimizada para esta keyword"
     },
     {
-      keyword: "mejor " + (auditResult.companyType || "empresa") + " " + auditResult.location,
+      keyword: "mejor " + (auditResult.companyType || "empresa") + " " + (auditResult.location || "Madrid"),
       position: Math.floor(Math.random() * 50) + 15,
       volume: Math.floor(Math.random() * 1000) + 300,
       difficulty: Math.floor(Math.random() * 70) + 40,
@@ -173,8 +187,8 @@ export const generateAIReport = async (auditResult: AuditResult): Promise<AIRepo
   
   // Estrategias de SEO local
   const localSeo = [
-    `Creación/optimización de perfil Google Business en ${auditResult.location}`,
-    `Desarrollo de páginas específicas para localidades cercanas a ${auditResult.location}`,
+    `Creación/optimización de perfil Google Business en ${auditResult.location || "su localidad"}`,
+    `Desarrollo de páginas específicas para localidades cercanas a ${auditResult.location || "su área"}`,
     "Implementación de schema markup local para mejorar resultados en búsquedas geográficas",
     "Estrategia de reseñas para aumentar valoración y visibilidad local",
     "Creación de contenido local relevante (eventos, noticias, colaboraciones)"
@@ -188,6 +202,31 @@ export const generateAIReport = async (auditResult: AuditResult): Promise<AIRepo
     "Optimización y expansión de páginas de servicios existentes",
     "Implementación de calendario editorial con temáticas estacionales relevantes"
   ];
+  
+  // Estrategias de linkbuilding
+  const linkBuilding = [
+    "Análisis y desautorización de backlinks tóxicos existentes",
+    "Estrategia de guest posting en sitios relevantes de su sector",
+    "Desarrollo de piezas de contenido linkable (infografías, estudios, guías)",
+    "Menciones de marca y aparición en directorios sectoriales de calidad",
+    "Colaboraciones con influencers y empresas complementarias"
+  ];
+  
+  // Cronograma de implementación
+  const cronogram = {
+    audit: "Semanas 1-2: Auditoría técnica completa y preparación de la estrategia",
+    implementation: "Semanas 3-6: Implementación de cambios técnicos y optimizaciones on-page",
+    review: "Semana 8: Primera revisión de resultados y ajustes de estrategia",
+    reporting: "Mensual: Entrega de informes detallados de evolución y resultados"
+  };
+  
+  // Métricas y KPIs
+  const metrics = {
+    trafficIncrease: "Incremento de tráfico orgánico entre un 30-50% en 6 meses",
+    positionImprovement: "Mejora de posiciones para keywords principales (Top 10) en 4-5 meses",
+    conversionIncrease: "Aumento de conversiones desde tráfico orgánico del 15-25% en 6 meses",
+    timeframe: "Primeros resultados visibles a partir del 3er mes, mejoras significativas a los 6 meses"
+  };
   
   // Generar el informe completo
   return {
@@ -248,16 +287,22 @@ Presencia Social: La marca tiene presencia en ${Object.values(auditResult.social
     strategy: {
       technicalOptimization: technicalOptimization,
       localSeo: localSeo,
-      contentCreation: contentCreation
+      contentCreation: contentCreation,
+      linkBuilding: linkBuilding
     },
+    
+    metrics: metrics,
     
     conclusion: `Basándonos en el análisis realizado, recomendamos implementar un plan ${auditResult.seoScore < 60 ? "Completo" : auditResult.seoScore < 75 ? "Avanzado" : "Estándar"} de SEO para su sitio web. Este enfoque permitirá abordar las principales áreas de mejora identificadas y potenciar sus fortalezas actuales. Los primeros resultados comenzarán a ser visibles a partir del tercer mes de implementación, con mejoras progresivas en posicionamiento y tráfico a medida que Google reconozca los cambios realizados. Para objetivos más ambiciosos o resultados más rápidos, considere el plan ${auditResult.seoScore < 70 ? "Premium" : "Completo"}.`,
     
     contactInfo: {
       email: "seo@tuagencia.com",
-      phone: "+34 612 345 678"
+      phone: "+34 612 345 678",
+      responsiblePerson: "Responsable SEO: María García"
     },
     
-    estimatedResultsTime: 3 // resultados visibles a partir del tercer mes
+    estimatedResultsTime: 3, // resultados visibles a partir del tercer mes
+    
+    cronogram: cronogram
   };
 };

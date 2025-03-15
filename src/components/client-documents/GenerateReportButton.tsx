@@ -1,13 +1,13 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Map, Clock } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
+import { ClientDocument } from "@/types/client";
 
 interface GenerateReportButtonProps {
   selectedDocuments: string[];
-  documents: any[];
-  setDocuments: React.Dispatch<React.SetStateAction<any[]>>;
+  documents: ClientDocument[];
+  setDocuments: React.Dispatch<React.SetStateAction<ClientDocument[]>>;
   isGenerating: boolean;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedDocuments: React.Dispatch<React.SetStateAction<string[]>>;
@@ -38,7 +38,7 @@ export const GenerateReportButton: React.FC<GenerateReportButtonProps> = ({
           if (selectedDocuments.includes(doc.id)) {
             return { 
               ...doc, 
-              analyzedStatus: "analyzed" as "pending" | "analyzed" | "processed" | "failed" | "error" 
+              analyzedStatus: "analyzed" 
             };
           }
           return doc;

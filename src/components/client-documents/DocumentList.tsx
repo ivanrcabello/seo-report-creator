@@ -71,6 +71,18 @@ export const DocumentList: React.FC<DocumentListProps> = ({
           icon: <CheckCircle className="h-3 w-3" />,
           text: "Analizado" 
         };
+      case "processed":
+        return { 
+          badge: "bg-blue-100 text-blue-800 border-blue-200", 
+          icon: <CheckCircle className="h-3 w-3" />,
+          text: "Procesado" 
+        };
+      case "failed":
+        return { 
+          badge: "bg-red-100 text-red-800 border-red-200", 
+          icon: <AlertTriangle className="h-3 w-3" />,
+          text: "Fallido" 
+        };
       case "error":
         return { 
           badge: "bg-red-100 text-red-800 border-red-200", 

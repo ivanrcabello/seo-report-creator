@@ -4,17 +4,17 @@ export interface Invoice {
   invoiceNumber: string;
   clientId: string;
   issueDate: string;
-  dueDate?: string | null;
-  packId?: string | null;
-  proposalId?: string | null;
+  dueDate?: string;
+  packId?: string;
+  proposalId?: string;
   baseAmount: number;
   taxRate: number;
   taxAmount: number;
   totalAmount: number;
-  status: "pending" | "paid" | "cancelled";
-  paymentDate?: string | null;
-  notes?: string | null;
-  pdfUrl?: string | null;
+  status: "draft" | "pending" | "paid" | "cancelled";
+  paymentDate?: string;
+  notes?: string;
+  pdfUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,10 +24,10 @@ export interface CompanySettings {
   companyName: string;
   taxId: string;
   address: string;
-  phone?: string | null;
-  email?: string | null;
-  logoUrl?: string | null;
-  bankAccount?: string | null;
+  phone?: string;
+  email?: string;
+  logoUrl?: string;
+  bankAccount?: string;
   createdAt: string;
   updatedAt: string;
 }

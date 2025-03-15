@@ -21,7 +21,7 @@ export interface ClientDocument {
   type: "pdf" | "image" | "doc" | "text";
   url: string;
   uploadDate: string;
-  analyzedStatus?: "pending" | "analyzed" | "error";
+  analyzedStatus?: "pending" | "analyzed" | "processed" | "failed" | "error";
   content?: string;
 }
 
@@ -38,8 +38,8 @@ export interface Invoice {
   status: "draft" | "pending" | "paid" | "cancelled";
   notes?: string;
   pdfUrl?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
   packId?: string;
   proposalId?: string;
   paymentDate?: string;

@@ -20,7 +20,8 @@ import {
   MailOpen,
   BarChart,
   FileSpreadsheet,
-  Settings
+  Settings,
+  FileSignature
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -44,6 +45,12 @@ export function AppSidebar() {
       label: "Informes", 
       icon: <FileText className="h-5 w-5" />,
       active: location.pathname.startsWith("/reports") || location.pathname === "/report"
+    },
+    { 
+      href: "/contracts", 
+      label: "Contratos", 
+      icon: <FileSignature className="h-5 w-5" />,
+      active: location.pathname.startsWith("/contracts")
     },
     { 
       href: "/packages", 

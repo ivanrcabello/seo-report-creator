@@ -323,6 +323,68 @@ export type Database = {
           },
         ]
       }
+      seo_contracts: {
+        Row: {
+          client_id: string
+          content: Json
+          created_at: string
+          end_date: string | null
+          id: string
+          monthly_fee: number
+          pdf_url: string | null
+          phase1_fee: number | null
+          signed_at: string | null
+          signed_by_client: boolean | null
+          signed_by_professional: boolean | null
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content: Json
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          monthly_fee: number
+          pdf_url?: string | null
+          phase1_fee?: number | null
+          signed_at?: string | null
+          signed_by_client?: boolean | null
+          signed_by_professional?: boolean | null
+          start_date: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content?: Json
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          monthly_fee?: number
+          pdf_url?: string | null
+          phase1_fee?: number | null
+          signed_at?: string | null
+          signed_by_client?: boolean | null
+          signed_by_professional?: boolean | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_local_reports: {
         Row: {
           business_name: string

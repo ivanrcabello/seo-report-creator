@@ -10,7 +10,7 @@ import { getClientReports, addReport } from "@/services/reportService";
 import { getLocalSeoReports } from "@/services/localSeoReportService";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, UserCog, FileText, UploadCloud, Map } from "lucide-react";
+import { Loader2, UserCog, FileText, UploadCloud, Map, FileSignature } from "lucide-react";
 
 // Import refactored components
 import { ClientHeader } from "@/components/client-detail/ClientHeader";
@@ -18,8 +18,9 @@ import { ClientForm } from "@/components/ClientForm";
 import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
-import ClientDocuments from "@/components/ClientDocuments";
+import ClientDocuments from "@/components/client-documents/ClientDocuments";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
+import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
 import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
 
 const ClientDetail = () => {
@@ -230,7 +231,7 @@ const ClientDetail = () => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <TabsList className="mb-4 grid grid-cols-5 max-w-4xl">
+        <TabsList className="mb-4 grid grid-cols-6 max-w-4xl">
           <TabsTrigger value="profile" className="flex items-center gap-1">
             <UserCog className="h-4 w-4" />
             Perfil
@@ -241,7 +242,11 @@ const ClientDetail = () => {
           </TabsTrigger>
           <TabsTrigger value="proposals-list" className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
-            Propuestas e Informes
+            Propuestas
+          </TabsTrigger>
+          <TabsTrigger value="contracts" className="flex items-center gap-1">
+            <FileSignature className="h-4 w-4" />
+            Contratos
           </TabsTrigger>
           <TabsTrigger value="upload" className="flex items-center gap-1">
             <UploadCloud className="h-4 w-4" />
@@ -268,6 +273,10 @@ const ClientDetail = () => {
         
         <TabsContent value="proposals-list">
           <ClientProposalsList clientId={client.id} />
+        </TabsContent>
+        
+        <TabsContent value="contracts">
+          <ClientContractsTab clientName={client.name} />
         </TabsContent>
         
         <TabsContent value="upload">

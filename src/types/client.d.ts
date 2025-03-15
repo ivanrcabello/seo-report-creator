@@ -1,4 +1,3 @@
-
 // Client types definitions
 
 export interface Client {
@@ -41,6 +40,44 @@ export interface ClientReport {
   analyticsData?: any;
   searchConsoleData?: any;
   auditResult?: any;
+}
+
+export interface SeoContract {
+  id: string;
+  clientId: string;
+  title: string;
+  startDate: string;
+  endDate?: string;
+  phase1Fee: number;
+  monthlyFee: number;
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  content: {
+    sections: ContractSection[];
+    clientInfo: {
+      name: string;
+      company?: string;
+      address?: string;
+      taxId?: string;
+    };
+    professionalInfo: {
+      name: string;
+      company: string;
+      address: string;
+      taxId: string;
+    };
+  };
+  createdAt: string;
+  updatedAt: string;
+  signedAt?: string;
+  signedByClient: boolean;
+  signedByProfessional: boolean;
+  pdfUrl?: string;
+}
+
+export interface ContractSection {
+  title: string;
+  content: string;
+  order: number;
 }
 
 export interface SeoLocalReport {

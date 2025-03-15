@@ -40,6 +40,44 @@ export interface ClientReport {
   auditResult?: any; // Resultados del análisis de auditoría
 }
 
+export interface SeoContract {
+  id: string;
+  clientId: string;
+  title: string;
+  startDate: string;
+  endDate?: string;
+  phase1Fee: number;
+  monthlyFee: number;
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  content: {
+    sections: ContractSection[];
+    clientInfo: {
+      name: string;
+      company?: string;
+      address?: string;
+      taxId?: string;
+    };
+    professionalInfo: {
+      name: string;
+      company: string;
+      address: string;
+      taxId: string;
+    };
+  };
+  createdAt: string;
+  updatedAt: string;
+  signedAt?: string;
+  signedByClient: boolean;
+  signedByProfessional: boolean;
+  pdfUrl?: string;
+}
+
+export interface ContractSection {
+  title: string;
+  content: string;
+  order: number;
+}
+
 export interface AnalyticsData {
   sessionCount: number;
   userCount: number;

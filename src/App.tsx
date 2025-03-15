@@ -18,6 +18,9 @@ import ProposalShare from "./pages/ProposalShare";
 import Invoices from "./pages/Invoices";
 import InvoiceDetail from "./pages/InvoiceDetail";
 import CompanySettings from "./pages/CompanySettings";
+import Contracts from "./pages/Contracts";
+import ContractForm from "./pages/ContractForm";
+import ContractDetail from "./pages/ContractDetail";
 import { Toaster } from "./components/ui/sonner";
 import { AppLayout } from "./components/AppLayout";
 import { InvoiceForm } from "./components/InvoiceForm";
@@ -59,6 +62,13 @@ function App() {
           <Route path="/proposals/new/:clientId/:packId" element={<AppLayout><ProposalForm /></AppLayout>} />
           <Route path="/proposals/edit/:id" element={<AppLayout><ProposalForm /></AppLayout>} />
           <Route path="/proposals/:id" element={<AppLayout><ProposalDetail /></AppLayout>} />
+          
+          {/* Contracts routes */}
+          <Route path="/contracts" element={<AppLayout><Contracts /></AppLayout>} />
+          <Route path="/contracts/new" element={<AppLayout><ContractForm /></AppLayout>} />
+          <Route path="/contracts/new/:clientId" element={<AppLayout><ContractForm /></AppLayout>} />
+          <Route path="/contracts/edit/:id" element={<AppLayout><ContractForm /></AppLayout>} />
+          <Route path="/contracts/:id" element={<AppLayout><ContractDetail /></AppLayout>} />
           
           {/* Invoice routes - fix the ordering to ensure the "new" route works */}
           <Route path="/invoices" element={<AppLayout><Invoices /></AppLayout>} />

@@ -28,6 +28,7 @@ export const mapInvoiceFromDB = (invoice: any): Invoice => ({
  * Converts application invoice data to database format
  */
 export const mapInvoiceToDB = (invoice: Partial<Invoice>) => ({
+  id: invoice.id, // Include ID for update operations
   invoice_number: invoice.invoiceNumber,
   client_id: invoice.clientId,
   issue_date: invoice.issueDate,
@@ -41,6 +42,5 @@ export const mapInvoiceToDB = (invoice: Partial<Invoice>) => ({
   status: invoice.status,
   payment_date: invoice.paymentDate,
   notes: invoice.notes,
-  pdf_url: invoice.pdfUrl,
-  updated_at: new Date().toISOString()
+  pdf_url: invoice.pdfUrl
 });

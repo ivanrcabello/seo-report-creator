@@ -111,6 +111,7 @@ export const InvoiceForm = () => {
         console.log("Loading invoice data for:", id);
         const data = await getInvoice(id);
         if (data) {
+          console.log("Retrieved invoice data:", data);
           setInvoice(data);
           // Load client data
           const clientData = await getClient(data.clientId);
@@ -218,10 +219,13 @@ export const InvoiceForm = () => {
         console.log("Updating invoice with ID:", id);
         console.log("Current invoice state:", invoice);
         
-        // Make sure to include the ID in the update data
+        // Make sure to include the ID in the update data and preserve createdAt
         const updateData = {
           ...invoiceData,
-          id: id
+          id: id,
+          createdAt: invoice?.createdAt || new Date().toISOString(),
+          paymentDate: invoice?.paymentDate,
+          pdfUrl: invoice?.pdfUrl,
         };
         
         console.log("Updating invoice with data:", updateData);

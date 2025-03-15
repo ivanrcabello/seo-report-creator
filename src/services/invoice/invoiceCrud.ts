@@ -102,7 +102,7 @@ export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefin
     }
     
     console.log("Updating invoice with ID:", invoice.id);
-    console.log("Invoice data:", invoice);
+    console.log("Invoice data for update:", invoice);
     
     // Create updated invoice with current timestamp
     const dbInvoice = mapInvoiceToDB(invoice);
@@ -111,7 +111,7 @@ export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefin
       updated_at: new Date().toISOString()
     };
     
-    console.log("Mapped invoice data for DB:", updatedInvoice);
+    console.log("Mapped invoice data for DB update:", updatedInvoice);
     
     const { data, error } = await supabase
       .from('invoices')

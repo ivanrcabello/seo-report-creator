@@ -219,11 +219,14 @@ export const InvoiceForm = () => {
         console.log("Updating invoice with ID:", id);
         console.log("Current invoice state:", invoice);
         
-        // Make sure to include the ID in the update data and preserve createdAt
+        // Make sure to include the ID in the update data and preserve existing fields
         const updateData = {
-          ...invoiceData,
-          id: id,
+          ...invoice, // Start with all existing invoice data
+          ...invoiceData, // Override with new form data
+          id: id, // Ensure ID is included
+          // Preserve data not in the form
           createdAt: invoice?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           paymentDate: invoice?.paymentDate,
           pdfUrl: invoice?.pdfUrl,
         };

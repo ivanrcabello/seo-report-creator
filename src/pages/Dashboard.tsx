@@ -1,6 +1,5 @@
-
 import { useAuth } from "@/contexts/AuthContext";
-import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
+import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
 import { TestUserCreator } from "@/components/TestUserCreator";
 import { useState, useEffect } from "react";

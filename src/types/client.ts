@@ -8,13 +8,11 @@ export interface Client {
   createdAt: string;
   lastReport?: string;
   notes?: string[];
-  documents?: any[];
+  documents?: ClientDocument[];
   analyticsConnected?: boolean;
   searchConsoleConnected?: boolean;
   isActive?: boolean;
 }
-
-// The following are all the types referenced in error messages
 
 export interface ClientDocument {
   id: string;
@@ -32,7 +30,7 @@ export interface Invoice {
   clientId: string;
   invoiceNumber: string;
   issueDate: string;
-  dueDate: string;
+  dueDate?: string;
   baseAmount: number;
   taxRate: number;
   taxAmount: number;
@@ -40,6 +38,11 @@ export interface Invoice {
   status: "draft" | "pending" | "paid" | "cancelled";
   notes?: string;
   pdfUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  packId?: string;
+  proposalId?: string;
+  paymentDate?: string;
 }
 
 export interface Proposal {
@@ -53,18 +56,29 @@ export interface Proposal {
   status: "draft" | "sent" | "accepted" | "rejected";
   customPrice?: number;
   customFeatures?: string[];
+  updatedAt?: string;
+  expiresAt?: string;
+  reportIds?: string[];
+  publicUrl?: string;
 }
 
 export interface ClientReport {
   id: string;
   clientId: string;
   title: string;
-  type: "seo" | "performance" | "technical" | "social";
+  type: "seo" | "performance" | "technical" | "social" | "local-seo";
   date: string;
   url?: string;
-  content: any;
-  status: "draft" | "published";
-  publicToken?: string;
+  content?: any;
+  status?: "draft" | "published";
+  documentIds?: string[];
+  shareToken?: string;
+  sharedAt?: string;
+  notes?: string;
+  includeInProposal?: boolean;
+  analyticsData?: any;
+  searchConsoleData?: any;
+  auditResult?: any;
 }
 
 export interface CompanySettings {
@@ -78,6 +92,9 @@ export interface CompanySettings {
   primaryColor?: string;
   secondaryColor?: string;
   accentColor?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  bankAccount?: string;
 }
 
 export interface SeoPack {
@@ -87,39 +104,59 @@ export interface SeoPack {
   price: number;
   features: string[];
   isActive: boolean;
+  createdAt?: string;
 }
 
 export interface SeoLocalReport {
   id: string;
   clientId: string;
-  reportDate: string;
+  title?: string;
+  date?: string;
   businessName: string;
-  address: string;
-  phoneNumber: string;
+  address?: string;
+  location?: string;
+  phone: string;
   website: string;
   googleBusinessUrl?: string;
+  googleMapsRanking?: number;
+  googleReviewsCount?: number;
   keywordRankings?: any[];
   localListings?: any[];
-  reviewSummary?: {
-    google?: { total: number; average: number };
-    facebook?: { total: number; average: number };
-    yelp?: { total: number; average: number };
-  };
-  competitorAnalysis?: any[];
+  shareToken?: string;
+  sharedAt?: string;
   recommendations?: string[];
 }
 
 export interface SeoContract {
   id: string;
   clientId: string;
-  contractNumber: string;
   title: string;
   startDate: string;
-  endDate: string;
-  status: "draft" | "active" | "completed" | "cancelled";
-  monthlyAmount: number;
-  signatureDate?: string;
-  sections: ContractSection[];
+  endDate?: string;
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  content?: {
+    sections: ContractSection[];
+    clientInfo: {
+      name: string;
+      company?: string;
+      address?: string;
+      taxId?: string;
+    };
+    professionalInfo: {
+      name: string;
+      company: string;
+      address: string;
+      taxId: string;
+    };
+  };
+  createdAt?: string;
+  updatedAt?: string;
+  signedAt?: string;
+  signedByClient?: boolean;
+  signedByProfessional?: boolean;
+  pdfUrl?: string;
+  phase1Fee?: number;
+  monthlyFee?: number;
 }
 
 export interface ContractSection {

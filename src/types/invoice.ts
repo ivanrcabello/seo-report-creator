@@ -1,3 +1,4 @@
+
 export type InvoiceStatus = "pending" | "paid" | "cancelled" | "draft";
 
 export interface Invoice {

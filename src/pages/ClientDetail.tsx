@@ -179,8 +179,7 @@ export default function ClientDetail() {
         </TabsContent>
         <TabsContent value="documents">
           <ClientDocumentsView
-            clientId={client.id}
-            notes={client.notes}
+            client={client}
           />
           {isAdmin && (
             <div className="mt-4">
@@ -216,7 +215,7 @@ export default function ClientDetail() {
           )}
         </TabsContent>
         <TabsContent value="invoices">
-          <ClientInvoices clientId={client.id} invoices={[]} />
+          <ClientInvoices clientId={client.id} />
           {isAdmin && (
             <Button asChild>
               <a href={`/invoices/new?clientId=${client.id}`} className="flex items-center gap-2">

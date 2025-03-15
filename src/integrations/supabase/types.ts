@@ -585,6 +585,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_client_metrics: {
+        Args: {
+          client_id_param: string
+        }
+        Returns: {
+          client_id: string | null
+          conversion_goal: number | null
+          conversions: number | null
+          created_at: string
+          id: string
+          keywords_top10: number | null
+          month: string
+          updated_at: string
+          web_visits: number | null
+        }[]
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -593,8 +609,31 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      insert_client_metric: {
+        Args: {
+          p_client_id: string
+          p_month: string
+          p_web_visits: number
+          p_keywords_top10: number
+          p_conversions: number
+          p_conversion_goal: number
+        }
+        Returns: string
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      update_client_metric: {
+        Args: {
+          p_id: string
+          p_client_id: string
+          p_month: string
+          p_web_visits: number
+          p_keywords_top10: number
+          p_conversions: number
+          p_conversion_goal: number
+        }
         Returns: boolean
       }
     }

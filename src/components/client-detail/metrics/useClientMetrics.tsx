@@ -17,6 +17,7 @@ export const useClientMetrics = (clientId: string) => {
       setIsLoading(true);
       setError(null);
       console.log("Fetching metrics for client ID:", clientId);
+      
       const data = await getClientMetrics(clientId);
       console.log("Metrics data received:", data);
       
@@ -40,10 +41,11 @@ export const useClientMetrics = (clientId: string) => {
       }
     } catch (error) {
       console.error("Error fetching client metrics:", error);
-      setError("No se pudieron cargar las métricas del cliente");
+      const errorMessage = error instanceof Error ? error.message : "No se pudieron cargar las métricas del cliente";
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: "No se pudieron cargar las métricas del cliente",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

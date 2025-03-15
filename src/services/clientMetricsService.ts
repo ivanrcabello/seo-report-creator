@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ClientMetric {
@@ -14,33 +13,20 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
   try {
     console.log("Fetching metrics for client:", clientId);
     
-    // Direct query using RPC to bypass potential RLS recursion issues
+    // Call the RPC function directly
     const { data, error } = await supabase
       .rpc('get_client_metrics', { client_id_param: clientId });
     
     if (error) {
       console.error("Error fetching client metrics:", error);
       console.log("Error details:", JSON.stringify(error));
-      
-      // Fallback to direct query if RPC fails
-      const fallbackResult = await supabase
-        .from('client_metrics')
-        .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
-        .eq('client_id', clientId)
-        .order('month', { ascending: false });
-        
-      if (fallbackResult.error) {
-        console.error("Fallback query also failed:", fallbackResult.error);
-        return [];
-      }
-      
-      return fallbackResult.data || [];
+      throw new Error(`Error fetching metrics: ${error.message}`);
     }
     
     return data || [];
   } catch (error) {
     console.error("Exception in getClientMetrics:", error);
-    return []; // Return empty array on any error
+    throw error; // Re-throw to handle in the calling function
   }
 };
 
@@ -50,15 +36,12 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
     
     // Prepare data to insert/update - ensure all numeric fields are valid numbers
     const metricData = {
-      client_id: clientId,
-      month: metric.month,
       web_visits: Math.max(0, Number(metric.web_visits) || 0),
       keywords_top10: Math.max(0, Number(metric.keywords_top10) || 0),
       conversions: Math.max(0, Number(metric.conversions) || 0),
       conversion_goal: Math.max(1, Number(metric.conversion_goal) || 30)
     };
     
-    // Use RPC instead of direct table operations to avoid RLS recursion
     let result;
     
     if (metric.id && metric.id.trim() !== '') {
@@ -67,7 +50,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         .rpc('update_client_metric', {
           p_id: metric.id,
           p_client_id: clientId,
-          p_month: metricData.month,
+          p_month: metric.month,
           p_web_visits: metricData.web_visits,
           p_keywords_top10: metricData.keywords_top10,
           p_conversions: metricData.conversions,
@@ -98,7 +81,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       const { data, error } = await supabase
         .rpc('insert_client_metric', {
           p_client_id: clientId,
-          p_month: metricData.month,
+          p_month: metric.month,
           p_web_visits: metricData.web_visits,
           p_keywords_top10: metricData.keywords_top10,
           p_conversions: metricData.conversions,
@@ -116,7 +99,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         .from('client_metrics')
         .select('*')
         .eq('client_id', clientId)
-        .eq('month', metricData.month)
+        .eq('month', metric.month)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();

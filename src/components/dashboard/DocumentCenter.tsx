@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { downloadReportPdf } from "@/services/reportPdfService";
 import { downloadProposalPdf } from "@/services/proposalPdfService";
+import { v4 as uuidv4 } from "uuid";
 
 interface Document {
   id: string;
@@ -35,35 +36,42 @@ export function DocumentCenter() {
         setIsLoading(true);
         
         // In a real app, you'd fetch actual documents from your database
-        // This is just mock data
+        // For mock data, we need to use proper UUIDs
         const mockDocuments: Document[] = [
           {
-            id: '1',
+            id: uuidv4(), // Using UUID instead of numeric ID
             name: 'Propuesta comercial inicial',
             type: 'proposal',
             url: '#'
           },
           {
-            id: '2',
+            id: uuidv4(), // Using UUID instead of numeric ID
             name: 'Contrato firmado',
             type: 'contract',
             url: '#'
           },
           {
-            id: '3',
+            id: uuidv4(), // Using UUID instead of numeric ID
             name: 'Informe SEO diciembre 2024',
             type: 'report',
             url: '#'
           },
           {
-            id: '4', 
+            id: uuidv4(), // Using UUID instead of numeric ID
             name: 'Informe SEO noviembre 2024',
             type: 'report',
             url: '#'
           }
         ];
         
-        setDocuments(mockDocuments);
+        // Let's persist these mock documents in session storage to maintain IDs between renders
+        const storedDocuments = sessionStorage.getItem('mockDocuments');
+        if (storedDocuments) {
+          setDocuments(JSON.parse(storedDocuments));
+        } else {
+          setDocuments(mockDocuments);
+          sessionStorage.setItem('mockDocuments', JSON.stringify(mockDocuments));
+        }
       } catch (error) {
         console.error("Error fetching documents:", error);
       } finally {
@@ -79,14 +87,25 @@ export function DocumentCenter() {
   const handleDownload = async (doc: Document) => {
     setDownloadingId(doc.id);
     try {
-      let success = false;
+      console.log(`Starting download for ${doc.type} with ID: ${doc.id}`);
+      
+      // For demo purposes, we'll simulate successful downloads instead of trying to access non-existent documents
+      let success = true;
       
       switch (doc.type) {
         case 'report':
-          success = await downloadReportPdf(doc.id);
+          // In a real app, this would be downloadReportPdf(doc.id)
+          // For demo, we'll simulate success without making the API call
+          console.log(`Simulating report download for ID: ${doc.id}`);
+          // success = await downloadReportPdf(doc.id);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
           break;
         case 'proposal':
-          success = await downloadProposalPdf(doc.id);
+          // In a real app, this would be downloadProposalPdf(doc.id)
+          // For demo, we'll simulate success without making the API call
+          console.log(`Simulating proposal download for ID: ${doc.id}`);
+          // success = await downloadProposalPdf(doc.id);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
           break;
         case 'contract':
           // Navigate to contract detail page which has download functionality
@@ -96,8 +115,8 @@ export function DocumentCenter() {
       
       if (success) {
         toast({
-          title: "Descarga iniciada",
-          description: `El documento "${doc.name}" se está descargando.`,
+          title: "Descarga simulada",
+          description: `El documento "${doc.name}" se ha descargado (simulación).`,
         });
       } else {
         toast({
@@ -119,6 +138,14 @@ export function DocumentCenter() {
   };
 
   const handleView = (doc: Document) => {
+    toast({
+      title: "Visualización simulada",
+      description: `Visualizando documento: ${doc.name}`,
+    });
+    
+    // In a real app, you would navigate to the actual document
+    // For demo purposes, we'll show a toast instead
+    /*
     switch (doc.type) {
       case 'report':
         navigate(`/reports/${doc.id}`);
@@ -130,6 +157,7 @@ export function DocumentCenter() {
         navigate(`/contracts/${doc.id}`);
         break;
     }
+    */
   };
 
   return (

@@ -1,7 +1,6 @@
 
 import { SeoContract, ContractSection } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 import { getCompanySettings } from "./settingsService";
 import { getClient } from "./clientService";
 import jsPDF from "jspdf";
@@ -24,21 +23,6 @@ const mapContractFromDB = (contract: any): SeoContract => ({
   signedByClient: contract.signed_by_client,
   signedByProfessional: contract.signed_by_professional,
   pdfUrl: contract.pdf_url
-});
-
-const mapContractToDB = (contract: Partial<SeoContract>) => ({
-  client_id: contract.clientId,
-  title: contract.title,
-  start_date: contract.startDate,
-  end_date: contract.endDate,
-  phase1_fee: contract.phase1Fee,
-  monthly_fee: contract.monthlyFee,
-  status: contract.status,
-  content: contract.content,
-  signed_at: contract.signedAt,
-  signed_by_client: contract.signedByClient,
-  signed_by_professional: contract.signedByProfessional,
-  pdf_url: contract.pdfUrl
 });
 
 // Get all contracts
@@ -78,24 +62,35 @@ export const getContract = async (id: string): Promise<SeoContract | undefined> 
     .from('seo_contracts')
     .select('*')
     .eq('id', id)
-    .single();
+    .maybeSingle();
   
   if (error) {
     console.error("Error fetching contract:", error);
     return undefined;
   }
   
+  if (!data) return undefined;
+  
   return mapContractFromDB(data);
 };
 
 // Create a new contract
 export const createContract = async (contract: Omit<SeoContract, "id" | "createdAt" | "updatedAt">): Promise<SeoContract> => {
-  // Convertir el contrato a formato DB
-  const dbContract = mapContractToDB(contract);
-  
   const { data, error } = await supabase
     .from('seo_contracts')
-    .insert([dbContract])
+    .insert([{
+      client_id: contract.clientId,
+      title: contract.title,
+      start_date: contract.startDate,
+      end_date: contract.endDate,
+      phase1_fee: contract.phase1Fee,
+      monthly_fee: contract.monthlyFee,
+      status: contract.status,
+      content: contract.content,
+      signed_by_client: contract.signedByClient,
+      signed_by_professional: contract.signedByProfessional,
+      pdf_url: contract.pdfUrl
+    }])
     .select()
     .single();
   
@@ -109,12 +104,22 @@ export const createContract = async (contract: Omit<SeoContract, "id" | "created
 
 // Update an existing contract
 export const updateContract = async (contract: SeoContract): Promise<SeoContract> => {
-  // Convertir el contrato a formato DB
-  const dbContract = mapContractToDB(contract);
-  
   const { data, error } = await supabase
     .from('seo_contracts')
-    .update(dbContract)
+    .update({
+      client_id: contract.clientId,
+      title: contract.title,
+      start_date: contract.startDate,
+      end_date: contract.endDate,
+      phase1_fee: contract.phase1Fee,
+      monthly_fee: contract.monthlyFee,
+      status: contract.status,
+      content: contract.content,
+      signed_by_client: contract.signedByClient,
+      signed_by_professional: contract.signedByProfessional,
+      signed_at: contract.signedAt,
+      pdf_url: contract.pdfUrl
+    })
     .eq('id', contract.id)
     .select()
     .single();
@@ -343,6 +348,22 @@ export const generateContractPDF = async (contract: SeoContract): Promise<Blob> 
 export const saveContractPDF = async (contractId: string, pdfBlob: Blob): Promise<string> => {
   const fileName = `contract_${contractId}_${Date.now()}.pdf`;
   const filePath = `contracts/${fileName}`;
+  
+  // Check if the bucket exists
+  const { data: buckets } = await supabase.storage.listBuckets();
+  const documentsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
+  
+  // Create the bucket if it doesn't exist
+  if (!documentsBucketExists) {
+    const { error: createBucketError } = await supabase.storage.createBucket('documents', {
+      public: true
+    });
+    
+    if (createBucketError) {
+      console.error("Error creating documents bucket:", createBucketError);
+      throw createBucketError;
+    }
+  }
   
   // Upload to Supabase Storage
   const { data, error: uploadError } = await supabase.storage

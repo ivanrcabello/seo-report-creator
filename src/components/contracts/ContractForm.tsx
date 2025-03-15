@@ -3,23 +3,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { SeoContract, Client, ContractSection } from "@/types/client";
 import { getClient, getClients } from "@/services/clientService";
 import { getContract, createContract, updateContract, createDefaultContractSections } from "@/services/contractService";
 import { getCompanySettings } from "@/services/settingsService";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,49 +18,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Plus, Trash2 } from "lucide-react";
-import { format, parse } from "date-fns";
-
-// Schema for the form validation
-const contractFormSchema = z.object({
-  title: z.string().min(1, "El título es obligatorio"),
-  clientId: z.string().min(1, "El cliente es obligatorio"),
-  startDate: z.date(),
-  endDate: z.date().optional(),
-  phase1Fee: z.coerce.number().min(0, "El importe debe ser mayor o igual a 0"),
-  monthlyFee: z.coerce.number().min(0, "El importe debe ser mayor o igual a 0"),
-  status: z.enum(["draft", "active", "completed", "cancelled"]),
-  clientInfo: z.object({
-    name: z.string().min(1, "El nombre es obligatorio"),
-    company: z.string().optional(),
-    address: z.string().optional(),
-    taxId: z.string().optional(),
-  }),
-  professionalInfo: z.object({
-    name: z.string().min(1, "El nombre es obligatorio"),
-    company: z.string().min(1, "La empresa es obligatoria"),
-    address: z.string().min(1, "La dirección es obligatoria"),
-    taxId: z.string().min(1, "El CIF/NIF es obligatorio"),
-  }),
-  sections: z.array(
-    z.object({
-      title: z.string().min(1, "El título de la sección es obligatorio"),
-      content: z.string().min(1, "El contenido de la sección es obligatorio"),
-      order: z.number(),
-    })
-  ),
-});
-
-type ContractFormValues = z.infer<typeof contractFormSchema>;
+import { Loader2 } from "lucide-react";
+import { contractFormSchema, ContractFormValues } from "./ContractFormSchema";
+import { GeneralInfoTab } from "./form/GeneralInfoTab";
+import { PartiesTab } from "./form/PartiesTab";
+import { SectionsTab } from "./form/SectionsTab";
 
 export const ContractForm = () => {
   const { id, clientId } = useParams<{ id: string; clientId: string }>();
@@ -185,48 +137,6 @@ export const ContractForm = () => {
     fetchData();
   }, [id, clientId, form, toast]);
 
-  const addSection = () => {
-    const newOrder = sections.length ? Math.max(...sections.map(s => s.order)) + 1 : 1;
-    setSections([
-      ...sections,
-      {
-        title: "",
-        content: "",
-        order: newOrder,
-      },
-    ]);
-  };
-
-  const removeSection = (index: number) => {
-    const newSections = [...sections];
-    newSections.splice(index, 1);
-    setSections(newSections);
-  };
-
-  const updateSection = (index: number, field: keyof ContractSection, value: string | number) => {
-    const newSections = [...sections];
-    newSections[index] = {
-      ...newSections[index],
-      [field]: value,
-    };
-    setSections(newSections);
-  };
-
-  const handleClientChange = async (clientId: string) => {
-    if (clientId) {
-      try {
-        const clientData = await getClient(clientId);
-        
-        if (clientData) {
-          form.setValue("clientInfo.name", clientData.name);
-          form.setValue("clientInfo.company", clientData.company || "");
-        }
-      } catch (error) {
-        console.error("Error fetching client data:", error);
-      }
-    }
-  };
-
   const onSubmit = async (values: ContractFormValues) => {
     try {
       setSaving(true);
@@ -324,326 +234,16 @@ export const ContractForm = () => {
                 <TabsTrigger value="sections">Secciones</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="general" className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Título del Contrato</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Contrato de Servicios SEO" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="clientId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cliente</FormLabel>
-                      <Select
-                        disabled={!!clientId}
-                        value={field.value}
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          handleClientChange(value);
-                        }}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona un cliente" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {clients.map((client) => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.name} {client.company ? `(${client.company})` : ""}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Fecha de Inicio</FormLabel>
-                        <DatePicker
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          mode="single"
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Fecha de Finalización (opcional)</FormLabel>
-                        <DatePicker
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          mode="single"
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="phase1Fee"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Importe Primera Fase (€)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} min="0" step="0.01" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="monthlyFee"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cuota Mensual (€)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} min="0" step="0.01" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estado</FormLabel>
-                        <Select 
-                          value={field.value} 
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona el estado" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="draft">Borrador</SelectItem>
-                            <SelectItem value="active">Activo</SelectItem>
-                            <SelectItem value="completed">Completado</SelectItem>
-                            <SelectItem value="cancelled">Cancelado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <TabsContent value="general">
+                <GeneralInfoTab form={form} clients={clients} clientId={clientId} />
               </TabsContent>
               
-              <TabsContent value="parties" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-lg">Información del Cliente</h3>
-                    
-                    <FormField
-                      control={form.control}
-                      name="clientInfo.name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nombre / Razón Social</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="clientInfo.company"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Empresa (opcional)</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="clientInfo.taxId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>CIF/NIF (opcional)</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="clientInfo.address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Dirección (opcional)</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-lg">Información del Profesional</h3>
-                    
-                    <FormField
-                      control={form.control}
-                      name="professionalInfo.name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nombre / Razón Social</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="professionalInfo.company"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Empresa</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="professionalInfo.taxId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>CIF/NIF</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="professionalInfo.address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Dirección</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
+              <TabsContent value="parties">
+                <PartiesTab form={form} />
               </TabsContent>
               
-              <TabsContent value="sections" className="space-y-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-medium text-lg">Secciones del Contrato</h3>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={addSection}
-                    className="flex items-center gap-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Añadir Sección
-                  </Button>
-                </div>
-                
-                {sections.map((section, index) => (
-                  <Card key={index} className="relative">
-                    <CardContent className="pt-6 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-[1fr,auto] gap-4 items-start">
-                        <Input
-                          placeholder="Título de la sección"
-                          value={section.title}
-                          onChange={(e) => updateSection(index, "title", e.target.value)}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeSection(index)}
-                          className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <Textarea
-                        placeholder="Contenido de la sección"
-                        value={section.content}
-                        onChange={(e) => updateSection(index, "content", e.target.value)}
-                        rows={4}
-                      />
-                    </CardContent>
-                  </Card>
-                ))}
-                
-                {sections.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No hay secciones en el contrato.</p>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={addSection}
-                      className="mt-2"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Añadir primera sección
-                    </Button>
-                  </div>
-                )}
+              <TabsContent value="sections">
+                <SectionsTab sections={sections} onChange={setSections} />
               </TabsContent>
             </Tabs>
           </CardContent>

@@ -187,6 +187,7 @@ export interface CompanySettings {
   primaryColor?: string;
   secondaryColor?: string;
   accentColor?: string;
+  bankAccount?: string; // Added bankAccount property
   createdAt: string;
   updatedAt: string;
 }

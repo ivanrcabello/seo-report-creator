@@ -1,4 +1,3 @@
-
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Proposal } from "@/types/client";
@@ -8,20 +7,20 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { getCompanySettings } from "./settingsService";
 
-// Colores corporativos
+// Colores corporativos (asegurando que sean arrays con exactamente 3 elementos)
 const COLORS = {
   primary: {
-    blue: [30, 64, 175], // Color azul corporativo
-    purple: [126, 34, 206], // Color morado corporativo
+    blue: [30, 64, 175] as [number, number, number], // Color azul corporativo
+    purple: [126, 34, 206] as [number, number, number], // Color morado corporativo
   },
   background: {
-    light: [240, 240, 250], // Fondo claro
-    white: [255, 255, 255], // Blanco
+    light: [240, 240, 250] as [number, number, number], // Fondo claro
+    white: [255, 255, 255] as [number, number, number], // Blanco
   },
   text: {
-    dark: [0, 0, 0], // Negro
-    white: [255, 255, 255], // Blanco
-    blue: [30, 64, 175], // Azul para textos destacados
+    dark: [0, 0, 0] as [number, number, number], // Negro
+    white: [255, 255, 255] as [number, number, number], // Blanco
+    blue: [30, 64, 175] as [number, number, number], // Azul para textos destacados
   }
 };
 

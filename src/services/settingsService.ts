@@ -14,6 +14,7 @@ const mapSettingsFromDB = (settings: any): CompanySettings => ({
   primaryColor: settings.primary_color,
   secondaryColor: settings.secondary_color,
   accentColor: settings.accent_color,
+  bankAccount: settings.bank_account,
   createdAt: settings.created_at,
   updatedAt: settings.updated_at
 });
@@ -29,6 +30,7 @@ const mapSettingsToDB = (settings: Partial<CompanySettings>) => ({
   primary_color: settings.primaryColor,
   secondary_color: settings.secondaryColor,
   accent_color: settings.accentColor,
+  bank_account: settings.bankAccount,
   updated_at: new Date().toISOString()
 });
 

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save } from "lucide-react";
 import { getClientMetrics, updateClientMetrics } from "@/services/clientMetricsService";
+import { format } from "date-fns";
 
 interface ClientMetric {
   id: string;
@@ -46,9 +47,12 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
         setCurrentMetric(data[0]);
       } else {
         // Create a default metric if none exists
+        const today = new Date();
+        const defaultMonth = format(today, 'yyyy-MM');
+        
         const newMetric = {
           id: "",
-          month: new Date().toISOString().substring(0, 7), // Current month in YYYY-MM format
+          month: defaultMonth,
           web_visits: 0,
           keywords_top10: 0,
           conversions: 0,
@@ -76,7 +80,16 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       setIsSaving(true);
       setError(null);
       
-      const updatedMetric = await updateClientMetrics(clientId, currentMetric);
+      // Ensure all numeric values are valid
+      const metricToSave = {
+        ...currentMetric,
+        web_visits: Number(currentMetric.web_visits) || 0,
+        keywords_top10: Number(currentMetric.keywords_top10) || 0,
+        conversions: Number(currentMetric.conversions) || 0,
+        conversion_goal: Number(currentMetric.conversion_goal) || 30
+      };
+      
+      const updatedMetric = await updateClientMetrics(clientId, metricToSave);
       
       // Update the metrics list with the new/updated metric
       if (currentMetric.id) {
@@ -110,13 +123,14 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const handleInputChange = (field: keyof ClientMetric, value: string) => {
     if (!currentMetric) return;
     
-    // Parse value to number or use fallback
-    const numValue = parseInt(value, 10);
-    const finalValue = isNaN(numValue) ? 0 : numValue;
+    // For numeric fields, parse as number
+    const processedValue = ['web_visits', 'keywords_top10', 'conversions', 'conversion_goal'].includes(field) 
+      ? (value === '' ? 0 : Number(value)) 
+      : value;
     
     setCurrentMetric({
       ...currentMetric,
-      [field]: finalValue
+      [field]: processedValue
     });
   };
 
@@ -173,11 +187,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.keywords_top10 || 0} 
                   onChange={(e) => handleInputChange('keywords_top10', e.target.value)}
-                  onBlur={(e) => {
-                    if (e.target.value === '') {
-                      handleInputChange('keywords_top10', '0');
-                    }
-                  }}
                 />
               </div>
             </div>
@@ -191,11 +200,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.conversions || 0} 
                   onChange={(e) => handleInputChange('conversions', e.target.value)}
-                  onBlur={(e) => {
-                    if (e.target.value === '') {
-                      handleInputChange('conversions', '0');
-                    }
-                  }}
                 />
               </div>
               
@@ -207,11 +211,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.conversion_goal || 30} 
                   onChange={(e) => handleInputChange('conversion_goal', e.target.value)}
-                  onBlur={(e) => {
-                    if (e.target.value === '') {
-                      handleInputChange('conversion_goal', '30');
-                    }
-                  }}
                 />
               </div>
               

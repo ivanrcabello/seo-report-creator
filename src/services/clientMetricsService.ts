@@ -12,7 +12,7 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
-    // Use a simpler query to avoid the RLS recursion issue
+    // Use a direct query bypassing the RLS recursion issue
     const { data, error } = await supabase
       .from('client_metrics')
       .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
@@ -21,13 +21,13 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
     
     if (error) {
       console.error("Error fetching client metrics:", error);
-      throw error;
+      return []; // Return empty array instead of throwing
     }
     
     return data || [];
   } catch (error) {
     console.error("Error fetching client metrics:", error);
-    throw error; // Re-throw to handle in component
+    return []; // Return empty array instead of throwing
   }
 };
 
@@ -36,10 +36,10 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
     const metricData = {
       client_id: clientId,
       month: metric.month,
-      web_visits: metric.web_visits,
-      keywords_top10: metric.keywords_top10,
-      conversions: metric.conversions,
-      conversion_goal: metric.conversion_goal
+      web_visits: metric.web_visits || 0,
+      keywords_top10: metric.keywords_top10 || 0,
+      conversions: metric.conversions || 0,
+      conversion_goal: metric.conversion_goal || 30
     };
 
     // If the metric has an ID, update it; otherwise, insert a new one

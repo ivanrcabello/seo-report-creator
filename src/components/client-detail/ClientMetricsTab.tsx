@@ -80,6 +80,11 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       setIsSaving(true);
       setError(null);
       
+      // Validate inputs before saving
+      if (currentMetric.month.trim() === '') {
+        throw new Error("El mes es obligatorio");
+      }
+      
       // Ensure all numeric values are valid before saving
       const metricToSave = {
         ...currentMetric,
@@ -109,10 +114,10 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       });
     } catch (error) {
       console.error("Error saving client metrics:", error);
-      setError("No se pudieron guardar las métricas del cliente");
+      setError(error.message || "No se pudieron guardar las métricas del cliente");
       toast({
         title: "Error",
-        description: "No se pudieron guardar las métricas del cliente",
+        description: error.message || "No se pudieron guardar las métricas del cliente",
         variant: "destructive"
       });
     } finally {
@@ -123,10 +128,18 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const handleInputChange = (field: keyof ClientMetric, value: string) => {
     if (!currentMetric) return;
     
-    // For numeric fields, allow empty string but will be converted to 0 later
-    const processedValue = ['web_visits', 'keywords_top10', 'conversions', 'conversion_goal'].includes(field) 
-      ? (value === '' ? 0 : Number(value)) 
-      : value;
+    // For numeric fields, ensure they're non-negative numbers
+    let processedValue = value;
+    if (['web_visits', 'keywords_top10', 'conversions', 'conversion_goal'].includes(field)) {
+      // Allow empty string during typing
+      if (value === '') {
+        processedValue = 0 as any;
+      } else {
+        // Convert to number and ensure non-negative
+        const numValue = Number(value);
+        processedValue = isNaN(numValue) ? 0 : Math.max(0, numValue) as any;
+      }
+    }
     
     setCurrentMetric({
       ...currentMetric,

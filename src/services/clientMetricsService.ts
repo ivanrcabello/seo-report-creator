@@ -12,7 +12,7 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
-    // Use a direct query approach
+    // Simplify query to avoid RLS policy issues
     const { data, error } = await supabase
       .from('client_metrics')
       .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
@@ -33,16 +33,18 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
 
 export const updateClientMetrics = async (clientId: string, metric: ClientMetric): Promise<ClientMetric> => {
   try {
-    // Ensure all values are properly formatted
+    // Clean and validate all values before saving
     const metricData = {
       client_id: clientId,
       month: metric.month,
-      web_visits: Number(metric.web_visits) || 0,
-      keywords_top10: Number(metric.keywords_top10) || 0,
-      conversions: Number(metric.conversions) || 0,
-      conversion_goal: Number(metric.conversion_goal) || 30
+      web_visits: Math.max(0, Number(metric.web_visits) || 0),
+      keywords_top10: Math.max(0, Number(metric.keywords_top10) || 0),
+      conversions: Math.max(0, Number(metric.conversions) || 0),
+      conversion_goal: Math.max(1, Number(metric.conversion_goal) || 30)
     };
 
+    let result;
+    
     // Check if metric has an ID for update or insert
     if (metric.id && metric.id.trim() !== '') {
       // Update existing metric
@@ -58,7 +60,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         throw error;
       }
       
-      return data;
+      result = data;
     } else {
       // Insert a new metric
       const { data, error } = await supabase
@@ -72,10 +74,18 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         throw error;
       }
       
-      return data;
+      result = data;
     }
+    
+    return result;
   } catch (error) {
     console.error("Error in updateClientMetrics:", error);
-    throw new Error("Failed to save client metrics");
+    
+    // Check if it's the infinite recursion error
+    if (error.message && error.message.includes("infinite recursion")) {
+      throw new Error("Error de acceso a la base de datos. Contacte al administrador del sistema.");
+    }
+    
+    throw new Error("No se pudieron guardar las métricas del cliente");
   }
 };

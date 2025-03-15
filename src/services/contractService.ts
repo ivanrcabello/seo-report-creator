@@ -76,9 +76,10 @@ export const getContract = async (id: string): Promise<SeoContract | undefined> 
 
 // Create a new contract
 export const createContract = async (contract: Omit<SeoContract, "id" | "createdAt" | "updatedAt">): Promise<SeoContract> => {
+  // Cast content to any to avoid TypeScript type issues with Supabase Json type
   const { data, error } = await supabase
     .from('seo_contracts')
-    .insert([{
+    .insert({
       client_id: contract.clientId,
       title: contract.title,
       start_date: contract.startDate,
@@ -86,11 +87,11 @@ export const createContract = async (contract: Omit<SeoContract, "id" | "created
       phase1_fee: contract.phase1Fee,
       monthly_fee: contract.monthlyFee,
       status: contract.status,
-      content: contract.content,
+      content: contract.content as any,
       signed_by_client: contract.signedByClient,
       signed_by_professional: contract.signedByProfessional,
       pdf_url: contract.pdfUrl
-    }])
+    })
     .select()
     .single();
   
@@ -104,6 +105,7 @@ export const createContract = async (contract: Omit<SeoContract, "id" | "created
 
 // Update an existing contract
 export const updateContract = async (contract: SeoContract): Promise<SeoContract> => {
+  // Cast content to any to avoid TypeScript type issues with Supabase Json type
   const { data, error } = await supabase
     .from('seo_contracts')
     .update({
@@ -114,7 +116,7 @@ export const updateContract = async (contract: SeoContract): Promise<SeoContract
       phase1_fee: contract.phase1Fee,
       monthly_fee: contract.monthlyFee,
       status: contract.status,
-      content: contract.content,
+      content: contract.content as any,
       signed_by_client: contract.signedByClient,
       signed_by_professional: contract.signedByProfessional,
       signed_at: contract.signedAt,
@@ -350,7 +352,7 @@ export const saveContractPDF = async (contractId: string, pdfBlob: Blob): Promis
   const filePath = `contracts/${fileName}`;
   
   // Check if the bucket exists
-  const { data: buckets } = await supabase.storage.listBuckets();
+  let { data: buckets } = await supabase.storage.listBuckets();
   const documentsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
   
   // Create the bucket if it doesn't exist

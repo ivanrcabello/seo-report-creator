@@ -95,16 +95,26 @@ export const ContractForm = () => {
             
             // Set client info
             if (contractData.content.clientInfo) {
-              form.setValue("clientInfo", contractData.content.clientInfo);
+              form.setValue("clientInfo", {
+                name: contractData.content.clientInfo.name || "",
+                company: contractData.content.clientInfo.company || "",
+                address: contractData.content.clientInfo.address || "",
+                taxId: contractData.content.clientInfo.taxId || "",
+              });
             }
             
             // Set professional info
             if (contractData.content.professionalInfo) {
-              form.setValue("professionalInfo", contractData.content.professionalInfo);
+              form.setValue("professionalInfo", {
+                name: contractData.content.professionalInfo.name || "",
+                company: contractData.content.professionalInfo.company || "",
+                address: contractData.content.professionalInfo.address || "",
+                taxId: contractData.content.professionalInfo.taxId || "",
+              });
             }
             
             // Set sections
-            setSections(contractData.content.sections);
+            setSections(contractData.content.sections || []);
           }
         } else if (clientId) {
           // If creating a new contract for a specific client

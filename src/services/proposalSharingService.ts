@@ -37,7 +37,7 @@ export const generateProposalShareToken = async (proposalId: string): Promise<st
     const token = Math.random().toString(36).substring(2, 15) + 
                  Math.random().toString(36).substring(2, 15);
     
-    // Save the token to the database using the public_url field instead of share_token
+    // Save the token to the database using the public_url field
     const { error } = await supabase
       .from("proposals")
       .update({ 
@@ -62,4 +62,11 @@ export const generateProposalShareToken = async (proposalId: string): Promise<st
 export const getProposalShareUrl = (token: string): string => {
   const baseUrl = window.location.origin;
   return `${baseUrl}/proposal-share/${token}`;
+};
+
+// Generate and get the public URL for a proposal
+export const generatePublicProposalUrl = async (proposalId: string): Promise<string | null> => {
+  const token = await generateProposalShareToken(proposalId);
+  if (!token) return null;
+  return getProposalShareUrl(token);
 };

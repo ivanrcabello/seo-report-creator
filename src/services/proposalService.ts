@@ -8,6 +8,5 @@ export * from "./proposal/proposalReports";
 export * from "./proposal/proposalCreation";
 export * from "./proposal/proposalMappers";
 
-// Import generatePublicProposalUrl from the correct path
-import { generatePublicProposalUrl } from "./reportSharingService";
-export { generatePublicProposalUrl };
+// Import and re-export functions from proposalSharingService
+export * from "./proposalSharingService";

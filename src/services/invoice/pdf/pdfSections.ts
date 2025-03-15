@@ -1,241 +1,220 @@
+
 /**
- * PDF section generators for invoice PDFs
+ * PDF sections for invoice generation
  */
 
 import jsPDF from "jspdf";
-import "jspdf-autotable"; // Import as a side effect to extend jsPDF
+import autoTable from "jspdf-autotable"; // Import it properly
 import { Invoice } from "@/types/invoice";
-import { getStatusText, getStatusColor } from "./pdfStyles";
-import { formatDate, formatCurrency } from "../invoiceFormatters";
-
-// Ensure jsPDF type includes autoTable
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-    lastAutoTable?: { finalY: number };
-  }
-}
+import { Client } from "@/types/client";
+import { tableStyles, textStyles } from "./pdfStyles";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 /**
- * Adds company header with logo to the PDF
+ * Adds the company header to the PDF
  */
-export const addCompanyHeader = (doc: jsPDF) => {
-  // Placeholder for logo (would use an actual logo image in production)
-  doc.setFillColor(41, 63, 125); // RGB values for blue
-  doc.rect(14, 15, 20, 20, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
-  doc.text("SEO", 19, 27);
+export const addCompanyHeader = (doc: jsPDF): void => {
+  // In a real app, we would add the company logo here
+  doc.setFont(textStyles.header.font, textStyles.header.style);
+  doc.setFontSize(textStyles.header.size);
+  doc.setTextColor(textStyles.header.color);
   
-  // Company name and info
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text("SEO Dashboard", 40, 25);
+  doc.text("SEO Dashboard", 20, 20);
   
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text("123 SEO Street, Digital City", 40, 33);
-  doc.text("contact@seodashboard.com | +34 123 456 789", 40, 38);
+  doc.setFont(textStyles.default.font, textStyles.default.style);
+  doc.setFontSize(textStyles.default.size);
+  doc.setTextColor(textStyles.default.color);
   
-  // Divider line
-  doc.setDrawColor(220, 220, 220);
-  doc.setLineWidth(0.5);
-  doc.line(14, 45, 196, 45);
+  doc.text("CIF: 12345678Z", 20, 30);
+  doc.text("Calle Principal 123", 20, 35);
+  doc.text("28001 Madrid", 20, 40);
+  doc.text("contact@seodashboard.com", 20, 45);
 };
 
 /**
  * Adds invoice information to the PDF
  */
-export const addInvoiceInfo = (doc: jsPDF, invoice: Invoice) => {
-  // FACTURA heading
-  doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(41, 63, 125);
-  doc.text("FACTURA", 14, 60);
+export const addInvoiceInfo = (doc: jsPDF, invoice: Invoice): void => {
+  const startY = 60;
   
-  // Invoice number and dates
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 0, 0);
-  doc.text("Número de Factura:", 14, 70);
-  doc.text("Fecha de Emisión:", 14, 75);
-  doc.text("Fecha de Vencimiento:", 14, 80);
+  // Add invoice title
+  doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
+  doc.setFontSize(textStyles.subheader.size);
+  doc.setTextColor(textStyles.subheader.color);
   
-  doc.setFont("helvetica", "normal");
-  doc.text(invoice.invoiceNumber || "", 80, 70);
-  doc.text(formatDate(invoice.issueDate), 80, 75);
-  doc.text(invoice.dueDate ? formatDate(invoice.dueDate) : "N/A", 80, 80);
+  doc.text("FACTURA", 140, startY);
   
-  // Status badge
-  const statusText = getStatusText(invoice.status);
-  const statusColor = getStatusColor(invoice.status);
+  // Add invoice details
+  doc.setFont(textStyles.default.font, textStyles.default.style);
+  doc.setFontSize(textStyles.default.size);
+  doc.setTextColor(textStyles.default.color);
   
-  // Draw status badge
-  doc.setFillColor(statusColor.r, statusColor.g, statusColor.b);
-  doc.roundedRect(140, 57, 45, 12, 2, 2, "F");
+  doc.text(`Nº Factura: ${invoice.invoiceNumber}`, 140, startY + 10);
+  doc.text(`Fecha: ${format(new Date(invoice.issueDate), "dd/MM/yyyy", { locale: es })}`, 140, startY + 15);
   
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10);
-  doc.text(statusText, 163, 65, { align: "center" });
+  if (invoice.dueDate) {
+    doc.text(`Vencimiento: ${format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: es })}`, 140, startY + 20);
+  }
+  
+  // Add status
+  doc.setFont(textStyles.default.font, "bold");
+  doc.text(`Estado: ${getInvoiceStatusText(invoice.status)}`, 140, startY + 30);
+  doc.setFont(textStyles.default.font, textStyles.default.style);
 };
 
 /**
  * Adds client information to the PDF
  */
-export const addClientInfo = (doc: jsPDF, client: any) => {
-  // Client section
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(41, 63, 125);
-  doc.text("CLIENTE", 14, 95);
+export const addClientInfo = (doc: jsPDF, client: Client): void => {
+  const startY = 90;
   
-  // Client details
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 0, 0);
+  // Add client title
+  doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
+  doc.setFontSize(textStyles.subheader.size);
+  doc.setTextColor(textStyles.subheader.color);
   
-  doc.text(`${client.name}${client.company ? ` - ${client.company}` : ""}`, 14, 103);
-  if (client.address) {
-    doc.text(client.address, 14, 108);
+  doc.text("CLIENTE", 20, startY);
+  
+  // Add client details
+  doc.setFont(textStyles.default.font, textStyles.default.style);
+  doc.setFontSize(textStyles.default.size);
+  doc.setTextColor(textStyles.default.color);
+  
+  doc.text(client.name, 20, startY + 10);
+  
+  if (client.company) {
+    doc.text(client.company, 20, startY + 15);
   }
   
-  if (client.city || client.postalCode) {
-    const locationLine = [
-      client.city || "",
-      client.postalCode ? `CP: ${client.postalCode}` : "",
-    ].filter(Boolean).join(", ");
-    
-    if (locationLine) {
-      doc.text(locationLine, 14, 113);
-    }
-  }
-  
-  if (client.taxId) {
-    doc.text(`NIF/CIF: ${client.taxId}`, 14, 118);
-  }
-  
-  // Email and phone if available
-  if (client.email) {
-    doc.text(`Email: ${client.email}`, 14, 123);
-  }
+  // Add client contact info
+  doc.text(`Email: ${client.email}`, 20, startY + 25);
   
   if (client.phone) {
-    doc.text(`Teléfono: ${client.phone}`, 14, 128);
+    doc.text(`Teléfono: ${client.phone}`, 20, startY + 30);
   }
-  
-  // Description line before items table
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "italic");
-  doc.text("Factura por servicios de marketing digital y SEO.", 14, 138);
 };
 
 /**
  * Adds invoice items to the PDF
  */
-export const addInvoiceItems = (doc: jsPDF, invoice: Invoice) => {
-  // Get table data - for now we'll just use a simple description row
-  const tableColumn = ["Descripción", "Cantidad", "Precio", "IVA", "Total"];
-  const tableRows = [
+export const addInvoiceItems = (doc: jsPDF, invoice: Invoice): void => {
+  const startY = 130;
+  
+  doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
+  doc.setFontSize(textStyles.subheader.size);
+  doc.setTextColor(textStyles.subheader.color);
+  
+  doc.text("CONCEPTOS", 20, startY);
+  
+  // Add items table
+  // For now, we're just showing a single concept since our invoices are simple
+  const tableData = [
     [
-      "Servicios de marketing digital y posicionamiento SEO",
-      "1",
+      "Servicios SEO",
       formatCurrency(invoice.baseAmount),
-      `${invoice.taxRate}%`,
-      formatCurrency(invoice.baseAmount)
-    ]
+    ],
   ];
   
-  // Add the items table using autoTable - now properly typed
-  doc.autoTable({
-    head: [tableColumn],
-    body: tableRows,
-    startY: 145,
-    theme: "grid",
-    styles: {
-      fontSize: 9,
-      lineColor: [220, 220, 220]
-    },
-    headStyles: {
-      fillColor: [41, 63, 125],
-      textColor: [255, 255, 255],
-      lineColor: [220, 220, 220]
-    },
-    columnStyles: {
-      0: { cellWidth: 'auto' },
-      1: { cellWidth: 20, halign: 'center' },
-      2: { cellWidth: 30, halign: 'right' },
-      3: { cellWidth: 20, halign: 'center' },
-      4: { cellWidth: 30, halign: 'right' }
-    },
+  if (invoice.notes) {
+    tableData[0][0] = `Servicios SEO - ${invoice.notes}`;
+  }
+  
+  autoTable(doc, {
+    startY: startY + 10,
+    head: [["Concepto", "Importe"]],
+    body: tableData,
+    ...tableStyles
   });
 };
 
 /**
  * Adds invoice totals to the PDF
  */
-export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice) => {
-  // Get the final Y position from the previous table - now properly typed
-  const finalY = doc.lastAutoTable?.finalY + 10 || 180;
+export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice): void => {
+  const finalY = doc.lastAutoTable?.finalY || 150;
   
-  // Draw the totals box on the right side
-  doc.setFillColor(249, 250, 251); // Light gray background
-  doc.rect(110, finalY, 85, 40, "F");
+  // Add totals table
+  const totalsData = [
+    ["Base Imponible", formatCurrency(invoice.baseAmount)],
+    [`IVA (${invoice.taxRate}%)`, formatCurrency(invoice.taxAmount)],
+    ["TOTAL", formatCurrency(invoice.totalAmount)],
+  ];
   
-  // Add totals text
-  doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("helvetica", "normal");
-  
-  doc.text("Subtotal:", 115, finalY + 10);
-  doc.text("IVA:", 115, finalY + 20);
-  doc.text("TOTAL:", 115, finalY + 30);
-  
-  // Add totals values aligned to the right
-  doc.setFont("helvetica", "bold");
-  doc.text(formatCurrency(invoice.baseAmount), 190, finalY + 10, { align: "right" });
-  doc.text(formatCurrency(invoice.taxAmount), 190, finalY + 20, { align: "right" });
-  
-  // Total amount with highlight
-  doc.setFontSize(12);
-  doc.setTextColor(41, 63, 125);
-  doc.text(formatCurrency(invoice.totalAmount), 190, finalY + 30, { align: "right" });
-  
-  // Add notes if available
-  if (invoice.notes) {
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(100, 100, 100);
-    doc.text("Notas:", 14, finalY + 10);
-    
-    const splitNotes = doc.splitTextToSize(invoice.notes, 90);
-    doc.text(splitNotes, 14, finalY + 15);
-  }
+  autoTable(doc, {
+    startY: finalY + 10,
+    body: totalsData,
+    columns: [
+      { header: "", dataKey: 0 },
+      { header: "", dataKey: 1 },
+    ],
+    margin: { left: 100 },
+    tableWidth: 100,
+    styles: {
+      fontSize: 10,
+      cellPadding: 5,
+    },
+    columnStyles: {
+      0: { halign: "right", font: "helvetica", fontStyle: "bold" },
+      1: { halign: "right", font: "helvetica" },
+    },
+    didParseCell: function(data) {
+      // Make the total row bold
+      if (data.row.index === 2) {
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.fontSize = 12;
+      }
+    },
+  });
 };
 
 /**
- * Adds footer with payment information to the PDF
+ * Adds footer with payment information
  */
-export const addFooterWithPaymentInfo = (doc: jsPDF, invoice: Invoice) => {
+export const addFooterWithPaymentInfo = (doc: jsPDF, invoice: Invoice): void => {
+  const finalY = doc.lastAutoTable?.finalY || 200;
+  
+  doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
+  doc.setFontSize(textStyles.subheader.size);
+  doc.setTextColor(textStyles.subheader.color);
+  
+  doc.text("INFORMACIÓN DE PAGO", 20, finalY + 30);
+  
+  doc.setFont(textStyles.default.font, textStyles.default.style);
+  doc.setFontSize(textStyles.default.size);
+  doc.setTextColor(textStyles.default.color);
+  
+  doc.text("Por favor, realice el pago mediante transferencia bancaria a la siguiente cuenta:", 20, finalY + 40);
+  doc.text("IBAN: ES12 3456 7890 1234 5678 9012", 20, finalY + 50);
+  doc.text("Banco: Banco Ejemplo", 20, finalY + 55);
+  doc.text("Titular: SEO Dashboard SL", 20, finalY + 60);
+  
+  // Add footer text
   const pageHeight = doc.internal.pageSize.height;
   
-  // Payment information
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(41, 63, 125);
-  doc.text("INFORMACIÓN DE PAGO", 14, pageHeight - 40);
-  
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 0, 0);
-  doc.text("Banco: BBVA", 14, pageHeight - 35);
-  doc.text("IBAN: ES12 3456 7890 1234 5678 9012", 14, pageHeight - 30);
-  doc.text("Referencia: Incluir el número de factura en el concepto", 14, pageHeight - 25);
-  
-  // Footer with legal text and page numbers
   doc.setFontSize(8);
-  doc.setTextColor(100, 100, 100);
-  doc.text("SEO Dashboard S.L. - CIF: B12345678 - Inscrita en el Registro Mercantil de Madrid", 14, pageHeight - 15);
-  doc.text(`Página 1 de 1`, doc.internal.pageSize.width - 20, pageHeight - 15, { align: "right" });
+  doc.text("Esta factura ha sido generada por SEO Dashboard.", 20, pageHeight - 20);
+};
+
+/**
+ * Helper functions
+ */
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+  }).format(amount);
+};
+
+const getInvoiceStatusText = (status: string): string => {
+  switch (status) {
+    case "paid":
+      return "Pagada";
+    case "pending":
+      return "Pendiente";
+    case "cancelled":
+      return "Cancelada";
+    default:
+      return status;
+  }
 };

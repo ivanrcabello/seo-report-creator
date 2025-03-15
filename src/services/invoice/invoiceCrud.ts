@@ -54,7 +54,7 @@ export const getInvoice = async (id: string): Promise<Invoice | undefined> => {
 // Create a new invoice
 export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | "updatedAt" | "invoiceNumber">): Promise<Invoice | undefined> => {
   try {
-    // Generar número de factura si no se proporciona uno
+    // Generate invoice number if one is not provided
     let invoiceNumber = (invoice as any).invoiceNumber;
     if (!invoiceNumber) {
       invoiceNumber = await generateInvoiceNumber();
@@ -99,8 +99,9 @@ export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefin
     console.log("Invoice data:", invoice);
     
     // Create updated invoice with current timestamp
+    const dbInvoice = mapInvoiceToDB(invoice);
     const updatedInvoice = {
-      ...mapInvoiceToDB(invoice),
+      ...dbInvoice,
       updated_at: new Date().toISOString()
     };
     
@@ -155,7 +156,7 @@ export const createInvoiceFromProposal = async (
     
     let baseAmount = proposal.customPrice;
     
-    // Si no hay precio personalizado, usar el del pack
+    // If there's no custom price, use the pack price
     if (!baseAmount && proposal.packId) {
       const pack = await getSeoPack(proposal.packId);
       if (pack) {
@@ -168,12 +169,12 @@ export const createInvoiceFromProposal = async (
       return undefined;
     }
     
-    // Calcular importes
-    const taxRate = 21; // IVA estándar en España
+    // Calculate amounts
+    const taxRate = 21; // Standard VAT in Spain
     const taxAmount = (baseAmount * taxRate) / 100;
     const totalAmount = baseAmount + taxAmount;
     
-    // Crear datos de factura
+    // Create invoice data
     const invoiceData = {
       clientId: proposal.clientId,
       proposalId: proposal.id,

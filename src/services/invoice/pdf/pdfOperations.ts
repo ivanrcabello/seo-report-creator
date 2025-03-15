@@ -14,6 +14,7 @@ import { toast } from "sonner";
  */
 export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> => {
   try {
+    console.log("Starting PDF download for invoice:", invoiceId);
     // Get the invoice
     const invoice = await getInvoice(invoiceId);
     
@@ -21,9 +22,11 @@ export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> =>
       throw new Error("Invoice not found");
     }
     
+    console.log("Invoice data loaded, generating PDF");
     // Generate the PDF
     const pdfBlob = await generateInvoicePdf(invoice as Invoice);
     
+    console.log("PDF generated, creating download link");
     // Create a download link
     const url = window.URL.createObjectURL(pdfBlob);
     const link = document.createElement('a');
@@ -38,6 +41,7 @@ export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> =>
     window.URL.revokeObjectURL(url);
     document.body.removeChild(link);
     
+    console.log("PDF download complete");
     return true;
   } catch (error) {
     console.error("Error downloading invoice PDF:", error);

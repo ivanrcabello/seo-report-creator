@@ -4,7 +4,7 @@
  */
 
 import jsPDF from "jspdf";
-import "jspdf-autotable"; // Import as a side effect to extend jsPDF
+import autoTable from "jspdf-autotable"; // Import correctly
 import { Invoice } from "@/types/invoice";
 import { getClient } from "@/services/clientService";
 import { 
@@ -15,14 +15,6 @@ import {
   addInvoiceTotals,
   addFooterWithPaymentInfo
 } from "./pdfSections";
-
-// Extend the jsPDF type to include autoTable
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-    lastAutoTable?: { finalY: number };
-  }
-}
 
 /**
  * Generates a PDF document for an invoice

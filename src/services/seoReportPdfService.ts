@@ -188,14 +188,10 @@ export const generateSeoReportPdf = async (report: AIReport, auditData: AuditRes
       autoTable(doc, {
         startY: yPos + 5,
         body: technicalData,
-        theme: "plain",
+        theme: "striped",
         styles: { 
           fontSize: 10,
-          cellPadding: 4,
-          // Apply zebra striping effect directly within styles
-          fillColor: function(cell, data) {
-            return data.row % 2 === 0 ? [240, 240, 240] : null;
-          }
+          cellPadding: 4
         }
       });
       
@@ -219,14 +215,10 @@ export const generateSeoReportPdf = async (report: AIReport, auditData: AuditRes
       autoTable(doc, {
         startY: yPos + 5,
         body: localSeoData,
-        theme: "plain",
+        theme: "striped",
         styles: { 
           fontSize: 10,
-          cellPadding: 4,
-          // Apply zebra striping effect directly within styles
-          fillColor: function(cell, data) {
-            return data.row % 2 === 0 ? [240, 240, 240] : null;
-          }
+          cellPadding: 4
         }
       });
       
@@ -250,14 +242,10 @@ export const generateSeoReportPdf = async (report: AIReport, auditData: AuditRes
       autoTable(doc, {
         startY: yPos + 5,
         body: contentData,
-        theme: "plain",
+        theme: "striped",
         styles: { 
           fontSize: 10,
-          cellPadding: 4,
-          // Apply zebra striping effect directly within styles
-          fillColor: function(cell, data) {
-            return data.row % 2 === 0 ? [240, 240, 240] : null;
-          }
+          cellPadding: 4
         }
       });
       
@@ -402,3 +390,4 @@ export const downloadSeoReportPdf = async (report: AIReport, auditData: AuditRes
     return false;
   }
 };
+

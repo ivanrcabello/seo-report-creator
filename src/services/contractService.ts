@@ -1,4 +1,3 @@
-
 import { SeoContract, ContractSection } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 import { getCompanySettings } from "./settingsService";
@@ -352,29 +351,20 @@ export const saveContractPDF = async (contractId: string, pdfBlob: Blob): Promis
   const filePath = `contracts/${fileName}`;
   
   try {
-    // Try to upload directly without checking/creating buckets first
-    // This is a simpler approach that works if the bucket already exists and permissions are set correctly
-    const { data, error: uploadError } = await supabase.storage
+    // Upload the PDF to Supabase storage
+    const { data, error } = await supabase.storage
       .from('documents')
       .upload(filePath, pdfBlob, {
         cacheControl: '3600',
-        upsert: true, // Changed to true to overwrite if exists
+        upsert: true,
         contentType: 'application/pdf'
       });
     
-    if (uploadError) {
-      // If the error is not about the bucket not existing, rethrow it
-      if (!uploadError.message.includes("does not exist")) {
-        throw uploadError;
-      }
+    if (error) {
+      console.error("Error uploading PDF to storage:", error);
       
-      // Fallback - if we're here, we need to handle the case where the bucket doesn't exist
-      console.log("Using fallback method to save PDF...");
-      // Instead of trying to create a bucket (which might fail due to RLS),
-      // we'll save the file locally as a data URL and return that
+      // If upload fails, fallback to data URL approach
       const reader = new FileReader();
-      
-      // Create a promise to handle the async FileReader
       const dataUrlPromise = new Promise<string>((resolve, reject) => {
         reader.onload = () => {
           if (typeof reader.result === 'string') {
@@ -388,35 +378,27 @@ export const saveContractPDF = async (contractId: string, pdfBlob: Blob): Promis
       
       // Read the blob as a data URL (base64)
       reader.readAsDataURL(pdfBlob);
-      
-      // Wait for the FileReader to complete
       const dataUrl = await dataUrlPromise;
       
       // Update the contract with the data URL
-      const { error: updateError } = await supabase
+      await supabase
         .from('seo_contracts')
         .update({ pdf_url: dataUrl })
         .eq('id', contractId);
       
-      if (updateError) {
-        throw updateError;
-      }
-      
       return dataUrl;
     }
     
-    // If upload successful, get the public URL
-    const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(filePath);
+    // Get the public URL of the uploaded file
+    const { data: { publicUrl } } = supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath);
     
     // Update the contract with the PDF URL
-    const { error: updateError } = await supabase
+    await supabase
       .from('seo_contracts')
       .update({ pdf_url: publicUrl })
       .eq('id', contractId);
-    
-    if (updateError) {
-      throw updateError;
-    }
     
     return publicUrl;
   } catch (error) {

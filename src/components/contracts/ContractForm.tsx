@@ -173,8 +173,18 @@ export const ContractForm = () => {
         status: values.status,
         content: {
           sections: sections,
-          clientInfo: values.clientInfo,
-          professionalInfo: values.professionalInfo,
+          clientInfo: {
+            name: values.clientInfo.name || "",
+            company: values.clientInfo.company || "",
+            address: values.clientInfo.address || "",
+            taxId: values.clientInfo.taxId || "",
+          },
+          professionalInfo: {
+            name: values.professionalInfo.name || "",
+            company: values.professionalInfo.company || "",
+            address: values.professionalInfo.address || "",
+            taxId: values.professionalInfo.taxId || "",
+          },
         },
         signedByClient: false,
         signedByProfessional: false,

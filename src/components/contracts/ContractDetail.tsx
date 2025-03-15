@@ -87,31 +87,38 @@ export const ContractDetail = () => {
     try {
       setActionLoading(true);
       
-      let pdfUrl = contract.pdfUrl;
+      // Generate and save the PDF document
+      const pdfUrl = await generateAndSaveContractPDF(contract.id);
       
-      if (!pdfUrl) {
-        // Generate PDF if not already available
-        pdfUrl = await generateAndSaveContractPDF(contract.id);
-        
-        // Update local state
-        setContract({
-          ...contract,
-          pdfUrl
-        });
+      // Update local state with the new PDF URL
+      setContract({
+        ...contract,
+        pdfUrl
+      });
+      
+      // Check if the URL is a data URL (base64) or a storage URL
+      if (pdfUrl.startsWith('data:')) {
+        // For data URLs, create a download link and trigger it
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = `contrato_${contract.title.replace(/\s+/g, '_')}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // For storage URLs, open in a new tab
+        window.open(pdfUrl, '_blank');
       }
       
-      // Open the PDF in a new tab
-      window.open(pdfUrl, '_blank');
-      
       toast({
-        title: "Contrato descargado",
+        title: "PDF generado con éxito",
         description: "El contrato se ha descargado correctamente",
       });
     } catch (error) {
       console.error("Error downloading contract:", error);
       toast({
         title: "Error",
-        description: "No se pudo descargar el contrato",
+        description: "No se pudo generar el PDF del contrato",
         variant: "destructive",
       });
     } finally {

@@ -351,51 +351,78 @@ export const saveContractPDF = async (contractId: string, pdfBlob: Blob): Promis
   const fileName = `contract_${contractId}_${Date.now()}.pdf`;
   const filePath = `contracts/${fileName}`;
   
-  // Check if the bucket exists
-  let { data: buckets } = await supabase.storage.listBuckets();
-  const documentsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
-  
-  // Create the bucket if it doesn't exist
-  if (!documentsBucketExists) {
-    const { error: createBucketError } = await supabase.storage.createBucket('documents', {
-      public: true
-    });
+  try {
+    // Try to upload directly without checking/creating buckets first
+    // This is a simpler approach that works if the bucket already exists and permissions are set correctly
+    const { data, error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, pdfBlob, {
+        cacheControl: '3600',
+        upsert: true, // Changed to true to overwrite if exists
+        contentType: 'application/pdf'
+      });
     
-    if (createBucketError) {
-      console.error("Error creating documents bucket:", createBucketError);
-      throw createBucketError;
+    if (uploadError) {
+      // If the error is not about the bucket not existing, rethrow it
+      if (!uploadError.message.includes("does not exist")) {
+        throw uploadError;
+      }
+      
+      // Fallback - if we're here, we need to handle the case where the bucket doesn't exist
+      console.log("Using fallback method to save PDF...");
+      // Instead of trying to create a bucket (which might fail due to RLS),
+      // we'll save the file locally as a data URL and return that
+      const reader = new FileReader();
+      
+      // Create a promise to handle the async FileReader
+      const dataUrlPromise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            resolve(reader.result);
+          } else {
+            reject(new Error("Failed to convert PDF to data URL"));
+          }
+        };
+        reader.onerror = () => reject(reader.error);
+      });
+      
+      // Read the blob as a data URL (base64)
+      reader.readAsDataURL(pdfBlob);
+      
+      // Wait for the FileReader to complete
+      const dataUrl = await dataUrlPromise;
+      
+      // Update the contract with the data URL
+      const { error: updateError } = await supabase
+        .from('seo_contracts')
+        .update({ pdf_url: dataUrl })
+        .eq('id', contractId);
+      
+      if (updateError) {
+        throw updateError;
+      }
+      
+      return dataUrl;
     }
+    
+    // If upload successful, get the public URL
+    const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(filePath);
+    
+    // Update the contract with the PDF URL
+    const { error: updateError } = await supabase
+      .from('seo_contracts')
+      .update({ pdf_url: publicUrl })
+      .eq('id', contractId);
+    
+    if (updateError) {
+      throw updateError;
+    }
+    
+    return publicUrl;
+  } catch (error) {
+    console.error("Error saving contract PDF:", error);
+    throw error;
   }
-  
-  // Upload to Supabase Storage
-  const { data, error: uploadError } = await supabase.storage
-    .from('documents')
-    .upload(filePath, pdfBlob, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: 'application/pdf'
-    });
-  
-  if (uploadError) {
-    console.error("Error uploading contract PDF:", uploadError);
-    throw uploadError;
-  }
-  
-  // Get the public URL
-  const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(filePath);
-  
-  // Update the contract with the PDF URL
-  const { error: updateError } = await supabase
-    .from('seo_contracts')
-    .update({ pdf_url: publicUrl })
-    .eq('id', contractId);
-  
-  if (updateError) {
-    console.error("Error updating contract with PDF URL:", updateError);
-    throw updateError;
-  }
-  
-  return publicUrl;
 };
 
 // Generate and save contract PDF

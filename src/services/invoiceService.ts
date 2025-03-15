@@ -1,4 +1,3 @@
-
 import { Invoice, CompanySettings } from "@/types/invoice";
 import { Client } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
@@ -347,7 +346,9 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     const statusX = pageWidth - margin - 50;
     const statusY = margin + 8;
     
-    doc.setFillColor(statusColor[0], statusColor[1], statusColor[2], 0.2);
+    // Fix for the error - the setFillColor method requires RGB components (and optional alpha)
+    // Make sure we're passing all required parameters
+    doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
     doc.roundedRect(statusX, statusY, 40, 12, 6, 6, 'F');
     doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
     doc.setFontSize(10);

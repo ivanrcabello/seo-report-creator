@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Download, Eye, FileCheck, FileContract } from "lucide-react";
+import { FileText, Download, Eye, FileCheck, Scroll } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -92,7 +92,7 @@ export function DocumentCenter() {
               <span>Propuestas</span>
             </TabsTrigger>
             <TabsTrigger value="contracts" className="flex items-center gap-1">
-              <FileContract className="h-4 w-4" />
+              <Scroll className="h-4 w-4" />
               <span>Contratos</span>
             </TabsTrigger>
           </TabsList>

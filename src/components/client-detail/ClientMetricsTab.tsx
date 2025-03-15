@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, Save, AlertTriangle } from "lucide-react";
 import { getClientMetrics, updateClientMetrics } from "@/services/clientMetricsService";
 import { format } from "date-fns";
 
@@ -160,10 +161,13 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   return (
     <div className="space-y-8">
       {error && (
-        <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-800 mb-4">
-          <p>{error}</p>
-        </div>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
+      
       <Card>
         <CardHeader>
           <CardTitle>Métricas de Rendimiento</CardTitle>

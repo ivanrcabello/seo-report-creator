@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface ClientMetric {
@@ -12,7 +11,7 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
-    // Direct query without complex RLS dependencies
+    // Simple query directly against clients table now
     const { data, error } = await supabase
       .from('client_metrics')
       .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
@@ -44,7 +43,6 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       conversion_goal: Math.max(1, Number(metric.conversion_goal) || 30)
     };
 
-    // Initialize result variable
     let result;
     
     // Check if we're updating or inserting
@@ -60,7 +58,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       if (error) {
         console.error("Error updating client metric:", error);
         console.log("Error details:", JSON.stringify(error));
-        throw error;
+        throw new Error(`Error al actualizar métricas: ${error.message}`);
       }
       
       result = data;
@@ -75,7 +73,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       if (error) {
         console.error("Error inserting client metric:", error);
         console.log("Error details:", JSON.stringify(error));
-        throw error;
+        throw new Error(`Error al guardar métricas: ${error.message}`);
       }
       
       result = data;
@@ -85,7 +83,12 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
   } catch (error) {
     console.error("Exception in updateClientMetrics:", error);
     
-    // Provide a more user-friendly message
-    throw new Error("No se pudieron guardar las métricas del cliente. Por favor, inténtelo de nuevo más tarde.");
+    // If it's an error we've already formatted, just pass it through
+    if (error.message && (error.message.startsWith("Error al actualizar") || error.message.startsWith("Error al guardar"))) {
+      throw error;
+    }
+    
+    // Otherwise provide a generic message
+    throw new Error("No se pudieron guardar las métricas del cliente. Por favor, contacte al administrador.");
   }
 };

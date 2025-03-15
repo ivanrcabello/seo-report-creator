@@ -9,6 +9,9 @@ import { ReportSection } from "./ReportSection";
 import { BarChart, FileText, Globe, Settings, Phone, Mail, PlusCircle, Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { getSeoPacks } from "@/services/packService";
+import { SeoPack } from "@/types/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface EditableReportFormProps {
   initialReport: AIReport;
@@ -17,7 +20,31 @@ interface EditableReportFormProps {
 
 export const EditableReportForm = ({ initialReport, onSave }: EditableReportFormProps) => {
   const [report, setReport] = useState<AIReport>(initialReport);
+  const [availablePacks, setAvailablePacks] = useState<SeoPack[]>([]);
+  const [isLoadingPacks, setIsLoadingPacks] = useState(false);
   const { toast } = useToast();
+
+  // Fetch available SEO packages
+  useEffect(() => {
+    const loadPacks = async () => {
+      setIsLoadingPacks(true);
+      try {
+        const packs = await getSeoPacks();
+        setAvailablePacks(packs);
+      } catch (error) {
+        console.error("Error loading SEO packages:", error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los paquetes disponibles",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingPacks(false);
+      }
+    };
+    
+    loadPacks();
+  }, [toast]);
 
   // Helper function to update nested objects
   const updateReport = (field: string, value: any) => {
@@ -161,6 +188,126 @@ export const EditableReportForm = ({ initialReport, onSave }: EditableReportForm
     setReport(prev => ({
       ...prev,
       competitors: updatedCompetitors
+    }));
+  };
+
+  // Add new package
+  const addPackage = () => {
+    const newPackage = {
+      name: "Nuevo Paquete",
+      price: 0,
+      features: ["Característica 1"]
+    };
+    
+    setReport(prev => ({
+      ...prev,
+      packages: [...(prev.packages || []), newPackage]
+    }));
+  };
+
+  // Add package from available packs
+  const addPackageFromAvailable = (packId: string) => {
+    const selectedPack = availablePacks.find(pack => pack.id === packId);
+    
+    if (!selectedPack) return;
+    
+    const newPackage = {
+      name: selectedPack.name,
+      price: selectedPack.price,
+      features: [...selectedPack.features]
+    };
+    
+    setReport(prev => ({
+      ...prev,
+      packages: [...(prev.packages || []), newPackage]
+    }));
+    
+    toast({
+      title: "Paquete añadido",
+      description: `Se ha añadido el paquete ${selectedPack.name} al informe.`
+    });
+  };
+
+  // Update package
+  const updatePackage = (index: number, field: string, value: any) => {
+    if (!report.packages) return;
+    
+    const updatedPackages = [...report.packages];
+    updatedPackages[index] = {
+      ...updatedPackages[index],
+      [field]: value
+    };
+    
+    setReport(prev => ({
+      ...prev,
+      packages: updatedPackages
+    }));
+  };
+
+  // Update package feature
+  const updatePackageFeature = (packageIndex: number, featureIndex: number, value: string) => {
+    if (!report.packages) return;
+    
+    const updatedPackages = [...report.packages];
+    const updatedFeatures = [...updatedPackages[packageIndex].features];
+    updatedFeatures[featureIndex] = value;
+    
+    updatedPackages[packageIndex] = {
+      ...updatedPackages[packageIndex],
+      features: updatedFeatures
+    };
+    
+    setReport(prev => ({
+      ...prev,
+      packages: updatedPackages
+    }));
+  };
+
+  // Add feature to package
+  const addPackageFeature = (packageIndex: number) => {
+    if (!report.packages) return;
+    
+    const updatedPackages = [...report.packages];
+    updatedPackages[packageIndex] = {
+      ...updatedPackages[packageIndex],
+      features: [...updatedPackages[packageIndex].features, "Nueva característica"]
+    };
+    
+    setReport(prev => ({
+      ...prev,
+      packages: updatedPackages
+    }));
+  };
+
+  // Remove feature from package
+  const removePackageFeature = (packageIndex: number, featureIndex: number) => {
+    if (!report.packages) return;
+    
+    const updatedPackages = [...report.packages];
+    const updatedFeatures = [...updatedPackages[packageIndex].features];
+    updatedFeatures.splice(featureIndex, 1);
+    
+    updatedPackages[packageIndex] = {
+      ...updatedPackages[packageIndex],
+      features: updatedFeatures
+    };
+    
+    setReport(prev => ({
+      ...prev,
+      packages: updatedPackages
+    }));
+  };
+
+  // Remove package
+  const removePackage = (index: number) => {
+    if (!report.packages) return;
+    
+    const updatedPackages = [...report.packages];
+    updatedPackages.splice(index, 1);
+    
+    setReport(prev => ({
+      ...prev,
+      packages: updatedPackages
     }));
   };
 
@@ -518,6 +665,106 @@ export const EditableReportForm = ({ initialReport, onSave }: EditableReportForm
                 <PlusCircle className="h-4 w-4 mr-2" /> Añadir recomendación de enlaces
               </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Planes de Tarifas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-6">
+            <Label>Añadir paquete de los disponibles</Label>
+            <div className="flex items-center gap-3 mt-2">
+              <Select
+                disabled={isLoadingPacks || availablePacks.length === 0}
+                onValueChange={addPackageFromAvailable}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar paquete disponible" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePacks.map((pack) => (
+                    <SelectItem key={pack.id} value={pack.id}>
+                      {pack.name} - {pack.price}€
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                onClick={addPackage} 
+                className="w-full"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" /> Añadir paquete personalizado
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {report.packages && report.packages.map((pack, index) => (
+              <div key={index} className="border rounded-lg p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-medium">Paquete #{index + 1}</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => removePackage(index)}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <Label>Nombre del paquete</Label>
+                    <Input 
+                      value={pack.name} 
+                      onChange={(e) => updatePackage(index, "name", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Precio (€/mes)</Label>
+                    <Input 
+                      type="number" 
+                      value={pack.price} 
+                      onChange={(e) => updatePackage(index, "price", Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label>Características</Label>
+                  {pack.features.map((feature, featureIndex) => (
+                    <div key={featureIndex} className="flex items-center gap-2 mt-2">
+                      <Input 
+                        value={feature} 
+                        onChange={(e) => updatePackageFeature(index, featureIndex, e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => removePackageFeature(index, featureIndex)}
+                        disabled={pack.features.length <= 1}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    onClick={() => addPackageFeature(index)} 
+                    className="w-full mt-3"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-2" /> Añadir característica
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

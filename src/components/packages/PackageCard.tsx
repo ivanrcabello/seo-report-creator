@@ -25,23 +25,23 @@ interface PackageCardProps {
 
 export const PackageCard = ({ pack, onEdit, onDelete }: PackageCardProps) => {
   return (
-    <Card key={pack.id} className={`border-2 ${!pack.isActive ? 'opacity-70 border-gray-200' : 'border-purple-200'}`}>
-      <CardHeader className="pb-4">
+    <Card key={pack.id} className={`border-2 ${!pack.isActive ? 'opacity-70 border-gray-200' : 'border-seo-purple/20'} shadow-sm hover:shadow-md transition-shadow`}>
+      <CardHeader className="pb-4 bg-gradient-to-r from-white via-white to-seo-purple/5">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-bold">{pack.name}</CardTitle>
+          <CardTitle className="text-xl font-bold text-seo-blue">{pack.name}</CardTitle>
           {!pack.isActive && (
             <Badge variant="outline" className="bg-gray-100 text-gray-600">Inactivo</Badge>
           )}
         </div>
         <CardDescription className="text-base">{pack.description}</CardDescription>
-        <div className="mt-2 text-2xl font-bold text-purple-700 flex items-center">
+        <div className="mt-2 text-2xl font-bold text-seo-purple flex items-center">
           <Euro className="h-5 w-5 mr-1" />
           {pack.price.toFixed(2)}
           <span className="text-sm font-normal text-gray-500 ml-1">(IVA incluido)</span>
         </div>
       </CardHeader>
       <CardContent className="pb-4">
-        <h4 className="font-semibold mb-2">Características:</h4>
+        <h4 className="font-semibold mb-2 text-seo-blue">Características:</h4>
         <ul className="space-y-2">
           {pack.features.map((feature, index) => (
             <li key={index} className="flex items-start gap-2">
@@ -51,12 +51,12 @@ export const PackageCard = ({ pack, onEdit, onDelete }: PackageCardProps) => {
           ))}
         </ul>
       </CardContent>
-      <CardFooter className="flex justify-end gap-2 pt-2">
+      <CardFooter className="flex justify-end gap-2 pt-2 bg-gray-50">
         <Button
           size="sm"
           variant="outline"
           onClick={() => onEdit(pack)}
-          className="gap-1"
+          className="gap-1 text-seo-blue hover:text-seo-blue/80 hover:bg-seo-blue/10"
         >
           <Edit className="h-4 w-4" />
           Editar

@@ -171,7 +171,7 @@ export const InvoiceDetail = () => {
           >
             Volver
           </button>
-          <h1 className="text-2xl font-bold">Cargando factura...</h1>
+          <h1 className="text-2xl font-bold text-seo-blue">Cargando factura...</h1>
         </div>
       </div>
     );
@@ -187,7 +187,7 @@ export const InvoiceDetail = () => {
           >
             Volver
           </button>
-          <h1 className="text-2xl font-bold">Factura no encontrada</h1>
+          <h1 className="text-2xl font-bold text-seo-blue">Factura no encontrada</h1>
         </div>
       </div>
     );
@@ -195,31 +195,35 @@ export const InvoiceDetail = () => {
   
   return (
     <div className="container py-8">
-      <div className="flex flex-col space-y-6">
-        <InvoiceDetailHeader 
-          invoice={invoice}
-          onDelete={handleDelete}
-          onMarkAsPaid={handleMarkAsPaid}
-          onDownloadPdf={handleDownloadPdf}
-          onSendEmail={handleSendEmail}
-          statusBadge={<InvoiceStatusBadge status={invoice.status} />}
-          onGoBack={() => navigate(-1)}
-        />
+      <div className="invoice-container bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="invoice-header bg-gradient-to-r from-seo-blue to-seo-purple text-white p-6">
+          <InvoiceDetailHeader 
+            invoice={invoice}
+            onDelete={handleDelete}
+            onMarkAsPaid={handleMarkAsPaid}
+            onDownloadPdf={handleDownloadPdf}
+            onSendEmail={handleSendEmail}
+            statusBadge={<InvoiceStatusBadge status={invoice.status} />}
+            onGoBack={() => navigate(-1)}
+          />
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <InvoiceDetailsCard 
-            invoice={invoice}
-            client={client}
-            company={company}
-            packName={packName}
-            formatCurrency={formatCurrency}
-          />
-          
-          <PaymentInfoCard 
-            invoice={invoice}
-            formatCurrency={formatCurrency}
-            formatDate={formatDate}
-          />
+        <div className="invoice-content p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <InvoiceDetailsCard 
+              invoice={invoice}
+              client={client}
+              company={company}
+              packName={packName}
+              formatCurrency={formatCurrency}
+            />
+            
+            <PaymentInfoCard 
+              invoice={invoice}
+              formatCurrency={formatCurrency}
+              formatDate={formatDate}
+            />
+          </div>
         </div>
       </div>
     </div>

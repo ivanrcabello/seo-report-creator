@@ -45,13 +45,13 @@ const SeoReport = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-seo-blue/5 to-seo-purple/5 py-8 px-4">
       <div className="container mx-auto max-w-5xl">
         <ReportHeader handlePrint={handlePrint} handleDownload={handleDownload} />
 
-        <div ref={reportRef} className="space-y-8 bg-white rounded-xl shadow-lg p-8 print:shadow-none">
+        <div ref={reportRef} className="report-container space-y-8 bg-white rounded-xl shadow-lg p-8 print:shadow-none">
           <div className="text-center border-b pb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Informe de Análisis SEO</h1>
+            <h1 className="text-3xl font-bold text-seo-blue mb-2">Informe de Análisis SEO</h1>
             <p className="text-gray-600">Generado el {new Date().toLocaleDateString()}</p>
           </div>
 
@@ -62,7 +62,7 @@ const SeoReport = () => {
           <AIReportGenerator auditResult={auditResult} />
 
           <div className="text-center pt-8 text-sm text-gray-500 print:hidden">
-            <p>© {new Date().getFullYear()} Servicio de Análisis SEO</p>
+            <p>© {new Date().getFullYear()} SoySeoLocal - Servicio de Análisis SEO</p>
           </div>
         </div>
       </div>

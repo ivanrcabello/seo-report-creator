@@ -27,9 +27,9 @@ export const AmountSummary = ({
   };
 
   return (
-    <Card className="md:col-span-2 bg-gray-50">
+    <Card className="md:col-span-2 bg-gray-50 border border-gray-200 shadow-sm">
       <CardContent className="pt-6">
-        <h3 className="text-lg font-medium mb-4">Resumen de importes</h3>
+        <h3 className="text-lg font-semibold text-seo-blue mb-4">Resumen de importes</h3>
         <div className="space-y-2">
           <div className="flex justify-between items-center py-1">
             <span className="text-gray-600">Importe Base:</span>
@@ -40,8 +40,8 @@ export const AmountSummary = ({
             <span className="font-medium">{formatCurrency(tax)}</span>
           </div>
           <div className="border-t border-gray-200 mt-2 pt-2 flex justify-between items-center py-1">
-            <span className="text-gray-800 font-medium">Total:</span>
-            <span className="text-lg font-bold">{formatCurrency(total)}</span>
+            <span className="text-gray-800 font-semibold">Total:</span>
+            <span className="text-lg font-bold text-seo-purple">{formatCurrency(total)}</span>
           </div>
         </div>
       </CardContent>

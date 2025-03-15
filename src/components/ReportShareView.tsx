@@ -25,11 +25,11 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="bg-blue-600 text-white p-8 rounded-t-lg">
+      <div className="bg-gradient-to-r from-seo-blue to-seo-purple text-white p-8 rounded-t-lg">
         <h1 className="text-3xl font-bold text-center mb-2">
           {report.title || "Informe SEO"}
         </h1>
-        <p className="text-center text-blue-100">
+        <p className="text-center text-white/80 mt-2">
           Informe generado el {formattedDate || "N/A"}
         </p>
       </div>
@@ -37,20 +37,20 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
       {/* Recipient Badge */}
       {client && (
         <div className="flex justify-end -mt-4 mr-4">
-          <div className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+          <div className="bg-seo-blue text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
             Para: {client.name || "Cliente"}
           </div>
         </div>
       )}
 
-      <Card className="border-0 shadow-sm mt-6">
+      <Card className="border-0 shadow-lg mt-6">
         <CardContent className="p-6">
           {/* Report Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Cliente</h3>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+              <h3 className="text-sm font-medium text-seo-blue mb-2">Cliente</h3>
               <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-gray-400" />
+                <User className="h-5 w-5 text-seo-purple" />
                 <span className="font-medium">{client?.name || "N/A"}</span>
               </div>
               {client?.company && (
@@ -58,21 +58,21 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
               )}
             </div>
             
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Detalles del informe</h3>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+              <h3 className="text-sm font-medium text-seo-blue mb-2">Detalles del informe</h3>
               <div className="flex items-center gap-2 mb-1">
-                <Calendar className="h-5 w-5 text-gray-400" />
+                <Calendar className="h-5 w-5 text-seo-purple" />
                 <span>Fecha: {formattedDate || "N/A"}</span>
               </div>
               {report.type && (
                 <div className="flex items-center gap-2 mb-1">
-                  <FileText className="h-5 w-5 text-gray-400" />
+                  <FileText className="h-5 w-5 text-seo-purple" />
                   <span>Tipo: {report.type}</span>
                 </div>
               )}
               {report.url && (
                 <div className="flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-gray-400" />
+                  <Globe className="h-5 w-5 text-seo-purple" />
                   <span className="truncate">{report.url}</span>
                 </div>
               )}
@@ -89,8 +89,8 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
 
           {/* Notes */}
           {report.notes && (
-            <div className="mt-8 p-6 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3">Notas y observaciones</h3>
+            <div className="mt-8 p-6 bg-gradient-to-r from-seo-blue/5 to-seo-purple/5 rounded-lg border border-seo-purple/10">
+              <h3 className="text-lg font-semibold text-seo-blue mb-3">Notas y observaciones</h3>
               <p className="text-gray-700 whitespace-pre-line">{report.notes}</p>
             </div>
           )}

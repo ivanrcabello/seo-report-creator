@@ -16,14 +16,14 @@ export const PaymentInfoCard = ({
   formatDate
 }: PaymentInfoCardProps) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-blue-600" />
+    <Card className="shadow-sm border border-gray-200">
+      <CardHeader className="bg-gradient-to-r from-seo-blue/10 to-seo-purple/10 pb-3">
+        <CardTitle className="flex items-center gap-2 text-seo-blue">
+          <Calendar className="h-5 w-5" />
           Información de Pago
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-4">
         <div className="flex justify-between pb-2 border-b">
           <span className="text-gray-600 text-sm">Estado:</span>
           <div><InvoiceStatusBadge status={invoice.status} /></div>
@@ -55,7 +55,7 @@ export const PaymentInfoCard = ({
         
         <div className="flex justify-between pt-2 mt-2">
           <span className="text-gray-800 font-semibold">Total a Pagar:</span>
-          <span className="text-blue-700 font-bold text-lg">
+          <span className="text-seo-purple font-bold text-lg">
             {formatCurrency(invoice.totalAmount)}
           </span>
         </div>

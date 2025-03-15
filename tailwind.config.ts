@@ -19,6 +19,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Poppins", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -53,9 +56,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-      },
-      fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        // Colores de SoySeoLocal
+        'seo-blue': '#1e40af',
+        'seo-purple': '#7e22ce',
+        'seo-indigo': '#4f46e5',
+        'seo-light': '#f9fafb',
+        'seo-dark': '#1f2937',
       },
       keyframes: {
         "accordion-down": {

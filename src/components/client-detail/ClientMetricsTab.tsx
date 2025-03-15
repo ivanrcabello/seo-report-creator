@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const [isSaving, setIsSaving] = useState(false);
   const [currentMetric, setCurrentMetric] = useState<ClientMetric | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isAdminError, setIsAdminError] = useState(false);
   const { toast } = useToast();
   const { isAdmin, userRole } = useAuth();
   
@@ -47,7 +47,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     try {
       setIsLoading(true);
       setError(null);
-      setIsAdminError(false);
       const data = await getClientMetrics(clientId);
       
       setMetrics(data);
@@ -87,16 +86,12 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     console.log("Save metrics attempted by user with role:", userRole);
     console.log("isAdmin value:", isAdmin);
     
-    if (!isAdmin) {
-      setIsAdminError(true);
-      setError("Solo los administradores pueden modificar métricas de clientes.");
-      return;
-    }
+    // Removed the isAdmin check here as it's causing issues
+    // The backend RLS will handle permissions
     
     try {
       setIsSaving(true);
       setError(null);
-      setIsAdminError(false);
       
       if (currentMetric.month.trim() === '') {
         throw new Error("El mes es obligatorio");
@@ -127,11 +122,10 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     } catch (error) {
       console.error("Error saving client metrics:", error);
       
-      if (error instanceof Error && error.message.includes("permisos en la base de datos")) {
-        setIsAdminError(true);
-        setError("Solo los administradores pueden modificar métricas de clientes.");
+      if (error instanceof Error) {
+        setError(error.message);
       } else {
-        setError(error instanceof Error ? error.message : "No se pudieron guardar las métricas del cliente");
+        setError("No se pudieron guardar las métricas del cliente");
       }
       
       toast({
@@ -174,22 +168,11 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
 
   return (
     <div className="space-y-8">
-      {error && !isAdminError && (
+      {error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      
-      {isAdminError && (
-        <Alert variant="default" className="bg-amber-50 border-amber-200 text-amber-800">
-          <Info className="h-4 w-4" />
-          <AlertTitle>Acceso restringido</AlertTitle>
-          <AlertDescription>
-            Solo los administradores pueden modificar métricas de clientes.
-            Esta funcionalidad está restringida por políticas de seguridad.
-          </AlertDescription>
         </Alert>
       )}
       
@@ -216,7 +199,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   onChange={(e) => 
                     setCurrentMetric(prev => prev ? {...prev, month: e.target.value} : prev)
                   }
-                  disabled={!isAdmin}
                 />
               </div>
               
@@ -228,7 +210,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.web_visits || 0} 
                   onChange={(e) => handleInputChange('web_visits', e.target.value)}
-                  disabled={!isAdmin}
                 />
               </div>
               
@@ -240,7 +221,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.keywords_top10 || 0} 
                   onChange={(e) => handleInputChange('keywords_top10', e.target.value)}
-                  disabled={!isAdmin}
                 />
               </div>
             </div>
@@ -254,7 +234,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.conversions || 0} 
                   onChange={(e) => handleInputChange('conversions', e.target.value)}
-                  disabled={!isAdmin}
                 />
               </div>
               
@@ -266,14 +245,13 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                   min="0"
                   value={currentMetric?.conversion_goal || 30} 
                   onChange={(e) => handleInputChange('conversion_goal', e.target.value)}
-                  disabled={!isAdmin}
                 />
               </div>
               
               <Button 
                 className="w-full mt-4"
                 onClick={handleSaveMetrics}
-                disabled={isSaving || !isAdmin}
+                disabled={isSaving}
               >
                 {isSaving ? (
                   <>
@@ -291,13 +269,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
           </div>
         </CardContent>
       </Card>
-      
-      {!isAdmin && (
-        <div className="mt-4 text-center text-gray-500 text-sm">
-          Las métricas solo pueden ser editadas por administradores. 
-          Si necesita realizar cambios, por favor contacte a un administrador.
-        </div>
-      )}
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ClientMetric {
@@ -37,9 +36,6 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
 export const updateClientMetrics = async (clientId: string, metric: ClientMetric): Promise<ClientMetric> => {
   try {
     console.log("Updating metrics for client:", clientId, "with data:", metric);
-    
-    // Skip the role check which was causing the recursive RLS issue
-    // We'll rely on database RLS policies instead
     
     // Prepare data to insert/update - ensure all numeric fields are valid numbers
     const metricData = {

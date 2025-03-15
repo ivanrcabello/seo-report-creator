@@ -1,9 +1,9 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { createTestUser, signInUser } from "@/services/authService";
 
 type UserRole = "admin" | "client" | null;
 
@@ -17,6 +17,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  createTestUser: (email: string, password: string, name: string, role?: UserRole) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchUserRole = async (userId: string) => {
       try {
-        // Use the non-recursive function we just created
         const { data, error } = await supabase
           .rpc('get_user_role')
           .single();
@@ -63,14 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     };
 
-    // Initial session fetch
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       console.log("Initial session:", initialSession);
       setSession(initialSession);
       setupUser(initialSession);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
         console.log("Auth state changed:", _event, newSession?.user?.id);
@@ -88,19 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       console.log("Attempting to sign in with:", email);
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        console.error("Sign in error:", error);
-        throw error;
-      }
-      
-      console.log("Sign in successful:", data);
-      toast.success("Inicio de sesión exitoso");
+      await signInUser(email, password);
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Sign in exception:", error);
-      toast.error(error.message || "Error al iniciar sesión");
       throw error;
     } finally {
       setIsLoading(false);
@@ -135,7 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       console.log("Attempting to sign up:", email);
       
-      // Check if the user already exists
       const { data: existingUser, error: checkError } = await supabase
         .from('profiles')
         .select('id, role')
@@ -146,19 +134,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Error checking existing user:", checkError);
       }
       
-      // Define role - set admin for specific email addresses
-      const adminEmails = ['ivan@soyseolocal.com', 'admin@example.com']; // Add your admin emails here
+      const adminEmails = ['ivan@soyseolocal.com', 'admin@example.com'];
       const role = adminEmails.includes(email.toLowerCase()) ? 'admin' : 'client';
       console.log(`Setting role for ${email} to ${role}`);
       
-      // Proceed with signup
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
           data: { 
             name,
-            role // Include role in user metadata
+            role
           }
         }
       });
@@ -168,9 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
       
-      // If the user already exists in profiles but is trying to re-register
       if (existingUser) {
-        console.log("User already exists in profiles, updating role if needed");
         if (existingUser.role !== role) {
           const { error: updateError } = await supabase
             .from('profiles')
@@ -186,7 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Sign up successful:", data);
       toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
       
-      // Auto sign in after successful registration
       if (data.user) {
         try {
           await signIn(email, password);
@@ -217,6 +200,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const createTestUserAccount = async (email: string, password: string, name: string, role: UserRole = "client") => {
+    try {
+      setIsLoading(true);
+      await createTestUser(email, password, name, role);
+      toast.success("Usuario de prueba creado con éxito");
+    } catch (error) {
+      console.error("Error creating test user:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isAdmin = userRole === "admin";
 
   const value = {
@@ -228,7 +223,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUp,
     signInWithGoogle,
     signOut,
-    isAdmin
+    isAdmin,
+    createTestUser: createTestUserAccount
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

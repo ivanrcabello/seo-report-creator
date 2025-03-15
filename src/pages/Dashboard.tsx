@@ -1,22 +1,28 @@
 
 import { useAuth } from "@/contexts/AuthContext";
-import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
+import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
+import { TestUserCreator } from "@/components/TestUserCreator";
 
 export default function Dashboard() {
-  const { userRole, isLoading } = useAuth();
+  const { isAdmin, userRole } = useAuth();
 
-  if (isLoading) {
-    return <div className="flex h-screen items-center justify-center">Cargando...</div>;
-  }
+  // Create the test user automatically on first load of the dashboard by admin
+  const shouldCreateTestUser = isAdmin;
 
   return (
-    <div>
-      {userRole === "admin" ? (
-        <AdminDashboard />
-      ) : (
-        <ClientDashboard />
+    <div className="container mx-auto py-6">
+      {shouldCreateTestUser && (
+        <TestUserCreator
+          email="ivan@repararelpc.es"
+          password="6126219271"
+          name="Cliente de Prueba"
+          role="client"
+          autoCreate={true}
+        />
       )}
+      
+      {isAdmin ? <AdminDashboard /> : <ClientDashboard />}
     </div>
   );
 }

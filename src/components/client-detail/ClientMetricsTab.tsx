@@ -72,19 +72,16 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     
     try {
       setIsSaving(true);
-      await updateClientMetrics(clientId, currentMetric);
+      const updatedMetric = await updateClientMetrics(clientId, currentMetric);
       
-      // Update the metrics list
-      const updatedMetrics = metrics.map(m => 
-        m.id === currentMetric.id ? currentMetric : m
-      );
-      
-      // If it's a new metric (no id), add it to the list after saving
-      if (!currentMetric.id) {
-        const updatedMetric = await getClientMetrics(clientId);
-        setMetrics(updatedMetric);
+      // Update the metrics list with the new/updated metric
+      if (currentMetric.id) {
+        // If updating an existing metric
+        setMetrics(metrics.map(m => m.id === updatedMetric.id ? updatedMetric : m));
       } else {
-        setMetrics(updatedMetrics);
+        // If it was a new metric
+        setMetrics([updatedMetric, ...metrics]);
+        setCurrentMetric(updatedMetric); // Update current metric with the saved one (with ID)
       }
       
       toast({

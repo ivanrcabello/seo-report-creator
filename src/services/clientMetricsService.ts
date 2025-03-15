@@ -12,6 +12,7 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
+    // Using select * with eq instead of a join that might trigger the recursion issue
     const { data, error } = await supabase
       .from('client_metrics')
       .select('*')
@@ -19,6 +20,7 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
       .order('month', { ascending: false });
     
     if (error) {
+      console.error("Error fetching client metrics:", error);
       throw error;
     }
     
@@ -31,22 +33,26 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
 
 export const updateClientMetrics = async (clientId: string, metric: ClientMetric): Promise<ClientMetric> => {
   try {
+    const metricData = {
+      client_id: clientId,
+      month: metric.month,
+      web_visits: metric.web_visits,
+      keywords_top10: metric.keywords_top10,
+      conversions: metric.conversions,
+      conversion_goal: metric.conversion_goal
+    };
+
     // If the metric has an ID, update it; otherwise, insert a new one
     if (metric.id) {
       const { data, error } = await supabase
         .from('client_metrics')
-        .update({
-          month: metric.month,
-          web_visits: metric.web_visits,
-          keywords_top10: metric.keywords_top10,
-          conversions: metric.conversions,
-          conversion_goal: metric.conversion_goal
-        })
+        .update(metricData)
         .eq('id', metric.id)
-        .select()
+        .select('*')
         .single();
       
       if (error) {
+        console.error("Error updating client metric:", error);
         throw error;
       }
       
@@ -55,18 +61,12 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       // Insert a new metric
       const { data, error } = await supabase
         .from('client_metrics')
-        .insert({
-          client_id: clientId,
-          month: metric.month,
-          web_visits: metric.web_visits,
-          keywords_top10: metric.keywords_top10,
-          conversions: metric.conversions,
-          conversion_goal: metric.conversion_goal
-        })
-        .select()
+        .insert(metricData)
+        .select('*')
         .single();
       
       if (error) {
+        console.error("Error inserting client metric:", error);
         throw error;
       }
       

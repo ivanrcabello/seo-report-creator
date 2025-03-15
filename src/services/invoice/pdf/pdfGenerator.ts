@@ -4,8 +4,8 @@
  */
 
 import jsPDF from "jspdf";
-// Import jsPDF-autotable properly
-import "jspdf-autotable";
+// Import jsPDF-autotable properly and ensure it's correctly initialized
+import autoTable from "jspdf-autotable";
 import { Invoice } from "@/types/invoice";
 import { getClient } from "@/services/clientService";
 import { 
@@ -21,7 +21,15 @@ import {
  * Generates a PDF document for an invoice
  */
 export const generateInvoicePdf = async (invoice: Invoice): Promise<Blob> => {
+  // Create new document with proper initialization of autoTable plugin
   const doc = new jsPDF();
+  
+  // Ensure jsPDF-autotable is properly initialized
+  if (typeof doc.autoTable !== 'function') {
+    // @ts-ignore - Apply autoTable to doc object if needed
+    autoTable(doc);
+  }
+  
   const client = await getClient(invoice.clientId);
 
   if (!client) {

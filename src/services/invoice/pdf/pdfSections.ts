@@ -4,8 +4,8 @@
  */
 
 import jsPDF from "jspdf";
-// Make sure jspdf-autotable is imported here as well
-import "jspdf-autotable";
+// Import jspdf-autotable correctly
+import autoTable from "jspdf-autotable";
 import { Invoice } from "@/types/invoice";
 import { getStatusText, getStatusColor } from "./pdfStyles";
 import { formatDate, formatCurrency } from "../invoiceFormatters";
@@ -142,29 +142,55 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice) => {
   ];
   
   // Add the items table using autoTable
-  // Use type casting to access the autoTable plugin
-  (doc as any).autoTable({
-    head: [tableColumn],
-    body: tableRows,
-    startY: 145,
-    theme: "grid",
-    styles: {
-      fontSize: 9,
-      lineColor: [220, 220, 220]
-    },
-    headStyles: {
-      fillColor: [41, 63, 125],
-      textColor: [255, 255, 255],
-      lineColor: [220, 220, 220]
-    },
-    columnStyles: {
-      0: { cellWidth: 'auto' },
-      1: { cellWidth: 20, halign: 'center' },
-      2: { cellWidth: 30, halign: 'right' },
-      3: { cellWidth: 20, halign: 'center' },
-      4: { cellWidth: 30, halign: 'right' }
-    },
-  });
+  if (typeof doc.autoTable !== 'function') {
+    // Apply autoTable function to doc if it's not already available
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 145,
+      theme: "grid",
+      styles: {
+        fontSize: 9,
+        lineColor: [220, 220, 220]
+      },
+      headStyles: {
+        fillColor: [41, 63, 125],
+        textColor: [255, 255, 255],
+        lineColor: [220, 220, 220]
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 20, halign: 'center' },
+        2: { cellWidth: 30, halign: 'right' },
+        3: { cellWidth: 20, halign: 'center' },
+        4: { cellWidth: 30, halign: 'right' }
+      },
+    });
+  } else {
+    // Use the standard method if autoTable is already on the doc object
+    (doc as any).autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 145,
+      theme: "grid",
+      styles: {
+        fontSize: 9,
+        lineColor: [220, 220, 220]
+      },
+      headStyles: {
+        fillColor: [41, 63, 125],
+        textColor: [255, 255, 255],
+        lineColor: [220, 220, 220]
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 20, halign: 'center' },
+        2: { cellWidth: 30, halign: 'right' },
+        3: { cellWidth: 20, halign: 'center' },
+        4: { cellWidth: 30, halign: 'right' }
+      },
+    });
+  }
 };
 
 /**
@@ -172,7 +198,7 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice) => {
  */
 export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice) => {
   // Get the final Y position from the previous table
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  const finalY = (doc as any).lastAutoTable?.finalY + 10 || 180;
   
   // Draw the totals box on the right side
   doc.setFillColor(249, 250, 251); // Light gray background

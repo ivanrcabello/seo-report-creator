@@ -118,6 +118,10 @@ export const InvoiceForm = () => {
             setClient(clientData);
           }
           
+          // Format dates properly
+          const issueDate = data.issueDate ? format(new Date(data.issueDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd");
+          const dueDate = data.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd") : format(addDays(new Date(), 30), "yyyy-MM-dd");
+          
           form.reset({
             clientId: data.clientId,
             packId: data.packId,
@@ -125,9 +129,9 @@ export const InvoiceForm = () => {
             baseAmount: data.baseAmount,
             taxRate: data.taxRate,
             status: data.status,
-            issueDate: format(new Date(data.issueDate), "yyyy-MM-dd"),
-            dueDate: data.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd") : undefined,
-            notes: data.notes,
+            issueDate: issueDate,
+            dueDate: dueDate,
+            notes: data.notes || "",
             invoiceNumber: data.invoiceNumber,
           });
         }
@@ -176,26 +180,29 @@ export const InvoiceForm = () => {
       const taxAmount = (baseAmountValue * taxRateValue) / 100;
       const totalAmount = baseAmountValue + taxAmount;
       
+      // Prepare the invoice data with correctly formatted dates
+      const invoiceData = {
+        ...data,
+        baseAmount: baseAmountValue,
+        taxRate: taxRateValue,
+        taxAmount,
+        totalAmount,
+        // Ensure dates are properly formatted
+        issueDate: data.issueDate,
+        dueDate: data.dueDate
+      };
+      
       if (isNewInvoice) {
         // Create new invoice
-        console.log("Creating new invoice with data:", data);
-        result = await createInvoice({
-          ...data,
-          baseAmount: baseAmountValue,
-          taxRate: taxRateValue,
-          taxAmount,
-          totalAmount,
-        } as any);
+        console.log("Creating new invoice with data:", invoiceData);
+        result = await createInvoice(invoiceData as any);
       } else {
-        // Update existing invoice
-        console.log("Updating invoice with data:", data);
+        // Update existing invoice with the ID
+        console.log("Updating invoice with data:", { id, ...invoiceData });
         result = await updateInvoice({
           ...invoice,
-          ...data,
-          baseAmount: baseAmountValue,
-          taxRate: taxRateValue,
-          taxAmount,
-          totalAmount,
+          ...invoiceData,
+          id: id // Ensure ID is included
         } as Invoice);
       }
       

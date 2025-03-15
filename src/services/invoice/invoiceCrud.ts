@@ -88,19 +88,38 @@ export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | 
 
 // Update an existing invoice
 export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefined> => {
-  const { data, error } = await supabase
-    .from('invoices')
-    .update(mapInvoiceToDB(invoice))
-    .eq('id', invoice.id)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Error updating invoice:", error);
+  try {
+    // Ensure we have an id
+    if (!invoice.id) {
+      console.error("Error updating invoice: No ID provided");
+      return undefined;
+    }
+    
+    // Create updated invoice with current timestamp
+    const updatedInvoice = {
+      ...mapInvoiceToDB(invoice),
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log("Updating invoice with data:", updatedInvoice);
+    
+    const { data, error } = await supabase
+      .from('invoices')
+      .update(updatedInvoice)
+      .eq('id', invoice.id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error updating invoice:", error);
+      return undefined;
+    }
+    
+    return mapInvoiceFromDB(data);
+  } catch (error) {
+    console.error("Error in updateInvoice:", error);
     return undefined;
   }
-  
-  return mapInvoiceFromDB(data);
 };
 
 // Delete an invoice

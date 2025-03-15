@@ -28,8 +28,16 @@ export const getSeoLocalReports = async (clientId: string): Promise<SeoLocalRepo
       googleBusinessUrl: item.google_business_url || '',
       googleMapsRanking: item.google_maps_ranking || 0,
       googleReviewsCount: item.google_reviews_count || 0,
-      keywordRankings: Array.isArray(item.keyword_rankings) ? item.keyword_rankings : [],
-      localListings: Array.isArray(item.local_listings) ? item.local_listings : [],
+      keywordRankings: Array.isArray(item.keyword_rankings) 
+        ? item.keyword_rankings 
+        : typeof item.keyword_rankings === 'string'
+          ? JSON.parse(item.keyword_rankings)
+          : [],
+      localListings: Array.isArray(item.local_listings) 
+        ? item.local_listings 
+        : typeof item.local_listings === 'string'
+          ? JSON.parse(item.local_listings)
+          : [],
       shareToken: item.share_token || null,
       sharedAt: item.shared_at || null,
       recommendations: Array.isArray(item.recommendations) ? item.recommendations : []

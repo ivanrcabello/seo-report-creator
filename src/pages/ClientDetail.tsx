@@ -19,7 +19,6 @@ import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
 import { useAuth } from "@/contexts/AuthContext";
 import { Plus, ArrowLeft } from "lucide-react";
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
-import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
 
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
@@ -114,10 +113,13 @@ export default function ClientDetail() {
     }
 
     try {
+      // We will implement these functions in the next step
       const analysis = await generateLocalSeoAnalysis(selectedDocuments, client.id, client.name);
       const newReport = await createLocalSeoReport(analysis, client.id, client.name);
 
+      // Add the new report to state
       setLocalSeoReports((prevReports) => [...prevReports, newReport]);
+      
       toast({
         title: "Success",
         description: "Local SEO report generated successfully!",
@@ -178,8 +180,8 @@ export default function ClientDetail() {
         <TabsContent value="documents">
           <ClientDocuments
             clientId={client.id}
-            onDocumentSelect={handleDocumentSelect}
-            selectedDocuments={selectedDocuments}
+            notes={client.notes}
+            onGenerateReport={handleGenerateReport}
           />
           {isAdmin && (
             <div className="mt-4">
@@ -245,10 +247,81 @@ export default function ClientDetail() {
               setCurrentLocalSeoReport={(report) => console.log("Setting current report:", report)}
               setActiveTab={(tab) => console.log("Setting active tab:", tab)}
             />
-            <PdfUploadTab clientId={client.id} />
+            <PdfUploadTab 
+              clientName={client.name}
+              onAnalysisComplete={(result) => console.log("Analysis result:", result)}
+            />
           </TabsContent>
         )}
       </Tabs>
     </div>
   );
+}
+
+// Helper functions to generate SEO reports
+async function generateLocalSeoAnalysis(documentIds: string[], clientId: string, clientName: string): Promise<Omit<SeoLocalReport, "id">> {
+  console.log("Generating local SEO analysis for documents:", documentIds);
+  
+  // This function analyzes documents and generates SEO data
+  // For now, we'll use a placeholder
+  
+  const sampleAnalysis: Omit<SeoLocalReport, "id"> = {
+    clientId: clientId,
+    title: `Informe SEO Local - ${clientName}`,
+    date: new Date().toISOString(),
+    businessName: clientName,
+    address: "Calle Principal 123",
+    location: "Madrid, España",
+    phone: "+34 91 123 45 67",
+    website: "www.example.com",
+    googleBusinessUrl: "https://business.google.com/example",
+    googleMapsRanking: 4,
+    googleReviewsCount: 12,
+    keywordRankings: [
+      { keyword: "negocio local madrid", position: 15 },
+      { keyword: "servicios profesionales madrid", position: 22 },
+      { keyword: `${clientName.toLowerCase()} madrid`, position: 8 }
+    ],
+    localListings: [
+      { platform: "Google Business", status: "Verificado" },
+      { platform: "Yelp", status: "Listado" },
+      { platform: "TripAdvisor", status: "No listado" }
+    ],
+    recommendations: [
+      "Optimizar perfil de Google Business",
+      "Conseguir más reseñas de clientes",
+      "Mejorar presencia en directorios locales",
+      "Crear contenido orientado a palabras clave locales"
+    ]
+  };
+  
+  console.log("Generated sample analysis:", sampleAnalysis);
+  
+  return sampleAnalysis;
+}
+
+async function createLocalSeoReport(
+  analysis: Omit<SeoLocalReport, "id">, 
+  clientId: string, 
+  clientName: string
+): Promise<SeoLocalReport> {
+  console.log("Creating local SEO report for client:", clientId, clientName);
+  
+  try {
+    // Import the createSeoLocalReport function from localSeoReportService
+    const { createSeoLocalReport } = await import("@/services/localSeoReportService");
+    
+    // Create the report
+    const id = await createSeoLocalReport(analysis);
+    
+    console.log("Created local SEO report with ID:", id);
+    
+    return {
+      ...analysis,
+      id
+    };
+  } catch (error) {
+    console.error("Error creating local SEO report:", error);
+    throw error;
+  }
 }

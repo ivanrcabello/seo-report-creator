@@ -66,8 +66,16 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
       googleBusinessUrl: data.google_business_url || '',
       googleMapsRanking: data.google_maps_ranking || 0,
       googleReviewsCount: data.google_reviews_count || 0,
-      keywordRankings: Array.isArray(data.keyword_rankings) ? data.keyword_rankings : [],
-      localListings: Array.isArray(data.local_listings) ? data.local_listings : [],
+      keywordRankings: Array.isArray(data.keyword_rankings) 
+        ? data.keyword_rankings 
+        : typeof data.keyword_rankings === 'string'
+          ? JSON.parse(data.keyword_rankings)
+          : [],
+      localListings: Array.isArray(data.local_listings) 
+        ? data.local_listings 
+        : typeof data.local_listings === 'string'
+          ? JSON.parse(data.local_listings)
+          : [],
       recommendations: Array.isArray(data.recommendations) ? data.recommendations : [],
       title: data.title || '',
       date: data.date || '',

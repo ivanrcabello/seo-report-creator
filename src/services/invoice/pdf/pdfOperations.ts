@@ -19,10 +19,12 @@ export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> =>
     const invoice = await getInvoice(invoiceId);
     
     if (!invoice) {
-      throw new Error("Invoice not found");
+      console.error("Invoice not found for ID:", invoiceId);
+      toast.error("No se pudo encontrar la factura");
+      return false;
     }
     
-    console.log("Invoice data loaded, generating PDF");
+    console.log("Invoice data loaded, generating PDF", invoice);
     // Generate the PDF
     const pdfBlob = await generateInvoicePdf(invoice as Invoice);
     
@@ -42,9 +44,11 @@ export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> =>
     document.body.removeChild(link);
     
     console.log("PDF download complete");
+    toast.success("Factura descargada correctamente");
     return true;
   } catch (error) {
     console.error("Error downloading invoice PDF:", error);
+    toast.error("Error al descargar la factura");
     return false;
   }
 };
@@ -54,20 +58,26 @@ export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> =>
  */
 export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> => {
   try {
+    console.log("Starting email process for invoice:", invoiceId);
     // Get the invoice
     const invoice = await getInvoice(invoiceId);
     
     if (!invoice) {
-      throw new Error("Invoice not found");
+      console.error("Invoice not found for ID:", invoiceId);
+      toast.error("No se pudo encontrar la factura");
+      return false;
     }
     
     // Get the client
     const client = await getClient(invoice.clientId);
     
     if (!client) {
-      throw new Error("Client not found");
+      console.error("Client not found for ID:", invoice.clientId);
+      toast.error("No se pudo encontrar el cliente de la factura");
+      return false;
     }
     
+    console.log("Generating PDF for email attachment");
     // Generate the PDF
     const pdfBlob = await generateInvoicePdf(invoice as Invoice);
     
@@ -77,6 +87,7 @@ export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> =>
     // In a real app, you would upload the file to a server and send the email from there
     // For now, we'll simulate a successful email send
     
+    console.log("Simulating sending email to client:", client.email);
     // Simulate API call to send email with attachment
     await new Promise(resolve => setTimeout(resolve, 1000));
     
@@ -86,6 +97,7 @@ export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> =>
     return true;
   } catch (error) {
     console.error("Error sending invoice email:", error);
+    toast.error("Error al enviar la factura por email");
     return false;
   }
 };

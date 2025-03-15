@@ -122,6 +122,19 @@ export const InvoiceForm = () => {
           const issueDate = data.issueDate ? format(new Date(data.issueDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd");
           const dueDate = data.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd") : format(addDays(new Date(), 30), "yyyy-MM-dd");
           
+          console.log("Setting form values with:", {
+            clientId: data.clientId,
+            packId: data.packId,
+            proposalId: data.proposalId,
+            baseAmount: data.baseAmount,
+            taxRate: data.taxRate,
+            status: data.status,
+            issueDate: issueDate,
+            dueDate: dueDate,
+            notes: data.notes || "",
+            invoiceNumber: data.invoiceNumber,
+          });
+          
           form.reset({
             clientId: data.clientId,
             packId: data.packId,
@@ -186,24 +199,33 @@ export const InvoiceForm = () => {
         baseAmount: baseAmountValue,
         taxRate: taxRateValue,
         taxAmount,
-        totalAmount,
-        // Ensure dates are properly formatted
-        issueDate: data.issueDate,
-        dueDate: data.dueDate
+        totalAmount
       };
+      
+      console.log("Form submission - isNewInvoice:", isNewInvoice);
+      console.log("Form data:", data);
       
       if (isNewInvoice) {
         // Create new invoice
         console.log("Creating new invoice with data:", invoiceData);
         result = await createInvoice(invoiceData as any);
       } else {
-        // Update existing invoice with the ID
-        console.log("Updating invoice with data:", { id, ...invoiceData });
-        result = await updateInvoice({
-          ...invoice,
+        if (!id) {
+          throw new Error("Missing invoice ID for update");
+        }
+        
+        // Ensure we're passing the full invoice object with the ID
+        console.log("Updating invoice with ID:", id);
+        console.log("Current invoice state:", invoice);
+        
+        // Make sure to include the ID in the update data
+        const updateData = {
           ...invoiceData,
-          id: id // Ensure ID is included
-        } as Invoice);
+          id: id
+        };
+        
+        console.log("Updating invoice with data:", updateData);
+        result = await updateInvoice(updateData as Invoice);
       }
       
       if (result) {

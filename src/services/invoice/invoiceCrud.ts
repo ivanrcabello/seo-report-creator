@@ -95,13 +95,16 @@ export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefin
       return undefined;
     }
     
+    console.log("Updating invoice with ID:", invoice.id);
+    console.log("Invoice data:", invoice);
+    
     // Create updated invoice with current timestamp
     const updatedInvoice = {
       ...mapInvoiceToDB(invoice),
       updated_at: new Date().toISOString()
     };
     
-    console.log("Updating invoice with data:", updatedInvoice);
+    console.log("Mapped invoice data for DB:", updatedInvoice);
     
     const { data, error } = await supabase
       .from('invoices')
@@ -111,10 +114,11 @@ export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefin
       .single();
     
     if (error) {
-      console.error("Error updating invoice:", error);
+      console.error("Supabase error updating invoice:", error);
       return undefined;
     }
     
+    console.log("Update successful, returned data:", data);
     return mapInvoiceFromDB(data);
   } catch (error) {
     console.error("Error in updateInvoice:", error);

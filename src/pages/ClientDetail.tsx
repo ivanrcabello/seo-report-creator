@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,7 +9,7 @@ import { getClientReports, addReport } from "@/services/reportService";
 import { getLocalSeoReports } from "@/services/localSeoReportService";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, UserCog, FileText, UploadCloud, Map, FileSignature, BarChart } from "lucide-react";
+import { Loader2, UserCog, FileText, UploadCloud, Map, FileSignature, BarChart, FileSpreadsheet } from "lucide-react";
 
 // Import refactored components
 import { ClientHeader } from "@/components/client-detail/ClientHeader";
@@ -22,6 +21,7 @@ import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
 import ClientDocuments from "@/components/client-documents/ClientDocuments";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
+import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
 
 const ClientDetail = () => {
@@ -232,7 +232,7 @@ const ClientDetail = () => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <TabsList className="mb-4 grid grid-cols-7 max-w-4xl">
+        <TabsList className="mb-4 grid grid-cols-8 max-w-4xl">
           <TabsTrigger value="profile" className="flex items-center gap-1">
             <UserCog className="h-4 w-4" />
             Perfil
@@ -244,6 +244,10 @@ const ClientDetail = () => {
           <TabsTrigger value="metrics" className="flex items-center gap-1">
             <BarChart className="h-4 w-4" />
             Métricas
+          </TabsTrigger>
+          <TabsTrigger value="invoices" className="flex items-center gap-1">
+            <FileSpreadsheet className="h-4 w-4" />
+            Facturas
           </TabsTrigger>
           <TabsTrigger value="proposals-list" className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
@@ -278,6 +282,10 @@ const ClientDetail = () => {
         
         <TabsContent value="metrics">
           <ClientMetricsTab clientId={client.id} clientName={client.name} />
+        </TabsContent>
+        
+        <TabsContent value="invoices">
+          <ClientInvoicesTab clientId={client.id} clientName={client.name} />
         </TabsContent>
         
         <TabsContent value="proposals-list">

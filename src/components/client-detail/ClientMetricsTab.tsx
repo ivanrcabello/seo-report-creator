@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save } from "lucide-react";
 import { getClientMetrics, updateClientMetrics } from "@/services/clientMetricsService";
-import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 
 interface ClientMetric {
   id: string;
@@ -201,15 +200,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Facturas del Cliente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ClientInvoicesTab clientId={clientId} clientName={clientName} />
         </CardContent>
       </Card>
     </div>

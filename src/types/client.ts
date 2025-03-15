@@ -179,12 +179,14 @@ export interface Proposal {
 export interface CompanySettings {
   id: string;
   companyName: string;
-  taxId: string; // CIF/NIF
+  taxId: string;
   address: string;
   phone?: string;
   email?: string;
   logoUrl?: string;
-  bankAccount?: string; // Añadido para la cuenta bancaria
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
   createdAt: string;
   updatedAt: string;
 }

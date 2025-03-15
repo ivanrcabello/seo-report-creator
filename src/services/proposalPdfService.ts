@@ -6,56 +6,89 @@ import { getClient } from "./clientService";
 import { getSeoPack } from "./packService";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { getCompanySettings } from "./settingsService";
+
+// Colores corporativos
+const COLORS = {
+  primary: {
+    blue: [30, 64, 175], // Color azul corporativo
+    purple: [126, 34, 206], // Color morado corporativo
+  },
+  background: {
+    light: [240, 240, 250], // Fondo claro
+    white: [255, 255, 255], // Blanco
+  },
+  text: {
+    dark: [0, 0, 0], // Negro
+    white: [255, 255, 255], // Blanco
+    blue: [30, 64, 175], // Azul para textos destacados
+  }
+};
 
 export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => {
   try {
     // Obtener datos del cliente y paquete
     const client = await getClient(proposal.clientId);
     const pack = proposal.packId ? await getSeoPack(proposal.packId) : null;
+    const company = await getCompanySettings();
     
     // Crear documento PDF
     const doc = new jsPDF();
     
-    // Función para crear gradientes
+    // Función para crear degradados
     const createGradient = (x: number, y: number, w: number, h: number) => {
-      const gradient = doc.setLinearGradient(x, y, x + w, y, [0, 1], [0, 1], [['#1e40af', 0], ['#7e22ce', 1]]);
-      doc.setFillStyle(gradient);
+      // En lugar de usar setLinearGradient que no existe en jsPDF v3
+      // Usamos un rectángulo con color sólido
+      doc.setFillColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
       doc.rect(x, y, w, h, 'F');
     };
     
-    // Cabecera con gradiente
+    // Cabecera con color corporativo
     createGradient(0, 0, doc.internal.pageSize.width, 40);
     
     // Añadir título en la cabecera
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
+    doc.setTextColor(COLORS.text.white[0], COLORS.text.white[1], COLORS.text.white[2]);
+    doc.setFont("Poppins", "bold");
     doc.setFontSize(22);
     doc.text("PROPUESTA COMERCIAL", 105, 20, { align: "center" });
     
+    // Añadir logo de la empresa si está disponible
+    if (company?.logoUrl) {
+      try {
+        // Convertir la URL de la imagen en un elemento de imagen
+        const img = new Image();
+        img.src = company.logoUrl;
+        // Añadir la imagen cuando esté cargada
+        doc.addImage(img, 'PNG', 10, 5, 30, 30);
+      } catch (error) {
+        console.error("Error al añadir el logo:", error);
+      }
+    }
+    
     // Información de la propuesta
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "bold");
+    doc.setTextColor(COLORS.text.dark[0], COLORS.text.dark[1], COLORS.text.dark[2]);
+    doc.setFont("Poppins", "bold");
     doc.setFontSize(16);
     doc.text(proposal.title, 105, 55, { align: "center" });
     
     // Agregar línea decorativa
-    doc.setDrawColor(30, 64, 175); // Color azul corporativo
+    doc.setDrawColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
     doc.setLineWidth(1);
     doc.line(40, 60, 170, 60);
     
     // Datos del cliente con estilo mejorado
     doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 64, 175); // Color azul corporativo
+    doc.setFont("Poppins", "bold");
+    doc.setTextColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
     doc.text("Datos del Cliente", 14, 75);
     
     // Rectángulo decorativo para la sección del cliente
-    doc.setFillColor(240, 240, 250);
+    doc.setFillColor(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]);
     doc.roundedRect(10, 80, 190, 30, 3, 3, 'F');
     
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Poppins", "normal");
     doc.setFontSize(11);
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(COLORS.text.dark[0], COLORS.text.dark[1], COLORS.text.dark[2]);
     
     const clientData = [
       ["Cliente:", client?.name || ""],
@@ -70,25 +103,28 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
       theme: "plain",
       styles: { 
         fontSize: 11,
+        fontStyle: "normal",
+        font: "Poppins",
         cellPadding: 2,
       },
       columnStyles: { 
         0: { 
-          fontStyle: "bold", 
+          fontStyle: "bold",
+          font: "Poppins", 
           cellWidth: 40,
-          textColor: [30, 64, 175]
+          textColor: COLORS.primary.blue
         } 
       }
     });
     
     // Detalles de la propuesta con estilo mejorado
     doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 64, 175);
+    doc.setFont("Poppins", "bold");
+    doc.setTextColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
     doc.text("Detalles de la Propuesta", 14, 120);
     
     // Rectángulo decorativo para la sección de la propuesta
-    doc.setFillColor(240, 240, 250);
+    doc.setFillColor(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]);
     doc.roundedRect(10, 125, 190, 30, 3, 3, 'F');
     
     const formattedCreatedAt = format(new Date(proposal.createdAt), "dd/MM/yyyy", { locale: es });
@@ -109,13 +145,16 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
       theme: "plain",
       styles: { 
         fontSize: 11,
+        fontStyle: "normal",
+        font: "Poppins",
         cellPadding: 2,
       },
       columnStyles: { 
         0: { 
-          fontStyle: "bold", 
+          fontStyle: "bold",
+          font: "Poppins", 
           cellWidth: 40,
-          textColor: [30, 64, 175]
+          textColor: COLORS.primary.blue
         } 
       }
     });
@@ -123,31 +162,31 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
     // Datos del paquete con estilo mejorado
     if (pack) {
       doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(30, 64, 175);
+      doc.setFont("Poppins", "bold");
+      doc.setTextColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
       doc.text("Paquete Seleccionado", 14, 165);
       
       // Rectángulo decorativo para el paquete
-      doc.setFillColor(240, 245, 255);
+      doc.setFillColor(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]);
       doc.roundedRect(10, 170, 190, 50, 3, 3, 'F');
       
       // Encabezado del paquete
-      doc.setFillColor(126, 34, 206); // Purple color
+      doc.setFillColor(COLORS.primary.purple[0], COLORS.primary.purple[1], COLORS.primary.purple[2]);
       doc.roundedRect(15, 175, 180, 10, 2, 2, 'F');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(COLORS.text.white[0], COLORS.text.white[1], COLORS.text.white[2]);
       doc.setFontSize(12);
       doc.text(pack.name, 105, 182, { align: "center" });
       
       const price = proposal.customPrice || pack.price;
       doc.setFontSize(14);
-      doc.setTextColor(126, 34, 206); // Purple color
-      doc.setFont("helvetica", "bold");
+      doc.setTextColor(COLORS.primary.purple[0], COLORS.primary.purple[1], COLORS.primary.purple[2]);
+      doc.setFont("Poppins", "bold");
       doc.text(`${price} €`, 105, 197, { align: "center" });
       
       // Características del paquete en formato de lista
       doc.setFontSize(11);
-      doc.setTextColor(0, 0, 0);
-      doc.setFont("helvetica", "normal");
+      doc.setTextColor(COLORS.text.dark[0], COLORS.text.dark[1], COLORS.text.dark[2]);
+      doc.setFont("Poppins", "normal");
       
       const packageData = [
         ["Descripción:", pack.description]
@@ -160,13 +199,16 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
         theme: "plain",
         styles: { 
           fontSize: 11,
+          fontStyle: "normal",
+          font: "Poppins",
           cellPadding: 2,
         },
         columnStyles: { 
           0: { 
-            fontStyle: "bold", 
+            fontStyle: "bold",
+            font: "Poppins", 
             cellWidth: 40,
-            textColor: [30, 64, 175]
+            textColor: COLORS.primary.blue
           } 
         }
       });
@@ -174,15 +216,15 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
     
     // Descripción con estilo mejorado
     doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 64, 175);
+    doc.setFont("Poppins", "bold");
+    doc.setTextColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
     doc.text("Descripción", 14, 230);
     
     // Rectángulo decorativo para la descripción
-    doc.setFillColor(240, 240, 250);
+    doc.setFillColor(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]);
     doc.roundedRect(10, 235, 190, 30, 3, 3, 'F');
     
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Poppins", "normal");
     doc.setFontSize(11);
     doc.setTextColor(60, 60, 60);
     
@@ -194,16 +236,16 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
       const startY = 275;
       
       doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(30, 64, 175);
+      doc.setFont("Poppins", "bold");
+      doc.setTextColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
       doc.text("Características Personalizadas", 14, startY);
       
       // Rectángulo decorativo para las características
-      doc.setFillColor(240, 240, 250);
+      doc.setFillColor(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]);
       doc.roundedRect(10, startY + 5, 190, 10 + (proposal.customFeatures.length * 8), 3, 3, 'F');
       
       // Listar características con check marks
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Poppins", "normal");
       doc.setFontSize(11);
       doc.setTextColor(60, 60, 60);
       
@@ -211,27 +253,27 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
         const y = startY + 15 + (index * 8);
         
         // Check mark circle
-        doc.setDrawColor(126, 34, 206);
-        doc.setFillColor(126, 34, 206);
+        doc.setDrawColor(COLORS.primary.purple[0], COLORS.primary.purple[1], COLORS.primary.purple[2]);
+        doc.setFillColor(COLORS.primary.purple[0], COLORS.primary.purple[1], COLORS.primary.purple[2]);
         doc.circle(20, y - 2, 1.5, 'FD');
         
         doc.text(feature, 25, y);
       });
     }
     
-    // Footer con gradiente en cada página
+    // Footer con color corporativo en cada página
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       
-      // Agregar gradiente en el pie de página
+      // Agregar color en el pie de página
       createGradient(0, doc.internal.pageSize.height - 20, doc.internal.pageSize.width, 20);
       
       // Texto en el pie de página
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(COLORS.text.white[0], COLORS.text.white[1], COLORS.text.white[2]);
       doc.setFontSize(9);
       doc.text(
-        `Página ${i} de ${pageCount} - SoySeoLocal - Generado el ${format(new Date(), "dd/MM/yyyy", { locale: es })}`,
+        `Página ${i} de ${pageCount} - ${company?.companyName || 'SoySeoLocal'} - Generado el ${format(new Date(), "dd/MM/yyyy", { locale: es })}`,
         105,
         doc.internal.pageSize.height - 10,
         { align: "center" }
@@ -281,4 +323,3 @@ export const downloadProposalPdf = async (proposalId: string): Promise<boolean> 
     return false;
   }
 };
-

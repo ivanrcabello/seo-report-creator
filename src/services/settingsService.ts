@@ -11,6 +11,9 @@ const mapSettingsFromDB = (settings: any): CompanySettings => ({
   phone: settings.phone,
   email: settings.email,
   logoUrl: settings.logo_url,
+  primaryColor: settings.primary_color,
+  secondaryColor: settings.secondary_color,
+  accentColor: settings.accent_color,
   createdAt: settings.created_at,
   updatedAt: settings.updated_at
 });
@@ -23,6 +26,9 @@ const mapSettingsToDB = (settings: Partial<CompanySettings>) => ({
   phone: settings.phone,
   email: settings.email,
   logo_url: settings.logoUrl,
+  primary_color: settings.primaryColor,
+  secondary_color: settings.secondaryColor,
+  accent_color: settings.accentColor,
   updated_at: new Date().toISOString()
 });
 

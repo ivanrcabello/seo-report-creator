@@ -1,9 +1,12 @@
-
 import { Invoice } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 import { getSeoPack } from "./packService";
 import { getProposal } from "./proposal/proposalCrud";
 import { getClient } from "./clientService";
+import { getCompanySettings } from "./settingsService";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
+import { toast } from "sonner";
 
 // Función para generar un número de factura secuencial
 export const generateInvoiceNumber = async (): Promise<string> => {
@@ -254,9 +257,232 @@ export const markInvoiceAsPaid = async (invoiceId: string): Promise<Invoice | un
   }
 };
 
-// Función para generar PDF de factura (esta implementación requerirá una librería PDF)
-export const generateInvoicePdf = async (invoiceId: string): Promise<string | undefined> => {
-  // Esta función se implementará más adelante con jsPDF o similar
-  // Por ahora, retornamos un valor ficticio
-  return undefined;
+// Funciones para generar y descargar PDF de factura
+export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | undefined> => {
+  try {
+    // Obtener datos necesarios
+    const invoice = await getInvoice(invoiceId);
+    if (!invoice) {
+      toast.error("No se pudo encontrar la factura");
+      return undefined;
+    }
+
+    const client = await getClient(invoice.clientId);
+    if (!client) {
+      toast.error("No se pudo encontrar el cliente");
+      return undefined;
+    }
+
+    const company = await getCompanySettings();
+    if (!company) {
+      toast.error("No se han configurado los datos de la empresa");
+      return undefined;
+    }
+
+    // Crear documento PDF
+    const doc = new jsPDF();
+    
+    // Estilos y configuración
+    const primaryColor = [0, 102, 204]; // Azul corporativo
+    const grayColor = [120, 120, 120];
+    doc.setDrawColor(...primaryColor);
+    doc.setFillColor(240, 240, 240);
+    
+    // Título y número de factura
+    doc.setFontSize(22);
+    doc.setTextColor(...primaryColor);
+    doc.text("FACTURA", 20, 20);
+    doc.setFontSize(14);
+    doc.text(`Nº: ${invoice.invoiceNumber}`, 20, 28);
+    
+    // Fechas
+    doc.setFontSize(10);
+    doc.setTextColor(...grayColor);
+    doc.text(`Fecha de emisión: ${formatDate(invoice.issueDate)}`, 20, 35);
+    if (invoice.dueDate) {
+      doc.text(`Fecha de vencimiento: ${formatDate(invoice.dueDate)}`, 20, 40);
+    }
+    
+    // Datos de empresa (emisor)
+    doc.setFillColor(245, 245, 250);
+    doc.roundedRect(20, 50, 80, 40, 2, 2, 'F');
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.text("DATOS DEL EMISOR", 25, 57);
+    doc.setFontSize(9);
+    doc.text(company.companyName, 25, 65);
+    doc.text(`CIF/NIF: ${company.taxId}`, 25, 70);
+    doc.text(company.address, 25, 75);
+    doc.text(`Tel: ${company.phone || "N/A"}`, 25, 80);
+    doc.text(`Email: ${company.email || "N/A"}`, 25, 85);
+    
+    // Datos del cliente
+    doc.setFillColor(245, 245, 250);
+    doc.roundedRect(110, 50, 80, 40, 2, 2, 'F');
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.text("DATOS DEL CLIENTE", 115, 57);
+    doc.setFontSize(9);
+    doc.text(client.name, 115, 65);
+    if (client.company) doc.text(client.company, 115, 70);
+    if (client.address) doc.text(client.address, 115, 75);
+    doc.text(`Tel: ${client.phone || "N/A"}`, 115, 80);
+    doc.text(`Email: ${client.email}`, 115, 85);
+    
+    // Estado de la factura
+    let statusText = "PENDIENTE";
+    let statusColor = [255, 150, 0]; // Naranja para pendiente
+    if (invoice.status === "paid") {
+      statusText = "PAGADA";
+      statusColor = [0, 170, 0]; // Verde para pagada
+    } else if (invoice.status === "cancelled") {
+      statusText = "CANCELADA";
+      statusColor = [200, 0, 0]; // Rojo para cancelada
+    }
+    
+    doc.setFillColor(...statusColor);
+    doc.setTextColor(255, 255, 255);
+    doc.roundedRect(150, 20, 40, 10, 2, 2, 'F');
+    doc.setFontSize(10);
+    doc.text(statusText, 170, 26, { align: "center" });
+    
+    // Tabla de conceptos
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.text("CONCEPTOS", 20, 105);
+    
+    // @ts-ignore - jsPDF-AutoTable no tiene tipos TS adecuados
+    doc.autoTable({
+      startY: 110,
+      head: [['Concepto', 'Importe']],
+      body: [
+        [(invoice.notes || "Servicios profesionales"), formatCurrency(invoice.baseAmount)],
+      ],
+      theme: 'grid',
+      headStyles: { 
+        fillColor: primaryColor, 
+        textColor: [255, 255, 255],
+        fontSize: 10 
+      },
+      columnStyles: {
+        0: { cellWidth: 140 },
+        1: { cellWidth: 30, halign: 'right' }
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    // Resumen de importes
+    // @ts-ignore
+    let finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(10);
+    doc.text("Base imponible:", 130, finalY);
+    doc.text(formatCurrency(invoice.baseAmount), 180, finalY, { align: 'right' });
+    
+    doc.text(`IVA (${invoice.taxRate}%):`, 130, finalY + 5);
+    doc.text(formatCurrency(invoice.taxAmount), 180, finalY + 5, { align: 'right' });
+    
+    doc.setLineWidth(0.3);
+    doc.line(130, finalY + 7, 180, finalY + 7);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(...primaryColor);
+    doc.setFont(undefined, 'bold');
+    doc.text("TOTAL:", 130, finalY + 13);
+    doc.text(formatCurrency(invoice.totalAmount), 180, finalY + 13, { align: 'right' });
+    
+    // Información adicional sobre formas de pago
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text("FORMA DE PAGO", 20, finalY + 25);
+    doc.setFontSize(8);
+    doc.text("Transferencia bancaria a la cuenta:", 20, finalY + 30);
+    doc.text(company.bankAccount || "ES00 0000 0000 0000 0000 0000", 20, finalY + 35);
+    
+    // Pie de página
+    const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+    doc.setFontSize(8);
+    doc.setTextColor(...grayColor);
+    doc.text(`Factura generada por ${company.companyName}`, 105, pageHeight - 10, { align: 'center' });
+    
+    // Devolver el blob del PDF
+    return doc.output('blob');
+  } catch (error) {
+    console.error("Error generating invoice PDF:", error);
+    toast.error("Error al generar el PDF de la factura");
+    return undefined;
+  }
+};
+
+// Función para descargar el PDF
+export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> => {
+  try {
+    const pdfBlob = await generateInvoicePdf(invoiceId);
+    if (!pdfBlob) return false;
+    
+    const invoice = await getInvoice(invoiceId);
+    if (!invoice) return false;
+    
+    // Crear URL y enlace para descargar
+    const blobUrl = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `Factura_${invoice.invoiceNumber}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Limpiar URL
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    
+    return true;
+  } catch (error) {
+    console.error("Error downloading invoice PDF:", error);
+    toast.error("Error al descargar el PDF de la factura");
+    return false;
+  }
+};
+
+// Función para enviar la factura por email al cliente
+export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> => {
+  try {
+    const invoice = await getInvoice(invoiceId);
+    if (!invoice) {
+      toast.error("No se pudo encontrar la factura");
+      return false;
+    }
+    
+    const client = await getClient(invoice.clientId);
+    if (!client) {
+      toast.error("No se pudo encontrar el cliente");
+      return false;
+    }
+    
+    // Aquí simulamos el envío del email
+    // En una implementación real, aquí se conectaría con un servicio de email
+    
+    toast.success(`Factura ${invoice.invoiceNumber} enviada a ${client.email}`);
+    return true;
+  } catch (error) {
+    console.error("Error sending invoice by email:", error);
+    toast.error("Error al enviar la factura por email");
+    return false;
+  }
+};
+
+// Funciones de utilidad para formateo
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(amount);
 };

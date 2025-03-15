@@ -15,15 +15,15 @@ export const AmountSummary = ({
   taxAmount,
   totalAmount
 }: AmountSummaryProps) => {
-  // Ensure all values are numbers for calculation and formatting
-  const base = typeof baseAmount === 'number' ? baseAmount : Number(baseAmount) || 0;
-  const tax = typeof taxAmount === 'number' ? taxAmount : Number(taxAmount) || 0;
-  const total = typeof totalAmount === 'number' ? totalAmount : Number(totalAmount) || 0;
-  const rate = typeof taxRate === 'number' ? taxRate : Number(taxRate) || 0;
+  // Asegurar que todos los valores sean números para el cálculo y formateo
+  const base = typeof baseAmount === 'number' ? baseAmount : parseFloat(baseAmount as string) || 0;
+  const tax = typeof taxAmount === 'number' ? taxAmount : parseFloat(taxAmount as string) || 0;
+  const total = typeof totalAmount === 'number' ? totalAmount : parseFloat(totalAmount as string) || 0;
+  const rate = typeof taxRate === 'number' ? taxRate : parseFloat(taxRate as string) || 0;
 
-  // Format numbers as currency strings
+  // Formatear números como strings de moneda
   const formatCurrency = (value: number) => {
-    return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' €';
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
   };
 
   return (

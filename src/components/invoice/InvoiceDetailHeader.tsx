@@ -8,7 +8,9 @@ import {
   Edit, 
   Trash2, 
   Check, 
-  Download
+  Download,
+  Printer,
+  Mail
 } from "lucide-react";
 import { Invoice } from "@/types/invoice";
 import {
@@ -27,6 +29,8 @@ interface InvoiceDetailHeaderProps {
   invoice: Invoice;
   onDelete: () => Promise<void>;
   onMarkAsPaid: () => Promise<void>;
+  onDownloadPdf: () => Promise<void>;
+  onSendEmail: () => Promise<void>;
   statusBadge: React.ReactNode;
   onGoBack: () => void;
 }
@@ -34,12 +38,14 @@ interface InvoiceDetailHeaderProps {
 export const InvoiceDetailHeader = ({ 
   invoice, 
   onDelete, 
-  onMarkAsPaid, 
+  onMarkAsPaid,
+  onDownloadPdf,
+  onSendEmail,
   statusBadge,
   onGoBack
 }: InvoiceDetailHeaderProps) => {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between flex-wrap gap-3">
       <div className="flex items-center space-x-4">
         <Button 
           variant="outline" 
@@ -57,7 +63,25 @@ export const InvoiceDetailHeader = ({
         {statusBadge}
       </div>
       
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 flex-wrap gap-2">
+        <Button
+          onClick={onDownloadPdf}
+          variant="outline"
+          className="gap-1"
+        >
+          <Download className="h-4 w-4" />
+          Descargar PDF
+        </Button>
+        
+        <Button
+          onClick={onSendEmail}
+          variant="outline"
+          className="gap-1"
+        >
+          <Mail className="h-4 w-4" />
+          Enviar por Email
+        </Button>
+        
         {invoice.status === "pending" && (
           <Button
             onClick={onMarkAsPaid}
@@ -75,15 +99,6 @@ export const InvoiceDetailHeader = ({
             Editar
           </Button>
         </Link>
-        
-        {invoice.pdfUrl && (
-          <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" className="gap-1">
-              <Download className="h-4 w-4" />
-              Descargar PDF
-            </Button>
-          </a>
-        )}
         
         <AlertDialog>
           <AlertDialogTrigger asChild>

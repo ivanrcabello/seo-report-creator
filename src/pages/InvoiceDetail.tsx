@@ -3,7 +3,13 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Client } from "@/types/client";
 import { Invoice, CompanySettings } from "@/types/invoice";
-import { getInvoice, markInvoiceAsPaid, deleteInvoice } from "@/services/invoiceService";
+import { 
+  getInvoice, 
+  markInvoiceAsPaid, 
+  deleteInvoice, 
+  downloadInvoicePdf,
+  sendInvoiceByEmail 
+} from "@/services/invoiceService";
 import { getClient } from "@/services/clientService";
 import { getCompanySettings } from "@/services/settingsService";
 import { getSeoPack } from "@/services/packService";
@@ -23,6 +29,7 @@ export const InvoiceDetail = () => {
   const [company, setCompany] = useState<CompanySettings | null>(null);
   const [packName, setPackName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   useEffect(() => {
     const loadInvoiceData = async () => {
@@ -76,6 +83,7 @@ export const InvoiceDetail = () => {
     if (!id) return;
     
     try {
+      setIsProcessing(true);
       const success = await deleteInvoice(id);
       if (success) {
         toast.success("Factura eliminada correctamente");
@@ -86,6 +94,8 @@ export const InvoiceDetail = () => {
     } catch (error) {
       console.error("Error deleting invoice:", error);
       toast.error("Error al eliminar la factura");
+    } finally {
+      setIsProcessing(false);
     }
   };
   
@@ -93,6 +103,7 @@ export const InvoiceDetail = () => {
     if (!id || !invoice) return;
     
     try {
+      setIsProcessing(true);
       const updatedInvoice = await markInvoiceAsPaid(id);
       if (updatedInvoice) {
         setInvoice(updatedInvoice);
@@ -103,6 +114,46 @@ export const InvoiceDetail = () => {
     } catch (error) {
       console.error("Error marking invoice as paid:", error);
       toast.error("Error al actualizar el estado de la factura");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!id || !invoice) return;
+    
+    try {
+      setIsProcessing(true);
+      toast.info("Generando PDF de la factura...");
+      const success = await downloadInvoicePdf(id);
+      if (success) {
+        toast.success("PDF generado correctamente");
+      } else {
+        throw new Error("No se pudo generar el PDF");
+      }
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error("Error al generar el PDF de la factura");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!id || !invoice || !client) return;
+    
+    try {
+      setIsProcessing(true);
+      toast.info(`Enviando factura a ${client.email}...`);
+      const success = await sendInvoiceByEmail(id);
+      if (!success) {
+        throw new Error("No se pudo enviar el email");
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error("Error al enviar la factura por email");
+    } finally {
+      setIsProcessing(false);
     }
   };
   
@@ -153,6 +204,8 @@ export const InvoiceDetail = () => {
           invoice={invoice}
           onDelete={handleDelete}
           onMarkAsPaid={handleMarkAsPaid}
+          onDownloadPdf={handleDownloadPdf}
+          onSendEmail={handleSendEmail}
           statusBadge={<InvoiceStatusBadge status={invoice.status} />}
           onGoBack={() => navigate(-1)}
         />

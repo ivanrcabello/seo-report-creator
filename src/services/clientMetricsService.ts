@@ -48,15 +48,23 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       conversion_goal: Math.max(1, Number(metric.conversion_goal) || 30)
     };
     
-    let result;
+    // Format the metric object for return (avoiding additional database query)
+    const formattedMetric = {
+      id: metric.id || '', 
+      month: metric.month,
+      web_visits: metricData.web_visits,
+      keywords_top10: metricData.keywords_top10,
+      conversions: metricData.conversions,
+      conversion_goal: metricData.conversion_goal
+    };
     
     if (metric.id && metric.id.trim() !== '') {
       // Update existing metric
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('update_client_metric', {
           p_id: metric.id,
           p_client_id: clientId,
-          p_month: metric.month, // Function now properly handles conversion to date
+          p_month: metric.month,
           p_web_visits: metricData.web_visits,
           p_keywords_top10: metricData.keywords_top10,
           p_conversions: metricData.conversions,
@@ -69,29 +77,14 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         throw new Error(`Error al actualizar métricas: ${error.message}`);
       }
       
-      // Fetch the updated record
-      const { data: updatedData, error: fetchError } = await supabase
-        .from('client_metrics')
-        .select('*')
-        .eq('id', metric.id)
-        .single();
-        
-      if (fetchError) {
-        console.error("Error fetching updated metric:", fetchError);
-        throw new Error(`Error al obtener métricas actualizadas: ${fetchError.message}`);
-      }
-      
-      // Format the month as string for the UI
-      result = {
-        ...updatedData,
-        month: updatedData.month ? new Date(updatedData.month).toISOString().substring(0, 7) : ''
-      };
+      // Return the formatted metric without querying the database again
+      return formattedMetric;
     } else {
       // Insert a new metric
       const { data, error } = await supabase
         .rpc('insert_client_metric', {
           p_client_id: clientId,
-          p_month: metric.month, // Function now properly handles conversion to date
+          p_month: metric.month,
           p_web_visits: metricData.web_visits,
           p_keywords_top10: metricData.keywords_top10,
           p_conversions: metricData.conversions,
@@ -104,28 +97,12 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         throw new Error(`Error al guardar métricas: ${error.message}`);
       }
       
-      // Find the newly inserted record by client_id and month
-      const { data: newData, error: fetchError } = await supabase
-        .from('client_metrics')
-        .select('*')
-        .eq('client_id', clientId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-        
-      if (fetchError) {
-        console.error("Error fetching new metric:", fetchError);
-        throw new Error(`Error al obtener nueva métrica: ${fetchError.message}`);
-      }
+      // Set the ID from the returned value if available, otherwise use a placeholder
+      formattedMetric.id = data || formattedMetric.id;
       
-      // Format the month as string for the UI
-      result = {
-        ...newData,
-        month: newData.month ? new Date(newData.month).toISOString().substring(0, 7) : ''
-      };
+      // Return the formatted metric without querying the database again
+      return formattedMetric;
     }
-    
-    return result;
   } catch (error) {
     console.error("Exception in updateClientMetrics:", error);
     

@@ -27,50 +27,55 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [currentMetric, setCurrentMetric] = useState<ClientMetric | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getClientMetrics(clientId);
-        setMetrics(data);
-        
-        // If metrics exist, set the most recent one as current
-        if (data.length > 0) {
-          setCurrentMetric(data[0]);
-        } else {
-          // Create a default metric if none exists
-          const newMetric = {
-            id: "",
-            month: new Date().toISOString().substring(0, 7), // Current month in YYYY-MM format
-            web_visits: 0,
-            keywords_top10: 0,
-            conversions: 0,
-            conversion_goal: 30
-          };
-          setCurrentMetric(newMetric);
-        }
-      } catch (error) {
-        console.error("Error fetching client metrics:", error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar las métricas del cliente",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchMetrics();
-  }, [clientId, toast]);
+  }, [clientId]);
+
+  const fetchMetrics = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getClientMetrics(clientId);
+      setMetrics(data);
+      
+      // If metrics exist, set the most recent one as current
+      if (data.length > 0) {
+        setCurrentMetric(data[0]);
+      } else {
+        // Create a default metric if none exists
+        const newMetric = {
+          id: "",
+          month: new Date().toISOString().substring(0, 7), // Current month in YYYY-MM format
+          web_visits: 0,
+          keywords_top10: 0,
+          conversions: 0,
+          conversion_goal: 30
+        };
+        setCurrentMetric(newMetric);
+      }
+    } catch (error) {
+      console.error("Error fetching client metrics:", error);
+      setError("No se pudieron cargar las métricas del cliente");
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las métricas del cliente",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSaveMetrics = async () => {
     if (!currentMetric) return;
     
     try {
       setIsSaving(true);
+      setError(null);
+      
       const updatedMetric = await updateClientMetrics(clientId, currentMetric);
       
       // Update the metrics list with the new/updated metric
@@ -80,8 +85,10 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       } else {
         // If it was a new metric
         setMetrics([updatedMetric, ...metrics]);
-        setCurrentMetric(updatedMetric); // Update current metric with the saved one (with ID)
       }
+      
+      // Update current metric with server response (to get the ID if it was new)
+      setCurrentMetric(updatedMetric);
       
       toast({
         title: "Métricas actualizadas",
@@ -89,6 +96,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       });
     } catch (error) {
       console.error("Error saving client metrics:", error);
+      setError("No se pudieron guardar las métricas del cliente");
       toast({
         title: "Error",
         description: "No se pudieron guardar las métricas del cliente",
@@ -102,10 +110,13 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const handleInputChange = (field: keyof ClientMetric, value: string) => {
     if (!currentMetric) return;
     
-    const numValue = parseInt(value, 10) || 0;
+    // Parse value to number or use fallback
+    const numValue = parseInt(value, 10);
+    const finalValue = isNaN(numValue) ? 0 : numValue;
+    
     setCurrentMetric({
       ...currentMetric,
-      [field]: numValue
+      [field]: finalValue
     });
   };
 
@@ -120,6 +131,11 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
 
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-800 mb-4">
+          <p>{error}</p>
+        </div>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Métricas de Rendimiento</CardTitle>
@@ -154,8 +170,14 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                 <Input 
                   id="keywords_top10" 
                   type="number" 
+                  min="0"
                   value={currentMetric?.keywords_top10 || 0} 
                   onChange={(e) => handleInputChange('keywords_top10', e.target.value)}
+                  onBlur={(e) => {
+                    if (e.target.value === '') {
+                      handleInputChange('keywords_top10', '0');
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -166,8 +188,14 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                 <Input 
                   id="conversions" 
                   type="number" 
+                  min="0"
                   value={currentMetric?.conversions || 0} 
                   onChange={(e) => handleInputChange('conversions', e.target.value)}
+                  onBlur={(e) => {
+                    if (e.target.value === '') {
+                      handleInputChange('conversions', '0');
+                    }
+                  }}
                 />
               </div>
               
@@ -176,8 +204,14 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                 <Input 
                   id="conversion_goal" 
                   type="number" 
+                  min="0"
                   value={currentMetric?.conversion_goal || 30} 
                   onChange={(e) => handleInputChange('conversion_goal', e.target.value)}
+                  onBlur={(e) => {
+                    if (e.target.value === '') {
+                      handleInputChange('conversion_goal', '30');
+                    }
+                  }}
                 />
               </div>
               

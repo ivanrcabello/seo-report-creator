@@ -12,10 +12,10 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
-    // Using select * with eq instead of a join that might trigger the recursion issue
+    // Use a simpler query to avoid the RLS recursion issue
     const { data, error } = await supabase
       .from('client_metrics')
-      .select('*')
+      .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
       .eq('client_id', clientId)
       .order('month', { ascending: false });
     
@@ -27,7 +27,7 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
     return data || [];
   } catch (error) {
     console.error("Error fetching client metrics:", error);
-    return [];
+    throw error; // Re-throw to handle in component
   }
 };
 
@@ -48,7 +48,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         .from('client_metrics')
         .update(metricData)
         .eq('id', metric.id)
-        .select('*')
+        .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
         .single();
       
       if (error) {
@@ -62,7 +62,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       const { data, error } = await supabase
         .from('client_metrics')
         .insert(metricData)
-        .select('*')
+        .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
         .single();
       
       if (error) {
@@ -74,6 +74,6 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
     }
   } catch (error) {
     console.error("Error updating client metrics:", error);
-    throw error;
+    throw error; // Re-throw to handle in component
   }
 };

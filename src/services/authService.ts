@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -18,6 +17,24 @@ export const createTestUser = async (
 ) => {
   try {
     console.log(`Creating test user with email: ${email} and role: ${role}`);
+    
+    // First check if the user already exists to avoid unnecessary API calls
+    const { data: existingUser, error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+      
+    if (existingUser) {
+      console.log("Test user already exists, skipping creation");
+      toast.success(`Usuario de prueba ya existe: ${email}`);
+      return { user: existingUser };
+    }
+    
+    if (checkError && !checkError.message.includes('No rows found')) {
+      console.error("Error checking for existing user:", checkError);
+    }
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -30,9 +47,15 @@ export const createTestUser = async (
     });
 
     if (error) {
-      console.error("Error creating test user:", error);
-      toast.error(`Error al crear usuario de prueba: ${error.message}`);
-      throw error;
+      if (error.message.includes("rate limit") || error.status === 429) {
+        console.error("Rate limit hit when creating test user:", error);
+        toast.error(`Límite de peticiones alcanzado. Intenta de nuevo en unos minutos.`);
+        throw Object.assign(error, { isRateLimit: true });
+      } else {
+        console.error("Error creating test user:", error);
+        toast.error(`Error al crear usuario de prueba: ${error.message}`);
+        throw error;
+      }
     }
     
     console.log("Test user created successfully:", data);
@@ -40,6 +63,12 @@ export const createTestUser = async (
     return data;
   } catch (error: any) {
     console.error("Exception creating test user:", error);
+    
+    // Propagate the rate limit flag
+    if (error.isRateLimit) {
+      throw Object.assign(new Error(`Error de límite de peticiones: ${error.message}`), { isRateLimit: true });
+    }
+    
     toast.error(`Error inesperado: ${error.message}`);
     throw error;
   }

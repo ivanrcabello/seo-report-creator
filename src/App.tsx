@@ -20,6 +20,7 @@ import InvoiceDetail from "./pages/InvoiceDetail";
 import CompanySettings from "./pages/CompanySettings";
 import { Toaster } from "./components/ui/sonner";
 import { AppLayout } from "./components/AppLayout";
+import { InvoiceForm } from "./components/InvoiceForm";
 import "./App.css";
 
 // Create a client
@@ -59,11 +60,11 @@ function App() {
           <Route path="/proposals/edit/:id" element={<AppLayout><ProposalForm /></AppLayout>} />
           <Route path="/proposals/:id" element={<AppLayout><ProposalDetail /></AppLayout>} />
           
-          {/* New invoice routes */}
+          {/* Invoice routes - fix the ordering to ensure the "new" route works */}
           <Route path="/invoices" element={<AppLayout><Invoices /></AppLayout>} />
+          <Route path="/invoices/new" element={<AppLayout><InvoiceForm /></AppLayout>} />
+          <Route path="/invoices/edit/:id" element={<AppLayout><InvoiceForm /></AppLayout>} />
           <Route path="/invoices/:id" element={<AppLayout><InvoiceDetail /></AppLayout>} />
-          <Route path="/invoices/new" element={<AppLayout><InvoiceDetail /></AppLayout>} />
-          <Route path="/invoices/edit/:id" element={<AppLayout><InvoiceDetail /></AppLayout>} />
           
           {/* Company settings */}
           <Route path="/settings" element={<AppLayout><CompanySettings /></AppLayout>} />

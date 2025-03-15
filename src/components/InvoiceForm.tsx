@@ -44,6 +44,7 @@ export const InvoiceForm = () => {
   const [availableClients, setAvailableClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isNewInvoice = !id || id === "new";
   
@@ -74,25 +75,26 @@ export const InvoiceForm = () => {
   useEffect(() => {
     const loadClients = async () => {
       try {
+        console.log("Loading clients...");
         const clients = await getClients();
+        console.log("Clients loaded:", clients);
         setAvailableClients(clients);
         
         // Si hay un clientId en la URL y estamos creando una nueva factura,
         // cargar los datos del cliente
         if (clientIdFromQuery && isNewInvoice) {
+          console.log("Loading client data for:", clientIdFromQuery);
           const clientData = await getClient(clientIdFromQuery);
           if (clientData) {
             setClient(clientData);
           }
         }
-
-        // Marcar como cargado una vez que tenemos los clientes
-        if (isNewInvoice) {
-          setIsLoading(false);
-        }
       } catch (error) {
         console.error("Error loading clients:", error);
+        setError("No se pudieron cargar los clientes");
         toast.error("No se pudieron cargar los clientes");
+      } finally {
+        // Siempre marcar como cargado, incluso si hay un error
         setIsLoading(false);
       }
     };
@@ -103,10 +105,14 @@ export const InvoiceForm = () => {
   // Cargar datos de la factura si se está editando
   useEffect(() => {
     const loadInvoiceData = async () => {
-      if (isNewInvoice) return;
+      if (isNewInvoice) {
+        setIsLoading(false);
+        return;
+      }
       
       setIsLoading(true);
       try {
+        console.log("Loading invoice data for:", id);
         const data = await getInvoice(id);
         if (data) {
           setInvoice(data);
@@ -130,6 +136,7 @@ export const InvoiceForm = () => {
         }
       } catch (error) {
         console.error("Error loading invoice:", error);
+        setError("No se pudo cargar la factura");
         toast.error("No se pudo cargar la factura");
       } finally {
         setIsLoading(false);
@@ -141,18 +148,27 @@ export const InvoiceForm = () => {
   
   // Cargar datos del cliente cuando se selecciona uno
   const handleClientChange = async (clientId: string) => {
+    if (!clientId || clientId === "no-clients") return;
+    
     try {
+      console.log("Loading client data for selected client:", clientId);
       const clientData = await getClient(clientId);
       if (clientData) {
         setClient(clientData);
       }
     } catch (error) {
       console.error("Error loading client:", error);
+      toast.error("No se pudo cargar la información del cliente");
     }
   };
 
   // Envío del formulario
   const onSubmit = async (data: FormValues) => {
+    if (!data.clientId || data.clientId === "no-clients") {
+      toast.error("Debe seleccionar un cliente");
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       let result;
@@ -163,6 +179,7 @@ export const InvoiceForm = () => {
       
       if (isNewInvoice) {
         // Crear nueva factura
+        console.log("Creating new invoice with data:", data);
         result = await createInvoice({
           ...data,
           taxAmount,
@@ -170,6 +187,7 @@ export const InvoiceForm = () => {
         } as any);
       } else {
         // Actualizar factura existente
+        console.log("Updating invoice with data:", data);
         result = await updateInvoice({
           ...invoice,
           ...data,
@@ -225,8 +243,43 @@ export const InvoiceForm = () => {
     );
   }
 
-  // Si estamos creando una nueva factura y no se ha seleccionado un cliente y no hay clientes disponibles
-  if (isNewInvoice && !clientIdFromQuery && availableClients.length === 0) {
+  if (error) {
+    return (
+      <Card className="shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+              Error
+            </CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate(-1)}
+              className="gap-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
+          </div>
+          <CardDescription>
+            {error}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <p className="text-gray-500 mb-4">Se produjo un error al cargar los datos</p>
+            <Button onClick={() => navigate(-1)} className="gap-1">
+              Volver
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Si estamos creando una nueva factura y no hay clientes disponibles
+  if (isNewInvoice && availableClients.length === 0) {
     return (
       <Card className="shadow-sm">
         <CardHeader>

@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Client, ClientReport, SeoLocalReport } from "@/types/client";
 import { AuditResult } from "@/services/pdfAnalyzer";
-import { getClient, updateClient, deleteClient } from "@/services/clientService";
+import { getClient, updateClient, deleteClient, updateClientActiveStatus } from "@/services/clientService";
 import { getClientReports, addReport } from "@/services/reportService";
 import { getLocalSeoReports } from "@/services/localSeoReportService";
 import { format } from "date-fns";
@@ -36,6 +37,7 @@ const ClientDetail = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [currentLocalSeoReport, setCurrentLocalSeoReport] = useState<SeoLocalReport | null>(null);
+  const [refreshMetrics, setRefreshMetrics] = useState(0);
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -64,7 +66,7 @@ const ClientDetail = () => {
     };
 
     fetchClientData();
-  }, [id, toast]);
+  }, [id, toast, refreshMetrics]);
 
   const handleEditClient = () => {
     setIsEditing(true);
@@ -83,6 +85,7 @@ const ClientDetail = () => {
         });
         setClient(updatedClient);
         setIsEditing(false);
+        setRefreshMetrics(prev => prev + 1);
         toast({
           title: "Cliente actualizado",
           description: `Los datos de ${updatedClient.name} han sido actualizados.`,
@@ -92,6 +95,27 @@ const ClientDetail = () => {
         toast({
           title: "Error",
           description: "No se pudo actualizar el cliente. Inténtalo de nuevo.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleToggleActiveStatus = async (isActive: boolean) => {
+    if (client && id) {
+      try {
+        const updatedClient = await updateClientActiveStatus(id, isActive);
+        setClient(updatedClient);
+        setRefreshMetrics(prev => prev + 1);
+        toast({
+          title: "Estado actualizado",
+          description: `El cliente ahora está ${isActive ? 'activo' : 'inactivo'}.`,
+        });
+      } catch (error) {
+        console.error("Error al actualizar estado del cliente:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo actualizar el estado del cliente. Inténtalo de nuevo.",
           variant: "destructive",
         });
       }
@@ -227,7 +251,8 @@ const ClientDetail = () => {
         <ClientHeader 
           client={client} 
           onEdit={handleEditClient} 
-          onDelete={handleDeleteClient} 
+          onDelete={handleDeleteClient}
+          onToggleActive={handleToggleActiveStatus}
         />
       )}
 
@@ -281,7 +306,11 @@ const ClientDetail = () => {
         </TabsContent>
         
         <TabsContent value="metrics">
-          <ClientMetricsTab clientId={client.id} clientName={client.name} />
+          <ClientMetricsTab 
+            clientId={client.id} 
+            clientName={client.name} 
+            key={`metrics-${refreshMetrics}`}
+          />
         </TabsContent>
         
         <TabsContent value="invoices">

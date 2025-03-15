@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ interface ClientSummary {
   phone?: string;
   created_at: string;
   lastActivity?: string;
+  is_active: boolean;
 }
 
 interface MonthlyBillingData {
@@ -90,11 +90,7 @@ export function AdminDashboard() {
           
           setMetrics({
             totalClients: formattedClients.length,
-            activeClients: formattedClients.filter(client => {
-              // Consider a client active if they had a report in the last 60 days
-              return client.lastActivity || 
-                     (client.created_at && new Date(client.created_at) > new Date(Date.now() - 60 * 24 * 60 * 60 * 1000));
-            }).length,
+            activeClients: formattedClients.filter(client => client.is_active).length,
             newClientsThisMonth: newClientsCount,
             totalReports: 24, // This would be replaced with actual data from reports table
             activeProposals: 7,  // This would be replaced with actual data from proposals table
@@ -308,7 +304,12 @@ export function AdminDashboard() {
                         {client.name.charAt(0)}
                       </div>
                       <div className="space-y-1">
-                        <h4 className="font-medium">{client.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">{client.name}</h4>
+                          <Badge variant={client.is_active ? "success" : "secondary"} className="text-xs">
+                            {client.is_active ? "Activo" : "Inactivo"}
+                          </Badge>
+                        </div>
                         <div className="flex items-center text-sm text-gray-500">
                           <Mail className="h-3 w-3 mr-1" />
                           {client.email}

@@ -144,6 +144,7 @@ export const useClientMetrics = (clientId: string) => {
     error,
     handleSaveMetrics,
     handleInputChange,
-    setCurrentMetric
+    setCurrentMetric,
+    fetchMetrics
   };
 };

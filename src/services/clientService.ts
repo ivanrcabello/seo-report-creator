@@ -1,4 +1,3 @@
-
 import { Client } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,7 +13,8 @@ const mapClientFromDB = (client: any): Client => ({
   notes: client.notes,
   documents: [],
   analyticsConnected: client.analytics_connected,
-  searchConsoleConnected: client.search_console_connected
+  searchConsoleConnected: client.search_console_connected,
+  isActive: client.is_active
 });
 
 // Función para convertir datos de la aplicación al formato de Supabase
@@ -25,7 +25,8 @@ const mapClientToDB = (client: Partial<Client>) => ({
   company: client.company,
   notes: client.notes,
   analytics_connected: client.analyticsConnected,
-  search_console_connected: client.searchConsoleConnected
+  search_console_connected: client.searchConsoleConnected,
+  is_active: client.isActive
 });
 
 // Client CRUD operations
@@ -157,6 +158,23 @@ export const removeClientNote = async (clientId: string, index: number): Promise
   
   if (error) {
     console.error("Error removing client note:", error);
+    throw error;
+  }
+  
+  return mapClientFromDB(data);
+};
+
+// Update client active status
+export const updateClientActiveStatus = async (clientId: string, isActive: boolean): Promise<Client> => {
+  const { data, error } = await supabase
+    .from('clients')
+    .update({ is_active: isActive })
+    .eq('id', clientId)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error updating client active status:", error);
     throw error;
   }
   

@@ -65,7 +65,7 @@ export const InvoiceDetailHeader = ({
       
       <div className="flex items-center space-x-2 flex-wrap gap-2">
         <Button
-          onClick={onDownloadPdf}
+          onClick={() => onDownloadPdf()}
           variant="outline"
           className="gap-1 bg-white text-seo-blue hover:bg-gray-100"
         >
@@ -74,7 +74,7 @@ export const InvoiceDetailHeader = ({
         </Button>
         
         <Button
-          onClick={onSendEmail}
+          onClick={() => onSendEmail()}
           variant="outline"
           className="gap-1 bg-white text-seo-blue hover:bg-gray-100"
         >
@@ -84,7 +84,7 @@ export const InvoiceDetailHeader = ({
         
         {invoice.status === "pending" && (
           <Button
-            onClick={onMarkAsPaid}
+            onClick={() => onMarkAsPaid()}
             variant="secondary"
             className="gap-1 bg-white text-seo-purple font-medium hover:bg-gray-100"
           >

@@ -83,7 +83,7 @@ export const ProposalActions = ({
               Editar
             </Button>
             <Button 
-              onClick={onSend}
+              onClick={() => onSend()}
               className="gap-1"
             >
               <Send className="h-4 w-4" />
@@ -97,14 +97,14 @@ export const ProposalActions = ({
             <Button 
               variant="outline" 
               className="gap-1 border-red-200 text-red-600 hover:bg-red-50"
-              onClick={onReject}
+              onClick={() => onReject()}
             >
               <XCircle className="h-4 w-4" />
               Marcar como Rechazada
             </Button>
             <Button 
               className="gap-1 bg-green-600 hover:bg-green-700"
-              onClick={onAccept}
+              onClick={() => onAccept()}
             >
               <CheckCircle className="h-4 w-4" />
               Marcar como Aceptada

@@ -38,6 +38,7 @@ export interface ClientReport {
   includeInProposal?: boolean; // Indicador para incluir en propuestas
   analyticsData?: AnalyticsData; // Datos de Google Analytics
   searchConsoleData?: SearchConsoleData; // Datos de Search Console
+  auditResult?: any; // Resultados del análisis de auditoría
 }
 
 export interface AnalyticsData {
@@ -136,4 +137,36 @@ export interface Proposal {
   customFeatures?: string[]; // Características personalizadas si son diferentes
   reportIds?: string[]; // IDs de los informes incluidos en la propuesta
   publicUrl?: string; // URL pública para que el cliente vea la propuesta
+}
+
+export interface CompanySettings {
+  id: string;
+  companyName: string;
+  taxId: string; // CIF/NIF
+  address: string;
+  phone?: string;
+  email?: string;
+  logoUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  clientId: string;
+  issueDate: string;
+  dueDate?: string;
+  packId?: string;
+  proposalId?: string;
+  baseAmount: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  status: "pending" | "paid" | "cancelled";
+  paymentDate?: string;
+  notes?: string;
+  pdfUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }

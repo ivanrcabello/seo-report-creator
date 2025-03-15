@@ -1,6 +1,8 @@
 
 import { Client, SeoPack, Invoice, CompanySettings } from "@/types/client";
 
+export { Invoice, CompanySettings };
+
 export interface InvoiceDetailProps {
   invoice: Invoice;
   client: Client | null;

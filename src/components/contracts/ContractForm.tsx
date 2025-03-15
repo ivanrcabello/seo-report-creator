@@ -93,23 +93,23 @@ export const ContractForm = () => {
             form.setValue("monthlyFee", contractData.monthlyFee);
             form.setValue("status", contractData.status as any);
             
-            // Set client info
+            // Set client info - ensure name is always a string (required field)
             if (contractData.content.clientInfo) {
               form.setValue("clientInfo", {
-                name: contractData.content.clientInfo.name || "",
+                name: contractData.content.clientInfo.name || "",  // Name is required
                 company: contractData.content.clientInfo.company || "",
                 address: contractData.content.clientInfo.address || "",
                 taxId: contractData.content.clientInfo.taxId || "",
               });
             }
             
-            // Set professional info
+            // Set professional info - ensure all required fields have values
             if (contractData.content.professionalInfo) {
               form.setValue("professionalInfo", {
-                name: contractData.content.professionalInfo.name || "",
-                company: contractData.content.professionalInfo.company || "",
-                address: contractData.content.professionalInfo.address || "",
-                taxId: contractData.content.professionalInfo.taxId || "",
+                name: contractData.content.professionalInfo.name || "",  // Required
+                company: contractData.content.professionalInfo.company || "", // Required
+                address: contractData.content.professionalInfo.address || "", // Required
+                taxId: contractData.content.professionalInfo.taxId || "",  // Required
               });
             }
             

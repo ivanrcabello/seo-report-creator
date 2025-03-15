@@ -17,7 +17,6 @@ export const ReportHeader = ({ handlePrint, handleDownload }: ReportHeaderProps)
     setIsDownloading(true);
     try {
       await handleDownload();
-      toast.success("El informe se está descargando");
     } catch (error) {
       console.error("Error downloading report:", error);
       toast.error("No se pudo descargar el informe. Inténtalo de nuevo.");

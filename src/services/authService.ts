@@ -32,21 +32,25 @@ export const createTestUser = async (
       return { user: existingProfiles };
     }
     
-    // Double-check with auth API as well to be extra safe
-    const { data: existingAuth, error: authError } = await supabase.auth.admin.getUserByEmail(email);
+    // Check if the user exists in auth by trying to fetch profiles with the same email
+    // Since we can't directly query auth.users, we rely on the profiles table
+    const { data: allProfiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('email, id')
+      .eq('email', email);
     
-    if (existingAuth?.user) {
+    if (allProfiles && allProfiles.length > 0) {
       console.log("Test user already exists in auth, skipping creation");
       toast.success(`Usuario de prueba ya existe: ${email}`);
-      return { user: existingAuth.user };
+      return { user: allProfiles[0] };
     }
     
     if (profileError && !profileError.message.includes('No rows found')) {
       console.error("Error checking for existing user in profiles:", profileError);
     }
     
-    if (authError) {
-      console.error("Error checking for existing user in auth:", authError);
+    if (profilesError) {
+      console.error("Error checking for existing users:", profilesError);
     }
     
     const { data, error } = await supabase.auth.signUp({

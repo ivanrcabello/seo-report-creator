@@ -12,7 +12,7 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
-    // Use a simpler query approach to avoid RLS recursion issues
+    // Use a direct query approach
     const { data, error } = await supabase
       .from('client_metrics')
       .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
@@ -33,7 +33,7 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
 
 export const updateClientMetrics = async (clientId: string, metric: ClientMetric): Promise<ClientMetric> => {
   try {
-    // Prepare metric data with proper validation
+    // Ensure all values are properly formatted
     const metricData = {
       client_id: clientId,
       month: metric.month,
@@ -43,7 +43,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       conversion_goal: Number(metric.conversion_goal) || 30
     };
 
-    // Check if metric has an ID
+    // Check if metric has an ID for update or insert
     if (metric.id && metric.id.trim() !== '') {
       // Update existing metric
       const { data, error } = await supabase
@@ -75,7 +75,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       return data;
     }
   } catch (error) {
-    console.error("Error updating client metrics:", error);
-    throw error; // Re-throw to handle in component
+    console.error("Error in updateClientMetrics:", error);
+    throw new Error("Failed to save client metrics");
   }
 };

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save } from "lucide-react";
 import { getClientMetrics, updateClientMetrics } from "@/services/clientMetricsService";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 
 interface ClientMetric {
   id: string;
@@ -80,7 +80,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       setIsSaving(true);
       setError(null);
       
-      // Ensure all numeric values are valid
+      // Ensure all numeric values are valid before saving
       const metricToSave = {
         ...currentMetric,
         web_visits: Number(currentMetric.web_visits) || 0,

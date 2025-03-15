@@ -135,6 +135,147 @@ export const generateReportPdf = async (report: ClientReport): Promise<Blob> => 
       });
     }
     
+    // Agregar datos del informe analítico si existen
+    if (report.analyticsData) {
+      // Agregar una nueva página para los analytics
+      doc.addPage();
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(44, 62, 80);
+      doc.text("Datos Analíticos", 14, 20);
+      
+      // Agregar línea decorativa
+      doc.setDrawColor(52, 152, 219);
+      doc.setLineWidth(0.5);
+      doc.line(14, 25, 196, 25);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      
+      // Resumen de métricas
+      const analyticsData = [
+        ["Sesiones:", report.analyticsData.sessionCount.toString()],
+        ["Usuarios:", report.analyticsData.userCount.toString()],
+        ["Tasa de rebote:", report.analyticsData.bounceRate.toFixed(1) + "%"],
+        ["Tiempo medio de sesión:", (report.analyticsData.avgSessionDuration / 60).toFixed(1) + " min"]
+      ];
+      
+      autoTable(doc, {
+        startY: 35,
+        head: [],
+        body: analyticsData,
+        theme: "plain",
+        styles: { fontSize: 10 },
+        columnStyles: { 
+          0: { fontStyle: "bold", cellWidth: 60, textColor: [44, 62, 80] } 
+        }
+      });
+      
+      // Top páginas
+      if (report.analyticsData.topPages && report.analyticsData.topPages.length > 0) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Páginas más visitadas", 14, 75);
+        
+        const pagesHeaders = [["Página", "Visitas", "Tiempo medio"]];
+        const pagesData = report.analyticsData.topPages.map(page => [
+          page.path,
+          page.views.toString(),
+          (page.avgTimeOnPage / 60).toFixed(1) + " min"
+        ]);
+        
+        autoTable(doc, {
+          startY: 80,
+          head: pagesHeaders,
+          body: pagesData,
+          theme: "striped",
+          headStyles: { 
+            fillColor: [52, 152, 219],
+            textColor: [255, 255, 255],
+            fontStyle: "bold" 
+          },
+          styles: { fontSize: 10 }
+        });
+      }
+    }
+    
+    // Agregar datos de Search Console si existen
+    if (report.searchConsoleData) {
+      // Si ya tenemos analytics, usamos la misma página
+      let startY = report.analyticsData ? 160 : 140;
+      
+      // Si no cabe en la página actual, agregar nueva página
+      if (startY > 220 || !report.analyticsData) {
+        doc.addPage();
+        startY = 20;
+      }
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(44, 62, 80);
+      doc.text("Datos de Search Console", 14, startY);
+      
+      // Agregar línea decorativa
+      doc.setDrawColor(52, 152, 219);
+      doc.setLineWidth(0.5);
+      doc.line(14, startY + 5, 196, startY + 5);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      
+      // Resumen de métricas
+      const searchData = [
+        ["Clics totales:", report.searchConsoleData.totalClicks.toString()],
+        ["Impresiones:", report.searchConsoleData.totalImpressions.toString()],
+        ["CTR promedio:", (report.searchConsoleData.totalClicks / report.searchConsoleData.totalImpressions * 100).toFixed(1) + "%"],
+        ["Posición media:", report.searchConsoleData.avgPosition.toFixed(1)]
+      ];
+      
+      autoTable(doc, {
+        startY: startY + 15,
+        head: [],
+        body: searchData,
+        theme: "plain",
+        styles: { fontSize: 10 },
+        columnStyles: { 
+          0: { fontStyle: "bold", cellWidth: 60, textColor: [44, 62, 80] } 
+        }
+      });
+      
+      // Top queries
+      if (report.searchConsoleData.topQueries && report.searchConsoleData.topQueries.length > 0) {
+        startY += 55;
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Principales consultas de búsqueda", 14, startY);
+        
+        const queriesHeaders = [["Consulta", "Clics", "Impresiones", "CTR", "Posición"]];
+        const queriesData = report.searchConsoleData.topQueries.map(query => [
+          query.query,
+          query.clicks.toString(),
+          query.impressions.toString(),
+          query.ctr.toFixed(1) + "%",
+          query.position.toFixed(1)
+        ]);
+        
+        autoTable(doc, {
+          startY: startY + 5,
+          head: queriesHeaders,
+          body: queriesData,
+          theme: "striped",
+          headStyles: { 
+            fillColor: [52, 152, 219],
+            textColor: [255, 255, 255],
+            fontStyle: "bold" 
+          },
+          styles: { fontSize: 10 }
+        });
+      }
+    }
+    
     // Agregar una nueva página para las notas y análisis
     doc.addPage();
     

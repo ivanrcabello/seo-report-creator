@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -23,11 +23,21 @@ export function TestUserCreator({
   onSuccess
 }: TestUserCreatorProps) {
   const { createTestUser, isAdmin } = useAuth();
+  const [isCreating, setIsCreating] = useState(false);
+  const [hasAttempted, setHasAttempted] = useState(false);
 
   useEffect(() => {
     const createUser = async () => {
-      if (autoCreate && isAdmin) {
+      // Only try to create if:
+      // 1. autoCreate is true
+      // 2. User is admin
+      // 3. We haven't already attempted
+      // 4. We're not currently creating
+      if (autoCreate && isAdmin && !hasAttempted && !isCreating) {
         try {
+          setIsCreating(true);
+          setHasAttempted(true);
+          console.log("Attempting to create test user:", email);
           await createTestUser(email, password, name, role);
           toast.success(`Usuario de prueba creado: ${email}`);
           if (onSuccess) onSuccess();
@@ -37,12 +47,14 @@ export function TestUserCreator({
           if (error.isRateLimit && onRateLimitError) {
             onRateLimitError();
           }
+        } finally {
+          setIsCreating(false);
         }
       }
     };
 
     createUser();
-  }, [autoCreate, email, password, name, role, createTestUser, isAdmin, onSuccess, onRateLimitError]);
+  }, [autoCreate, email, password, name, role, createTestUser, isAdmin, onSuccess, onRateLimitError, hasAttempted, isCreating]);
 
   if (!isAdmin) {
     return null;
@@ -56,18 +68,24 @@ export function TestUserCreator({
       <p><strong>Rol:</strong> {role}</p>
       <button 
         className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        disabled={isCreating}
         onClick={async () => {
+          if (isCreating) return;
+          
           try {
+            setIsCreating(true);
             await createTestUser(email, password, name, role);
             if (onSuccess) onSuccess();
           } catch (error: any) {
             if (error.isRateLimit && onRateLimitError) {
               onRateLimitError();
             }
+          } finally {
+            setIsCreating(false);
           }
         }}
       >
-        Crear Usuario
+        {isCreating ? 'Creando...' : 'Crear Usuario'}
       </button>
     </div>
   );

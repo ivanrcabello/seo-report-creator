@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -19,20 +20,33 @@ export const createTestUser = async (
     console.log(`Creating test user with email: ${email} and role: ${role}`);
     
     // First check if the user already exists to avoid unnecessary API calls
-    const { data: existingUser, error: checkError } = await supabase
+    const { data: existingProfiles, error: profileError } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
       .maybeSingle();
       
-    if (existingUser) {
-      console.log("Test user already exists, skipping creation");
+    if (existingProfiles) {
+      console.log("Test user already exists in profiles, skipping creation");
       toast.success(`Usuario de prueba ya existe: ${email}`);
-      return { user: existingUser };
+      return { user: existingProfiles };
     }
     
-    if (checkError && !checkError.message.includes('No rows found')) {
-      console.error("Error checking for existing user:", checkError);
+    // Double-check with auth API as well to be extra safe
+    const { data: existingAuth, error: authError } = await supabase.auth.admin.getUserByEmail(email);
+    
+    if (existingAuth?.user) {
+      console.log("Test user already exists in auth, skipping creation");
+      toast.success(`Usuario de prueba ya existe: ${email}`);
+      return { user: existingAuth.user };
+    }
+    
+    if (profileError && !profileError.message.includes('No rows found')) {
+      console.error("Error checking for existing user in profiles:", profileError);
+    }
+    
+    if (authError) {
+      console.error("Error checking for existing user in auth:", authError);
     }
     
     const { data, error } = await supabase.auth.signUp({

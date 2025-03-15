@@ -11,6 +11,7 @@ export default function Dashboard() {
   const { isAdmin, userRole } = useAuth();
   const [hasAttemptedUserCreation, setHasAttemptedUserCreation] = useState(false);
   const [hasExistingTestUser, setHasExistingTestUser] = useState(false);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   // Check localStorage for whether we've hit rate limits recently
   useEffect(() => {
@@ -19,9 +20,11 @@ export default function Dashboard() {
       const rateLimitTime = parseInt(rateLimitUntil, 10);
       if (Date.now() < rateLimitTime) {
         // Still in rate limit period, don't try to create users
+        console.log("Rate limit period active, skipping test user creation");
         setHasAttemptedUserCreation(true);
       } else {
         // Rate limit period has passed, clear it
+        console.log("Rate limit period expired, clearing");
         localStorage.removeItem('rateLimitUntil');
       }
     }
@@ -30,8 +33,11 @@ export default function Dashboard() {
   // Check if test user already exists
   useEffect(() => {
     const checkExistingUser = async () => {
-      if (isAdmin && !hasAttemptedUserCreation) {
+      if (isAdmin && !hasAttemptedUserCreation && !hasExistingTestUser) {
         try {
+          setIsCheckingUser(true);
+          console.log("Checking if test user exists...");
+          
           const { data, error } = await supabase
             .from('profiles')
             .select('id')
@@ -42,21 +48,30 @@ export default function Dashboard() {
             console.log("Test user already exists, skipping creation");
             setHasExistingTestUser(true);
             setHasAttemptedUserCreation(true);
+          } else {
+            console.log("Test user does not exist");
+            // Only mark as "not existing" if we're sure
+            if (error && error.message.includes('No rows found')) {
+              setHasExistingTestUser(false);
+            }
           }
           
           if (error && !error.message.includes('No rows found')) {
             console.error("Error checking for existing user:", error);
+            // If there's an error (other than "no rows"), err on the side of caution
             setHasAttemptedUserCreation(true);
           }
         } catch (error) {
           console.error("Exception checking for existing user:", error);
           setHasAttemptedUserCreation(true);
+        } finally {
+          setIsCheckingUser(false);
         }
       }
     };
     
     checkExistingUser();
-  }, [isAdmin, hasAttemptedUserCreation]);
+  }, [isAdmin, hasAttemptedUserCreation, hasExistingTestUser]);
 
   // Handler for rate limit errors in test user creation
   const handleRateLimitError = () => {
@@ -68,6 +83,15 @@ export default function Dashboard() {
     setHasAttemptedUserCreation(true);
   };
 
+  // Don't render the TestUserCreator until we've completed the check
+  if (isCheckingUser) {
+    return (
+      <div className="container mx-auto py-6">
+        {isAdmin ? <AdminDashboard /> : <ClientDashboard />}
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-6">
       {isAdmin && !hasAttemptedUserCreation && !hasExistingTestUser && (
@@ -78,7 +102,11 @@ export default function Dashboard() {
           role="client"
           autoCreate={true}
           onRateLimitError={handleRateLimitError}
-          onSuccess={() => setHasAttemptedUserCreation(true)}
+          onSuccess={() => {
+            console.log("Test user created successfully");
+            setHasAttemptedUserCreation(true);
+            setHasExistingTestUser(true);
+          }}
         />
       )}
       

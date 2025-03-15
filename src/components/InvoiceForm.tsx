@@ -19,6 +19,7 @@ import { DateFields } from "./invoice/DateFields";
 import { AmountFields } from "./invoice/AmountFields";
 import { AmountSummary } from "./invoice/AmountSummary";
 import { NotesField } from "./invoice/NotesField";
+import { InvoiceNumberField } from "./invoice/InvoiceNumberField";
 
 // Schema de validación para las facturas
 const invoiceSchema = z.object({
@@ -31,6 +32,7 @@ const invoiceSchema = z.object({
   issueDate: z.string(),
   dueDate: z.string().optional(),
   notes: z.string().optional(),
+  invoiceNumber: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof invoiceSchema>;
@@ -62,6 +64,7 @@ export const InvoiceForm = () => {
       issueDate: format(new Date(), "yyyy-MM-dd"),
       dueDate: format(addDays(new Date(), 30), "yyyy-MM-dd"),
       notes: "",
+      invoiceNumber: "",
     },
   });
 
@@ -136,6 +139,7 @@ export const InvoiceForm = () => {
             issueDate: format(new Date(data.issueDate), "yyyy-MM-dd"),
             dueDate: data.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd") : undefined,
             notes: data.notes,
+            invoiceNumber: data.invoiceNumber,
           });
         }
       } catch (error) {
@@ -361,6 +365,15 @@ export const InvoiceForm = () => {
                 onClientChange={handleClientChange} 
               />
               <InvoiceStatus form={form} />
+              
+              {/* Número de factura */}
+              {!isNewInvoice && (
+                <InvoiceNumberField 
+                  form={form} 
+                  isNewInvoice={isNewInvoice} 
+                  invoiceNumber={invoice?.invoiceNumber} 
+                />
+              )}
               
               {/* Fechas */}
               <DateFields form={form} />

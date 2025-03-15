@@ -1,3 +1,4 @@
+
 import { Invoice, CompanySettings } from "@/types/invoice";
 import { Client } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,8 +142,11 @@ export const getInvoice = async (id: string): Promise<Invoice | undefined> => {
 
 export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | "updatedAt" | "invoiceNumber">): Promise<Invoice | undefined> => {
   try {
-    // Generar número de factura
-    const invoiceNumber = await generateInvoiceNumber();
+    // Generar número de factura si no se proporciona uno
+    let invoiceNumber = (invoice as any).invoiceNumber;
+    if (!invoiceNumber) {
+      invoiceNumber = await generateInvoiceNumber();
+    }
     
     const now = new Date().toISOString();
     const newInvoice = {
@@ -307,23 +311,30 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     const pageHeight = doc.internal.pageSize.height;
     const margin = 15;
     
-    // Calcular colores
+    // Definir colores
     const primaryBlue = [32, 78, 207]; // color seo-blue
     const primaryPurple = [126, 34, 206]; // color seo-purple
     const pendingColor = [234, 179, 8]; // yellow-500
     const paidColor = [34, 197, 94]; // green-500
     const cancelledColor = [239, 68, 68]; // red-500
     
-    // ---- Título y cabecera ----
-    // Fondo de cabecera con gradiente
+    // Obtener colores según el estado
+    const statusColor = {
+      pending: pendingColor,
+      paid: paidColor,
+      cancelled: cancelledColor
+    }[invoice.status] || pendingColor;
+    
+    // ---- Cabecera con gradiente ----
+    // Dibujar el fondo de la cabecera con un gradiente
     doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
     doc.rect(margin, margin, pageWidth - margin * 2, 25, 'F');
     
-    // Título "Factura" y número
+    // Título y número de factura
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Factura ${invoice.invoiceNumber}`, margin + 30, margin + 16);
+    doc.text(`Factura ${invoice.invoiceNumber}`, margin + 5, margin + 16);
     
     // Badge de estado
     const statusText = {
@@ -332,18 +343,10 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
       cancelled: "Cancelada"
     }[invoice.status];
     
-    // Status badge oval
-    const statusColors = {
-      pending: pendingColor,
-      paid: paidColor,
-      cancelled: cancelledColor
-    };
-    
-    const statusColor = statusColors[invoice.status] || pendingColor;
-    const statusX = margin + 160;
-    const statusY = margin + 12;
-    
     // Dibujamos el badge de estado
+    const statusX = pageWidth - margin - 50;
+    const statusY = margin + 8;
+    
     doc.setFillColor(statusColor[0], statusColor[1], statusColor[2], 0.2);
     doc.roundedRect(statusX, statusY, 40, 12, 6, 6, 'F');
     doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
@@ -351,91 +354,93 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     doc.setFont('helvetica', 'bold');
     doc.text(statusText, statusX + 20, statusY + 8, { align: 'center' });
     
-    // ---- Contenido principal ----
-    // Dividimos en dos columnas: Detalles factura (izq, 2/3) e Información de pago (der, 1/3)
-    const columnMargin = 5;
+    // ---- Contenido principal en un grid ----
     const mainY = margin + 35;
-    const detailsWidth = (pageWidth - margin * 2) * 0.65;
-    const paymentWidth = (pageWidth - margin * 2) * 0.3;
     
-    // Recuadro de detalles de factura
+    // Columna izquierda (2/3 del ancho)
+    const leftColWidth = (pageWidth - margin * 2) * 0.65;
+    const rightColWidth = (pageWidth - margin * 2) * 0.30;
+    const rightColX = margin + leftColWidth + 10;
+    
+    // Recuadro principal para detalles
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(240, 240, 240);
-    doc.roundedRect(margin, mainY, detailsWidth, pageHeight - mainY - margin * 2, 3, 3, 'FD');
+    doc.roundedRect(margin, mainY, leftColWidth, 200, 3, 3, 'FD');
     
-    // Título de detalles
+    // Sección 1: Título Detalles de la Factura
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.text("Detalles de la Factura", margin + 10, mainY + 15);
     
-    // Datos del emisor
-    const emisorY = mainY + 35;
+    // Sección 2: Datos del Emisor y Cliente (en dos columnas)
+    const datosY = mainY + 35;
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text("Datos del Emisor", margin + 10, emisorY);
+    doc.text("Datos del Emisor", margin + 10, datosY);
     
+    // Datos del emisor
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    let emisorContentY = emisorY + 10;
+    let emisorY = datosY + 10;
     
     doc.setFont('helvetica', 'bold');
-    doc.text(company.companyName, margin + 10, emisorContentY);
-    emisorContentY += 6;
+    doc.text(company.companyName, margin + 10, emisorY);
+    emisorY += 6;
     
     doc.setFont('helvetica', 'normal');
-    doc.text(`CIF/NIF: ${company.taxId}`, margin + 10, emisorContentY);
-    emisorContentY += 6;
+    doc.text(`CIF/NIF: ${company.taxId}`, margin + 10, emisorY);
+    emisorY += 6;
     
-    doc.text(`${company.address}`, margin + 10, emisorContentY);
-    emisorContentY += 6;
+    doc.text(`${company.address}`, margin + 10, emisorY);
+    emisorY += 6;
     
     if (company.phone) {
-      doc.text(`Tel: ${company.phone}`, margin + 10, emisorContentY);
-      emisorContentY += 6;
+      doc.text(`Tel: ${company.phone}`, margin + 10, emisorY);
+      emisorY += 6;
     }
     
     if (company.email) {
-      doc.text(`Email: ${company.email}`, margin + 10, emisorContentY);
+      doc.text(`Email: ${company.email}`, margin + 10, emisorY);
+      emisorY += 6;
     }
     
-    // Datos del cliente
-    const clientX = margin + detailsWidth / 2;
-    const clientY = mainY + 35;
+    // Datos del cliente (segunda columna)
+    const clienteX = margin + leftColWidth/2 + 5;
     
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text("Datos del Cliente", clientX, clientY);
+    doc.text("Datos del Cliente", clienteX, datosY);
     
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    let clientContentY = clientY + 10;
+    let clienteY = datosY + 10;
     
     doc.setFont('helvetica', 'bold');
-    doc.text(client.name, clientX, clientContentY);
-    clientContentY += 6;
+    doc.text(client.name, clienteX, clienteY);
+    clienteY += 6;
     
     doc.setFont('helvetica', 'normal');
     if (client.company) {
-      doc.text(client.company, clientX, clientContentY);
-      clientContentY += 6;
+      doc.text(client.company, clienteX, clienteY);
+      clienteY += 6;
     }
     
-    doc.text(`Email: ${client.email}`, clientX, clientContentY);
-    clientContentY += 6;
+    doc.text(`Email: ${client.email}`, clienteX, clienteY);
+    clienteY += 6;
     
     if (client.phone) {
-      doc.text(`Tel: ${client.phone}`, clientX, clientContentY);
+      doc.text(`Tel: ${client.phone}`, clienteX, clienteY);
+      clienteY += 6;
     }
     
-    // Sección de conceptos
-    const conceptosY = emisorContentY + 25;
+    // Sección 3: Tabla de conceptos
+    const conceptosY = Math.max(emisorY, clienteY) + 15;
+    
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text("Conceptos", margin + detailsWidth / 2, conceptosY, { align: 'center' });
+    doc.text("Conceptos", margin + leftColWidth/2, conceptosY, { align: 'center' });
     
     // Tabla de conceptos
-    // Usar autotable para generar la tabla de conceptos
     doc.autoTable({
       startY: conceptosY + 10,
       head: [['Concepto', 'Importe']],
@@ -486,7 +491,7 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
           },
           {
             content: formatCurrency(invoice.totalAmount),
-            styles: { halign: 'right', fontStyle: 'bold', textColor: [32, 78, 207] }
+            styles: { halign: 'right', fontStyle: 'bold', textColor: primaryBlue }
           }
         ]
       ],
@@ -496,37 +501,36 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
         cellPadding: 6
       },
       columnStyles: {
-        0: { cellWidth: detailsWidth * 0.6 },
-        1: { cellWidth: detailsWidth * 0.4, halign: 'right' }
+        0: { cellWidth: leftColWidth * 0.6 },
+        1: { cellWidth: leftColWidth * 0.4, halign: 'right' }
       },
       margin: { left: margin + 5 },
-      tableWidth: detailsWidth - 10,
+      tableWidth: leftColWidth - 10,
     });
     
-    // Recuadro de información de pago
-    const paymentX = margin + detailsWidth + columnMargin;
+    // Columna derecha (1/3 del ancho) - Información de pago
     doc.setFillColor(248, 250, 252); // bg-gray-50
-    doc.roundedRect(paymentX, mainY, paymentWidth, 200, 3, 3, 'F');
+    doc.roundedRect(rightColX, mainY, rightColWidth, 200, 3, 3, 'F');
     
     // Título de información de pago
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(32, 78, 207); // text-seo-blue
-    doc.text("Información de", paymentX + paymentWidth / 2, mainY + 20, { align: 'center' });
-    doc.text("Pago", paymentX + paymentWidth / 2, mainY + 35, { align: 'center' });
+    doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]); // text-seo-blue
+    doc.text("Información de", rightColX + rightColWidth/2, mainY + 20, { align: 'center' });
+    doc.text("Pago", rightColX + rightColWidth/2, mainY + 35, { align: 'center' });
     
     // Información de pago
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
-    let paymentContentY = mainY + 60;
+    let paymentY = mainY + 60;
     
     // Estado
     doc.setFont('helvetica', 'normal');
-    doc.text("Estado:", paymentX + 10, paymentContentY);
+    doc.text("Estado:", rightColX + 10, paymentY);
     
-    // Status badge para la sección de pago
-    const smallStatusX = paymentX + paymentWidth - 10 - 40;
-    const smallStatusY = paymentContentY - 8;
+    // Status badge
+    const smallStatusX = rightColX + rightColWidth - 10 - 40;
+    const smallStatusY = paymentY - 8;
     
     doc.setFillColor(statusColor[0], statusColor[1], statusColor[2], 0.2);
     doc.roundedRect(smallStatusX, smallStatusY, 40, 12, 6, 6, 'F');
@@ -536,44 +540,55 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     doc.text(statusText, smallStatusX + 20, smallStatusY + 8, { align: 'center' });
     
     // Resto de información
-    paymentContentY += 20;
+    paymentY += 20;
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text("Nº Factura:", paymentX + 10, paymentContentY);
+    doc.text("Nº Factura:", rightColX + 10, paymentY);
     doc.setFont('helvetica', 'bold');
-    doc.text(invoice.invoiceNumber, paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
+    doc.text(invoice.invoiceNumber, rightColX + rightColWidth - 10, paymentY, { align: 'right' });
     
-    paymentContentY += 20;
+    paymentY += 20;
     doc.setFont('helvetica', 'normal');
-    doc.text("Fecha Emisión:", paymentX + 10, paymentContentY);
+    doc.text("Fecha Emisión:", rightColX + 10, paymentY);
     doc.setFont('helvetica', 'bold');
-    doc.text(formatDate(invoice.issueDate), paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
+    doc.text(formatDate(invoice.issueDate), rightColX + rightColWidth - 10, paymentY, { align: 'right' });
     
     if (invoice.dueDate) {
-      paymentContentY += 20;
+      paymentY += 20;
       doc.setFont('helvetica', 'normal');
-      doc.text("Fecha Vencimiento:", paymentX + 10, paymentContentY);
+      doc.text("Fecha Vencimiento:", rightColX + 10, paymentY);
       doc.setFont('helvetica', 'bold');
-      doc.text(formatDate(invoice.dueDate), paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
+      doc.text(formatDate(invoice.dueDate), rightColX + rightColWidth - 10, paymentY, { align: 'right' });
     }
     
     if (invoice.status === "paid" && invoice.paymentDate) {
-      paymentContentY += 20;
+      paymentY += 20;
       doc.setFont('helvetica', 'normal');
-      doc.text("Fecha Pago:", paymentX + 10, paymentContentY);
+      doc.text("Fecha Pago:", rightColX + 10, paymentY);
       doc.setFont('helvetica', 'bold');
-      doc.text(formatDate(invoice.paymentDate), paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
+      doc.text(formatDate(invoice.paymentDate), rightColX + rightColWidth - 10, paymentY, { align: 'right' });
     }
     
     // Total a pagar destacado
-    paymentContentY += 30;
+    paymentY += 30;
     doc.setFont('helvetica', 'normal');
-    doc.text("Total a Pagar:", paymentX + 10, paymentContentY);
+    doc.text("Total a Pagar:", rightColX + 10, paymentY);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(126, 34, 206); // text-seo-purple
+    doc.setTextColor(primaryPurple[0], primaryPurple[1], primaryPurple[2]); // text-seo-purple
     doc.setFontSize(12);
-    doc.text(formatCurrency(invoice.totalAmount), paymentX + paymentWidth - 10, paymentContentY, { align: 'right' });
+    doc.text(formatCurrency(invoice.totalAmount), rightColX + rightColWidth - 10, paymentY, { align: 'right' });
+    
+    // Información de cuenta bancaria si existe
+    if (company.bankAccount) {
+      paymentY += 25;
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text("Cuenta bancaria:", rightColX + 10, paymentY);
+      doc.setFont('helvetica', 'bold');
+      doc.text(company.bankAccount, rightColX + rightColWidth - 10, paymentY, { align: 'right' });
+    }
     
     // Devolver el blob del PDF
     return doc.output('blob');
@@ -645,21 +660,13 @@ export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> =>
 };
 
 // Funciones de utilidad para formateo
-const formatDate = (dateString: string, includeDay: boolean = true): string => {
+const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
-  if (includeDay) {
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  } else {
-    return date.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  }
+  return date.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
 };
 
 const formatCurrency = (amount: number): string => {

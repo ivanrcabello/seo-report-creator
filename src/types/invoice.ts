@@ -27,7 +27,7 @@ export interface CompanySettings {
   phone?: string | null;
   email?: string | null;
   logoUrl?: string | null;
-  bankAccount?: string;
+  bankAccount?: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -3,15 +3,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { Proposal } from "@/types/client";
 import { mapProposalFromDB } from "./proposal/proposalMappers";
 
+// Define a simple type for the raw database proposal to help TypeScript
+type RawProposal = {
+  id: string;
+  client_id: string;
+  pack_id: string;
+  title: string;
+  description: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  sent_at?: string;
+  expires_at?: string;
+  custom_price?: number;
+  custom_features?: string[];
+  report_ids?: string[];
+  public_url?: string;
+  share_token?: string;
+};
+
 // Fetch a shared proposal using its token
 export const getProposalByShareToken = async (token: string): Promise<Proposal | null> => {
   try {
-    // Use a simpler approach without letting TypeScript infer complex types
+    // Use explicit typing to avoid excessive type inference
     const { data, error } = await supabase
       .from("proposals")
-      .select()
+      .select("*")
       .eq("share_token", token)
-      .limit(1);
+      .limit(1) as { data: RawProposal[] | null, error: any };
     
     if (error) {
       console.error("Error fetching proposal by share token:", error);

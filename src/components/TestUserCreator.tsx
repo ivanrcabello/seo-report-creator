@@ -9,6 +9,8 @@ interface TestUserCreatorProps {
   name: string;
   role?: "admin" | "client";
   autoCreate?: boolean;
+  onRateLimitError?: () => void;
+  onSuccess?: () => void;
 }
 
 export function TestUserCreator({ 
@@ -16,7 +18,9 @@ export function TestUserCreator({
   password, 
   name, 
   role = "client",
-  autoCreate = true 
+  autoCreate = true,
+  onRateLimitError,
+  onSuccess
 }: TestUserCreatorProps) {
   const { createTestUser, isAdmin } = useAuth();
 
@@ -26,14 +30,19 @@ export function TestUserCreator({
         try {
           await createTestUser(email, password, name, role);
           toast.success(`Usuario de prueba creado: ${email}`);
-        } catch (error) {
+          if (onSuccess) onSuccess();
+        } catch (error: any) {
           console.error("Failed to create test user:", error);
+          // Check if this is a rate limit error
+          if (error.isRateLimit && onRateLimitError) {
+            onRateLimitError();
+          }
         }
       }
     };
 
     createUser();
-  }, [autoCreate, email, password, name, role, createTestUser, isAdmin]);
+  }, [autoCreate, email, password, name, role, createTestUser, isAdmin, onSuccess, onRateLimitError]);
 
   if (!isAdmin) {
     return null;
@@ -47,7 +56,16 @@ export function TestUserCreator({
       <p><strong>Rol:</strong> {role}</p>
       <button 
         className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-        onClick={() => createTestUser(email, password, name, role)}
+        onClick={async () => {
+          try {
+            await createTestUser(email, password, name, role);
+            if (onSuccess) onSuccess();
+          } catch (error: any) {
+            if (error.isRateLimit && onRateLimitError) {
+              onRateLimitError();
+            }
+          }
+        }}
       >
         Crear Usuario
       </button>

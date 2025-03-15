@@ -232,7 +232,12 @@ export default function ClientDetail() {
           )}
         </TabsContent>
         <TabsContent value="invoices">
-          <ClientInvoices clientId={client.id} invoices={[]} />
+          <ClientInvoices 
+            clientId={client.id} 
+            invoices={[]} 
+            clientName={client.name}
+            onAddInvoice={() => navigate(`/invoices/new?clientId=${client.id}`)}
+          />
           {isAdmin && (
             <Button asChild>
               <a href={`/invoices/new?clientId=${client.id}`} className="flex items-center gap-2">

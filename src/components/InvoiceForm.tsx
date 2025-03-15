@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,14 +20,13 @@ import { AmountSummary } from "./invoice/AmountSummary";
 import { NotesField } from "./invoice/NotesField";
 import { InvoiceNumberField } from "./invoice/InvoiceNumberField";
 
-// Schema de validación para las facturas
 const invoiceSchema = z.object({
   clientId: z.string().uuid("El cliente es obligatorio"),
   packId: z.string().uuid("El paquete es obligatorio").optional(),
   proposalId: z.string().uuid("La propuesta es obligatoria").optional(),
   baseAmount: z.coerce.number().min(0, "El importe base no puede ser negativo"),
   taxRate: z.coerce.number().min(0, "El tipo de IVA no puede ser negativo").default(21),
-  status: z.enum(["pending", "paid", "cancelled"]),
+  status: z.enum(["draft", "pending", "paid", "cancelled"]),
   issueDate: z.string(),
   dueDate: z.string().optional(),
   notes: z.string().optional(),
@@ -50,7 +48,6 @@ export const InvoiceForm = () => {
 
   const isNewInvoice = !id || id === "new";
   
-  // Get clientId from query params if available
   const queryParams = new URLSearchParams(location.search);
   const clientIdFromQuery = queryParams.get('clientId');
 
@@ -60,7 +57,7 @@ export const InvoiceForm = () => {
       clientId: clientIdFromQuery || "",
       baseAmount: 0,
       taxRate: 21,
-      status: "pending",
+      status: "draft",
       issueDate: format(new Date(), "yyyy-MM-dd"),
       dueDate: format(addDays(new Date(), 30), "yyyy-MM-dd"),
       notes: "",
@@ -68,17 +65,14 @@ export const InvoiceForm = () => {
     },
   });
 
-  // Calcular automáticamente el IVA y total cuando cambia el importe base
   const baseAmount = form.watch("baseAmount");
   const taxRate = form.watch("taxRate");
   
-  // Ensure values are numbers for calculations
   const baseAmountNum = Number(baseAmount) || 0;
   const taxRateNum = Number(taxRate) || 0;
   const taxAmount = (baseAmountNum * taxRateNum) / 100;
   const totalAmount = baseAmountNum + taxAmount;
 
-  // Cargar la lista de clientes disponibles
   useEffect(() => {
     const loadClients = async () => {
       try {
@@ -87,8 +81,6 @@ export const InvoiceForm = () => {
         console.log("Clients loaded:", clients);
         setAvailableClients(clients);
         
-        // Si hay un clientId en la URL y estamos creando una nueva factura,
-        // cargar los datos del cliente
         if (clientIdFromQuery && isNewInvoice) {
           console.log("Loading client data for:", clientIdFromQuery);
           const clientData = await getClient(clientIdFromQuery);
@@ -101,7 +93,6 @@ export const InvoiceForm = () => {
         setError("No se pudieron cargar los clientes");
         toast.error("No se pudieron cargar los clientes");
       } finally {
-        // Siempre marcar como cargado, incluso si hay un error
         setIsLoading(false);
       }
     };
@@ -109,7 +100,6 @@ export const InvoiceForm = () => {
     loadClients();
   }, [clientIdFromQuery, isNewInvoice]);
 
-  // Cargar datos de la factura si se está editando
   useEffect(() => {
     const loadInvoiceData = async () => {
       if (isNewInvoice) {
@@ -123,7 +113,6 @@ export const InvoiceForm = () => {
         const data = await getInvoice(id);
         if (data) {
           setInvoice(data);
-          // Cargar datos del cliente
           const clientData = await getClient(data.clientId);
           if (clientData) {
             setClient(clientData);
@@ -154,7 +143,6 @@ export const InvoiceForm = () => {
     loadInvoiceData();
   }, [id, isNewInvoice, form]);
   
-  // Cargar datos del cliente cuando se selecciona uno
   const handleClientChange = async (clientId: string) => {
     if (!clientId || clientId === "no-clients") return;
     
@@ -170,7 +158,6 @@ export const InvoiceForm = () => {
     }
   };
 
-  // Envío del formulario
   const onSubmit = async (data: FormValues) => {
     if (!data.clientId || data.clientId === "no-clients") {
       toast.error("Debe seleccionar un cliente");
@@ -181,15 +168,12 @@ export const InvoiceForm = () => {
     try {
       let result;
       
-      // Calcular impuestos
       const baseAmountValue = Number(data.baseAmount) || 0;
       const taxRateValue = Number(data.taxRate) || 0;
       const taxAmount = (baseAmountValue * taxRateValue) / 100;
       const totalAmount = baseAmountValue + taxAmount;
       
       if (isNewInvoice) {
-        // Crear nueva factura
-        console.log("Creating new invoice with data:", data);
         result = await createInvoice({
           ...data,
           baseAmount: baseAmountValue,
@@ -198,8 +182,6 @@ export const InvoiceForm = () => {
           totalAmount,
         } as any);
       } else {
-        // Actualizar factura existente
-        console.log("Updating invoice with data:", data);
         result = await updateInvoice({
           ...invoice,
           ...data,
@@ -292,7 +274,6 @@ export const InvoiceForm = () => {
     );
   }
 
-  // Si estamos creando una nueva factura y no hay clientes disponibles
   if (isNewInvoice && availableClients.length === 0) {
     return (
       <Card className="shadow-sm">
@@ -356,7 +337,6 @@ export const InvoiceForm = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Cliente y Estado */}
               <ClientSelection 
                 form={form} 
                 isNewInvoice={isNewInvoice} 
@@ -366,7 +346,6 @@ export const InvoiceForm = () => {
               />
               <InvoiceStatus form={form} />
               
-              {/* Número de factura */}
               {!isNewInvoice && (
                 <InvoiceNumberField 
                   form={form} 
@@ -375,13 +354,10 @@ export const InvoiceForm = () => {
                 />
               )}
               
-              {/* Fechas */}
               <DateFields form={form} />
               
-              {/* Importes */}
               <AmountFields form={form} />
               
-              {/* Resumen de Importes */}
               <AmountSummary 
                 baseAmount={baseAmountNum} 
                 taxRate={taxRateNum} 
@@ -389,7 +365,6 @@ export const InvoiceForm = () => {
                 totalAmount={totalAmount} 
               />
               
-              {/* Notas */}
               <NotesField form={form} />
             </div>
             

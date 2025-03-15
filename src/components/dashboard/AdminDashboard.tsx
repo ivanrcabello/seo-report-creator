@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -154,14 +153,7 @@ const ClientCard = ({ client }: { client: ClientSummary }) => {
     try {
       if (!client.createdAt) return "Fecha desconocida";
       
-      let date;
-      if (typeof client.createdAt === 'string') {
-        date = parseISO(client.createdAt);
-      } else if (client.createdAt instanceof Date) {
-        date = client.createdAt;
-      } else {
-        return "Fecha inválida";
-      }
+      const date = typeof client.createdAt === 'string' ? parseISO(client.createdAt) : client.createdAt;
         
       if (isValid(date)) {
         return format(date, 'dd/MM/yyyy', { locale: es });

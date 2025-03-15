@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,7 +50,7 @@ export const InvoiceForm = () => {
       clientId: clientIdFromQuery || "",
       baseAmount: 0,
       taxRate: 21,
-      status: "pending",
+      status: "draft",
       issueDate: format(new Date(), "yyyy-MM-dd"),
       dueDate: format(addDays(new Date(), 30), "yyyy-MM-dd"),
       notes: "",
@@ -200,13 +199,22 @@ export const InvoiceForm = () => {
       if (isNewInvoice) {
         // Create new invoice
         console.log("Creating new invoice with data:", data);
-        result = await createInvoice({
+        const invoiceData = {
           ...data,
+          number: data.invoiceNumber || '',
+          clientName: client?.name || '',
           baseAmount: baseAmountValue,
+          subtotal: baseAmountValue,
+          tax: taxRateValue,
           taxRate: taxRateValue,
           taxAmount,
           totalAmount,
-        } as any);
+          total: totalAmount,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        result = await createInvoice(invoiceData as Invoice);
       } else {
         if (!id) {
           throw new Error("Missing invoice ID for update");
@@ -223,15 +231,21 @@ export const InvoiceForm = () => {
           packId: data.packId,
           proposalId: data.proposalId,
           baseAmount: baseAmountValue,
+          subtotal: baseAmountValue,
+          tax: taxRateValue,
           taxRate: taxRateValue,
           taxAmount,
           totalAmount,
+          total: totalAmount,
           status: data.status,
           issueDate: data.issueDate,
+          date: data.issueDate,
           dueDate: data.dueDate || null,
           notes: data.notes || null,
           invoiceNumber: data.invoiceNumber || invoice?.invoiceNumber || "",
+          number: data.invoiceNumber || invoice?.invoiceNumber || "",
           paymentDate: invoice?.paymentDate || null,
+          paidAt: invoice?.paidAt || null,
           pdfUrl: invoice?.pdfUrl || null,
           createdAt: invoice?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()

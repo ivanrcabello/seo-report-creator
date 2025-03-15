@@ -61,6 +61,13 @@ export const ClientInvoices = ({ invoices, clientName, clientId, onAddInvoice }:
             Cancelada
           </Badge>
         );
+      case 'draft':
+        return (
+          <Badge className="bg-gray-100 text-gray-800 border-gray-200 font-normal gap-1">
+            <FileText className="h-3 w-3" />
+            Borrador
+          </Badge>
+        );
       default:
         return null;
     }

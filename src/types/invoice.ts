@@ -22,7 +22,7 @@ export interface Invoice {
   packId?: string;
   proposalId?: string;
   status: InvoiceStatus;
-  items: InvoiceItem[];
+  items?: InvoiceItem[];
   subtotal: number;
   baseAmount: number;      // For backward compatibility
   tax: number;

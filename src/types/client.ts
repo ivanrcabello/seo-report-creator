@@ -1,5 +1,5 @@
 
-import { Invoice as InvoiceType } from './invoice';
+// Client types definitions
 
 export interface Client {
   id: string;
@@ -20,75 +20,66 @@ export interface ClientDocument {
   id: string;
   clientId: string;
   name: string;
-  type: "pdf" | "image" | "doc" | "text";
+  type: "pdf" | "doc" | "image" | "text";
   url: string;
   uploadDate: string;
-  analyzedStatus?: "pending" | "analyzed" | "processed" | "failed" | "error";
+  analyzedStatus: "pending" | "analyzed" | "processed" | "error" | "failed";
   content?: string;
-}
-
-export type Invoice = InvoiceType;
-
-export interface Proposal {
-  id: string;
-  clientId: string;
-  packId: string;
-  title: string;
-  description: string;
-  createdAt: string;
-  sentAt?: string;
-  status: "draft" | "sent" | "accepted" | "rejected";
-  customPrice?: number;
-  customFeatures?: string[];
-  updatedAt?: string;
-  expiresAt?: string;
-  reportIds?: string[];
-  publicUrl?: string;
 }
 
 export interface ClientReport {
   id: string;
   clientId: string;
   title: string;
-  type: "seo" | "performance" | "technical" | "social" | "local-seo";
   date: string;
+  type: "seo" | "performance" | "technical" | "social" | "local-seo";
   url?: string;
-  content?: any;
-  status?: "draft" | "published";
-  documentIds?: string[];
-  shareToken?: string;
-  sharedAt?: string;
   notes?: string;
-  includeInProposal?: boolean;
+  documentIds: string[];
+  shareToken: string | null;
+  sharedAt: string | null;
+  includeInProposal: boolean;
   analyticsData?: any;
   searchConsoleData?: any;
   auditResult?: any;
 }
 
-export interface CompanySettings {
-  id?: string;
-  companyName: string;
-  taxId: string;
-  address: string;
-  phone?: string;
-  email?: string;
-  logoUrl?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  accentColor?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  bankAccount?: string;
+export interface SeoContract {
+  id: string;
+  clientId: string;
+  title: string;
+  startDate: string;
+  endDate?: string;
+  phase1Fee: number;
+  monthlyFee: number;
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  content: {
+    sections: ContractSection[];
+    clientInfo: {
+      name: string;
+      company?: string;
+      address?: string;
+      taxId?: string;
+    };
+    professionalInfo: {
+      name: string;
+      company: string;
+      address: string;
+      taxId: string;
+    };
+  };
+  createdAt: string;
+  updatedAt: string;
+  signedAt?: string;
+  signedByClient: boolean;
+  signedByProfessional: boolean;
+  pdfUrl?: string;
 }
 
-export interface SeoPack {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  features: string[];
-  isActive: boolean;
-  createdAt?: string;
+export interface ContractSection {
+  title: string;
+  content: string;
+  order: number;
 }
 
 export interface SeoLocalReport {
@@ -111,49 +102,68 @@ export interface SeoLocalReport {
   recommendations?: string[];
 }
 
-export interface SeoContract {
+export interface SeoPack {
+  id: string;
+  name: string;
+  description: string;
+  price: number; 
+  features: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface Proposal {
   id: string;
   clientId: string;
   title: string;
-  startDate: string;
-  endDate?: string;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
-  content?: {
-    sections: ContractSection[];
-    clientInfo: {
-      name: string;
-      company?: string;
-      address?: string;
-      taxId?: string;
-    };
-    professionalInfo: {
-      name: string;
-      company: string;
-      address: string;
-      taxId: string;
-    };
-  };
-  createdAt?: string;
-  updatedAt?: string;
-  signedAt?: string;
-  signedByClient?: boolean;
-  signedByProfessional?: boolean;
-  pdfUrl?: string;
-  phase1Fee?: number;
-  monthlyFee?: number;
-}
-
-export interface ContractSection {
-  title: string;
-  content: string;
-  order: number;
-}
-
-export interface ClientSummary {
-  id: string;
-  name: string;
-  email: string;
-  company?: string;
+  description: string;
+  packId: string;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected';
   createdAt: string;
-  isActive: boolean;
+  updatedAt: string;
+  sentAt?: string;
+  expiresAt?: string;
+  customPrice?: number;
+  customFeatures?: string[];
+  reportIds?: string[];
+  publicUrl?: string;
+}
+
+export interface CompanySettings {
+  id: string;
+  companyName: string;
+  taxId: string;
+  address: string;
+  phone?: string;
+  email?: string;
+  logoUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  number?: string;
+  clientId: string;
+  clientName?: string;
+  issueDate: string;
+  date?: string;
+  dueDate?: string;
+  packId?: string;
+  proposalId?: string;
+  baseAmount: number;
+  subtotal?: number;
+  taxRate: number;
+  tax?: number;
+  taxAmount: number;
+  totalAmount: number;
+  total?: number;
+  status: "pending" | "paid" | "cancelled" | "draft";
+  paymentDate?: string;
+  paidAt?: string;
+  notes?: string;
+  pdfUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
@@ -12,12 +13,29 @@ export default function Dashboard() {
   const [hasExistingTestUser, setHasExistingTestUser] = useState(false);
   const [isCheckingUser, setIsCheckingUser] = useState(true);
 
+  // Safe date parsing helper
+  const safeParseDate = (dateString: string | null): Date | null => {
+    if (!dateString) return null;
+    
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+      return date;
+    } catch (e) {
+      console.error("Invalid date format:", dateString);
+      return null;
+    }
+  };
+
   // Check localStorage for whether we've hit rate limits recently
   useEffect(() => {
     const rateLimitUntil = localStorage.getItem('rateLimitUntil');
     if (rateLimitUntil) {
       const rateLimitTime = parseInt(rateLimitUntil, 10);
-      if (Date.now() < rateLimitTime) {
+      if (!isNaN(rateLimitTime) && Date.now() < rateLimitTime) {
         // Still in rate limit period, don't try to create users
         console.log("Rate limit period active, skipping test user creation");
         setHasAttemptedUserCreation(true);

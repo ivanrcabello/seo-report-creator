@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -117,7 +116,6 @@ export default function ClientDetail() {
       const analysis = await generateLocalSeoAnalysis(selectedDocuments, client.id, client.name);
       const newReport = await createLocalSeoReport(analysis, client.id, client.name);
 
-      // Add the new report to state
       setLocalSeoReports((prevReports) => [newReport, ...prevReports]);
       
       toast({
@@ -142,7 +140,6 @@ export default function ClientDetail() {
     return <div>Client not found</div>;
   }
 
-  // Funciones para los requisitos de ClientHeader
   const handleEdit = () => navigate(`/clients/edit/${client.id}`);
   const handleDelete = () => console.log("Delete client:", client.id);
   const handleToggleActive = (isActive: boolean) => console.log("Toggle active:", isActive);
@@ -217,7 +214,7 @@ export default function ClientDetail() {
           )}
         </TabsContent>
         <TabsContent value="invoices">
-          <ClientInvoices clientId={client.id} />
+          <ClientInvoices clientId={client.id} invoices={[]} />
           {isAdmin && (
             <Button asChild>
               <a href={`/invoices/new?clientId=${client.id}`} className="flex items-center gap-2">

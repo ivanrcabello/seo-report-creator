@@ -61,6 +61,8 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
     return {
       id: data.id,
       clientId: data.client_id,
+      title: data.title || '',
+      date: data.date || '',
       businessName: data.business_name || '',
       address: data.address || '',
       location: data.location || '',
@@ -80,8 +82,6 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
           ? JSON.parse(data.local_listings)
           : [],
       recommendations: Array.isArray(data.recommendations) ? data.recommendations : [],
-      title: data.title || '',
-      date: data.date || '',
       shareToken: data.share_token || null,
       sharedAt: data.shared_at || null
     };

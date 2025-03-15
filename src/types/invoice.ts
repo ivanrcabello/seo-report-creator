@@ -1,35 +1,29 @@
 
 export type InvoiceStatus = "pending" | "paid" | "cancelled" | "draft";
 
-export interface Invoice {
+export interface InvoiceItem {
   id: string;
-  invoiceNumber: string;
-  clientId: string;
-  issueDate: string;
-  dueDate?: string;
-  packId?: string;
-  proposalId?: string;
-  baseAmount: number;
-  taxRate: number;
-  taxAmount: number;
-  totalAmount: number;
-  status: InvoiceStatus;
-  paymentDate?: string;
-  notes?: string;
-  pdfUrl?: string;
-  createdAt: string;
-  updatedAt: string;
+  invoiceId: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  tax: number;
 }
 
-export interface CompanySettings {
+export interface Invoice {
   id: string;
-  companyName: string;
-  taxId: string;
-  address: string;
-  phone?: string;
-  email?: string;
-  logoUrl?: string;
-  bankAccount?: string;
+  number: string;
+  clientId: string;
+  clientName: string;
+  date: string;
+  dueDate: string;
+  status: InvoiceStatus;
+  items: InvoiceItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
+  paidAt?: string | null;
 }

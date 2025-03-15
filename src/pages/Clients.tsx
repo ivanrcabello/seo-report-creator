@@ -5,12 +5,22 @@ import { ClientsList } from "@/components/ClientsList";
 import { ClientForm } from "@/components/ClientForm";
 import { getClients, addClient } from "@/services/clientService";
 import { Client } from "@/types/client";
+import { useParams, useNavigate } from "react-router-dom";
 
 const Clients = () => {
   const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const params = useParams();
+  const navigate = useNavigate();
+
+  // Check if we're on the "new" route
+  useEffect(() => {
+    if (params.id === "new") {
+      setShowAddForm(true);
+    }
+  }, [params.id]);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -39,6 +49,10 @@ const Clients = () => {
 
   const handleCancelAddClient = () => {
     setShowAddForm(false);
+    // If we're on the "new" route, navigate back to clients list
+    if (params.id === "new") {
+      navigate("/clients");
+    }
   };
 
   const handleClientSubmit = async (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
@@ -46,6 +60,12 @@ const Clients = () => {
       const newClient = await addClient(clientData);
       setClients([...clients, newClient]);
       setShowAddForm(false);
+      
+      // If we were on the "new" route, navigate to main clients list
+      if (params.id === "new") {
+        navigate("/clients");
+      }
+      
       toast({
         title: "Cliente creado",
         description: `${newClient.name} ha sido añadido correctamente.`,

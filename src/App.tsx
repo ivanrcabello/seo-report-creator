@@ -66,6 +66,7 @@ function App() {
               {/* Admin-only routes */}
               <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
                 <Route path="/clients" element={<AppLayout><Clients /></AppLayout>} />
+                <Route path="/clients/new" element={<AppLayout><Clients /></AppLayout>} />
                 <Route path="/clients/:id" element={<AppLayout><ClientDetail /></AppLayout>} />
                 <Route path="/reports/:id" element={<AppLayout><ReportDetail /></AppLayout>} />
                 <Route path="/reports/edit/:id" element={<AppLayout><ReportForm /></AppLayout>} />

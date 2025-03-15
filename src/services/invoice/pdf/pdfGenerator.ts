@@ -4,8 +4,7 @@
  */
 
 import jsPDF from "jspdf";
-// Import jsPDF-autotable properly and ensure it's correctly initialized
-import autoTable from "jspdf-autotable";
+import "jspdf-autotable"; // Import as a side effect to extend jsPDF
 import { Invoice } from "@/types/invoice";
 import { getClient } from "@/services/clientService";
 import { 
@@ -17,18 +16,20 @@ import {
   addFooterWithPaymentInfo
 } from "./pdfSections";
 
+// Extend the jsPDF type to include autoTable
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable?: { finalY: number };
+  }
+}
+
 /**
  * Generates a PDF document for an invoice
  */
 export const generateInvoicePdf = async (invoice: Invoice): Promise<Blob> => {
-  // Create new document with proper initialization of autoTable plugin
+  // Create new document
   const doc = new jsPDF();
-  
-  // Ensure jsPDF-autotable is properly initialized
-  if (typeof doc.autoTable !== 'function') {
-    // @ts-ignore - Apply autoTable to doc object if needed
-    autoTable(doc);
-  }
   
   const client = await getClient(invoice.clientId);
 

@@ -12,37 +12,47 @@ export const downloadDocumentPdf = async (id: string, name: string, type: Docume
   try {
     console.log(`Starting document download for ${type} with ID: ${id}`);
     
-    // Para la demostración, simulamos la descarga
-    await new Promise(resolve => setTimeout(resolve, 800));
+    let pdfBlob;
     
-    // En una app real, esto llamaría a los servicios específicos basados en el tipo
-    // let pdfBlob;
+    // Generate the actual PDF based on document type
+    switch (type) {
+      case 'report':
+        // Import dynamically to avoid circular dependencies
+        const { getReport } = await import("../reportService");
+        const report = await getReport(id);
+        if (!report) {
+          throw new Error("Report not found");
+        }
+        pdfBlob = await generateReportPdf(report);
+        break;
+      case 'proposal':
+        // Import dynamically to avoid circular dependencies
+        const { getProposal } = await import("../proposal/proposalCrud");
+        const proposal = await getProposal(id);
+        if (!proposal) {
+          throw new Error("Proposal not found");
+        }
+        pdfBlob = await generateProposalPdf(proposal);
+        break;
+      case 'contract':
+        // For contracts, we'll handle this differently as they have their own download mechanism
+        toast.info("Redirigiendo a la página del contrato para su descarga");
+        return true;
+    }
     
-    // switch (type) {
-    //   case 'report':
-    //     pdfBlob = await generateReportPdf(report);
-    //     break;
-    //   case 'proposal':
-    //     pdfBlob = await generateProposalPdf(proposal);
-    //     break;
-    //   case 'contract':
-    //     // Lógica para documentos de contrato
-    //     break;
-    // }
+    // Create URL for the blob
+    const blobUrl = URL.createObjectURL(pdfBlob);
     
-    // Crear URL para el blob
-    // const blobUrl = URL.createObjectURL(pdfBlob);
+    // Create an anchor element for download
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = `${name.replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(a);
+    a.click();
     
-    // Crear elemento a para descargar
-    // const a = document.createElement("a");
-    // a.href = blobUrl;
-    // a.download = `${name}.pdf`;
-    // document.body.appendChild(a);
-    // a.click();
-    
-    // Limpiar
-    // document.body.removeChild(a);
-    // URL.revokeObjectURL(blobUrl);
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
     
     console.log(`Document download completed for: ${name}`);
     toast.success(`Documento '${name}' descargado correctamente`);

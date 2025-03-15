@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
-interface ClientMetric {
+export interface ClientMetric {
   id: string;
   month: string;
   web_visits: number;

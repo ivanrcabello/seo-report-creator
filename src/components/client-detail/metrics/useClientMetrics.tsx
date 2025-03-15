@@ -104,13 +104,13 @@ export const useClientMetrics = (clientId: string) => {
   const handleInputChange = (field: keyof ClientMetric, value: string) => {
     if (!currentMetric) return;
     
-    let processedValue = value;
-    if (['web_visits', 'keywords_top10', 'conversions', 'conversion_goal'].includes(field)) {
+    let processedValue: any = value;
+    if (['web_visits', 'keywords_top10', 'conversions', 'conversion_goal'].includes(field as string)) {
       if (value === '') {
-        processedValue = 0 as any;
+        processedValue = 0;
       } else {
         const numValue = Number(value);
-        processedValue = isNaN(numValue) ? 0 : Math.max(0, numValue) as any;
+        processedValue = isNaN(numValue) ? 0 : Math.max(0, numValue);
       }
     }
     

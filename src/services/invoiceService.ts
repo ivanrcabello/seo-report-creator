@@ -1,5 +1,4 @@
-
-import { Invoice } from "@/types/client";
+import { Invoice } from "@/types/invoice";
 import { supabase } from "@/integrations/supabase/client";
 import { getSeoPack } from "./packService";
 import { getProposal } from "./proposal/proposalCrud";

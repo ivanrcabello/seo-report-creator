@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Client } from "@/types/client";
@@ -43,7 +44,7 @@ export const InvoiceDetail = () => {
           return;
         }
         
-        setInvoice(invoiceData);
+        setInvoice(invoiceData as Invoice);
         
         if (invoiceData.clientId) {
           const clientData = await getClient(invoiceData.clientId);
@@ -54,7 +55,7 @@ export const InvoiceDetail = () => {
         
         const companyData = await getCompanySettings();
         if (companyData) {
-          setCompany(companyData);
+          setCompany(companyData as CompanySettings);
         }
         
         if (invoiceData.packId) {
@@ -101,7 +102,7 @@ export const InvoiceDetail = () => {
       setIsProcessing(true);
       const updatedInvoice = await markInvoiceAsPaid(id);
       if (updatedInvoice) {
-        setInvoice(updatedInvoice);
+        setInvoice(updatedInvoice as Invoice);
         toast.success("Factura marcada como pagada");
       } else {
         throw new Error("No se pudo actualizar el estado de la factura");

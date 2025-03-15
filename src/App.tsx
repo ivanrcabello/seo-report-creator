@@ -21,9 +21,14 @@ import CompanySettings from "./pages/CompanySettings";
 import Contracts from "./pages/Contracts";
 import ContractForm from "./pages/ContractForm";
 import ContractDetail from "./pages/ContractDetail";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
 import { Toaster } from "./components/ui/sonner";
 import { AppLayout } from "./components/AppLayout";
 import { InvoiceForm } from "./components/InvoiceForm";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import "./App.css";
 
 // Create a client
@@ -41,48 +46,65 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          {/* Public routes without sidebar */}
-          <Route path="/report-share/:token" element={<ReportShare />} />
-          <Route path="/proposal-share/:token" element={<ProposalShare />} />
-          
-          {/* Protected routes with sidebar */}
-          <Route path="/" element={<AppLayout><Index /></AppLayout>} />
-          <Route path="/clients" element={<AppLayout><Clients /></AppLayout>} />
-          <Route path="/clients/:id" element={<AppLayout><ClientDetail /></AppLayout>} />
-          <Route path="/reports/:id" element={<AppLayout><ReportDetail /></AppLayout>} />
-          <Route path="/reports/edit/:id" element={<AppLayout><ReportForm /></AppLayout>} />
-          <Route path="/reports/new" element={<AppLayout><ReportForm /></AppLayout>} />
-          <Route path="/reports/new/:clientId" element={<AppLayout><ReportForm /></AppLayout>} />
-          <Route path="/report" element={<AppLayout><SeoReport /></AppLayout>} />
-          <Route path="/reports" element={<AppLayout><AllReports /></AppLayout>} />
-          <Route path="/packages" element={<AppLayout><Packages /></AppLayout>} />
-          <Route path="/proposals" element={<AppLayout><Proposals /></AppLayout>} />
-          <Route path="/proposals/new" element={<AppLayout><ProposalForm /></AppLayout>} />
-          <Route path="/proposals/new/:clientId/:packId" element={<AppLayout><ProposalForm /></AppLayout>} />
-          <Route path="/proposals/edit/:id" element={<AppLayout><ProposalForm /></AppLayout>} />
-          <Route path="/proposals/:id" element={<AppLayout><ProposalDetail /></AppLayout>} />
-          
-          {/* Contracts routes */}
-          <Route path="/contracts" element={<AppLayout><Contracts /></AppLayout>} />
-          <Route path="/contracts/new" element={<AppLayout><ContractForm /></AppLayout>} />
-          <Route path="/contracts/new/:clientId" element={<AppLayout><ContractForm /></AppLayout>} />
-          <Route path="/contracts/edit/:id" element={<AppLayout><ContractForm /></AppLayout>} />
-          <Route path="/contracts/:id" element={<AppLayout><ContractDetail /></AppLayout>} />
-          
-          {/* Invoice routes - fix the ordering to ensure the "new" route works */}
-          <Route path="/invoices" element={<AppLayout><Invoices /></AppLayout>} />
-          <Route path="/invoices/new" element={<AppLayout><InvoiceForm /></AppLayout>} />
-          <Route path="/invoices/edit/:id" element={<AppLayout><InvoiceForm /></AppLayout>} />
-          <Route path="/invoices/:id" element={<AppLayout><InvoiceDetail /></AppLayout>} />
-          
-          {/* Company settings */}
-          <Route path="/settings" element={<AppLayout><CompanySettings /></AppLayout>} />
-          
-          {/* 404 route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
+        <AuthProvider>
+          <Routes>
+            {/* Public auth routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Public share routes (no sidebar) */}
+            <Route path="/report-share/:token" element={<ReportShare />} />
+            <Route path="/proposal-share/:token" element={<ProposalShare />} />
+            
+            {/* Route for the landing page */}
+            <Route path="/" element={<Index />} />
+            
+            {/* Protected routes with role-based access */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+              
+              {/* Admin-only routes */}
+              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                <Route path="/clients" element={<AppLayout><Clients /></AppLayout>} />
+                <Route path="/clients/:id" element={<AppLayout><ClientDetail /></AppLayout>} />
+                <Route path="/reports/:id" element={<AppLayout><ReportDetail /></AppLayout>} />
+                <Route path="/reports/edit/:id" element={<AppLayout><ReportForm /></AppLayout>} />
+                <Route path="/reports/new" element={<AppLayout><ReportForm /></AppLayout>} />
+                <Route path="/reports/new/:clientId" element={<AppLayout><ReportForm /></AppLayout>} />
+                <Route path="/report" element={<AppLayout><SeoReport /></AppLayout>} />
+                <Route path="/reports" element={<AppLayout><AllReports /></AppLayout>} />
+                <Route path="/packages" element={<AppLayout><Packages /></AppLayout>} />
+                
+                {/* Proposals routes */}
+                <Route path="/proposals" element={<AppLayout><Proposals /></AppLayout>} />
+                <Route path="/proposals/new" element={<AppLayout><ProposalForm /></AppLayout>} />
+                <Route path="/proposals/new/:clientId/:packId" element={<AppLayout><ProposalForm /></AppLayout>} />
+                <Route path="/proposals/edit/:id" element={<AppLayout><ProposalForm /></AppLayout>} />
+                <Route path="/proposals/:id" element={<AppLayout><ProposalDetail /></AppLayout>} />
+                
+                {/* Contracts routes */}
+                <Route path="/contracts" element={<AppLayout><Contracts /></AppLayout>} />
+                <Route path="/contracts/new" element={<AppLayout><ContractForm /></AppLayout>} />
+                <Route path="/contracts/new/:clientId" element={<AppLayout><ContractForm /></AppLayout>} />
+                <Route path="/contracts/edit/:id" element={<AppLayout><ContractForm /></AppLayout>} />
+                <Route path="/contracts/:id" element={<AppLayout><ContractDetail /></AppLayout>} />
+                
+                {/* Invoice routes */}
+                <Route path="/invoices" element={<AppLayout><Invoices /></AppLayout>} />
+                <Route path="/invoices/new" element={<AppLayout><InvoiceForm /></AppLayout>} />
+                <Route path="/invoices/edit/:id" element={<AppLayout><InvoiceForm /></AppLayout>} />
+                <Route path="/invoices/:id" element={<AppLayout><InvoiceDetail /></AppLayout>} />
+                
+                {/* Company settings */}
+                <Route path="/settings" element={<AppLayout><CompanySettings /></AppLayout>} />
+              </Route>
+            </Route>
+            
+            {/* 404 route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

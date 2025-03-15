@@ -21,18 +21,23 @@ import {
   BarChart,
   FileSpreadsheet,
   Settings,
-  FileSignature
+  FileSignature,
+  LogOut
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 export function AppSidebar() {
   const location = useLocation();
+  const { signOut, userRole, user } = useAuth();
   
-  const links = [
+  // Different navigation links based on user role
+  const adminLinks = [
     { 
-      href: "/", 
-      label: "Inicio", 
+      href: "/dashboard", 
+      label: "Dashboard", 
       icon: <Home className="h-5 w-5" />,
-      active: location.pathname === "/"
+      active: location.pathname === "/dashboard"
     },
     { 
       href: "/clients", 
@@ -77,6 +82,18 @@ export function AppSidebar() {
       active: location.pathname.startsWith("/settings")
     },
   ];
+  
+  const clientLinks = [
+    { 
+      href: "/dashboard", 
+      label: "Dashboard", 
+      icon: <Home className="h-5 w-5" />,
+      active: location.pathname === "/dashboard"
+    }
+  ];
+  
+  // Use appropriate links based on user role
+  const links = userRole === "admin" ? adminLinks : clientLinks;
 
   return (
     <Sidebar className="border-r">
@@ -104,6 +121,26 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        {user && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Usuario</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="px-3 py-2">
+                <div className="text-sm font-medium">{user.email}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Rol: {userRole === "admin" ? "Administrador" : "Cliente"}
+                </div>
+              </div>
+              <div className="px-3 pt-2">
+                <Button variant="outline" size="sm" className="w-full" onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Cerrar Sesión
+                </Button>
+              </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter className="border-t">
         <div className="p-4 text-xs text-center text-gray-500">

@@ -50,6 +50,50 @@ export type Database = {
           },
         ]
       }
+      client_metrics: {
+        Row: {
+          client_id: string | null
+          conversion_goal: number | null
+          conversions: number | null
+          created_at: string
+          id: string
+          keywords_top10: number | null
+          month: string
+          updated_at: string
+          web_visits: number | null
+        }
+        Insert: {
+          client_id?: string | null
+          conversion_goal?: number | null
+          conversions?: number | null
+          created_at?: string
+          id?: string
+          keywords_top10?: number | null
+          month: string
+          updated_at?: string
+          web_visits?: number | null
+        }
+        Update: {
+          client_id?: string | null
+          conversion_goal?: number | null
+          conversions?: number | null
+          created_at?: string
+          id?: string
+          keywords_top10?: number | null
+          month?: string
+          updated_at?: string
+          web_visits?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_metrics_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_reports: {
         Row: {
           client_id: string
@@ -253,6 +297,74 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      project_timeline: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          details: string | null
+          id: string
+          order_number: number
+          status: string
+          task_name: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          order_number: number
+          status: string
+          task_name: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          order_number?: number
+          status?: string
+          task_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_timeline_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -473,10 +585,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "client"
     }
     CompositeTypes: {
       [_ in never]: never

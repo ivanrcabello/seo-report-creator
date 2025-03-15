@@ -1,218 +1,157 @@
-
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link, useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { getClients } from "@/services/clientService";
-import { getAllReports } from "@/services/reportService";
-import { ClientReport, Client } from "@/types/client";
-import { 
-  BarChart3, 
-  Users, 
-  FileText, 
-  TrendingUp, 
-  Activity, 
-  ArrowUp, 
-  ArrowDown,
-  ChevronRight 
-} from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { StatCard } from "@/components/dashboard/StatCard";
-import { ActiveUsers } from "@/components/dashboard/ActiveUsers";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { UsageMetrics } from "@/components/dashboard/UsageMetrics";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
+import { BarChart3, LogIn, UserPlus, ArrowRight, FileText, Users } from "lucide-react";
 
 const Index = () => {
-  const [recentReports, setRecentReports] = useState<ClientReport[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+  
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [reports, loadedClients] = await Promise.all([
-          getAllReports(),
-          getClients()
-        ]);
-        
-        setRecentReports(reports.slice(0, 5));
-        setClients(loadedClients);
-      } catch (error) {
-        console.error("Error loading dashboard data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadData();
-  }, []);
+    if (user && !isLoading) {
+      navigate('/dashboard');
+    }
+  }, [user, isLoading, navigate]);
 
-  // Function to get client name by ID
-  const getClientName = (clientId: string) => {
-    const client = clients.find(c => c.id === clientId);
-    return client ? client.name : "Cliente desconocido";
-  };
-
-  // Calculate stats
-  const totalClients = clients.length;
-  const totalReports = recentReports.length;
-  const clientsWithReports = new Set(recentReports.map(r => r.clientId)).size;
-  const clientsPercentage = totalClients > 0 ? (clientsWithReports / totalClients) * 100 : 0;
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+  }
 
   return (
-    <div className="container mx-auto py-4">
-      <div className="flex flex-col md:flex-row items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Panel de Control</h1>
-        <div className="flex space-x-2 mt-2 md:mt-0">
-          <Button variant="outline" size="sm">
-            <FileText className="mr-2 h-4 w-4" />
-            Ver Informes
-          </Button>
-          <Button size="sm">
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Análisis
-          </Button>
-        </div>
-      </div>
-      
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-pulse">
-          {[1, 2, 3, 4].map((item) => (
-            <Card key={item} className="h-32"></Card>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard 
-            title="Clientes" 
-            value={totalClients.toString()}
-            change={"+7.5%"}
-            trend="up"
-            icon={<Users className="h-5 w-5 text-blue-500" />}
-            color="bg-blue-100"
-          />
-          <StatCard 
-            title="Informes" 
-            value={totalReports.toString()}
-            change={"+12.2%"}
-            trend="up"
-            icon={<FileText className="h-5 w-5 text-green-500" />}
-            color="bg-green-100"
-          />
-          <StatCard 
-            title="Propuestas" 
-            value="8"
-            change={"-2.4%"}
-            trend="down"
-            icon={<Activity className="h-5 w-5 text-red-500" />}
-            color="bg-red-100"
-          />
-          <StatCard 
-            title="Rendimiento" 
-            value="89%"
-            change={"+4.7%"}
-            trend="up"
-            icon={<BarChart3 className="h-5 w-5 text-purple-500" />}
-            color="bg-purple-100"
-          />
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Uso por Cliente</CardTitle>
-            <CardDescription>
-              Actividad y distribución de servicios
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <UsageMetrics />
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Clientes Activos</CardTitle>
-            <CardDescription>
-              Últimos 30 días
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ActiveUsers clients={clients.slice(0, 5)} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+    <div className="flex min-h-screen flex-col">
+      <header className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12 md:py-20">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <CardTitle className="text-lg">Informes Recientes</CardTitle>
-              <CardDescription>
-                Últimos informes generados
-              </CardDescription>
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="h-8 w-8" />
+                <h1 className="text-2xl font-bold">SEO Manager</h1>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
+                Potencia tu estrategia SEO
+              </h2>
+              <p className="text-xl opacity-90 mb-8">
+                Plataforma todo-en-uno para gestionar proyectos SEO, crear informes profesionales y hacer seguimiento de resultados.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Button size="lg" asChild className="bg-white text-blue-600 hover:bg-gray-100">
+                  <Link to="/login">
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Iniciar Sesión
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white/10">
+                  <Link to="/register">
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Registrarse
+                  </Link>
+                </Button>
+              </div>
             </div>
-            <Link to="/reports">
-              <Button variant="ghost" size="sm">
-                Ver todos
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {recentReports.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-gray-500 mb-4">No hay informes recientes</p>
-                <Link to="/reports/new">
-                  <Button variant="outline">Crear Nuevo Informe</Button>
-                </Link>
+            <div className="hidden md:block">
+              <div className="bg-white/10 rounded-xl p-6 border border-white/20 backdrop-blur">
+                <img 
+                  src="/placeholder.svg" 
+                  alt="SEO Dashboard" 
+                  className="rounded-lg shadow-2xl" 
+                />
               </div>
-            ) : (
-              <div className="space-y-4">
-                {recentReports.map((report) => (
-                  <div key={report.id} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
-                    <div>
-                      <h3 className="font-medium">{report.title}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-sm text-gray-600">{getClientName(report.clientId)}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-gray-600">
-                        {format(new Date(report.date), "d MMM yyyy", { locale: es })}
-                      </span>
-                      <Badge variant={report.type === 'seo' ? "default" : "outline"} className="font-normal">
-                        {report.type}
-                      </Badge>
-                      <Link to={`/reports/${report.id}`}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Actividad Reciente</CardTitle>
-            <CardDescription>
-              Últimas acciones realizadas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RecentActivity />
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Todo lo que necesitas para gestionar tu SEO</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="rounded-full bg-blue-100 p-3 w-12 h-12 flex items-center justify-center mb-4">
+                  <BarChart3 className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Análisis SEO</h3>
+                <p className="text-gray-600 mb-4">
+                  Realiza auditorías completas, seguimiento de keywords y análisis de competencia.
+                </p>
+                <Button variant="link" className="px-0">
+                  <span>Descubrir más</span>
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="pt-6">
+                <div className="rounded-full bg-purple-100 p-3 w-12 h-12 flex items-center justify-center mb-4">
+                  <FileText className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Informes Profesionales</h3>
+                <p className="text-gray-600 mb-4">
+                  Crea informes personalizados para tus clientes con datos relevantes y recomendaciones.
+                </p>
+                <Button variant="link" className="px-0">
+                  <span>Descubrir más</span>
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="pt-6">
+                <div className="rounded-full bg-green-100 p-3 w-12 h-12 flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Gestión de Clientes</h3>
+                <p className="text-gray-600 mb-4">
+                  Administra tus clientes, propuestas, contratos y facturas desde un solo lugar.
+                </p>
+                <Button variant="link" className="px-0">
+                  <span>Descubrir más</span>
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 bg-blue-600 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-4">Empieza a optimizar hoy mismo</h2>
+          <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
+            Regístrate para acceder a todas las herramientas y funcionalidades que necesitas para mejorar tu estrategia SEO.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Button size="lg" asChild className="bg-white text-blue-600 hover:bg-gray-100">
+              <Link to="/register">
+                <UserPlus className="mr-2 h-5 w-5" />
+                Crear Cuenta Gratis
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white/10">
+              <Link to="/login">
+                Ya tengo una cuenta
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center mb-8">
+            <BarChart3 className="h-8 w-8 mr-2" />
+            <h2 className="text-2xl font-bold">SEO Manager</h2>
+          </div>
+          <div className="text-center text-gray-400 text-sm">
+            &copy; {new Date().getFullYear()} SEO Manager. Todos los derechos reservados.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

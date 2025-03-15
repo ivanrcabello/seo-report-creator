@@ -40,6 +40,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       setIsLoading(true);
       setError(null);
       const data = await getClientMetrics(clientId);
+      
       setMetrics(data);
       
       // If metrics exist, set the most recent one as current

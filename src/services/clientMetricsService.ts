@@ -12,7 +12,7 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
-    // Simplified query with more detailed error logging
+    // Direct query without complex RLS dependencies
     const { data, error } = await supabase
       .from('client_metrics')
       .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
@@ -34,7 +34,7 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
 
 export const updateClientMetrics = async (clientId: string, metric: ClientMetric): Promise<ClientMetric> => {
   try {
-    // Clean and validate all values before saving
+    // Prepare data to insert/update - ensure all numeric fields are valid numbers
     const metricData = {
       client_id: clientId,
       month: metric.month,
@@ -44,9 +44,10 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       conversion_goal: Math.max(1, Number(metric.conversion_goal) || 30)
     };
 
+    // Initialize result variable
     let result;
     
-    // Check if metric has an ID for update or insert
+    // Check if we're updating or inserting
     if (metric.id && metric.id.trim() !== '') {
       // Update existing metric
       const { data, error } = await supabase
@@ -83,12 +84,8 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
     return result;
   } catch (error) {
     console.error("Exception in updateClientMetrics:", error);
-    console.log("Error details:", error.message);
     
-    if (error.message && error.message.includes("infinite recursion")) {
-      throw new Error("Error de acceso a la base de datos. Contacte al administrador del sistema.");
-    }
-    
-    throw new Error("No se pudieron guardar las métricas del cliente");
+    // Provide a more user-friendly message
+    throw new Error("No se pudieron guardar las métricas del cliente. Por favor, inténtelo de nuevo más tarde.");
   }
 };

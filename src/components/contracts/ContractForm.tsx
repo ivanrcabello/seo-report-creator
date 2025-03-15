@@ -51,16 +51,16 @@ const contractFormSchema = z.object({
   monthlyFee: z.coerce.number().min(0, "El importe debe ser mayor o igual a 0"),
   status: z.enum(["draft", "active", "completed", "cancelled"]),
   clientInfo: z.object({
-    name: z.string(),
+    name: z.string().min(1, "El nombre es obligatorio"),
     company: z.string().optional(),
     address: z.string().optional(),
     taxId: z.string().optional(),
   }),
   professionalInfo: z.object({
-    name: z.string(),
-    company: z.string(),
-    address: z.string(),
-    taxId: z.string(),
+    name: z.string().min(1, "El nombre es obligatorio"),
+    company: z.string().min(1, "La empresa es obligatoria"),
+    address: z.string().min(1, "La dirección es obligatoria"),
+    taxId: z.string().min(1, "El CIF/NIF es obligatorio"),
   }),
   sections: z.array(
     z.object({
@@ -231,8 +231,15 @@ export const ContractForm = () => {
     try {
       setSaving(true);
 
-      // Make sure sections are included in the form data
-      form.setValue("sections", sections);
+      // Validate sections before submitting
+      if (sections.some(section => !section.title || !section.content)) {
+        toast({
+          title: "Error",
+          description: "Todas las secciones deben tener título y contenido",
+          variant: "destructive",
+        });
+        return;
+      }
       
       const contractData: Omit<SeoContract, "id" | "createdAt" | "updatedAt"> = {
         clientId: values.clientId,
@@ -243,7 +250,7 @@ export const ContractForm = () => {
         monthlyFee: values.monthlyFee,
         status: values.status,
         content: {
-          sections: values.sections,
+          sections: sections,
           clientInfo: values.clientInfo,
           professionalInfo: values.professionalInfo,
         },
@@ -372,8 +379,9 @@ export const ContractForm = () => {
                       <FormItem className="flex flex-col">
                         <FormLabel>Fecha de Inicio</FormLabel>
                         <DatePicker
-                          date={field.value}
-                          setDate={field.onChange}
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          mode="single"
                         />
                         <FormMessage />
                       </FormItem>
@@ -387,8 +395,9 @@ export const ContractForm = () => {
                       <FormItem className="flex flex-col">
                         <FormLabel>Fecha de Finalización (opcional)</FormLabel>
                         <DatePicker
-                          date={field.value}
-                          setDate={field.onChange}
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          mode="single"
                         />
                         <FormMessage />
                       </FormItem>

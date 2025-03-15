@@ -90,9 +90,12 @@ export const getContract = async (id: string): Promise<SeoContract | undefined> 
 
 // Create a new contract
 export const createContract = async (contract: Omit<SeoContract, "id" | "createdAt" | "updatedAt">): Promise<SeoContract> => {
+  // Convertir el contrato a formato DB
+  const dbContract = mapContractToDB(contract);
+  
   const { data, error } = await supabase
     .from('seo_contracts')
-    .insert([mapContractToDB(contract)])
+    .insert([dbContract])
     .select()
     .single();
   
@@ -106,9 +109,12 @@ export const createContract = async (contract: Omit<SeoContract, "id" | "created
 
 // Update an existing contract
 export const updateContract = async (contract: SeoContract): Promise<SeoContract> => {
+  // Convertir el contrato a formato DB
+  const dbContract = mapContractToDB(contract);
+  
   const { data, error } = await supabase
     .from('seo_contracts')
-    .update(mapContractToDB(contract))
+    .update(dbContract)
     .eq('id', contract.id)
     .select()
     .single();

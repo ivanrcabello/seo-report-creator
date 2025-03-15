@@ -14,9 +14,12 @@ import { cn } from "@/lib/utils"
 export interface DatePickerProps {
   className?: string;
   mode?: "single" | "range" | "multiple";
-  selected?: Date | Date[] | { from: Date; to: Date };
+  selected?: Date | Date[] | { from: Date; to: Date } | undefined;
   onSelect?: (date: Date | Date[] | { from: Date; to: Date } | undefined) => void;
   initialFocus?: boolean;
+  // Agregamos compatibilidad con props antiguas
+  date?: Date;
+  setDate?: (date: Date) => void;
 }
 
 export function DatePicker({
@@ -25,14 +28,20 @@ export function DatePicker({
   selected,
   onSelect,
   initialFocus = false,
+  date, // Para compatibilidad
+  setDate, // Para compatibilidad
 }: DatePickerProps) {
+  // Si se pasan las props antiguas, usamos esas
+  const effectiveSelected = selected || date;
+  const effectiveOnSelect = onSelect || setDate;
+
   return (
     <div className={cn("grid gap-2", className)}>
       {mode === "single" && (
         <Calendar
           mode="single"
-          selected={selected as Date}
-          onSelect={onSelect as (date: Date | undefined) => void}
+          selected={effectiveSelected as Date}
+          onSelect={effectiveOnSelect as (date: Date | undefined) => void}
           initialFocus={initialFocus}
           className="pointer-events-auto"
         />
@@ -40,8 +49,8 @@ export function DatePicker({
       {mode === "range" && (
         <Calendar
           mode="range"
-          selected={selected as { from: Date; to: Date }}
-          onSelect={onSelect as (date: { from: Date; to: Date } | undefined) => void}
+          selected={effectiveSelected as { from: Date; to: Date }}
+          onSelect={effectiveOnSelect as (date: { from: Date; to: Date } | undefined) => void}
           initialFocus={initialFocus}
           className="pointer-events-auto"
         />
@@ -49,8 +58,8 @@ export function DatePicker({
       {mode === "multiple" && (
         <Calendar
           mode="multiple"
-          selected={selected as Date[]}
-          onSelect={onSelect as (date: Date[] | undefined) => void}
+          selected={effectiveSelected as Date[]}
+          onSelect={effectiveOnSelect as (date: Date[] | undefined) => void}
           initialFocus={initialFocus}
           className="pointer-events-auto"
         />
@@ -65,7 +74,13 @@ export function DatePickerWithButton({
   selected,
   onSelect,
   initialFocus = false,
+  date, // Para compatibilidad
+  setDate, // Para compatibilidad
 }: DatePickerProps) {
+  // Si se pasan las props antiguas, usamos esas
+  const effectiveSelected = selected || date;
+  const effectiveOnSelect = onSelect || setDate;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -73,13 +88,13 @@ export function DatePickerWithButton({
           variant={"outline"}
           className={cn(
             "w-full justify-start text-left font-normal",
-            !selected && "text-muted-foreground",
+            !effectiveSelected && "text-muted-foreground",
             className
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {selected && mode === "single"
-            ? format(selected as Date, "PPP")
+          {effectiveSelected && mode === "single"
+            ? format(effectiveSelected as Date, "PPP")
             : <span>Selecciona una fecha</span>}
         </Button>
       </PopoverTrigger>
@@ -87,8 +102,8 @@ export function DatePickerWithButton({
         {mode === "single" && (
           <Calendar
             mode="single"
-            selected={selected as Date}
-            onSelect={onSelect as (date: Date | undefined) => void}
+            selected={effectiveSelected as Date}
+            onSelect={effectiveOnSelect as (date: Date | undefined) => void}
             initialFocus={initialFocus}
             className="pointer-events-auto"
           />
@@ -96,8 +111,8 @@ export function DatePickerWithButton({
         {mode === "range" && (
           <Calendar
             mode="range"
-            selected={selected as { from: Date; to: Date }}
-            onSelect={onSelect as (date: { from: Date; to: Date } | undefined) => void}
+            selected={effectiveSelected as { from: Date; to: Date }}
+            onSelect={effectiveOnSelect as (date: { from: Date; to: Date } | undefined) => void}
             initialFocus={initialFocus}
             className="pointer-events-auto"
           />
@@ -105,8 +120,8 @@ export function DatePickerWithButton({
         {mode === "multiple" && (
           <Calendar
             mode="multiple"
-            selected={selected as Date[]}
-            onSelect={onSelect as (date: Date[] | undefined) => void}
+            selected={effectiveSelected as Date[]}
+            onSelect={effectiveOnSelect as (date: Date[] | undefined) => void}
             initialFocus={initialFocus}
             className="pointer-events-auto"
           />

@@ -5,8 +5,17 @@ import { getProposal } from "./proposal/proposalCrud";
 import { getClient } from "./clientService";
 import { getCompanySettings } from "./settingsService";
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import 'jspdf-autotable';
 import { toast } from "sonner";
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => any;
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
 
 // Función para generar un número de factura secuencial
 export const generateInvoiceNumber = async (): Promise<string> => {
@@ -352,7 +361,7 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     doc.setFontSize(11);
     doc.text("CONCEPTOS", 20, 105);
     
-    // @ts-ignore - jsPDF-AutoTable no tiene tipos TS adecuados
+    // Usar autoTable para crear la tabla de conceptos
     doc.autoTable({
       startY: 110,
       head: [['Concepto', 'Importe']],
@@ -373,8 +382,7 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     });
     
     // Resumen de importes
-    // @ts-ignore
-    let finalY = doc.lastAutoTable.finalY + 10;
+    const finalY = doc.lastAutoTable.finalY + 10;
     doc.setFontSize(10);
     doc.text("Base imponible:", 130, finalY);
     doc.text(formatCurrency(invoice.baseAmount), 180, finalY, { align: 'right' });
@@ -462,10 +470,14 @@ export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> =>
       return false;
     }
     
-    // Aquí simulamos el envío del email
-    // En una implementación real, aquí se conectaría con un servicio de email
+    // NOTA: Esta es una simulación del envío del email
+    // Para implementar envío real de emails, necesitarías:
+    // 1. Crear una función Edge en Supabase (o usar un servicio como Resend, SendGrid, etc.)
+    // 2. Llamar a esa función desde aquí con los datos necesarios
     
-    toast.success(`Factura ${invoice.invoiceNumber} enviada a ${client.email}`);
+    toast.success(`Simulación: Factura ${invoice.invoiceNumber} enviada a ${client.email}`);
+    toast.info("Para implementar envío real de emails, contacta con el desarrollador");
+    
     return true;
   } catch (error) {
     console.error("Error sending invoice by email:", error);

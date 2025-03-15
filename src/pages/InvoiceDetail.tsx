@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Client } from "@/types/client";
@@ -37,7 +36,6 @@ export const InvoiceDetail = () => {
       
       setIsLoading(true);
       try {
-        // Cargar factura
         const invoiceData = await getInvoice(id);
         if (!invoiceData) {
           toast.error("Factura no encontrada");
@@ -47,7 +45,6 @@ export const InvoiceDetail = () => {
         
         setInvoice(invoiceData);
         
-        // Cargar datos del cliente
         if (invoiceData.clientId) {
           const clientData = await getClient(invoiceData.clientId);
           if (clientData) {
@@ -55,13 +52,11 @@ export const InvoiceDetail = () => {
           }
         }
         
-        // Cargar datos de la empresa
         const companyData = await getCompanySettings();
         if (companyData) {
           setCompany(companyData);
         }
         
-        // Cargar nombre del paquete si existe
         if (invoiceData.packId) {
           const packData = await getSeoPack(invoiceData.packId);
           if (packData) {

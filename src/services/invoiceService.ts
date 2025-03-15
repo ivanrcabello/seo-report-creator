@@ -1,5 +1,6 @@
 
-import { Invoice } from "@/types/invoice";
+import { Invoice, CompanySettings } from "@/types/invoice";
+import { Client } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 import { getSeoPack } from "./packService";
 import { getProposal } from "./proposal/proposalCrud";
@@ -294,9 +295,9 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     const doc = new jsPDF();
     
     // Colores personalizados
-    const primaryColor = [41, 128, 114]; // Color verde azulado #298072
-    const darkColor = [30, 33, 36]; // Color oscuro #1E2124
-    const lightColor = [255, 255, 255]; // Blanco
+    const primaryColor: [number, number, number] = [41, 128, 114]; // Color verde azulado #298072
+    const darkColor: [number, number, number] = [30, 33, 36]; // Color oscuro #1E2124
+    const lightColor: [number, number, number] = [255, 255, 255]; // Blanco
     
     // Configuración de la página
     const pageWidth = doc.internal.pageSize.width;
@@ -356,14 +357,10 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
       doc.text(`${client.company}`, margin, 85);
     }
     
-    // Dirección y contacto (A, W, P)
+    // Dirección y contacto
     let yPos = client.company ? 92 : 85;
     
-    doc.setFont('helvetica', 'bold');
-    doc.text("A :", margin, yPos);
-    doc.setFont('helvetica', 'normal');
-    doc.text(client.address || "No disponible", margin + 10, yPos);
-    yPos += 7;
+    // Nota: El cliente no tiene dirección en el tipo Client, así que omitimos esa línea
     
     doc.setFont('helvetica', 'bold');
     doc.text("E :", margin, yPos);
@@ -432,8 +429,8 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     
     // Estilos de la tabla
     const tableBodyStyles = {
-      fillColor: [245, 245, 245], // Color claro para filas alternadas
-      textColor: [50, 50, 50]
+      fillColor: [245, 245, 245] as [number, number, number], // Color claro para filas alternadas
+      textColor: [50, 50, 50] as [number, number, number]
     };
     
     // Encabezado de la tabla con diseño bicolor
@@ -450,8 +447,8 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
       body: tableData.map(row => [row.description, row.price, row.quantity, row.amount]),
       theme: 'grid',
       headStyles: { 
-        fillColor: [0, 0, 0, 0], // Transparente porque ya dibujamos el fondo
-        textColor: [255, 255, 255],
+        fillColor: [0, 0, 0, 0] as unknown as [number, number, number], // Transparente porque ya dibujamos el fondo
+        textColor: [255, 255, 255] as [number, number, number],
         fontStyle: 'bold',
         halign: 'left'
       },

@@ -4,9 +4,10 @@ import { ClientProposals } from "./ClientProposals";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientReports } from "./ClientReports";
 import { ClientInvoices } from "./ClientInvoices";
-import { ClientReport, Invoice } from "@/types/client";
+import { ClientReport, Invoice, Proposal } from "@/types/client";
 import { getClientReports } from "@/services/reportService";
 import { getClientInvoices } from "@/services/invoiceService";
+import { getClientProposals } from "@/services/proposalService";
 
 interface ClientProposalsListProps {
   clientId: string;
@@ -38,7 +39,7 @@ export const ClientProposalsList: React.FC<ClientProposalsListProps> = ({ client
   }, [clientId]);
 
   return (
-    <Tabs defaultValue="reports" className="w-full">
+    <Tabs defaultValue="proposals" className="w-full">
       <TabsList className="mb-4">
         <TabsTrigger value="reports">Informes</TabsTrigger>
         <TabsTrigger value="proposals">Propuestas</TabsTrigger>

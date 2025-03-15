@@ -1,16 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ClientForm } from "@/components/ClientForm";
-import { ClientReports } from "@/components/ClientReports";
+import { ClientProposalsList } from "@/components/ClientProposalsList";
 import ClientDocuments from "@/components/ClientDocuments";
 import { PdfUploader } from "@/components/PdfUploader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LocalSeoReportView } from "@/components/LocalSeoReportView";
-import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { 
   getClient, 
   updateClient, 
@@ -141,7 +139,6 @@ const ClientDetail = () => {
   const handlePdfAnalysis = async (result: AuditResult) => {
     if (client && id) {
       try {
-        // Create a new report from the analysis result
         const currentDate = new Date().toISOString();
         const newReport = await addReport({
           title: `Auditoría SEO - ${format(new Date(), "d MMM yyyy", { locale: es })}`,
@@ -151,7 +148,6 @@ const ClientDetail = () => {
           notes: `Informe generado automáticamente a partir de un PDF el ${format(new Date(), "d MMMM yyyy", { locale: es })}`,
         });
         
-        // Update the reports list
         setReports([...reports, newReport]);
         
         toast({
@@ -159,7 +155,6 @@ const ClientDetail = () => {
           description: "Informe generado correctamente desde el PDF.",
         });
         
-        // Navigate to the report page with the audit data
         navigate(`/report`, { state: { auditResult: result } });
       } catch (error) {
         console.error("Error al crear informe:", error);
@@ -187,25 +182,19 @@ const ClientDetail = () => {
       try {
         setIsGeneratingReport(true);
         
-        // Mostrar mensaje inicial
         toast({
           title: "Generando informe",
           description: "Analizando documentos y recopilando datos de SEO local...",
         });
         
-        // Generar análisis SEO local a partir de los documentos
         const localSeoAnalysis = await generateLocalSeoAnalysis(documentIds, id, client.name);
         
-        // Crear informe SEO local a partir del análisis
         const newLocalSeoReport = await createLocalSeoReport(localSeoAnalysis, id, client.name);
         
-        // Actualizar la lista de informes locales
         setLocalSeoReports([...localSeoReports, newLocalSeoReport]);
         
-        // Establecer el informe actual para mostrarlo
         setCurrentLocalSeoReport(newLocalSeoReport);
         
-        // Cambiar a la pestaña de informe local
         setActiveTab("localseo");
         
         toast({
@@ -313,7 +302,7 @@ const ClientDetail = () => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-        <TabsList className="mb-4 grid grid-cols-6 max-w-4xl">
+        <TabsList className="mb-4 grid grid-cols-5 max-w-4xl">
           <TabsTrigger value="profile" className="flex items-center gap-1">
             <UserCog className="h-4 w-4" />
             Perfil
@@ -322,13 +311,9 @@ const ClientDetail = () => {
             <FileText className="h-4 w-4" />
             Documentos
           </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-1">
+          <TabsTrigger value="proposals-list" className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
-            Informes
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="flex items-center gap-1">
-            <FileSpreadsheet className="h-4 w-4" />
-            Facturas
+            Propuestas e Informes
           </TabsTrigger>
           <TabsTrigger value="upload" className="flex items-center gap-1">
             <UploadCloud className="h-4 w-4" />
@@ -389,16 +374,8 @@ const ClientDetail = () => {
           />
         </TabsContent>
         
-        <TabsContent value="reports">
-          <ClientReports 
-            reports={reports} 
-            clientName={client.name}
-            onAddReport={handleAddReport}
-          />
-        </TabsContent>
-
-        <TabsContent value="invoices">
-          <ClientInvoicesTab clientId={client.id} clientName={client.name} />
+        <TabsContent value="proposals-list">
+          <ClientProposalsList clientId={client.id} />
         </TabsContent>
         
         <TabsContent value="upload">

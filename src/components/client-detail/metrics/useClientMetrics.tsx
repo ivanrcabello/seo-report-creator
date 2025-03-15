@@ -16,7 +16,9 @@ export const useClientMetrics = (clientId: string) => {
     try {
       setIsLoading(true);
       setError(null);
+      console.log("Fetching metrics for client ID:", clientId);
       const data = await getClientMetrics(clientId);
+      console.log("Metrics data received:", data);
       
       setMetrics(data);
       
@@ -60,6 +62,9 @@ export const useClientMetrics = (clientId: string) => {
         throw new Error("El mes es obligatorio");
       }
       
+      console.log("Saving metric for client ID:", clientId);
+      console.log("Current metric data:", currentMetric);
+      
       const metricToSave = {
         ...currentMetric,
         web_visits: Number(currentMetric.web_visits) || 0,
@@ -69,6 +74,7 @@ export const useClientMetrics = (clientId: string) => {
       };
       
       const updatedMetric = await updateClientMetrics(clientId, metricToSave);
+      console.log("Metric saved successfully:", updatedMetric);
       
       if (currentMetric.id) {
         setMetrics(metrics.map(m => m.id === updatedMetric.id ? updatedMetric : m));
@@ -85,15 +91,16 @@ export const useClientMetrics = (clientId: string) => {
     } catch (error) {
       console.error("Error saving client metrics:", error);
       
+      let errorMessage = "No se pudieron guardar las métricas del cliente";
       if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("No se pudieron guardar las métricas del cliente");
+        errorMessage = error.message;
       }
+      
+      setError(errorMessage);
       
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "No se pudieron guardar las métricas del cliente",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -121,7 +128,10 @@ export const useClientMetrics = (clientId: string) => {
   };
 
   useEffect(() => {
-    fetchMetrics();
+    if (clientId) {
+      console.log("Client ID changed, fetching metrics for:", clientId);
+      fetchMetrics();
+    }
   }, [clientId]);
 
   return {

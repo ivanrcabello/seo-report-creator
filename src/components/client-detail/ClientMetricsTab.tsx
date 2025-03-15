@@ -24,9 +24,10 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   } = useClientMetrics(clientId);
   
   useEffect(() => {
-    console.log("Current user role:", userRole);
-    console.log("Is admin:", isAdmin);
-  }, [userRole, isAdmin]);
+    console.log("ClientMetricsTab - Current user role:", userRole);
+    console.log("ClientMetricsTab - Is admin:", isAdmin);
+    console.log("ClientMetricsTab - Client ID:", clientId);
+  }, [userRole, isAdmin, clientId]);
 
   if (isLoading) {
     return <LoadingState />;

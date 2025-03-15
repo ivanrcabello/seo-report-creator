@@ -19,6 +19,7 @@ export const getProposalByShareToken = async (token: string): Promise<Proposal |
     }
 
     if (!data || data.length === 0) {
+      console.log("No proposal found with token:", token);
       return null;
     }
 
@@ -68,5 +69,7 @@ export const getProposalShareUrl = (token: string): string => {
 export const generatePublicProposalUrl = async (proposalId: string): Promise<string | null> => {
   const token = await generateProposalShareToken(proposalId);
   if (!token) return null;
+  
+  // Return the complete share URL
   return getProposalShareUrl(token);
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Proposal } from "@/types/client";
@@ -27,18 +28,24 @@ const ProposalShare = () => {
       
       setIsLoading(true);
       try {
+        console.log("Fetching proposal with token:", token);
         const proposalData = await getProposalByShareToken(token);
         
         if (!proposalData) {
           setError("La propuesta no existe o el enlace no es válido");
+          setIsLoading(false);
           return;
         }
         
         setProposal(proposalData);
         
-        const clientData = await getClient(proposalData.clientId);
-        setClient(clientData);
+        // Fetch client data
+        if (proposalData.clientId) {
+          const clientData = await getClient(proposalData.clientId);
+          setClient(clientData);
+        }
         
+        // Fetch pack data
         if (proposalData.packId) {
           const packData = await getSeoPack(proposalData.packId);
           setPack(packData);

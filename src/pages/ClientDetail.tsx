@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ClientHeader } from "@/components/client-detail/ClientHeader";
 import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
-import { ClientDocumentsView } from "@/components/client-documents";
+import ClientDocuments from "@/components/client-documents/ClientDocuments";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
 import { getClient, updateClientActiveStatus } from "@/services/clientService";
@@ -197,18 +197,14 @@ export default function ClientDetail() {
           <ClientProfileTab client={client} />
         </TabsContent>
         <TabsContent value="documents">
-          <ClientDocumentsView
-            documents={client.documents || []}
-            selectedDocuments={selectedDocuments}
-            onDocumentSelect={handleDocumentSelect}
+          <ClientDocuments
+            clientId={client.id}
+            notes={client.notes}
+            onNoteAdded={(updatedNotes) => {
+              setClient({ ...client, notes: updatedNotes });
+            }}
+            onGenerateReport={handleGenerateReport}
           />
-          {isAdmin && (
-            <div className="mt-4">
-              <Button onClick={handleGenerateReport} disabled={selectedDocuments.length === 0}>
-                Generar Informe SEO Local
-              </Button>
-            </div>
-          )}
         </TabsContent>
         <TabsContent value="metrics">
           <ClientMetricsTab clientId={client.id} clientName={client.name} />

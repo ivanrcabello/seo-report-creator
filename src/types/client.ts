@@ -1,3 +1,4 @@
+
 import { Invoice as InvoiceType } from './invoice';
 
 export interface Client {
@@ -98,8 +99,8 @@ export interface SeoLocalReport {
   businessName: string;
   address?: string;
   location?: string;
-  phone: string;
-  website: string;
+  phone?: string;
+  website?: string;
   googleBusinessUrl?: string;
   googleMapsRanking?: number;
   googleReviewsCount?: number;

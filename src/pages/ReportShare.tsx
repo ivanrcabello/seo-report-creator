@@ -2,15 +2,17 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ClientReport } from "@/types/client";
-import { ShareableReport } from "@/components/ShareableReport";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getReportByShareToken } from "@/services/reportSharingService";
+import { getClient } from "@/services/clientService";
+import { ReportShareView } from "@/components/ReportShareView";
 
 const ReportShare = () => {
   const { token } = useParams<{ token: string }>();
   const [report, setReport] = useState<ClientReport | null>(null);
+  const [client, setClient] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +54,13 @@ const ReportShare = () => {
         };
         
         setReport(clientReport);
+        
+        // Fetch client data
+        if (reportData.client_id) {
+          const clientData = await getClient(reportData.client_id);
+          setClient(clientData);
+        }
+        
         console.log("Report loaded successfully:", clientReport);
       } catch (error) {
         console.error("Error fetching report:", error);
@@ -67,8 +76,8 @@ const ReportShare = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto p-8">
-        <Skeleton className="w-[200px] h-8 mb-4" />
-        <Skeleton className="h-[300px] w-full" />
+        <Skeleton className="h-[200px] w-full mb-4 rounded-lg" />
+        <Skeleton className="h-[400px] w-full rounded-lg" />
       </div>
     );
   }
@@ -98,8 +107,8 @@ const ReportShare = () => {
   }
 
   return (
-    <div className="container mx-auto p-8">
-      <ShareableReport report={report} />
+    <div className="container mx-auto p-4 md:p-8">
+      <ReportShareView report={report} client={client} />
     </div>
   );
 };

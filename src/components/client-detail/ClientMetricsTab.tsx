@@ -27,7 +27,8 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     console.log("ClientMetricsTab - Current user role:", userRole);
     console.log("ClientMetricsTab - Is admin:", isAdmin);
     console.log("ClientMetricsTab - Client ID:", clientId);
-  }, [userRole, isAdmin, clientId]);
+    console.log("ClientMetricsTab - Client Name:", clientName);
+  }, [userRole, isAdmin, clientId, clientName]);
 
   if (isLoading) {
     return <LoadingState />;

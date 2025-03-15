@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SeoLocalReport } from "@/types/client";
+import { SeoLocalReport, ClientReport } from "@/types/client";
 import { createSeoLocalReport as createLocalSeoReportFromService } from "./localSeoReportService";
 
 export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport | null> => {
@@ -81,8 +81,8 @@ export const getLocalSeoData = async (clientId: string): Promise<SeoLocalReport 
   }
 };
 
-// Add the missing functions
-export const generateLocalSeoAnalysis = async (documentIds: string[], clientId: string, clientName: string) => {
+// Implementation of missing functions
+export const generateLocalSeoAnalysis = async (documentIds: string[], clientId: string, clientName: string): Promise<Omit<SeoLocalReport, "id">> => {
   console.log("Generating local SEO analysis for documents:", documentIds);
   
   // This function analyzes documents and generates SEO data

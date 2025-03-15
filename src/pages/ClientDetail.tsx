@@ -1,17 +1,17 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ClientHeader } from "@/components/client-detail/ClientHeader";
 import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
-import { ClientDocuments } from "@/components/client-documents";
+import ClientDocuments from "@/components/ClientDocuments";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
 import { getClient } from "@/services/clientService";
 import { getSeoLocalReports } from "@/services/localSeoReportService";
 import { useToast } from "@/hooks/use-toast";
-import { Client, ClientReport } from "@/types/client";
-import { createReport } from "@/services/reportService";
+import { Client, ClientReport, SeoLocalReport } from "@/types/client";
 import { ClientReports } from "@/components/ClientReports";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
 import { ClientInvoices } from "@/components/ClientInvoices";
@@ -25,6 +25,7 @@ export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const [client, setClient] = useState<Client | null>(null);
   const [reports, setReports] = useState<ClientReport[]>([]);
+  const [localSeoReports, setLocalSeoReports] = useState<SeoLocalReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ export default function ClientDetail() {
       if (id) {
         try {
           const reportsData = await getSeoLocalReports(id);
-          setReports(reportsData);
+          setLocalSeoReports(reportsData);
         } catch (error) {
           console.error("Failed to fetch reports:", error);
           toast({
@@ -116,7 +117,7 @@ export default function ClientDetail() {
       const analysis = await generateLocalSeoAnalysis(selectedDocuments, client.id, client.name);
       const newReport = await createLocalSeoReport(analysis, client.id, client.name);
 
-      setReports((prevReports) => [...prevReports, newReport]);
+      setLocalSeoReports((prevReports) => [...prevReports, newReport]);
       toast({
         title: "Success",
         description: "Local SEO report generated successfully!",
@@ -139,6 +140,11 @@ export default function ClientDetail() {
     return <div>Client not found</div>;
   }
 
+  // Mock functions for ClientHeader requirements
+  const handleEdit = () => navigate(`/clients/edit/${client.id}`);
+  const handleDelete = () => console.log("Delete client:", client.id);
+  const handleToggleActive = (isActive: boolean) => console.log("Toggle active:", isActive);
+
   return (
     <div>
       <Button
@@ -149,7 +155,12 @@ export default function ClientDetail() {
         <ArrowLeft className="mr-2 h-4 w-4" />
         Volver a Clientes
       </Button>
-      <ClientHeader client={client} />
+      <ClientHeader 
+        client={client} 
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onToggleActive={handleToggleActive}
+      />
       <Tabs defaultValue="profile" className="w-full space-y-4">
         <TabsList>
           <TabsTrigger value="profile">Perfil</TabsTrigger>
@@ -179,10 +190,10 @@ export default function ClientDetail() {
           )}
         </TabsContent>
         <TabsContent value="metrics">
-          <ClientMetricsTab clientId={client.id} />
+          <ClientMetricsTab clientId={client.id} clientName={client.name} />
         </TabsContent>
         <TabsContent value="reports">
-          <ClientReports clientId={client.id} reports={reports} />
+          <ClientReports reports={reports} />
           {isAdmin && (
             <Button asChild>
               <a href={`/reports/new/${client.id}`} className="flex items-center gap-2">
@@ -204,7 +215,7 @@ export default function ClientDetail() {
           )}
         </TabsContent>
         <TabsContent value="invoices">
-          <ClientInvoices clientId={client.id} />
+          <ClientInvoices clientId={client.id} invoices={[]} />
           {isAdmin && (
             <Button asChild>
               <a href={`/invoices/new?clientId=${client.id}`} className="flex items-center gap-2">
@@ -227,7 +238,13 @@ export default function ClientDetail() {
         </TabsContent>
         {isAdmin && (
           <TabsContent value="local-seo">
-            <LocalSeoTab clientId={client.id} clientName={client.name} />
+            <LocalSeoTab 
+              isGeneratingReport={false}
+              localSeoReports={localSeoReports}
+              currentLocalSeoReport={localSeoReports.length > 0 ? localSeoReports[0] : null}
+              setCurrentLocalSeoReport={(report) => console.log("Setting current report:", report)}
+              setActiveTab={(tab) => console.log("Setting active tab:", tab)}
+            />
             <PdfUploadTab clientId={client.id} />
           </TabsContent>
         )}

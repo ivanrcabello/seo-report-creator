@@ -12,7 +12,7 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
-    // Simple query directly against clients table now
+    console.log("Fetching metrics for client:", clientId);
     const { data, error } = await supabase
       .from('client_metrics')
       .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
@@ -22,7 +22,14 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
     if (error) {
       console.error("Error fetching client metrics:", error);
       console.log("Error details:", JSON.stringify(error));
-      return []; // Return empty array instead of throwing
+      
+      // Special handling for permission errors
+      if (error.code === '42P17' || error.message.includes('infinite recursion')) {
+        console.warn("Permission error detected when fetching metrics");
+        return []; // Return empty array instead of throwing to prevent UI errors
+      }
+      
+      throw error;
     }
     
     return data || [];
@@ -34,6 +41,18 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
 
 export const updateClientMetrics = async (clientId: string, metric: ClientMetric): Promise<ClientMetric> => {
   try {
+    console.log("Updating metrics for client:", clientId, "with data:", metric);
+    
+    // First, check if the user has admin role using a separate function
+    const { data: roleData, error: roleError } = await supabase
+      .rpc('get_user_role')
+      .single();
+      
+    if (roleError || roleData !== 'admin') {
+      console.error("Permission error: User is not an admin", roleError);
+      throw new Error("Error de permisos en la base de datos. Por favor, contacte al administrador.");
+    }
+    
     // Prepare data to insert/update - ensure all numeric fields are valid numbers
     const metricData = {
       client_id: clientId,
@@ -61,7 +80,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         console.log("Error details:", JSON.stringify(error));
         
         // Check for infinite recursion error
-        if (error.message && error.message.includes("infinite recursion")) {
+        if (error.message && (error.message.includes("infinite recursion") || error.code === '42P17')) {
           throw new Error("Error de permisos en la base de datos. Por favor, contacte al administrador.");
         }
         
@@ -82,7 +101,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
         console.log("Error details:", JSON.stringify(error));
         
         // Check for infinite recursion error
-        if (error.message && error.message.includes("infinite recursion")) {
+        if (error.message && (error.message.includes("infinite recursion") || error.code === '42P17')) {
           throw new Error("Error de permisos en la base de datos. Por favor, contacte al administrador.");
         }
         

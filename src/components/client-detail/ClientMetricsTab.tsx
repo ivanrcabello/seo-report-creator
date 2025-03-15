@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +32,12 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const [error, setError] = useState<string | null>(null);
   const [isAdminError, setIsAdminError] = useState(false);
   const { toast } = useToast();
-  const { isAdmin } = useAuth();
+  const { isAdmin, userRole } = useAuth();
+  
+  useEffect(() => {
+    console.log("Current user role:", userRole);
+    console.log("Is admin:", isAdmin);
+  }, [userRole, isAdmin]);
 
   useEffect(() => {
     fetchMetrics();
@@ -48,11 +52,9 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       
       setMetrics(data);
       
-      // If metrics exist, set the most recent one as current
       if (data.length > 0) {
         setCurrentMetric(data[0]);
       } else {
-        // Create a default metric if none exists
         const today = new Date();
         const defaultMonth = format(today, 'yyyy-MM');
         
@@ -82,7 +84,9 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const handleSaveMetrics = async () => {
     if (!currentMetric) return;
     
-    // Display a warning for non-admin users instead of allowing them to attempt an action that will fail
+    console.log("Save metrics attempted by user with role:", userRole);
+    console.log("isAdmin value:", isAdmin);
+    
     if (!isAdmin) {
       setIsAdminError(true);
       setError("Solo los administradores pueden modificar métricas de clientes.");
@@ -94,12 +98,10 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       setError(null);
       setIsAdminError(false);
       
-      // Validate inputs before saving
       if (currentMetric.month.trim() === '') {
         throw new Error("El mes es obligatorio");
       }
       
-      // Ensure all numeric values are valid before saving
       const metricToSave = {
         ...currentMetric,
         web_visits: Number(currentMetric.web_visits) || 0,
@@ -110,16 +112,12 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       
       const updatedMetric = await updateClientMetrics(clientId, metricToSave);
       
-      // Update the metrics list with the new/updated metric
       if (currentMetric.id) {
-        // If updating an existing metric
         setMetrics(metrics.map(m => m.id === updatedMetric.id ? updatedMetric : m));
       } else {
-        // If it was a new metric
         setMetrics([updatedMetric, ...metrics]);
       }
       
-      // Update current metric with server response (to get the ID if it was new)
       setCurrentMetric(updatedMetric);
       
       toast({
@@ -129,7 +127,6 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     } catch (error) {
       console.error("Error saving client metrics:", error);
       
-      // Check if it's a database permissions error
       if (error instanceof Error && error.message.includes("permisos en la base de datos")) {
         setIsAdminError(true);
         setError("Solo los administradores pueden modificar métricas de clientes.");
@@ -150,14 +147,11 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const handleInputChange = (field: keyof ClientMetric, value: string) => {
     if (!currentMetric) return;
     
-    // For numeric fields, ensure they're non-negative numbers
     let processedValue = value;
     if (['web_visits', 'keywords_top10', 'conversions', 'conversion_goal'].includes(field)) {
-      // Allow empty string during typing
       if (value === '') {
         processedValue = 0 as any;
       } else {
-        // Convert to number and ensure non-negative
         const numValue = Number(value);
         processedValue = isNaN(numValue) ? 0 : Math.max(0, numValue) as any;
       }
@@ -180,7 +174,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
 
   return (
     <div className="space-y-8">
-      {error && (
+      {error && !isAdminError && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -205,6 +199,13 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {process.env.NODE_ENV === 'development' && (
+              <div className="col-span-2 p-2 bg-gray-100 rounded mb-4 text-xs">
+                <div>Role: {userRole || 'No role'}</div>
+                <div>Is Admin: {isAdmin ? 'Yes' : 'No'}</div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <Label htmlFor="month">Mes</Label>

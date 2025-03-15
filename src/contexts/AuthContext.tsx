@@ -30,22 +30,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fetchUserRole = async (userId: string) => {
-      const { data, error } = await supabase
-        .rpc('get_user_role')
-        .single();
-      
-      if (error) {
-        console.error("Error fetching user role:", error);
+      try {
+        const { data, error } = await supabase
+          .rpc('get_user_role')
+          .single();
+        
+        if (error) {
+          console.error("Error fetching user role:", error);
+          return null;
+        }
+        
+        console.log("User role fetched:", data);
+        return data as UserRole;
+      } catch (error) {
+        console.error("Exception fetching user role:", error);
         return null;
       }
-      
-      return data as UserRole;
     };
 
     const setupUser = async (currentSession: Session | null) => {
       if (currentSession?.user) {
         setUser(currentSession.user);
+        console.log("Setting up user:", currentSession.user.id);
         const role = await fetchUserRole(currentSession.user.id);
+        console.log("Setting user role:", role);
         setUserRole(role);
       } else {
         setUser(null);
@@ -56,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Initial session fetch
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      console.log("Initial session:", initialSession);
       setSession(initialSession);
       setupUser(initialSession);
     });
@@ -63,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
+        console.log("Auth state changed:", _event, newSession?.user?.id);
         setSession(newSession);
         setupUser(newSession);
       }
@@ -76,13 +86,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log("Attempting to sign in with:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Sign in error:", error);
+        throw error;
+      }
       
+      console.log("Sign in successful:", data);
       toast.success("Inicio de sesión exitoso");
       navigate("/dashboard");
     } catch (error: any) {
+      console.error("Sign in exception:", error);
       toast.error(error.message || "Error al iniciar sesión");
       throw error;
     } finally {
@@ -93,16 +109,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin + '/dashboard'
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Google sign in error:", error);
+        throw error;
+      }
       
+      console.log("Google sign in initiated:", data);
     } catch (error: any) {
+      console.error("Google sign in exception:", error);
       toast.error(error.message || "Error al iniciar sesión con Google");
       setIsLoading(false);
     }
@@ -111,7 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, name: string) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({ 
+      console.log("Attempting to sign up:", email);
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
@@ -119,10 +141,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Sign up error:", error);
+        throw error;
+      }
       
+      console.log("Sign up successful:", data);
       toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
+      
+      // Auto sign in after successful registration
+      if (data.user) {
+        try {
+          await signIn(email, password);
+        } catch (signInError) {
+          console.error("Auto sign in failed after registration:", signInError);
+        }
+      }
     } catch (error: any) {
+      console.error("Sign up exception:", error);
       toast.error(error.message || "Error al registrarse");
       throw error;
     } finally {
@@ -137,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       navigate("/login");
       toast.success("Has cerrado sesión correctamente");
     } catch (error: any) {
+      console.error("Sign out error:", error);
       toast.error(error.message || "Error al cerrar sesión");
     } finally {
       setIsLoading(false);

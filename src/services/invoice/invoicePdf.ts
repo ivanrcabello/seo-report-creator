@@ -4,7 +4,7 @@
  */
 
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import "jspdf-autotable";
 import { Invoice } from "@/types/invoice";
 import { getClient } from "@/services/clientService";
 import { formatDate, formatCurrency } from "./invoiceFormatters";
@@ -262,8 +262,8 @@ const addInvoiceItems = (doc: jsPDF, invoice: Invoice) => {
     ]
   ];
   
-  // Add the items table
-  autoTable(doc, {
+  // Add the items table using the imported autoTable
+  (doc as any).autoTable({
     head: [tableColumn],
     body: tableRows,
     startY: 145,

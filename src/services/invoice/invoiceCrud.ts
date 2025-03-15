@@ -64,12 +64,18 @@ export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | 
     }
     
     const now = new Date().toISOString();
-    const newInvoice = {
-      ...mapInvoiceToDB(invoice),
-      invoice_number: invoiceNumber,
-      created_at: now,
-      updated_at: now
+    
+    // Create a new invoice object with a generated UUID
+    const newInvoiceData = {
+      ...invoice,
+      id: undefined, // Remove any ID that might have been passed
+      invoiceNumber,
+      createdAt: now,
+      updatedAt: now
     };
+    
+    // Map the invoice data for DB, which will include the generated UUID
+    const newInvoice = mapInvoiceToDB(newInvoiceData);
     
     console.log("Mapped invoice data for DB:", newInvoice);
     

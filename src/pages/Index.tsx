@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ const Index = () => {
                     Iniciar Sesión
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white/10 hover:text-white">
                   <Link to="/register">
                     <UserPlus className="mr-2 h-5 w-5" />
                     Registrarse
@@ -132,7 +133,7 @@ const Index = () => {
                 Crear Cuenta Gratis
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white/10">
+            <Button size="lg" variant="outline" asChild className="border-white text-white hover:bg-white/10 hover:text-white">
               <Link to="/login">
                 Ya tengo una cuenta
               </Link>

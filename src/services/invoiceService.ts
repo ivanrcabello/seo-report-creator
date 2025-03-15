@@ -283,21 +283,21 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     const doc = new jsPDF();
     
     // Estilos y configuración
-    const primaryColor = [0, 102, 204]; // Azul corporativo
-    const grayColor = [120, 120, 120];
-    doc.setDrawColor(...primaryColor);
+    const primaryColor = [0, 102, 204] as [number, number, number]; // Azul corporativo
+    const grayColor = [120, 120, 120] as [number, number, number];
+    doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.setFillColor(240, 240, 240);
     
     // Título y número de factura
     doc.setFontSize(22);
-    doc.setTextColor(...primaryColor);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.text("FACTURA", 20, 20);
     doc.setFontSize(14);
     doc.text(`Nº: ${invoice.invoiceNumber}`, 20, 28);
     
     // Fechas
     doc.setFontSize(10);
-    doc.setTextColor(...grayColor);
+    doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
     doc.text(`Fecha de emisión: ${formatDate(invoice.issueDate)}`, 20, 35);
     if (invoice.dueDate) {
       doc.text(`Fecha de vencimiento: ${formatDate(invoice.dueDate)}`, 20, 40);
@@ -325,22 +325,23 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     doc.setFontSize(9);
     doc.text(client.name, 115, 65);
     if (client.company) doc.text(client.company, 115, 70);
-    if (client.address) doc.text(client.address, 115, 75);
+    const clientAddress = client.company ? client.company : "N/A";
+    doc.text(clientAddress, 115, 75);
     doc.text(`Tel: ${client.phone || "N/A"}`, 115, 80);
     doc.text(`Email: ${client.email}`, 115, 85);
     
     // Estado de la factura
     let statusText = "PENDIENTE";
-    let statusColor = [255, 150, 0]; // Naranja para pendiente
+    let statusColor = [255, 150, 0] as [number, number, number]; // Naranja para pendiente
     if (invoice.status === "paid") {
       statusText = "PAGADA";
-      statusColor = [0, 170, 0]; // Verde para pagada
+      statusColor = [0, 170, 0] as [number, number, number]; // Verde para pagada
     } else if (invoice.status === "cancelled") {
       statusText = "CANCELADA";
-      statusColor = [200, 0, 0]; // Rojo para cancelada
+      statusColor = [200, 0, 0] as [number, number, number]; // Rojo para cancelada
     }
     
-    doc.setFillColor(...statusColor);
+    doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
     doc.setTextColor(255, 255, 255);
     doc.roundedRect(150, 20, 40, 10, 2, 2, 'F');
     doc.setFontSize(10);
@@ -360,7 +361,7 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
       ],
       theme: 'grid',
       headStyles: { 
-        fillColor: primaryColor, 
+        fillColor: [primaryColor[0], primaryColor[1], primaryColor[2]], 
         textColor: [255, 255, 255],
         fontSize: 10 
       },
@@ -385,7 +386,7 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     doc.line(130, finalY + 7, 180, finalY + 7);
     
     doc.setFontSize(12);
-    doc.setTextColor(...primaryColor);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.setFont(undefined, 'bold');
     doc.text("TOTAL:", 130, finalY + 13);
     doc.text(formatCurrency(invoice.totalAmount), 180, finalY + 13, { align: 'right' });
@@ -397,12 +398,15 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<Blob | unde
     doc.text("FORMA DE PAGO", 20, finalY + 25);
     doc.setFontSize(8);
     doc.text("Transferencia bancaria a la cuenta:", 20, finalY + 30);
-    doc.text(company.bankAccount || "ES00 0000 0000 0000 0000 0000", 20, finalY + 35);
+    
+    // Use default bank account if not available in company settings
+    const bankAccount = company.bankAccount || "ES00 0000 0000 0000 0000 0000";
+    doc.text(bankAccount, 20, finalY + 35);
     
     // Pie de página
     const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
     doc.setFontSize(8);
-    doc.setTextColor(...grayColor);
+    doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
     doc.text(`Factura generada por ${company.companyName}`, 105, pageHeight - 10, { align: 'center' });
     
     // Devolver el blob del PDF

@@ -1,4 +1,3 @@
-
 export interface Client {
   id: string;
   name: string;
@@ -147,6 +146,7 @@ export interface CompanySettings {
   phone?: string;
   email?: string;
   logoUrl?: string;
+  bankAccount?: string; // Añadido para la cuenta bancaria
   createdAt: string;
   updatedAt: string;
 }

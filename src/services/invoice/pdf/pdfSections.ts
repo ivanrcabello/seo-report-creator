@@ -4,7 +4,6 @@
  */
 
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable"; // Import it properly
 import { Invoice } from "@/types/invoice";
 import { Client } from "@/types/client";
 import { tableStyles, textStyles } from "./pdfStyles";
@@ -18,13 +17,13 @@ export const addCompanyHeader = (doc: jsPDF): void => {
   // In a real app, we would add the company logo here
   doc.setFont(textStyles.header.font, textStyles.header.style);
   doc.setFontSize(textStyles.header.size);
-  doc.setTextColor(textStyles.header.color);
+  doc.setTextColor(textStyles.header.color[0], textStyles.header.color[1], textStyles.header.color[2]);
   
   doc.text("SEO Dashboard", 20, 20);
   
   doc.setFont(textStyles.default.font, textStyles.default.style);
   doc.setFontSize(textStyles.default.size);
-  doc.setTextColor(textStyles.default.color);
+  doc.setTextColor(textStyles.default.color[0], textStyles.default.color[1], textStyles.default.color[2]);
   
   doc.text("CIF: 12345678Z", 20, 30);
   doc.text("Calle Principal 123", 20, 35);
@@ -41,14 +40,14 @@ export const addInvoiceInfo = (doc: jsPDF, invoice: Invoice): void => {
   // Add invoice title
   doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
   doc.setFontSize(textStyles.subheader.size);
-  doc.setTextColor(textStyles.subheader.color);
+  doc.setTextColor(textStyles.subheader.color[0], textStyles.subheader.color[1], textStyles.subheader.color[2]);
   
   doc.text("FACTURA", 140, startY);
   
   // Add invoice details
   doc.setFont(textStyles.default.font, textStyles.default.style);
   doc.setFontSize(textStyles.default.size);
-  doc.setTextColor(textStyles.default.color);
+  doc.setTextColor(textStyles.default.color[0], textStyles.default.color[1], textStyles.default.color[2]);
   
   doc.text(`Nº Factura: ${invoice.invoiceNumber}`, 140, startY + 10);
   doc.text(`Fecha: ${format(new Date(invoice.issueDate), "dd/MM/yyyy", { locale: es })}`, 140, startY + 15);
@@ -72,14 +71,14 @@ export const addClientInfo = (doc: jsPDF, client: Client): void => {
   // Add client title
   doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
   doc.setFontSize(textStyles.subheader.size);
-  doc.setTextColor(textStyles.subheader.color);
+  doc.setTextColor(textStyles.subheader.color[0], textStyles.subheader.color[1], textStyles.subheader.color[2]);
   
   doc.text("CLIENTE", 20, startY);
   
   // Add client details
   doc.setFont(textStyles.default.font, textStyles.default.style);
   doc.setFontSize(textStyles.default.size);
-  doc.setTextColor(textStyles.default.color);
+  doc.setTextColor(textStyles.default.color[0], textStyles.default.color[1], textStyles.default.color[2]);
   
   doc.text(client.name, 20, startY + 10);
   
@@ -103,7 +102,7 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice): void => {
   
   doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
   doc.setFontSize(textStyles.subheader.size);
-  doc.setTextColor(textStyles.subheader.color);
+  doc.setTextColor(textStyles.subheader.color[0], textStyles.subheader.color[1], textStyles.subheader.color[2]);
   
   doc.text("CONCEPTOS", 20, startY);
   
@@ -120,11 +119,14 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice): void => {
     tableData[0][0] = `Servicios SEO - ${invoice.notes}`;
   }
   
-  autoTable(doc, {
+  doc.autoTable({
     startY: startY + 10,
     head: [["Concepto", "Importe"]],
     body: tableData,
-    ...tableStyles
+    styles: tableStyles.styles,
+    headStyles: tableStyles.headStyles,
+    bodyStyles: tableStyles.bodyStyles,
+    alternateRowStyles: tableStyles.alternateRowStyles
   });
 };
 
@@ -141,12 +143,12 @@ export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice): void => {
     ["TOTAL", formatCurrency(invoice.totalAmount)],
   ];
   
-  autoTable(doc, {
+  doc.autoTable({
     startY: finalY + 10,
     body: totalsData,
     columns: [
-      { header: "", dataKey: 0 },
-      { header: "", dataKey: 1 },
+      { header: "", dataKey: "0" },
+      { header: "", dataKey: "1" },
     ],
     margin: { left: 100 },
     tableWidth: 100,
@@ -176,13 +178,13 @@ export const addFooterWithPaymentInfo = (doc: jsPDF, invoice: Invoice): void => 
   
   doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
   doc.setFontSize(textStyles.subheader.size);
-  doc.setTextColor(textStyles.subheader.color);
+  doc.setTextColor(textStyles.subheader.color[0], textStyles.subheader.color[1], textStyles.subheader.color[2]);
   
   doc.text("INFORMACIÓN DE PAGO", 20, finalY + 30);
   
   doc.setFont(textStyles.default.font, textStyles.default.style);
   doc.setFontSize(textStyles.default.size);
-  doc.setTextColor(textStyles.default.color);
+  doc.setTextColor(textStyles.default.color[0], textStyles.default.color[1], textStyles.default.color[2]);
   
   doc.text("Por favor, realice el pago mediante transferencia bancaria a la siguiente cuenta:", 20, finalY + 40);
   doc.text("IBAN: ES12 3456 7890 1234 5678 9012", 20, finalY + 50);

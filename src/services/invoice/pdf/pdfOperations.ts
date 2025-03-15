@@ -28,7 +28,8 @@ export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> =>
     // Generate the PDF
     const pdfBlob = await generateInvoicePdf(invoice as Invoice);
     
-    console.log("PDF generated, creating download link");
+    console.log("PDF generated successfully, size:", pdfBlob.size, "bytes");
+    console.log("Creating download link");
     // Create a download link
     const url = window.URL.createObjectURL(pdfBlob);
     const link = document.createElement('a');
@@ -80,6 +81,7 @@ export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> =>
     console.log("Generating PDF for email attachment");
     // Generate the PDF
     const pdfBlob = await generateInvoicePdf(invoice as Invoice);
+    console.log("PDF generated successfully, size:", pdfBlob.size, "bytes");
     
     // Create a file object from the blob
     const file = new File([pdfBlob], `Factura_${invoice.invoiceNumber}.pdf`, { type: 'application/pdf' });

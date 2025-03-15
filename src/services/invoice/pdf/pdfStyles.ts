@@ -22,16 +22,16 @@ export const getStatusText = (status: string): string => {
 /**
  * Maps invoice status to color
  */
-export const getStatusColor = (status: string): { r: number, g: number, b: number } => {
+export const getStatusColor = (status: string): [number, number, number] => {
   switch (status) {
     case "paid":
-      return { r: 34, g: 197, b: 94 }; // Green
+      return [34, 197, 94]; // Green
     case "pending":
-      return { r: 234, g: 179, b: 8 }; // Yellow
+      return [234, 179, 8]; // Yellow
     case "cancelled":
-      return { r: 239, g: 68, b: 68 }; // Red
+      return [239, 68, 68]; // Red
     default:
-      return { r: 107, g: 114, b: 128 }; // Gray
+      return [107, 114, 128]; // Gray
   }
 };
 
@@ -43,19 +43,19 @@ export const textStyles = {
     font: "helvetica",
     style: "bold",
     size: 18,
-    color: { r: 59, g: 130, b: 246 } // Blue (primary color)
+    color: [59, 130, 246] // Blue (primary color)
   },
   subheader: {
     font: "helvetica",
     style: "bold",
     size: 12,
-    color: { r: 75, g: 85, b: 99 } // Gray-600
+    color: [75, 85, 99] // Gray-600
   },
   default: {
     font: "helvetica",
     style: "normal",
     size: 10,
-    color: { r: 31, g: 41, b: 55 } // Gray-800
+    color: [31, 41, 55] // Gray-800
   }
 };
 
@@ -79,13 +79,3 @@ export const tableStyles = {
     fillColor: [249, 250, 251]  // Gray-50
   }
 };
-
-// Add TypeScript declaration for jsPDF with autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-    lastAutoTable: {
-      finalY: number;
-    } | undefined;
-  }
-}

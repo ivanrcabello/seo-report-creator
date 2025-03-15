@@ -47,6 +47,8 @@ export const mapInvoiceToDB = (invoice: Partial<Invoice>) => {
     status: invoice.status,
     payment_date: invoice.paymentDate,
     notes: invoice.notes,
-    pdf_url: invoice.pdfUrl
+    pdf_url: invoice.pdfUrl,
+    updated_at: invoice.updatedAt,
+    created_at: invoice.createdAt
   };
 };

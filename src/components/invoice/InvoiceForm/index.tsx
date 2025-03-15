@@ -194,22 +194,19 @@ export const InvoiceForm = () => {
       const taxAmount = (baseAmountValue * taxRateValue) / 100;
       const totalAmount = baseAmountValue + taxAmount;
       
-      // Prepare the invoice data with correctly formatted dates
-      const invoiceData = {
-        ...data,
-        baseAmount: baseAmountValue,
-        taxRate: taxRateValue,
-        taxAmount,
-        totalAmount
-      };
-      
       console.log("Form submission - isNewInvoice:", isNewInvoice);
       console.log("Form data:", data);
       
       if (isNewInvoice) {
         // Create new invoice
-        console.log("Creating new invoice with data:", invoiceData);
-        result = await createInvoice(invoiceData as any);
+        console.log("Creating new invoice with data:", data);
+        result = await createInvoice({
+          ...data,
+          baseAmount: baseAmountValue,
+          taxRate: taxRateValue,
+          taxAmount,
+          totalAmount,
+        } as any);
       } else {
         if (!id) {
           throw new Error("Missing invoice ID for update");
@@ -217,22 +214,31 @@ export const InvoiceForm = () => {
         
         // Ensure we're passing the full invoice object with the ID
         console.log("Updating invoice with ID:", id);
-        console.log("Current invoice state:", invoice);
         
         // Make sure to include the ID in the update data and preserve existing fields
-        const updateData = {
-          ...invoice, // Start with all existing invoice data
-          ...invoiceData, // Override with new form data
-          id: id, // Ensure ID is included
-          // Preserve data not in the form
+        const updateData: Invoice = {
+          ...(invoice || {}),
+          id,
+          clientId: data.clientId,
+          packId: data.packId,
+          proposalId: data.proposalId,
+          baseAmount: baseAmountValue,
+          taxRate: taxRateValue,
+          taxAmount,
+          totalAmount,
+          status: data.status,
+          issueDate: data.issueDate,
+          dueDate: data.dueDate || null,
+          notes: data.notes || null,
+          invoiceNumber: data.invoiceNumber || invoice?.invoiceNumber || "",
+          paymentDate: invoice?.paymentDate || null,
+          pdfUrl: invoice?.pdfUrl || null,
           createdAt: invoice?.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          paymentDate: invoice?.paymentDate,
-          pdfUrl: invoice?.pdfUrl,
+          updatedAt: new Date().toISOString()
         };
         
-        console.log("Updating invoice with data:", updateData);
-        result = await updateInvoice(updateData as Invoice);
+        console.log("Updating invoice with full data:", updateData);
+        result = await updateInvoice(updateData);
       }
       
       if (result) {

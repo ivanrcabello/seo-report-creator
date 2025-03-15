@@ -1,4 +1,3 @@
-
 import { Invoice } from "@/types/invoice";
 import { supabase } from "@/integrations/supabase/client";
 import { mapInvoiceFromDB, mapInvoiceToDB } from "./invoiceMappers";
@@ -111,17 +110,16 @@ export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefin
     console.log("Invoice data for update:", invoice);
     
     // Create updated invoice with current timestamp
-    const dbInvoice = mapInvoiceToDB(invoice);
-    const updatedInvoice = {
-      ...dbInvoice,
-      updated_at: new Date().toISOString()
-    };
+    const dbInvoice = mapInvoiceToDB({
+      ...invoice,
+      updatedAt: new Date().toISOString()
+    });
     
-    console.log("Mapped invoice data for DB update:", updatedInvoice);
+    console.log("Mapped invoice data for DB update:", dbInvoice);
     
     const { data, error } = await supabase
       .from('invoices')
-      .update(updatedInvoice)
+      .update(dbInvoice)
       .eq('id', invoice.id)
       .select()
       .single();

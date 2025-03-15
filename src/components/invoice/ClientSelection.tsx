@@ -39,17 +39,24 @@ export const ClientSelection = ({
                 field.onChange(value);
                 onClientChange(value);
               }}
-              value={field.value}
+              value={field.value || ""}
+              defaultValue={field.value || ""}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar cliente" />
               </SelectTrigger>
               <SelectContent>
-                {availableClients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.name} {client.company ? `(${client.company})` : ''}
+                {availableClients.length === 0 ? (
+                  <SelectItem value="no-clients" disabled>
+                    No hay clientes disponibles
                   </SelectItem>
-                ))}
+                ) : (
+                  availableClients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name} {client.company ? `(${client.company})` : ''}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </FormControl>

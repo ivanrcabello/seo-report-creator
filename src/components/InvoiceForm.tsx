@@ -42,7 +42,7 @@ export const InvoiceForm = () => {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [availableClients, setAvailableClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isNewInvoice = !id || id === "new";
@@ -85,9 +85,15 @@ export const InvoiceForm = () => {
             setClient(clientData);
           }
         }
+
+        // Marcar como cargado una vez que tenemos los clientes
+        if (isNewInvoice) {
+          setIsLoading(false);
+        }
       } catch (error) {
         console.error("Error loading clients:", error);
         toast.error("No se pudieron cargar los clientes");
+        setIsLoading(false);
       }
     };
     
@@ -185,6 +191,75 @@ export const InvoiceForm = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+              {isNewInvoice ? "Nueva Factura" : `Editando Factura ${invoice?.invoiceNumber}`}
+            </CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate(-1)}
+              className="gap-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
+          </div>
+          <CardDescription>
+            {isNewInvoice ? "Cargando datos..." : `Cargando factura...`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-500">Cargando información...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Si estamos creando una nueva factura y no se ha seleccionado un cliente y no hay clientes disponibles
+  if (isNewInvoice && !clientIdFromQuery && availableClients.length === 0) {
+    return (
+      <Card className="shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+              Nueva Factura
+            </CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate(-1)}
+              className="gap-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
+          </div>
+          <CardDescription>
+            No hay clientes disponibles para crear facturas
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <p className="text-gray-500 mb-4">Debe crear al menos un cliente antes de poder crear facturas</p>
+            <Button onClick={() => navigate("/clients/new")} className="gap-1">
+              Crear Cliente
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-sm">

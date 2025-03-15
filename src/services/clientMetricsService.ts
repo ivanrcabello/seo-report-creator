@@ -12,7 +12,7 @@ interface ClientMetric {
 
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   try {
-    // Use a direct query bypassing the RLS recursion issue
+    // Use a simpler query approach to avoid RLS recursion issues
     const { data, error } = await supabase
       .from('client_metrics')
       .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
@@ -27,28 +27,30 @@ export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]
     return data || [];
   } catch (error) {
     console.error("Error fetching client metrics:", error);
-    return []; // Return empty array instead of throwing
+    return []; // Return empty array on any error
   }
 };
 
 export const updateClientMetrics = async (clientId: string, metric: ClientMetric): Promise<ClientMetric> => {
   try {
+    // Prepare metric data with proper validation
     const metricData = {
       client_id: clientId,
       month: metric.month,
-      web_visits: metric.web_visits || 0,
-      keywords_top10: metric.keywords_top10 || 0,
-      conversions: metric.conversions || 0,
-      conversion_goal: metric.conversion_goal || 30
+      web_visits: Number(metric.web_visits) || 0,
+      keywords_top10: Number(metric.keywords_top10) || 0,
+      conversions: Number(metric.conversions) || 0,
+      conversion_goal: Number(metric.conversion_goal) || 30
     };
 
-    // If the metric has an ID, update it; otherwise, insert a new one
-    if (metric.id) {
+    // Check if metric has an ID
+    if (metric.id && metric.id.trim() !== '') {
+      // Update existing metric
       const { data, error } = await supabase
         .from('client_metrics')
         .update(metricData)
         .eq('id', metric.id)
-        .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
+        .select()
         .single();
       
       if (error) {
@@ -62,7 +64,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       const { data, error } = await supabase
         .from('client_metrics')
         .insert(metricData)
-        .select('id, month, web_visits, keywords_top10, conversions, conversion_goal')
+        .select()
         .single();
       
       if (error) {

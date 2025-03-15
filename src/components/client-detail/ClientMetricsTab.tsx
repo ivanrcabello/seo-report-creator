@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save } from "lucide-react";
 import { getClientMetrics, updateClientMetrics } from "@/services/clientMetricsService";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 interface ClientMetric {
   id: string;
@@ -123,7 +123,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const handleInputChange = (field: keyof ClientMetric, value: string) => {
     if (!currentMetric) return;
     
-    // For numeric fields, parse as number
+    // For numeric fields, allow empty string but will be converted to 0 later
     const processedValue = ['web_visits', 'keywords_top10', 'conversions', 'conversion_goal'].includes(field) 
       ? (value === '' ? 0 : Number(value)) 
       : value;
@@ -174,6 +174,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
                 <Input 
                   id="web_visits" 
                   type="number" 
+                  min="0"
                   value={currentMetric?.web_visits || 0} 
                   onChange={(e) => handleInputChange('web_visits', e.target.value)}
                 />

@@ -4,7 +4,7 @@
  */
 
 import jsPDF from "jspdf";
-import 'jspdf-autotable'; // Import as a side effect to extend jsPDF
+import autoTable from "jspdf-autotable"; // Import as a named import
 import { Invoice } from "@/types/invoice";
 import { getClient } from "@/services/clientService";
 import { 

@@ -119,7 +119,8 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice): void => {
     tableData[0][0] = `Servicios SEO - ${invoice.notes}`;
   }
   
-  doc.autoTable({
+  // Using autoTable plugin
+  (doc as any).autoTable({
     startY: startY + 10,
     head: [["Concepto", "Importe"]],
     body: tableData,
@@ -134,7 +135,7 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice): void => {
  * Adds invoice totals to the PDF
  */
 export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice): void => {
-  const finalY = doc.lastAutoTable?.finalY || 150;
+  const finalY = (doc as any).lastAutoTable?.finalY || 150;
   
   // Add totals table
   const totalsData = [
@@ -143,7 +144,7 @@ export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice): void => {
     ["TOTAL", formatCurrency(invoice.totalAmount)],
   ];
   
-  doc.autoTable({
+  (doc as any).autoTable({
     startY: finalY + 10,
     body: totalsData,
     columns: [
@@ -160,7 +161,7 @@ export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice): void => {
       0: { halign: "right", font: "helvetica", fontStyle: "bold" },
       1: { halign: "right", font: "helvetica" },
     },
-    didParseCell: function(data) {
+    didParseCell: function(data: any) {
       // Make the total row bold
       if (data.row.index === 2) {
         data.cell.styles.fontStyle = "bold";
@@ -174,7 +175,7 @@ export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice): void => {
  * Adds footer with payment information
  */
 export const addFooterWithPaymentInfo = (doc: jsPDF, invoice: Invoice): void => {
-  const finalY = doc.lastAutoTable?.finalY || 200;
+  const finalY = (doc as any).lastAutoTable?.finalY || 200;
   
   doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
   doc.setFontSize(textStyles.subheader.size);

@@ -54,10 +54,13 @@ export const getInvoice = async (id: string): Promise<Invoice | undefined> => {
 // Create a new invoice
 export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | "updatedAt" | "invoiceNumber">): Promise<Invoice | undefined> => {
   try {
+    console.log("Creating invoice with data:", invoice);
+    
     // Generate invoice number if one is not provided
     let invoiceNumber = (invoice as any).invoiceNumber;
     if (!invoiceNumber) {
       invoiceNumber = await generateInvoiceNumber();
+      console.log("Generated invoice number:", invoiceNumber);
     }
     
     const now = new Date().toISOString();
@@ -67,6 +70,8 @@ export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | 
       created_at: now,
       updated_at: now
     };
+    
+    console.log("Mapped invoice data for DB:", newInvoice);
     
     const { data, error } = await supabase
       .from('invoices')
@@ -79,6 +84,7 @@ export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | 
       return undefined;
     }
     
+    console.log("Invoice created successfully:", data);
     return mapInvoiceFromDB(data);
   } catch (error) {
     console.error("Error in createInvoice:", error);

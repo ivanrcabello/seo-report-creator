@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Save, AlertTriangle } from "lucide-react";
+import { Loader2, Save, AlertTriangle, Info } from "lucide-react";
 import { getClientMetrics, updateClientMetrics } from "@/services/clientMetricsService";
 import { format } from "date-fns";
 
@@ -30,6 +30,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const [isSaving, setIsSaving] = useState(false);
   const [currentMetric, setCurrentMetric] = useState<ClientMetric | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAdminError, setIsAdminError] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     try {
       setIsLoading(true);
       setError(null);
+      setIsAdminError(false);
       const data = await getClientMetrics(clientId);
       
       setMetrics(data);
@@ -81,6 +83,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     try {
       setIsSaving(true);
       setError(null);
+      setIsAdminError(false);
       
       // Validate inputs before saving
       if (currentMetric.month.trim() === '') {
@@ -116,10 +119,18 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       });
     } catch (error) {
       console.error("Error saving client metrics:", error);
-      setError(error.message || "No se pudieron guardar las métricas del cliente");
+      
+      // Check if it's a database permissions error
+      if (error instanceof Error && error.message.includes("permisos en la base de datos")) {
+        setIsAdminError(true);
+        setError("Error de permisos: Solo los administradores pueden modificar métricas. Por favor, contacte al administrador.");
+      } else {
+        setError(error instanceof Error ? error.message : "No se pudieron guardar las métricas del cliente");
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "No se pudieron guardar las métricas del cliente",
+        description: error instanceof Error ? error.message : "No se pudieron guardar las métricas del cliente",
         variant: "destructive"
       });
     } finally {
@@ -165,6 +176,17 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {isAdminError && (
+        <Alert variant="warning" className="bg-amber-50 border-amber-200">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Acceso restringido</AlertTitle>
+          <AlertDescription>
+            Solo los administradores pueden modificar métricas de clientes.
+            Esta funcionalidad está restringida por políticas de seguridad.
+          </AlertDescription>
         </Alert>
       )}
       

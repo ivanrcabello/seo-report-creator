@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface ClientMetric {
@@ -58,6 +59,12 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       if (error) {
         console.error("Error updating client metric:", error);
         console.log("Error details:", JSON.stringify(error));
+        
+        // Check for infinite recursion error
+        if (error.message && error.message.includes("infinite recursion")) {
+          throw new Error("Error de permisos en la base de datos. Por favor, contacte al administrador.");
+        }
+        
         throw new Error(`Error al actualizar métricas: ${error.message}`);
       }
       
@@ -73,6 +80,12 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
       if (error) {
         console.error("Error inserting client metric:", error);
         console.log("Error details:", JSON.stringify(error));
+        
+        // Check for infinite recursion error
+        if (error.message && error.message.includes("infinite recursion")) {
+          throw new Error("Error de permisos en la base de datos. Por favor, contacte al administrador.");
+        }
+        
         throw new Error(`Error al guardar métricas: ${error.message}`);
       }
       
@@ -84,7 +97,7 @@ export const updateClientMetrics = async (clientId: string, metric: ClientMetric
     console.error("Exception in updateClientMetrics:", error);
     
     // If it's an error we've already formatted, just pass it through
-    if (error.message && (error.message.startsWith("Error al actualizar") || error.message.startsWith("Error al guardar"))) {
+    if (error instanceof Error) {
       throw error;
     }
     

@@ -1,5 +1,5 @@
 
-import { supabaseClient } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { SeoLocalReport } from '@/types/client';
 
@@ -16,7 +16,7 @@ export async function generateLocalSeoAnalysis(
     console.log('Generating local SEO analysis...');
     
     // Retrieve document content to analyze
-    const { data: documents, error } = await supabaseClient
+    const { data: documents, error } = await supabase
       .from('client_documents')
       .select('*')
       .in('id', documentIds);
@@ -85,7 +85,7 @@ export async function createLocalSeoReport(
       date: new Date().toISOString()
     };
 
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from('seo_local_reports')
       .insert(reportData)
       .select()
@@ -146,7 +146,7 @@ export async function updateLocalSeoReport(
     if (updates.localListings) reportData.local_listings = updates.localListings;
     if (updates.recommendations) reportData.recommendations = updates.recommendations;
     
-    const { error } = await supabaseClient
+    const { error } = await supabase
       .from('seo_local_reports')
       .update(reportData)
       .eq('id', reportId);

@@ -1,5 +1,5 @@
 
-import { supabaseClient } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { SeoLocalReport } from '@/types/client';
 
 /**
@@ -7,7 +7,7 @@ import { SeoLocalReport } from '@/types/client';
  */
 export async function getSeoLocalReports(clientId: string): Promise<SeoLocalReport[]> {
   try {
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from('seo_local_reports')
       .select('*')
       .eq('client_id', clientId)
@@ -49,7 +49,7 @@ export async function getSeoLocalReports(clientId: string): Promise<SeoLocalRepo
  */
 export async function getSeoLocalReportById(reportId: string): Promise<SeoLocalReport | null> {
   try {
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from('seo_local_reports')
       .select('*')
       .eq('id', reportId)

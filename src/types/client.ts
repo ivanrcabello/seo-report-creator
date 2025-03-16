@@ -1,4 +1,3 @@
-
 export interface ClientReport {
   id: string;
   clientId: string;
@@ -7,17 +6,16 @@ export interface ClientReport {
   type: string;
   url?: string;
   notes?: string;
-  content: string; // Change from optional to required
+  content: string;
   documentIds: string[];
   shareToken?: string;
   sharedAt?: string | null;
   includeInProposal?: boolean;
-  analyticsData: any; // Change from optional to required
+  analyticsData: any;
   searchConsoleData?: any;
   auditResult?: any;
 }
 
-// Adding other exported interfaces for imports in the project
 export interface Client {
   id: string;
   name: string;
@@ -98,11 +96,11 @@ export interface SeoLocalReport {
   date: string;
   businessName: string;
   location?: string;
-  address: string; // This will actually just use location data from DB
+  address: string;
   phone: string | null;
   website: string | null;
   googleBusinessUrl?: string | null;
-  googleMapsRanking?: number; // Maps to google_maps_ranking in DB
+  googleMapsRanking?: number;
   googleReviewsCount?: number;
   keywordRankings?: any;
   localListings?: any;

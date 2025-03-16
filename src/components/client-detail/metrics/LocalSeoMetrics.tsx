@@ -123,7 +123,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
           phone: settings.phone || "",
           website: settings.website || "",
           googleBusinessUrl: settings.google_business_url || "",
-          googleMapsRanking: settings.google_maps_ranking || 0,
+          googleMapsRanking: settings.listings_count || 0, // Changed from google_maps_ranking
           googleReviewsCount: settings.google_reviews_count || 0,
           googleReviewsAverage: settings.google_reviews_average || 0,
           listingsCount: settings.listings_count || 0,
@@ -211,7 +211,6 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
         website: data.website,
         googleBusinessUrl: data.googleBusinessUrl,
         targetLocations: targetLocations,
-        googleMapsRanking: data.googleMapsRanking,
         googleReviewsCount: data.googleReviewsCount,
         googleReviewsAverage: data.googleReviewsAverage,
         listingsCount: data.listingsCount,
@@ -451,7 +450,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Informaci��n básica del negocio</h3>
+                        <h3 className="text-sm font-medium">Información básica del negocio</h3>
                         
                         <div className="grid grid-cols-1 gap-4">
                           <FormField

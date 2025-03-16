@@ -3,8 +3,12 @@ import { Search } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useLocalSeoData } from "./useLocalSeoData";
 
-export const LocalSeoKeywords = () => {
-  const { currentReport } = useLocalSeoData("", "");
+interface LocalSeoKeywordsProps {
+  clientId: string;
+}
+
+export const LocalSeoKeywords = ({ clientId }: LocalSeoKeywordsProps) => {
+  const { currentReport } = useLocalSeoData(clientId);
   
   if (!currentReport?.keywordRankings || currentReport.keywordRankings.length === 0) {
     return (

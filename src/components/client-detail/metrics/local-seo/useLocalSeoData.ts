@@ -25,7 +25,7 @@ export const localSeoMetricsSchema = z.object({
 
 export type LocalSeoMetricsFormValues = z.infer<typeof localSeoMetricsSchema>;
 
-export const useLocalSeoData = (clientId: string, clientName: string) => {
+export const useLocalSeoData = (clientId: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -216,7 +216,6 @@ export const useLocalSeoData = (clientId: string, clientName: string) => {
     handleAddLocation,
     handleRemoveLocation,
     handleKeyDown,
-    saveData,
-    clientName
+    saveData
   };
 };

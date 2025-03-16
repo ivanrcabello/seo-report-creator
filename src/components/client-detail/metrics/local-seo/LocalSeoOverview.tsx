@@ -7,15 +7,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 interface LocalSeoOverviewProps {
   clientId: string;
+  clientName: string;
 }
 
-export const LocalSeoOverview = ({ clientId }: LocalSeoOverviewProps) => {
+export const LocalSeoOverview = ({ clientId, clientName }: LocalSeoOverviewProps) => {
   const { 
     currentReport, 
     localSeoSettings, 
-    targetLocations,
-    clientName
-  } = useLocalSeoData(clientId, clientName);
+    targetLocations
+  } = useLocalSeoData(clientId);
 
   const form = useForm<LocalSeoMetricsFormValues>({
     resolver: zodResolver(localSeoMetricsSchema),

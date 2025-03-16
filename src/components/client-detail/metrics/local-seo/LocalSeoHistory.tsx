@@ -7,7 +7,7 @@ interface LocalSeoHistoryProps {
 }
 
 export const LocalSeoHistory = ({ clientId }: LocalSeoHistoryProps) => {
-  const { metricHistory, clientName } = useLocalSeoData(clientId, clientName);
+  const { metricHistory } = useLocalSeoData(clientId);
   
   if (metricHistory.length === 0) {
     return (

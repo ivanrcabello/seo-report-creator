@@ -12,9 +12,10 @@ import { useLocalSeoData, LocalSeoMetricsFormValues, localSeoMetricsSchema } fro
 
 interface LocalSeoSettingsProps {
   clientId: string;
+  clientName: string;
 }
 
-export const LocalSeoSettings = ({ clientId }: LocalSeoSettingsProps) => {
+export const LocalSeoSettings = ({ clientId, clientName }: LocalSeoSettingsProps) => {
   const { 
     localSeoSettings, 
     targetLocations, 
@@ -24,9 +25,8 @@ export const LocalSeoSettings = ({ clientId }: LocalSeoSettingsProps) => {
     handleRemoveLocation, 
     handleKeyDown, 
     saveData, 
-    isSaving,
-    clientName
-  } = useLocalSeoData(clientId, clientName);
+    isSaving
+  } = useLocalSeoData(clientId);
 
   const form = useForm<LocalSeoMetricsFormValues>({
     resolver: zodResolver(localSeoMetricsSchema),

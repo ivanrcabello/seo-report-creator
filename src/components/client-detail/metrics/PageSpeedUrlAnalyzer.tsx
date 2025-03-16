@@ -25,6 +25,7 @@ export const PageSpeedUrlAnalyzer = ({
 }: PageSpeedUrlAnalyzerProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [tipVisible, setTipVisible] = useState(true);
+  const [apiStatus, setApiStatus] = useState<string | null>(null);
 
   const handleAnalyzeUrl = async () => {
     if (!url.trim()) {
@@ -36,6 +37,7 @@ export const PageSpeedUrlAnalyzer = ({
       setIsLoading(true);
       setError(null);
       setTipVisible(false);
+      setApiStatus("Conectando con Google PageSpeed API...");
       
       let formattedUrl = url;
       if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
@@ -48,6 +50,7 @@ export const PageSpeedUrlAnalyzer = ({
       
       if (report) {
         console.log("Análisis de PageSpeed completado con éxito");
+        setApiStatus("Guardando resultados...");
         
         // Set the report in state before saving to database
         setPageSpeedReport(report);
@@ -75,6 +78,7 @@ export const PageSpeedUrlAnalyzer = ({
       toast.error("Error al analizar la URL. Por favor, inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
+      setApiStatus(null);
     }
   };
 
@@ -116,6 +120,14 @@ export const PageSpeedUrlAnalyzer = ({
           </div>
         </div>
       </div>
+      
+      {apiStatus && isLoading && (
+        <Alert className="bg-blue-50 border-blue-100">
+          <AlertDescription className="text-sm text-blue-700">
+            {apiStatus}
+          </AlertDescription>
+        </Alert>
+      )}
       
       {tipVisible && !isLoading && (
         <Alert className="bg-blue-50 border-blue-100">

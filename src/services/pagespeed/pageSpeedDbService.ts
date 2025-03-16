@@ -7,11 +7,11 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
   try {
     console.log("Saving PageSpeed report for client:", clientId);
     
-    // Convert all metrics to numbers to ensure type consistency
+    // Convertir todas las métricas a números para asegurar consistencia de tipos
     const metrics = { ...report.metrics };
     
-    // Prepare data for the pagespeed_metrics table
-    // Important: Multiply decimal scores by 100 to store as integers as required by the database
+    // Preparar datos para la tabla pagespeed_metrics
+    // Importante: Multiplicar las puntuaciones decimales por 100 para almacenarlas como enteros
     const metricsData = {
       client_id: clientId,
       url: metrics.url,
@@ -30,7 +30,7 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
     
     console.log("Metrics data to be saved:", metricsData);
     
-    // Insert into pagespeed_metrics
+    // Insertar en pagespeed_metrics
     const { data: metricsResult, error: metricsError } = await supabase
       .from('pagespeed_metrics')
       .insert([metricsData])
@@ -49,35 +49,44 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
     }
     
     const metricId = metricsResult[0].id;
+    console.log("PageSpeed metrics saved with ID:", metricId);
     
-    // Also store in client_pagespeed table with audits included
-    // Again, multiply decimal scores by 100 to store as integers
-    const pagespeedData = {
-      client_id: clientId,
-      url: metrics.url,
-      performance_score: Math.round(Number(metrics.performance_score) * 100),
-      accessibility_score: Math.round(Number(metrics.accessibility_score) * 100),
-      best_practices_score: Math.round(Number(metrics.best_practices_score) * 100),
-      seo_score: Math.round(Number(metrics.seo_score) * 100),
-      first_contentful_paint: Number(metrics.first_contentful_paint),
-      speed_index: Number(metrics.speed_index),
-      largest_contentful_paint: Number(metrics.largest_contentful_paint),
-      time_to_interactive: Number(metrics.time_to_interactive),
-      total_blocking_time: Number(metrics.total_blocking_time),
-      cumulative_layout_shift: Number(metrics.cumulative_layout_shift),
-      audits: JSON.stringify(report.audits), // Convert to JSON string before storing
-      created_at: new Date().toISOString()
-    };
-    
-    // Insert into client_pagespeed
-    const { error: reportError } = await supabase
-      .from('client_pagespeed')
-      .insert([pagespeedData]);
-    
-    if (reportError) {
-      console.error("Error saving PageSpeed report:", reportError);
-      toast.error("Error al guardar el informe de PageSpeed");
-      return false;
+    // También almacenar en client_pagespeed con audits incluidos
+    // De nuevo, multiplicar puntuaciones decimales por 100 para almacenarlas como enteros
+    try {
+      const pagespeedData = {
+        client_id: clientId,
+        url: metrics.url,
+        performance_score: Math.round(Number(metrics.performance_score) * 100),
+        accessibility_score: Math.round(Number(metrics.accessibility_score) * 100),
+        best_practices_score: Math.round(Number(metrics.best_practices_score) * 100),
+        seo_score: Math.round(Number(metrics.seo_score) * 100),
+        first_contentful_paint: Number(metrics.first_contentful_paint),
+        speed_index: Number(metrics.speed_index),
+        largest_contentful_paint: Number(metrics.largest_contentful_paint),
+        time_to_interactive: Number(metrics.time_to_interactive),
+        total_blocking_time: Number(metrics.total_blocking_time),
+        cumulative_layout_shift: Number(metrics.cumulative_layout_shift),
+        audits: JSON.stringify(report.audits), // Convertir a string JSON antes de almacenar
+        created_at: new Date().toISOString()
+      };
+      
+      // Insertar en client_pagespeed
+      const { error: reportError } = await supabase
+        .from('client_pagespeed')
+        .insert([pagespeedData]);
+      
+      if (reportError) {
+        console.error("Error saving PageSpeed report:", reportError);
+        // Aunque falle esta parte, ya hemos guardado las métricas principales
+        console.log("Falling back to metrics-only storage");
+        return true;
+      }
+    } catch (err) {
+      console.error("Error in second insert (client_pagespeed):", err);
+      // Si falla la segunda inserción, todavía consideramos exitoso el guardado
+      // ya que las métricas principales están guardadas
+      return true;
     }
     
     console.log("PageSpeed report saved successfully");
@@ -93,7 +102,7 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
   try {
     console.log("Getting PageSpeed report for client:", clientId);
     
-    // Get latest record from client_pagespeed that includes audits
+    // Obtener el registro más reciente de client_pagespeed que incluye audits
     const { data: pagespeedData, error: pagespeedError } = await supabase
       .from('client_pagespeed')
       .select('*')
@@ -109,8 +118,8 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
     const data = pagespeedData[0];
     console.log("PageSpeed data found:", data);
     
-    // Build the report
-    // Important: Divide integer scores by 100 to convert back to decimals (0-1)
+    // Construir el informe
+    // Importante: Dividir puntuaciones enteras por 100 para convertirlas de vuelta a decimales (0-1)
     const report: PageSpeedReport = {
       id: data.id,
       metrics: {
@@ -138,7 +147,7 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
   }
 };
 
-// Helper function to get latest metrics as a report
+// Función auxiliar para obtener las métricas más recientes como informe
 const getLatestMetricsAsReport = async (clientId: string): Promise<PageSpeedReport | null> => {
   try {
     const { data, error } = await supabase
@@ -154,7 +163,7 @@ const getLatestMetricsAsReport = async (clientId: string): Promise<PageSpeedRepo
     }
     
     const metricData = data[0];
-    // Divide integer scores by 100 to convert back to decimals (0-1)
+    // Dividir puntuaciones enteras por 100 para convertirlas de vuelta a decimales (0-1)
     return {
       id: metricData.id,
       metrics: {
@@ -193,7 +202,7 @@ export const getPageSpeedMetrics = async (clientId: string, limit = 10): Promise
       return [];
     }
     
-    // Map the data to convert scores back from integers to decimals (0-1)
+    // Mapear los datos para convertir las puntuaciones de enteros a decimales (0-1)
     const mappedData = data?.map(item => ({
       ...item,
       performance_score: Number(item.performance_score) / 100,

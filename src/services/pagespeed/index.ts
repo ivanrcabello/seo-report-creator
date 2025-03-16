@@ -4,7 +4,7 @@ export * from "./types";
 export * from "./pageSpeedApiService";
 export * from "./pageSpeedDbService";
 
-// Export the getPageSpeedHistory function
+// Función para obtener el historial de PageSpeed
 export const getPageSpeedHistory = async (clientId: string): Promise<any[]> => {
   try {
     console.log("Getting PageSpeed history for client:", clientId);

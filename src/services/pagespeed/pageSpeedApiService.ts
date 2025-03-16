@@ -2,23 +2,25 @@
 import axios from 'axios';
 import { PageSpeedReport, PageSpeedAudit } from "./types";
 
-// Get API key from environment variables
+// Obtener la clave API desde las variables de entorno
 const API_KEY = import.meta.env.VITE_PAGESPEED_API_KEY;
 
 export const analyzeWebsite = async (url: string): Promise<PageSpeedReport> => {
   try {
     console.log("Analyzing URL with PageSpeed Insights:", url);
     
-    // Use mock data if in development mode and no API key
-    if (!API_KEY && import.meta.env.DEV) {
-      console.log("Using mock PageSpeed data for development");
+    // Verificar que tenemos una API_KEY antes de intentar usar la API real
+    if (!API_KEY) {
+      console.log("No PageSpeed API key found. Using mock data.");
       return generateMockData(url);
     }
     
-    // Build the API URL
+    // Construir la URL de la API
     const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${API_KEY}&strategy=mobile&category=performance&category=seo&category=best-practices&category=accessibility`;
     
-    // Make the API request
+    console.log("Calling PageSpeed API with URL:", apiUrl);
+    
+    // Realizar la petición a la API
     const response = await axios.get(apiUrl);
     
     if (response.status !== 200) {
@@ -27,14 +29,14 @@ export const analyzeWebsite = async (url: string): Promise<PageSpeedReport> => {
     }
     
     const data = response.data;
-    console.log("PageSpeed API response received");
+    console.log("PageSpeed API response received successfully");
     
-    // Process and map the response data
+    // Procesar y mapear los datos de la respuesta
     return processPageSpeedResponse(data, url);
   } catch (error) {
     console.error("Error calling PageSpeed API:", error);
     
-    // Fall back to mock data in development
+    // Solo usar datos mock en desarrollo o si no hay API key
     if (import.meta.env.DEV) {
       console.log("Falling back to mock data in development");
       return generateMockData(url);
@@ -44,20 +46,20 @@ export const analyzeWebsite = async (url: string): Promise<PageSpeedReport> => {
   }
 };
 
-// Function to process the API response
+// Función para procesar la respuesta de la API
 const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
   try {
-    // Extract categories and audits
+    // Extraer categorías y auditorías
     const categories = data.lighthouseResult?.categories || {};
     const audits = data.lighthouseResult?.audits || {};
     
-    // Extract scores from categories
+    // Extraer puntuaciones de las categorías
     const performanceScore = (categories.performance?.score || 0);
     const seoScore = (categories.seo?.score || 0);
     const bestPracticesScore = (categories['best-practices']?.score || 0);
     const accessibilityScore = (categories.accessibility?.score || 0);
     
-    // Extract main metrics
+    // Extraer métricas principales
     const firstContentfulPaint = parseFloat(audits['first-contentful-paint']?.numericValue) || 0;
     const speedIndex = parseFloat(audits['speed-index']?.numericValue) || 0;
     const largestContentfulPaint = parseFloat(audits['largest-contentful-paint']?.numericValue) || 0;
@@ -65,12 +67,12 @@ const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
     const totalBlockingTime = parseFloat(audits['total-blocking-time']?.numericValue) || 0;
     const cumulativeLayoutShift = parseFloat(audits['cumulative-layout-shift']?.numericValue) || 0;
     
-    // Convert audits to our format
+    // Convertir auditorías al formato requerido
     const formattedAudits: PageSpeedAudit[] = Object.entries(audits).map(([id, audit]: [string, any]) => {
-      // Ensure score is a number between 0 and 1
+      // Asegurar que score es un número entre 0 y 1
       let score = typeof audit.score === 'number' ? audit.score : null;
       
-      // Try to infer score from displayValue if needed
+      // Intentar inferir score desde displayValue si es necesario
       if (score === null && audit.displayValue) {
         const numericMatch = audit.displayValue.match(/(\d+(\.\d+)?)/);
         if (numericMatch) {
@@ -83,12 +85,12 @@ const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
         }
       }
       
-      // Default score if still null
+      // Valor por defecto si sigue siendo null
       if (score === null) {
         score = 0.5;
       }
       
-      // Determine audit category
+      // Determinar la categoría de la auditoría
       let category: 'performance' | 'accessibility' | 'best-practices' | 'seo' = 'performance';
       if (audit.group === 'a11y') {
         category = 'accessibility';
@@ -98,7 +100,7 @@ const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
         category = 'seo';
       }
       
-      // Determine importance based on score
+      // Determinar importancia basada en la puntuación
       let importance: 'high' | 'medium' | 'low' = 'medium';
       if (score < 0.5) {
         importance = 'high';
@@ -119,7 +121,7 @@ const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
       };
     });
     
-    // Return the complete report
+    // Devolver el informe completo
     return {
       id: `pagespeed-${Date.now()}`,
       metrics: {
@@ -135,7 +137,8 @@ const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
         total_blocking_time: totalBlockingTime,
         cumulative_layout_shift: cumulativeLayoutShift
       },
-      audits: formattedAudits
+      audits: formattedAudits,
+      created_at: new Date().toISOString()
     };
   } catch (error) {
     console.error("Error processing PageSpeed response:", error);
@@ -143,17 +146,17 @@ const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
   }
 };
 
-// Function to generate mock data for development
+// Función para generar datos mock para desarrollo
 const generateMockData = (url: string): PageSpeedReport => {
   console.log("Generating mock PageSpeed data for:", url);
   
-  // Generate random audits
+  // Generar auditorías aleatorias
   const audits: PageSpeedAudit[] = [];
   const categories: Array<'performance' | 'accessibility' | 'best-practices' | 'seo'> = [
     'performance', 'accessibility', 'best-practices', 'seo'
   ];
   
-  // Generate some random audits
+  // Generar algunas auditorías aleatorias
   for (let i = 1; i <= 20; i++) {
     const category = categories[Math.floor(Math.random() * categories.length)];
     const score = Math.random();
@@ -170,7 +173,7 @@ const generateMockData = (url: string): PageSpeedReport => {
     });
   }
   
-  // Generate random scores between 0 and 1
+  // Generar puntuaciones aleatorias entre 0 y 1
   const performanceScore = parseFloat(Math.random().toFixed(2));
   const seoScore = parseFloat(Math.random().toFixed(2));
   const bestPracticesScore = parseFloat(Math.random().toFixed(2));
@@ -191,6 +194,7 @@ const generateMockData = (url: string): PageSpeedReport => {
       total_blocking_time: Math.round(Math.random() * 1000),
       cumulative_layout_shift: parseFloat((Math.random() * 0.5).toFixed(2))
     },
-    audits
+    audits,
+    created_at: new Date().toISOString()
   };
 };

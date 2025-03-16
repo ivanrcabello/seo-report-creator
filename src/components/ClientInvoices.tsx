@@ -29,7 +29,7 @@ import { es } from "date-fns/locale";
 interface ClientInvoicesProps {
   invoices: Invoice[];
   clientName?: string;
-  clientId?: string;
+  clientId: string; // Make clientId required
   onAddInvoice?: () => void;
 }
 

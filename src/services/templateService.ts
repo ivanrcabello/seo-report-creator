@@ -41,7 +41,7 @@ export const getTemplates = async (documentType: DocumentType): Promise<Document
       
     if (error) throw error;
     
-    return data.map(mapTemplateFromDB);
+    return Array.isArray(data) ? data.map(mapTemplateFromDB) : [];
   } catch (error) {
     console.error("Error fetching templates:", error);
     toast.error("Error al cargar las plantillas");

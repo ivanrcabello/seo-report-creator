@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,13 +6,14 @@ import { LocalSeoReportView } from "@/components/LocalSeoReportView";
 import { SeoLocalReport, ClientDocument } from "@/types/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Map, FileText, FileUp, Loader2 } from "lucide-react";
+import { Map, FileText, FileUp, Loader2, Settings, FileBarChart } from "lucide-react";
 import { FileUploader } from "@/components/FileUploader";
 import { useToast } from "@/components/ui/use-toast";
 import { extractFileContent, getFileType } from "@/services/documentService";
 import { generateLocalSeoAnalysis, createLocalSeoReport } from "@/services/localSeoService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { LocalSeoSettingsForm } from "./LocalSeoSettingsForm";
 
 interface LocalSeoTabProps {
   isGeneratingReport: boolean;
@@ -37,9 +37,36 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
   const [uploadedDocuments, setUploadedDocuments] = useState<ClientDocument[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeLocalTab, setActiveLocalTab] = useState<"report" | "upload">("report");
+  const [activeLocalTab, setActiveLocalTab] = useState<"report" | "upload" | "settings">("report");
+  const [clientName, setClientName] = useState<string>("");
 
-  // Reset to report tab when a report is available
+  useEffect(() => {
+    if (localSeoReports.length > 0 && localSeoReports[0].businessName) {
+      setClientName(localSeoReports[0].businessName);
+    } else {
+      const fetchClientName = async () => {
+        if (!clientId) return;
+        
+        try {
+          const { data, error } = await supabase
+            .from('clients')
+            .select('name')
+            .eq('id', clientId)
+            .single();
+            
+          if (error) throw error;
+          if (data) {
+            setClientName(data.name);
+          }
+        } catch (error) {
+          console.error("Error fetching client name:", error);
+        }
+      };
+      
+      fetchClientName();
+    }
+  }, [clientId, localSeoReports]);
+
   useEffect(() => {
     if (localSeoReports.length > 0 && !isGeneratingReport) {
       setActiveLocalTab("report");
@@ -110,13 +137,10 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
 
     setIsAnalyzing(true);
     try {
-      // First save the documents to the database
       const { addDocument } = await import("@/services/documentService");
       
-      // Track document IDs to use for the SEO analysis
       const documentIds: string[] = [];
       
-      // Save each document and collect IDs
       for (const doc of uploadedDocuments) {
         if (doc.id.startsWith('temp-')) {
           const savedDoc = await addDocument({
@@ -134,19 +158,15 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
         }
       }
 
-      // Get client name for the analysis
       let clientName = "Cliente";
       if (localSeoReports.length > 0 && localSeoReports[0].businessName) {
         clientName = localSeoReports[0].businessName;
       }
 
-      // Generate analysis
       const analysis = await generateLocalSeoAnalysis(documentIds, clientId, clientName);
       
-      // Create report
       const report = await createLocalSeoReport(analysis, clientId, clientName);
       
-      // Clear uploaded documents and set current report
       setUploadedDocuments([]);
       if (setCurrentLocalSeoReport) {
         setCurrentLocalSeoReport(report);
@@ -157,7 +177,6 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
         description: "El informe SEO local ha sido generado exitosamente.",
       });
       
-      // Switch to report view
       setActiveLocalTab("report");
       
     } catch (error) {
@@ -186,17 +205,26 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
     );
   }
 
-  // If we have reports, show the report view with tabs for uploading
   if (localSeoReports.length > 0) {
     const reportToShow = currentLocalSeoReport || localSeoReports[localSeoReports.length - 1];
     const previousReports = localSeoReports.filter(report => report.id !== reportToShow.id);
     
     return (
       <div className="space-y-6">
-        <Tabs value={activeLocalTab} onValueChange={(value) => setActiveLocalTab(value as "report" | "upload")}>
+        <Tabs value={activeLocalTab} onValueChange={(value) => setActiveLocalTab(value as "report" | "upload" | "settings")}>
           <TabsList className="mb-4">
-            <TabsTrigger value="report">Ver informe SEO local</TabsTrigger>
-            <TabsTrigger value="upload">Subir documentos</TabsTrigger>
+            <TabsTrigger value="report" className="flex items-center gap-1.5">
+              <FileBarChart className="h-4 w-4" />
+              Ver informe SEO local
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-1.5">
+              <Settings className="h-4 w-4" />
+              Configuración
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex items-center gap-1.5">
+              <FileUp className="h-4 w-4" />
+              Subir documentos
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="report">
@@ -224,6 +252,13 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+          
+          <TabsContent value="settings">
+            <LocalSeoSettingsForm 
+              clientId={clientId} 
+              clientName={clientName}
+            />
           </TabsContent>
           
           <TabsContent value="upload">
@@ -279,61 +314,84 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
     );
   }
 
-  // If no reports exist, show the document upload interface
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>SEO Local</CardTitle>
-        <CardDescription>
-          Sube documentos relacionados con el negocio para crear un informe SEO local
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="text-center py-4">
-          <Map className="w-16 h-16 text-green-200 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No hay informes SEO local</h3>
-          <p className="text-gray-500 max-w-md mx-auto mb-6">
-            Para generar un informe SEO local, sube documentos relacionados con el negocio del cliente
-          </p>
-        </div>
+    <div className="space-y-6">
+      <Tabs defaultValue="settings">
+        <TabsList className="mb-4">
+          <TabsTrigger value="settings" className="flex items-center gap-1.5">
+            <Settings className="h-4 w-4" />
+            Configuración
+          </TabsTrigger>
+          <TabsTrigger value="upload" className="flex items-center gap-1.5">
+            <FileUp className="h-4 w-4" />
+            Subir documentos
+          </TabsTrigger>
+        </TabsList>
         
-        <FileUploader 
-          onFileUpload={handleFileUpload}
-          isLoading={isUploading}
-          allowedTypes={[".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx", ".txt"]}
-          maxSizeMB={25}
-        />
+        <TabsContent value="settings">
+          <LocalSeoSettingsForm 
+            clientId={clientId} 
+            clientName={clientName}
+          />
+        </TabsContent>
         
-        {uploadedDocuments.length > 0 && (
-          <div className="space-y-4">
-            <Separator />
-            <h3 className="font-medium text-lg">Documentos añadidos ({uploadedDocuments.length})</h3>
-            <div className="space-y-2">
-              {uploadedDocuments.map((doc) => (
-                <div key={doc.id} className="flex items-center gap-2 p-2 border rounded">
-                  <FileText className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{doc.name}</span>
+        <TabsContent value="upload">
+          <Card>
+            <CardHeader>
+              <CardTitle>SEO Local</CardTitle>
+              <CardDescription>
+                Sube documentos relacionados con el negocio para crear un informe SEO local
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="text-center py-4">
+                <Map className="w-16 h-16 text-green-200 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No hay informes SEO local</h3>
+                <p className="text-gray-500 max-w-md mx-auto mb-6">
+                  Para generar un informe SEO local, sube documentos relacionados con el negocio del cliente
+                </p>
+              </div>
+              
+              <FileUploader 
+                onFileUpload={handleFileUpload}
+                isLoading={isUploading}
+                allowedTypes={[".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx", ".txt"]}
+                maxSizeMB={25}
+              />
+              
+              {uploadedDocuments.length > 0 && (
+                <div className="space-y-4">
+                  <Separator />
+                  <h3 className="font-medium text-lg">Documentos añadidos ({uploadedDocuments.length})</h3>
+                  <div className="space-y-2">
+                    {uploadedDocuments.map((doc) => (
+                      <div key={doc.id} className="flex items-center gap-2 p-2 border rounded">
+                        <FileText className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm">{doc.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <Button 
+                    onClick={generateSeoReport} 
+                    disabled={isAnalyzing || uploadedDocuments.length === 0}
+                    className="w-full mt-4"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generando informe...
+                      </>
+                    ) : (
+                      'Generar informe SEO local'
+                    )}
+                  </Button>
                 </div>
-              ))}
-            </div>
-            
-            <Button 
-              onClick={generateSeoReport} 
-              disabled={isAnalyzing || uploadedDocuments.length === 0}
-              className="w-full mt-4"
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generando informe...
-                </>
-              ) : (
-                'Generar informe SEO local'
               )}
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };

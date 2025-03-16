@@ -133,6 +133,53 @@ export type Database = {
           },
         ]
       }
+      client_local_seo_settings: {
+        Row: {
+          address: string
+          business_name: string
+          client_id: string
+          created_at: string
+          google_business_url: string | null
+          id: string
+          phone: string | null
+          target_locations: string[] | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address: string
+          business_name: string
+          client_id: string
+          created_at?: string
+          google_business_url?: string | null
+          id?: string
+          phone?: string | null
+          target_locations?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string
+          business_name?: string
+          client_id?: string
+          created_at?: string
+          google_business_url?: string | null
+          id?: string
+          phone?: string | null
+          target_locations?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_local_seo_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_metrics: {
         Row: {
           client_id: string | null
@@ -766,43 +813,52 @@ export type Database = {
           business_name: string
           client_id: string
           date: string
+          google_business_url: string | null
           google_maps_ranking: number | null
           id: string
           keyword_rankings: Json | null
           local_listings: Json | null
           location: string
+          phone: string | null
           recommendations: string[] | null
           share_token: string | null
           shared_at: string | null
           title: string
+          website: string | null
         }
         Insert: {
           business_name: string
           client_id: string
           date?: string
+          google_business_url?: string | null
           google_maps_ranking?: number | null
           id?: string
           keyword_rankings?: Json | null
           local_listings?: Json | null
           location: string
+          phone?: string | null
           recommendations?: string[] | null
           share_token?: string | null
           shared_at?: string | null
           title: string
+          website?: string | null
         }
         Update: {
           business_name?: string
           client_id?: string
           date?: string
+          google_business_url?: string | null
           google_maps_ranking?: number | null
           id?: string
           keyword_rankings?: Json | null
           local_listings?: Json | null
           location?: string
+          phone?: string | null
           recommendations?: string[] | null
           share_token?: string | null
           shared_at?: string | null
           title?: string
+          website?: string | null
         }
         Relationships: [
           {

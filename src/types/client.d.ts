@@ -34,12 +34,12 @@ export interface ClientReport {
   type: "seo" | "performance" | "technical" | "social" | "local-seo" | "seo_report";
   url?: string;
   notes?: string;
-  content: string; // Changed from optional to required
+  content: string;
   documentIds: string[];
   shareToken?: string | null;
   sharedAt?: string | null;
   includeInProposal?: boolean;
-  analyticsData: any; // Changed from optional to required
+  analyticsData: any;
   searchConsoleData?: any;
   auditResult?: any;
 }

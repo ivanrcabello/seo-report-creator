@@ -1,0 +1,84 @@
+
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { PageSpeedReport } from "@/services/pageSpeedService";
+
+export interface PageSpeedMetric {
+  id: string;
+  client_id: string;
+  url: string;
+  performance_score: number;
+  accessibility_score: number;
+  best_practices_score: number;
+  seo_score: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Saves PageSpeed metrics to a separate table for metrics tracking
+ */
+export const savePageSpeedMetrics = async (
+  clientId: string,
+  report: PageSpeedReport
+): Promise<boolean> => {
+  try {
+    const metrics = report.metrics;
+    
+    if (!metrics) {
+      console.error("No metrics found in report");
+      return false;
+    }
+    
+    const metricsData = {
+      client_id: clientId,
+      url: metrics.url,
+      performance_score: metrics.performance_score,
+      accessibility_score: metrics.accessibility_score,
+      best_practices_score: metrics.best_practices_score,
+      seo_score: metrics.seo_score
+    };
+    
+    console.log("Saving PageSpeed metrics:", metricsData);
+    
+    const { error } = await supabase
+      .from('pagespeed_metrics')
+      .insert([metricsData]);
+    
+    if (error) {
+      console.error("Error saving PageSpeed metrics:", error);
+      return false;
+    }
+    
+    console.log("PageSpeed metrics saved successfully");
+    return true;
+  } catch (error) {
+    console.error("Exception saving PageSpeed metrics:", error);
+    return false;
+  }
+};
+
+/**
+ * Gets historical PageSpeed metrics for a client
+ */
+export const getPageSpeedMetrics = async (
+  clientId: string
+): Promise<PageSpeedMetric[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('pagespeed_metrics')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching PageSpeed metrics:", error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Exception fetching PageSpeed metrics:", error);
+    return [];
+  }
+};

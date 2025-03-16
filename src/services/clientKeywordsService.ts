@@ -96,7 +96,7 @@ export const addClientKeyword = async (
   }
 };
 
-// Add multiple keywords at once
+// Add multiple keywords at once - alternative implementation to handle duplicates
 export const addClientKeywords = async (
   clientId: string,
   keywords: Partial<ClientKeyword>[]
@@ -104,44 +104,91 @@ export const addClientKeywords = async (
   try {
     console.log(`Adding ${keywords.length} keywords to client ${clientId}`);
     
-    const keywordsData = keywords.map(kw => ({
-      client_id: clientId,
-      keyword: kw.keyword || '',
-      position: kw.position || null,
-      target_position: kw.target_position || 10,
-      search_volume: kw.search_volume,
-      keyword_difficulty: kw.keyword_difficulty,
-      cpc: kw.cpc,
-      url: kw.url,
-      traffic: kw.traffic,
-      traffic_percentage: kw.traffic_percentage,
-      traffic_cost: kw.traffic_cost,
-      competition: kw.competition,
-      backlinks_count: kw.backlinks_count,
-      trends: kw.trends,
-      timestamp: kw.timestamp,
-      serp_features: kw.serp_features,
-      keyword_intent: kw.keyword_intent,
-      position_type: kw.position_type
-    }));
+    // Add keywords in batches to avoid errors with duplicates
+    let successCount = 0;
+    const batchSize = 50;
     
-    // Use upsert to update existing keywords and insert new ones
-    const { error } = await supabase
-      .from('client_keywords')
-      .upsert(keywordsData, {
-        onConflict: 'client_id,keyword',
-        ignoreDuplicates: false
-      });
+    for (let i = 0; i < keywords.length; i += batchSize) {
+      const batch = keywords.slice(i, i + batchSize);
+      const keywordsData = batch.map(kw => ({
+        client_id: clientId,
+        keyword: kw.keyword || '',
+        position: kw.position || null,
+        target_position: kw.target_position || 10,
+        search_volume: kw.search_volume,
+        keyword_difficulty: kw.keyword_difficulty,
+        cpc: kw.cpc,
+        url: kw.url,
+        traffic: kw.traffic,
+        traffic_percentage: kw.traffic_percentage,
+        traffic_cost: kw.traffic_cost,
+        competition: kw.competition,
+        backlinks_count: kw.backlinks_count,
+        trends: kw.trends,
+        timestamp: kw.timestamp,
+        serp_features: kw.serp_features,
+        keyword_intent: kw.keyword_intent,
+        position_type: kw.position_type
+      }));
+      
+      // First try to update existing keywords
+      const { error: upsertError } = await supabase
+        .from('client_keywords')
+        .upsert(keywordsData, {
+          onConflict: 'client_id,keyword',
+          ignoreDuplicates: false
+        });
+      
+      if (upsertError) {
+        console.error("Error in batch upsert:", upsertError);
+        
+        // If upsert failed, try one by one insert/update
+        for (const kwd of keywordsData) {
+          try {
+            // Check if keyword exists
+            const { data: existing } = await supabase
+              .from('client_keywords')
+              .select('id')
+              .eq('client_id', clientId)
+              .eq('keyword', kwd.keyword)
+              .maybeSingle();
+            
+            if (existing) {
+              // Update existing keyword
+              const { error: updateError } = await supabase
+                .from('client_keywords')
+                .update(kwd)
+                .eq('id', existing.id);
+              
+              if (!updateError) successCount++;
+            } else {
+              // Insert new keyword
+              const { error: insertError } = await supabase
+                .from('client_keywords')
+                .insert([kwd]);
+              
+              if (!insertError) successCount++;
+            }
+          } catch (err) {
+            console.error("Error processing individual keyword:", err);
+          }
+        }
+      } else {
+        successCount += batch.length;
+      }
+    }
     
-    if (error) {
-      console.error("Error adding client keywords:", error);
+    const message = `${successCount} de ${keywords.length} palabras clave importadas correctamente`;
+    if (successCount === keywords.length) {
+      toast.success(message);
+      return true;
+    } else if (successCount > 0) {
+      toast.success(message);
+      return true;
+    } else {
       toast.error("Error al importar las palabras clave");
       return false;
     }
-    
-    console.log("Keywords added successfully");
-    toast.success(`${keywords.length} palabras clave importadas correctamente`);
-    return true;
   } catch (error) {
     console.error("Exception adding client keywords:", error);
     toast.error("Error al importar las palabras clave");

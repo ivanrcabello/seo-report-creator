@@ -73,13 +73,27 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
       
       // Analyze the URL
       const report = await analyzeWebsite(formattedUrl);
+      
       if (report) {
+        console.log("PageSpeed analysis completed:", report);
         setPageSpeedReport(report);
+        
         // Save the report for this client
-        const saved = await savePageSpeedReport(clientId, report);
-        if (saved) {
-          toast.success("Análisis de PageSpeed completado y guardado");
+        try {
+          const saved = await savePageSpeedReport(clientId, report);
+          if (saved) {
+            console.log("PageSpeed report saved successfully");
+            toast.success("Análisis de PageSpeed completado y guardado");
+          } else {
+            console.error("Failed to save PageSpeed report");
+            toast.error("Análisis completado, pero no se pudo guardar el informe");
+          }
+        } catch (saveError) {
+          console.error("Error saving PageSpeed report:", saveError);
+          toast.error("Análisis completado, pero no se pudo guardar el informe");
         }
+      } else {
+        throw new Error("No se pudo obtener un informe válido");
       }
     } catch (err) {
       console.error("Error analyzing URL:", err);

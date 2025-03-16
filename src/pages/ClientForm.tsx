@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ClientForm as ClientFormComponent } from "@/components/ClientForm";
-import { getClient, createClient, updateClient } from "@/services/clientService";
+import { getClient, addClient, updateClient } from "@/services/clientService";
 import { toast } from "sonner";
 
 export default function ClientForm() {
@@ -36,7 +36,7 @@ export default function ClientForm() {
         await updateClient({ ...data, id: clientId });
         toast.success("Cliente actualizado correctamente");
       } else {
-        await createClient(data);
+        await addClient(data);
         toast.success("Cliente creado correctamente");
       }
       navigate("/clients");

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { getClientMetrics } from "@/services/clientMetricsService";
 import { getPageSpeedReport } from "@/services/pageSpeedService";
@@ -41,15 +42,20 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   }, [clientId]);
 
   if (loading) return <LoadingState />;
-  if (error) return <ErrorAlert message={error.message} />;
+  if (error) return <ErrorAlert error={error} />;
 
   return (
     <div className="space-y-6">
-      <MetricsForm clientId={clientId} />
-      <MetricsSummary metrics={metrics} />
-      <PageSpeedSection clientId={clientId} />
+      <MetricsForm 
+        currentMetric={metrics && metrics.length > 0 ? metrics[0] : null}
+        isSaving={false}
+        handleInputChange={() => {}}
+        handleSaveMetrics={async () => {}}
+      />
+      <MetricsSummary currentMetric={metrics && metrics.length > 0 ? metrics[0] : null} clientId={clientId} />
+      <PageSpeedSection clientId={clientId} clientName={clientName} />
       <KeywordsSection clientId={clientId} />
-      <LocalSeoMetrics clientId={clientId} />
+      <LocalSeoMetrics clientId={clientId} clientName={clientName} />
 
       <div className="mt-8 border-t pt-6">
         <AIReportGenerator clientId={clientId} clientName={clientName} />

@@ -98,7 +98,7 @@ export const saveGeminiReport = async (
         generatedBy: "gemini"
       },
       document_ids: documentIds,
-      status: 'draft'
+      status: 'draft' as 'draft' | 'published' | 'shared'
     };
     
     console.log("Inserting report into database");

@@ -24,6 +24,7 @@ export interface Package {
 }
 
 export interface AIReport {
+  id?: string;
   introduction?: string;
   authorityScore?: number;
   authorityScoreComment?: string;
@@ -48,8 +49,12 @@ export interface AIReport {
 }
 
 export const generateAIReport = async (auditData: AuditResult): Promise<AIReport> => {
+  // Generate a temporary ID for the report
+  const tempId = 'report-' + Math.random().toString(36).substring(2, 9);
+  
   // Generar un informe de ejemplo basado en los datos proporcionados
   const report: AIReport = {
+    id: tempId,
     introduction: `Este informe presenta un análisis completo de la presencia online de ${auditData.companyName || "su empresa"} en ${auditData.location || "su ubicación"}. El objetivo es mejorar su visibilidad en los motores de búsqueda, aumentar el tráfico orgánico y local, y captar nuevos clientes a través de estrategias SEO adaptadas a su sector (${auditData.companyType || "industria"}).`,
     
     authorityScore: 37,

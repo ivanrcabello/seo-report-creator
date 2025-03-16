@@ -57,7 +57,9 @@ export const AIReportGenerator = ({ auditResult }: AIReportGeneratorProps) => {
     if (!report) return;
     
     try {
-      const success = await downloadSeoReportPdf(report, auditResult);
+      // Updated to pass only the reportId from the report object
+      // This matches the function signature in seoReportPdfService
+      const success = await downloadSeoReportPdf(report.id || "temp-report-id");
       if (success) {
         toast({
           title: "PDF generado",

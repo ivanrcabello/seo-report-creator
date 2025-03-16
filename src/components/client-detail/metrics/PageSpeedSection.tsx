@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   PageSpeedReport, 
@@ -68,12 +69,17 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
         setPageSpeedReport(report);
         
         // Save the report
-        await savePageSpeedReport(clientId, report);
-        toast.success("Informe guardado correctamente");
+        try {
+          await savePageSpeedReport(clientId, report);
+          toast.success("Informe guardado correctamente");
+        } catch (saveError) {
+          console.error("Error saving PageSpeed report:", saveError);
+          toast.error("El análisis se completó pero hubo un error al guardar el informe");
+        }
       }
     } catch (error) {
       console.error("Error in handleAnalyze:", error);
-      toast.error("Ha ocurrido un error al analizar la web");
+      toast.error("Ha ocurrido un error al analizar la web. Por favor, inténtalo de nuevo.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -86,20 +92,26 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
     }
 
     setIsGeneratingAIReport(true);
+    toast.loading("Generando informe...");
+    
     try {
-      // Generate a professional report using our new service
+      // Generate a professional report using our service
       const report = await generatePageSpeedReport(pageSpeedReport, clientId, clientName);
       
-      toast.success("Informe generado correctamente y guardado en documentos");
-      
-      // Navigate to the report view after a short delay
-      setTimeout(() => {
-        navigate(`/reports/${report.id}`);
-      }, 1500);
+      if (report && report.id) {
+        toast.success("Informe generado correctamente");
+        
+        // Navigate to the report view after a short delay
+        setTimeout(() => {
+          navigate(`/reports/${report.id}`);
+        }, 1500);
+      } else {
+        throw new Error("No se pudo crear el informe");
+      }
       
     } catch (error) {
       console.error("Error generating AI report:", error);
-      toast.error("Error al generar el informe AI");
+      toast.error("Error al generar el informe. Por favor, inténtalo de nuevo.");
     } finally {
       setIsGeneratingAIReport(false);
     }

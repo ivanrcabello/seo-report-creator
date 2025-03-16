@@ -229,7 +229,7 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
   content += `- **Backlinks**: ${report.backlinksCount} - ${report.backlinksComment}\n\n`;
   
   // Technical issues section if available in the audit data
-  if (auditResult && 'technicalIssues' in auditResult && Array.isArray(auditResult['technicalIssues']) && auditResult['technicalIssues'].length > 0) {
+  if (auditResult && 'technicalIssues' in auditResult && Array.isArray(auditResult['technicalIssues']) && auditResult['technicalIssues']?.length > 0) {
     content += `### Problemas Técnicos Detectados\n\n`;
     auditResult['technicalIssues'].forEach((issue: any) => {
       content += `- **${issue.type || 'Problema'}**: ${issue.description || 'Sin descripción'}\n`;

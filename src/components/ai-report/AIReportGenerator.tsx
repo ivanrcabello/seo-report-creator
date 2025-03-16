@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AIReport, generateAIReport } from "@/services/aiReportService";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { ClientReport } from "@/types/client";
@@ -26,17 +26,20 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
   const { toast: uiToast } = useToast();
 
   // Load report data from currentReport if it exists
-  useState(() => {
+  useEffect(() => {
     if (currentReport?.analyticsData?.aiReport) {
       setReport(currentReport.analyticsData.aiReport);
     }
-  });
+  }, [currentReport]);
 
   const generateReport = async () => {
     setIsLoading(true);
     try {
       const data = await generateAIReport(auditResult);
       setReport(data);
+      uiToast({
+        description: "Informe generado correctamente"
+      });
     } catch (error) {
       console.error("Error generando el informe:", error);
       uiToast({

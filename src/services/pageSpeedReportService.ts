@@ -10,25 +10,35 @@ export const generatePageSpeedReport = async (
   clientId: string,
   clientName: string
 ): Promise<ClientReport> => {
-  // Create report content with proper formatting and visual indicators
-  const content = generateFormattedReportContent(report, clientName);
-  
-  // Create a new report object
-  const newReport: Omit<ClientReport, "id"> = {
-    clientId,
-    title: `Informe PageSpeed - ${new Date().toLocaleDateString('es-ES')}`,
-    date: new Date().toISOString(),
-    type: "pagespeed",
-    url: report.metrics.url || "",
-    content,
-    documentIds: [],
-    shareToken: uuidv4(),
-    sharedAt: null,
-    includeInProposal: false
-  };
-  
-  // Save report to database
-  return await addReport(newReport);
+  try {
+    // Create report content with proper formatting and visual indicators
+    const content = generateFormattedReportContent(report, clientName);
+    
+    // Create a new report object
+    const newReport: Omit<ClientReport, "id"> = {
+      clientId,
+      title: `Informe PageSpeed - ${new Date().toLocaleDateString('es-ES')}`,
+      date: new Date().toISOString(),
+      type: "pagespeed",
+      url: report.metrics.url || "",
+      content,
+      documentIds: [],
+      shareToken: uuidv4(),
+      sharedAt: null,
+      includeInProposal: false,
+      // Store data in format compatible with database schema
+      data: {
+        metrics: report.metrics,
+        audits: report.audits
+      }
+    };
+    
+    // Save report to database
+    return await addReport(newReport);
+  } catch (error) {
+    console.error("Error generating PageSpeed report:", error);
+    throw new Error("No se pudo generar el informe de PageSpeed");
+  }
 };
 
 // Helper function to format score as emojis/visual indicators

@@ -1,3 +1,4 @@
+
 // Client types definitions
 
 export interface Client {
@@ -12,6 +13,7 @@ export interface Client {
   documents?: ClientDocument[];
   analyticsConnected?: boolean;
   searchConsoleConnected?: boolean;
+  isActive?: boolean;
 }
 
 export interface ClientDocument {
@@ -33,10 +35,11 @@ export interface ClientReport {
   type: "seo" | "performance" | "technical" | "social" | "local-seo";
   url?: string;
   notes?: string;
+  content?: string; // For storing formatted report
   documentIds: string[];
-  shareToken: string | null;
-  sharedAt: string | null;
-  includeInProposal: boolean;
+  shareToken?: string | null;
+  sharedAt?: string | null;
+  includeInProposal?: boolean;
   analyticsData?: any;
   searchConsoleData?: any;
   auditResult?: any;
@@ -87,23 +90,29 @@ export interface SeoLocalReport {
   date: string;
   businessName: string;
   address: string;
-  phone: string;
-  website: string;
-  googleMapsRating: number;
-  googleReviewsCount: number;
-  directoryListings: {
+  phone: string | null;
+  website: string | null;
+  googleBusinessUrl?: string | null;
+  googleMapsRanking?: number;
+  googleReviewsCount?: number;
+  directoryListings?: {
     name: string;
     listed: boolean;
     url?: string;
   }[];
-  recommendations: string[];
+  recommendations?: string[];
+  keywordRankings?: any;
+  localListings?: any;
+  location?: string;
+  shareToken?: string;
+  sharedAt?: string | null;
 }
 
 export interface SeoPack {
   id: string;
   name: string;
   description: string;
-  price: number; // Precio en euros IVA incluido
+  price: number;
   features: string[];
   isActive: boolean;
   createdAt: string;
@@ -120,16 +129,16 @@ export interface Proposal {
   updatedAt: string;
   sentAt?: string;
   expiresAt?: string;
-  customPrice?: number; // Precio personalizado si es diferente al del paquete
-  customFeatures?: string[]; // Características personalizadas si son diferentes
-  reportIds?: string[]; // IDs de los informes incluidos en la propuesta
-  publicUrl?: string; // URL pública para que el cliente vea la propuesta
+  customPrice?: number;
+  customFeatures?: string[];
+  reportIds?: string[];
+  publicUrl?: string;
 }
 
 export interface CompanySettings {
   id: string;
   companyName: string;
-  taxId: string; // CIF/NIF
+  taxId: string;
   address: string;
   phone?: string;
   email?: string;
@@ -150,10 +159,19 @@ export interface Invoice {
   taxRate: number;
   taxAmount: number;
   totalAmount: number;
-  status: "pending" | "paid" | "cancelled";
+  status: "pending" | "paid" | "cancelled" | "draft";
   paymentDate?: string;
   notes?: string;
   pdfUrl?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ClientSummary {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+  createdAt: string | Date;
+  isActive: boolean;
 }

@@ -76,6 +76,7 @@ const Clients = () => {
     setShowForm(true);
     setIsEditMode(false);
     setCurrentClient(null);
+    navigate("/clients/new");
   };
 
   const handleCancelForm = () => {
@@ -129,23 +130,25 @@ const Clients = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8">Gestión de Clientes</h1>
-      
-      {showForm ? (
-        <div className="mb-8">
-          <ClientForm 
-            client={currentClient || undefined}
-            onSubmit={handleClientSubmit}
-            onCancel={handleCancelForm}
-          />
-        </div>
-      ) : (
-        <ClientsList 
-          clients={clients} 
-          onAddClient={handleAddClient}
-          isLoading={isLoading}
-        />
-      )}
+      <div className="max-w-7xl mx-auto">
+        {showForm ? (
+          <div className="animate-fadeIn">
+            <ClientForm 
+              client={currentClient || undefined}
+              onSubmit={handleClientSubmit}
+              onCancel={handleCancelForm}
+            />
+          </div>
+        ) : (
+          <div className="animate-fadeIn">
+            <ClientsList 
+              clients={clients} 
+              onAddClient={handleAddClient}
+              isLoading={isLoading}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

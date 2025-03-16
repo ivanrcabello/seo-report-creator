@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { ClientKeyword } from "@/services/clientKeywordsService";
 import { useClientKeywords } from "./useClientKeywords";
@@ -181,6 +182,12 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  // Add the missing handleClearFilters function
+  const handleClearFilters = () => {
+    setPositionFilter("all");
+    setIsFilterActive(false);
   };
 
   const getPageNumbers = () => {

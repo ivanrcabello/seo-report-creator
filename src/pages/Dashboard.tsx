@@ -2,6 +2,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
+import { Suspense } from "react";
 
 export default function Dashboard() {
   const { isAdmin } = useAuth();
@@ -10,7 +11,9 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto py-6">
-      {isAdmin ? <AdminDashboard /> : <ClientDashboard />}
+      <Suspense fallback={<div>Cargando...</div>}>
+        {isAdmin ? <AdminDashboard /> : <ClientDashboard />}
+      </Suspense>
     </div>
   );
 }

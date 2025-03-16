@@ -2,6 +2,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AppLayout } from './components/AppLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
@@ -15,6 +17,9 @@ import CompanySettings from './pages/CompanySettings';
 import TemplateSettings from './pages/TemplateSettings';
 import Contracts from './pages/Contracts';
 
+// Crear una instancia de QueryClient
+const queryClient = new QueryClient();
+
 // Componente para proteger rutas que requieren autenticación
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -25,19 +30,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace state={{ path: location.pathname }} />;
   }
 
-  return children;
+  return <AppLayout>{children}</AppLayout>;
 };
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="*" element={<AppRoutes />} />
-        </Routes>
-      </AuthProvider>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="*" element={<AppRoutes />} />
+          </Routes>
+        </AuthProvider>
+      </Router>
+    </QueryClientProvider>
   );
 }
 

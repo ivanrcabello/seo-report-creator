@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useClientKeywords } from "./useClientKeywords";
 import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 interface MetricsSummaryProps {
   currentMetric: ClientMetric;
@@ -14,24 +15,42 @@ interface MetricsSummaryProps {
 export const MetricsSummary = ({ currentMetric }: MetricsSummaryProps) => {
   // Use the client ID from the URL params instead of trying to get it from the metric
   const { id: clientId } = useParams<{ id: string }>();
-  const { keywords } = useClientKeywords(clientId || "");
+  const { keywords, isLoading } = useClientKeywords(clientId || "");
+  const [keywordsOnTarget, setKeywordsOnTarget] = useState(0);
+  const [keywordsPercentage, setKeywordsPercentage] = useState(0);
+  const [keywordsInTopTen, setKeywordsInTopTen] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading && keywords.length > 0) {
+      // Count keywords in top 10 positions
+      const inTopTen = keywords.filter(k => k.position !== null && k.position <= 10).length;
+      setKeywordsInTopTen(inTopTen);
+      
+      // Calculate keywords reaching their target
+      const onTarget = keywords.filter(
+        k => k.position !== null && k.position <= k.target_position
+      ).length;
+      setKeywordsOnTarget(onTarget);
+      
+      // Calculate percentage
+      const percentage = keywords.length > 0 
+        ? Math.round((onTarget / keywords.length) * 100) 
+        : 0;
+      setKeywordsPercentage(percentage);
+      
+      console.log("Keywords stats updated:", {
+        total: keywords.length,
+        inTopTen,
+        onTarget,
+        percentage
+      });
+    }
+  }, [keywords, isLoading]);
 
   const formatPercentage = (value: number, goal: number) => {
     const percentage = (value / goal) * 100;
     return Math.min(percentage, 100).toFixed(0);
   };
-
-  // Count keywords in top 10 positions
-  const keywordsInTopTen = keywords.filter(k => k.position !== null && k.position <= 10).length;
-  
-  // Calculate percentage of keywords reaching their target
-  const keywordsOnTarget = keywords.filter(
-    k => k.position !== null && k.position <= k.target_position
-  ).length;
-  
-  const keywordsPercentage = keywords.length > 0 
-    ? Math.round((keywordsOnTarget / keywords.length) * 100) 
-    : 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

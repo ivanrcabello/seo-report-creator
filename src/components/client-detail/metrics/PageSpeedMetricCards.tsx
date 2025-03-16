@@ -101,7 +101,7 @@ export const PageSpeedMetricCards = ({ clientId }: PageSpeedMetricCardsProps) =>
         trend={
           <Badge 
             variant={getLCPStatus(report.metrics.largest_contentful_paint).status === "good" ? "success" : 
-                  getLCPStatus(report.metrics.largest_contentful_paint).status === "needs improvement" ? "warning" : "destructive"}
+                  getLCPStatus(report.metrics.largest_contentful_paint).status === "needs improvement" ? "secondary" : "destructive"}
           >
             {getLCPStatus(report.metrics.largest_contentful_paint).status}
           </Badge>
@@ -118,7 +118,7 @@ export const PageSpeedMetricCards = ({ clientId }: PageSpeedMetricCardsProps) =>
         trend={
           <Badge 
             variant={getTBTStatus(report.metrics.total_blocking_time).status === "good" ? "success" : 
-                  getTBTStatus(report.metrics.total_blocking_time).status === "needs improvement" ? "warning" : "destructive"}
+                  getTBTStatus(report.metrics.total_blocking_time).status === "needs improvement" ? "secondary" : "destructive"}
           >
             {getTBTStatus(report.metrics.total_blocking_time).status}
           </Badge>
@@ -135,7 +135,7 @@ export const PageSpeedMetricCards = ({ clientId }: PageSpeedMetricCardsProps) =>
         trend={
           <Badge 
             variant={getCLSStatus(report.metrics.cumulative_layout_shift).status === "good" ? "success" : 
-                  getCLSStatus(report.metrics.cumulative_layout_shift).status === "needs improvement" ? "warning" : "destructive"}
+                  getCLSStatus(report.metrics.cumulative_layout_shift).status === "needs improvement" ? "secondary" : "destructive"}
           >
             {getCLSStatus(report.metrics.cumulative_layout_shift).status}
           </Badge>

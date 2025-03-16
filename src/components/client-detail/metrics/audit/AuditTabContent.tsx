@@ -14,7 +14,10 @@ export const AuditTabContent = ({
   audits, 
   emptyMessage = "No hay auditorías en esta categoría" 
 }: AuditTabContentProps) => {
-  if (audits.length === 0) {
+  // Validación adicional para asegurar que audits es un array
+  const validAudits = Array.isArray(audits) ? audits : [];
+  
+  if (validAudits.length === 0) {
     return (
       <Alert variant="default" className="bg-gray-50 border-gray-200">
         <InfoIcon className="h-4 w-4 text-gray-500" />
@@ -27,7 +30,7 @@ export const AuditTabContent = ({
   
   return (
     <Accordion type="multiple" className="w-full">
-      {audits.map((audit) => (
+      {validAudits.map((audit) => (
         <AuditItem key={audit.id} audit={audit} />
       ))}
     </Accordion>

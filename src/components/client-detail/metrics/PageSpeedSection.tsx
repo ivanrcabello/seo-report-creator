@@ -26,16 +26,22 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
     const fetchLatestReport = async () => {
       try {
         setLoadingReport(true);
-        console.log("Getting latest PageSpeed report for client:", clientId);
+        console.log("Obteniendo último informe PageSpeed para cliente:", clientId);
         const report = await getPageSpeedReport(clientId);
-        setPageSpeedReport(report);
         
-        if (report?.metrics?.url) {
-          setUrl(report.metrics.url);
+        if (report) {
+          console.log("Informe PageSpeed encontrado:", report.id);
+          setPageSpeedReport(report);
+          
+          if (report?.metrics?.url) {
+            setUrl(report.metrics.url);
+          }
+        } else {
+          console.log("No se encontró informe PageSpeed para cliente:", clientId);
         }
       } catch (err) {
-        console.log("No PageSpeed report found for client:", clientId);
-        // Not setting error here, as it's normal for new clients to not have reports
+        console.log("Error al obtener informe PageSpeed para cliente:", clientId, err);
+        // No establecemos error aquí, ya que es normal que nuevos clientes no tengan informes
       } finally {
         setLoadingReport(false);
       }

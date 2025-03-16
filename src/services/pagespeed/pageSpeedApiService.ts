@@ -1,204 +1,193 @@
 
-import { toast } from "sonner";
-import { PageSpeedReport, PageSpeedMetrics, PageSpeedAudit } from "./types";
+// Import axios u otra librería para hacer peticiones HTTP
+import axios from 'axios';
+import { PageSpeedReport, PageSpeedAudit } from "../pagespeed";
 
-// Analyze a website URL with PageSpeed Insights API
-export const analyzeWebsite = async (url: string): Promise<PageSpeedReport | null> => {
+// Clave API para PageSpeed Insights (debe estar configurada en el .env)
+const API_KEY = import.meta.env.VITE_PAGESPEED_API_KEY;
+
+export const analyzeWebsite = async (url: string): Promise<PageSpeedReport> => {
   try {
-    toast.loading("Analizando URL con PageSpeed Insights...");
     console.log("Analyzing URL with PageSpeed Insights:", url);
     
-    // Make the URL look clean for display
-    const displayUrl = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    
-    try {
-      // Call the PageSpeed Insights API
-      const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo`;
-      const response = await fetch(apiUrl);
-      
-      if (!response.ok) {
-        throw new Error(`PageSpeed API responded with status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log("PageSpeed API response received");
-      
-      // Extract metrics from the API response
-      const metrics: PageSpeedMetrics = {
-        url: displayUrl,
-        performance_score: parseFloat(data.lighthouseResult?.categories?.performance?.score || 0),
-        accessibility_score: parseFloat(data.lighthouseResult?.categories?.accessibility?.score || 0),
-        best_practices_score: parseFloat(data.lighthouseResult?.categories?.['best-practices']?.score || 0),
-        seo_score: parseFloat(data.lighthouseResult?.categories?.seo?.score || 0),
-        first_contentful_paint: parseFloat(data.lighthouseResult?.audits?.['first-contentful-paint']?.numericValue || 0),
-        speed_index: parseFloat(data.lighthouseResult?.audits?.['speed-index']?.numericValue || 0),
-        largest_contentful_paint: parseFloat(data.lighthouseResult?.audits?.['largest-contentful-paint']?.numericValue || 0),
-        time_to_interactive: parseFloat(data.lighthouseResult?.audits?.['interactive']?.numericValue || 0),
-        total_blocking_time: parseFloat(data.lighthouseResult?.audits?.['total-blocking-time']?.numericValue || 0),
-        cumulative_layout_shift: parseFloat(data.lighthouseResult?.audits?.['cumulative-layout-shift']?.numericValue || 0)
-      };
-      
-      // Extract audits from the API response
-      const audits: PageSpeedAudit[] = parseAuditsFromApiResponse(data);
-      
-      const report: PageSpeedReport = {
-        metrics,
-        audits
-      };
-      
-      toast.dismiss();
-      console.log("PageSpeed analysis complete");
-      return report;
-    } catch (apiError) {
-      console.error("Error calling PageSpeed API:", apiError);
-      toast.error("Error al conectar con PageSpeed API. Usando datos de ejemplo.");
-      return generateMockData(displayUrl);
+    // Si estamos en desarrollo y no hay API_KEY, usamos datos de prueba
+    if (!API_KEY && import.meta.env.DEV) {
+      console.log("Using mock PageSpeed data for development");
+      return generateMockData(url);
     }
+    
+    // Construir la URL de la API
+    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${API_KEY}&strategy=mobile&category=performance&category=seo&category=best-practices&category=accessibility`;
+    
+    // Realizar la petición a la API
+    const response = await axios.get(apiUrl);
+    
+    if (response.status !== 200) {
+      console.error("PageSpeed API responded with status:", response.status);
+      throw new Error(`PageSpeed API responded with status: ${response.status}`);
+    }
+    
+    const data = response.data;
+    console.log("PageSpeed API response received");
+    
+    // Procesar y mapear los datos de la respuesta
+    return processPageSpeedResponse(data, url);
   } catch (error) {
-    toast.dismiss();
-    console.error("Error analyzing website:", error);
+    console.error("Error calling PageSpeed API:", error);
+    
+    // En desarrollo, si falla, usamos datos simulados
+    if (import.meta.env.DEV) {
+      console.log("Falling back to mock data in development");
+      return generateMockData(url);
+    }
+    
     throw error;
   }
 };
 
-// Helper function to parse audits from API response
-const parseAuditsFromApiResponse = (data: any): PageSpeedAudit[] => {
-  const audits: PageSpeedAudit[] = [];
-  
-  // Map to store audit importance by ID
-  const auditImportance: Record<string, 'high' | 'medium' | 'low'> = {
-    'first-contentful-paint': 'high',
-    'speed-index': 'high',
-    'largest-contentful-paint': 'high',
-    'interactive': 'high',
-    'total-blocking-time': 'high',
-    'cumulative-layout-shift': 'high',
-    // Add more mappings as needed
-  };
-  
-  // Process all audits from the API response
-  if (data.lighthouseResult?.audits) {
-    for (const [id, auditData] of Object.entries(data.lighthouseResult.audits)) {
-      // TypeScript safeguard - ensure auditData is an object
-      const audit = auditData as Record<string, any>;
+// Función para procesar la respuesta de la API
+const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
+  try {
+    // Extraer categorías y puntuaciones
+    const categories = data.lighthouseResult?.categories || {};
+    const audits = data.lighthouseResult?.audits || {};
+    
+    // Extraer puntuaciones de las categorías
+    const performanceScore = (categories.performance?.score || 0);
+    const seoScore = (categories.seo?.score || 0);
+    const bestPracticesScore = (categories['best-practices']?.score || 0);
+    const accessibilityScore = (categories.accessibility?.score || 0);
+    
+    // Extraer métricas principales
+    const firstContentfulPaint = parseFloat(audits['first-contentful-paint']?.numericValue) || 0;
+    const speedIndex = parseFloat(audits['speed-index']?.numericValue) || 0;
+    const largestContentfulPaint = parseFloat(audits['largest-contentful-paint']?.numericValue) || 0;
+    const timeToInteractive = parseFloat(audits['interactive']?.numericValue) || 0;
+    const totalBlockingTime = parseFloat(audits['total-blocking-time']?.numericValue) || 0;
+    const cumulativeLayoutShift = parseFloat(audits['cumulative-layout-shift']?.numericValue) || 0;
+    
+    // Convertir audits a nuestro formato
+    const formattedAudits: PageSpeedAudit[] = Object.entries(audits).map(([id, audit]: [string, any]) => {
+      // Asegurarnos de que score es un número entre 0 y 1
+      let score = typeof audit.score === 'number' ? audit.score : null;
       
-      // Skip informative audits with no score
-      if (audit.scoreDisplayMode === 'informative' || audit.scoreDisplayMode === 'manual' || audit.scoreDisplayMode === 'notApplicable') {
-        continue;
+      // Si score es null, intentamos usar el displayValue para inferir un score
+      if (score === null && audit.displayValue) {
+        const numericMatch = audit.displayValue.match(/(\d+(\.\d+)?)/);
+        if (numericMatch) {
+          const numericValue = parseFloat(numericMatch[0]);
+          // Convertir a un valor entre 0 y 1 si parece razonable
+          if (numericValue <= 1) {
+            score = numericValue;
+          } else if (numericValue <= 100) {
+            score = numericValue / 100;
+          }
+        }
       }
       
-      // Determine the category for this audit
-      let category: 'performance' | 'accessibility' | 'best-practices' | 'seo' = 'performance';
+      // Si score sigue siendo null, usamos un valor predeterminado de 0.5
+      if (score === null) {
+        score = 0.5;
+      }
       
-      // Map audits to categories based on their ID patterns or other logic
-      if (id.includes('a11y')) {
-        category = 'accessibility';
-      } else if (id.includes('seo')) {
+      // Determinamos la categoría del audit
+      let category = 'other';
+      if (audit.group === 'metrics') {
+        category = 'performance';
+      } else if (audit.group === 'seo') {
         category = 'seo';
-      } else if (id.includes('best-practices') || id.includes('uses-')) {
+      } else if (audit.group === 'best-practices') {
         category = 'best-practices';
+      } else if (audit.group === 'a11y') {
+        category = 'accessibility';
       }
       
-      // Handle binary-scored audits (passed/failed)
-      let score = typeof audit.score === 'number' ? audit.score : 0;
-      if (audit.scoreDisplayMode === 'binary') {
-        score = score > 0 ? 1 : 0;
-      }
-      
-      // Create the audit object with proper type checking
-      audits.push({
+      return {
         id,
-        title: audit.title || '',
+        title: audit.title || id,
         description: audit.description || '',
-        score: score,
-        scoreDisplayMode: audit.scoreDisplayMode || 'numeric',
-        displayValue: audit.displayValue,
-        category,
-        importance: auditImportance[id] || 'medium'
-      });
-    }
+        score,
+        displayValue: audit.displayValue || '',
+        details: audit.details || null,
+        category
+      };
+    });
+    
+    // Devolver el informe completo
+    return {
+      id: `pagespeed-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      url: url,
+      metrics: {
+        url: url,
+        performance_score: Number(performanceScore),
+        seo_score: Number(seoScore),
+        best_practices_score: Number(bestPracticesScore),
+        accessibility_score: Number(accessibilityScore),
+        first_contentful_paint: Number(firstContentfulPaint),
+        speed_index: Number(speedIndex),
+        largest_contentful_paint: Number(largestContentfulPaint),
+        time_to_interactive: Number(timeToInteractive),
+        total_blocking_time: Number(totalBlockingTime),
+        cumulative_layout_shift: Number(cumulativeLayoutShift)
+      },
+      audits: formattedAudits
+    };
+  } catch (error) {
+    console.error("Error processing PageSpeed response:", error);
+    throw new Error("Could not process PageSpeed API response");
   }
-
-  return audits;
 };
 
-// Generate mock data for testing or when API fails
-const generateMockData = (displayUrl: string): PageSpeedReport => {
-  // Mock response data - use values between 0 and 1 for scores
-  const mockReport: PageSpeedReport = {
-    metrics: {
-      url: displayUrl,
-      performance_score: Math.random() * 0.8 + 0.1, // 0.1 - 0.9
-      accessibility_score: Math.random() * 0.8 + 0.1,
-      best_practices_score: Math.random() * 0.8 + 0.1,
-      seo_score: Math.random() * 0.8 + 0.1,
-      first_contentful_paint: Math.round(Math.random() * 5000),
-      speed_index: Math.round(Math.random() * 5000),
-      largest_contentful_paint: Math.round(Math.random() * 6000),
-      time_to_interactive: Math.round(Math.random() * 7000),
-      total_blocking_time: Math.round(Math.random() * 500),
-      cumulative_layout_shift: Math.random() * 0.5
-    },
-    audits: []
-  };
+// Función para generar datos de prueba para desarrollo
+const generateMockData = (url: string): PageSpeedReport => {
+  const timestamp = new Date().toISOString();
   
-  // Generate some audits for each category
-  const categories = ['performance', 'accessibility', 'best-practices', 'seo'] as const;
-  const importanceLevels = ['high', 'medium', 'low'] as const;
+  console.log("Generating mock PageSpeed data for:", url);
   
-  categories.forEach(category => {
-    // Add 3-5 more audits per category
-    const numAudits = 3 + Math.floor(Math.random() * 3);
+  // Generar puntuaciones aleatorias para los audits
+  const audits: PageSpeedAudit[] = [];
+  const categories = ['performance', 'seo', 'best-practices', 'accessibility'];
+  
+  // Generar algunos audits aleatorios
+  for (let i = 1; i <= 20; i++) {
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    const score = Math.random();
     
-    for (let i = 0; i < numAudits; i++) {
-      // Create varied scores for better test data
-      const score = Math.random(); // 0-1
-      
-      mockReport.audits.push({
-        id: `${category}-audit-${i}`,
-        title: `${category.charAt(0).toUpperCase() + category.slice(1)} Audit ${i+1}`,
-        description: `This is a mock ${category} audit for testing purposes.`,
-        score: score,
-        scoreDisplayMode: 'numeric',
-        category,
-        importance: importanceLevels[Math.floor(Math.random() * importanceLevels.length)]
-      });
-    }
-  });
+    audits.push({
+      id: `mock-audit-${i}`,
+      title: `Audit de prueba ${i}`,
+      description: `Esta es una descripción de prueba para el audit ${i}`,
+      score,
+      displayValue: score >= 0.9 ? 'Excelente' : score >= 0.5 ? 'Necesita mejoras' : 'Deficiente',
+      details: null,
+      category
+    });
+  }
   
-  // Add key performance audits that mimic the real API
-  mockReport.audits.push({
-    id: 'first-contentful-paint',
-    title: 'First Contentful Paint',
-    description: 'First Contentful Paint marks the time at which the first text or image is painted.',
-    score: Math.random(),
-    scoreDisplayMode: 'numeric',
-    displayValue: Math.round(Math.random() * 5) + ' s',
-    category: 'performance',
-    importance: 'high'
-  });
+  // Generar métricas aleatorias
+  const performance_score = Math.random();
+  const seo_score = Math.random();
+  const best_practices_score = Math.random();
+  const accessibility_score = Math.random();
   
-  mockReport.audits.push({
-    id: 'largest-contentful-paint',
-    title: 'Largest Contentful Paint',
-    description: 'Largest Contentful Paint marks the time at which the largest text or image is painted.',
-    score: Math.random(),
-    scoreDisplayMode: 'numeric',
-    displayValue: Math.round(Math.random() * 6) + ' s',
-    category: 'performance',
-    importance: 'high'
-  });
-  
-  mockReport.audits.push({
-    id: 'cumulative-layout-shift',
-    title: 'Cumulative Layout Shift',
-    description: 'Cumulative Layout Shift measures the movement of visible elements within the viewport.',
-    score: Math.random(),
-    scoreDisplayMode: 'numeric',
-    displayValue: (Math.random() * 0.5).toFixed(2),
-    category: 'performance',
-    importance: 'high'
-  });
-  
-  return mockReport;
+  return {
+    id: `mock-pagespeed-${Date.now()}`,
+    timestamp,
+    url,
+    metrics: {
+      url,
+      performance_score: Number(performance_score.toFixed(2)),
+      seo_score: Number(seo_score.toFixed(2)),
+      best_practices_score: Number(best_practices_score.toFixed(2)),
+      accessibility_score: Number(accessibility_score.toFixed(2)),
+      first_contentful_paint: Number((Math.random() * 5000).toFixed(0)),
+      speed_index: Number((Math.random() * 6000).toFixed(0)),
+      largest_contentful_paint: Number((Math.random() * 7000).toFixed(0)),
+      time_to_interactive: Number((Math.random() * 8000).toFixed(0)),
+      total_blocking_time: Number((Math.random() * 1000).toFixed(0)),
+      cumulative_layout_shift: Number((Math.random() * 0.5).toFixed(2))
+    },
+    audits
+  };
 };

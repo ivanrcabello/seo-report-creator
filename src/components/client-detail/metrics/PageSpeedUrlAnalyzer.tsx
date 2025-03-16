@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { analyzeWebsite, savePageSpeedReport } from "@/services/pagespeed";
-import { PageSpeedReport } from "@/services/pagespeed";
+import { analyzeWebsite, savePageSpeedReport, PageSpeedReport } from "@/services/pagespeed";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PageSpeedUrlAnalyzerProps {
@@ -44,30 +43,44 @@ export const PageSpeedUrlAnalyzer = ({
         setUrl(formattedUrl);
       }
       
+      console.log("Analizando URL con PageSpeed:", formattedUrl);
       const report = await analyzeWebsite(formattedUrl);
       
       if (report) {
-        console.log("PageSpeed analysis completed");
+        console.log("Análisis de PageSpeed completado con éxito");
+        
+        // Convertimos explícitamente las métricas a números antes de guardarlas
+        if (report.metrics) {
+          Object.keys(report.metrics).forEach(key => {
+            // Si la propiedad es un número en forma de string, lo convertimos a número
+            const value = report.metrics[key];
+            if (typeof value === 'string' && !isNaN(Number(value))) {
+              report.metrics[key] = Number(value);
+            }
+          });
+        }
+        
         setPageSpeedReport(report);
         
         try {
+          console.log("Guardando reporte de PageSpeed para cliente:", clientId);
           const saved = await savePageSpeedReport(clientId, report);
           if (saved) {
-            console.log("PageSpeed report saved successfully");
+            console.log("Reporte de PageSpeed guardado correctamente");
             toast.success("Análisis de PageSpeed completado y guardado");
           } else {
-            console.error("Failed to save PageSpeed report");
+            console.error("No se pudo guardar el reporte de PageSpeed");
             toast.error("Análisis completado, pero no se pudo guardar el informe");
           }
         } catch (saveError) {
-          console.error("Error saving PageSpeed report:", saveError);
+          console.error("Error guardando reporte de PageSpeed:", saveError);
           toast.error("Análisis completado, pero no se pudo guardar el informe");
         }
       } else {
         throw new Error("No se pudo obtener un informe válido");
       }
     } catch (err) {
-      console.error("Error analyzing URL:", err);
+      console.error("Error analizando URL:", err);
       setError("No se pudo analizar la URL. Por favor, inténtalo de nuevo más tarde.");
       toast.error("Error al analizar la URL. Por favor, inténtalo de nuevo.");
     } finally {

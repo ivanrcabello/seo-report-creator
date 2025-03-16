@@ -9,14 +9,17 @@ interface ScoreIconProps {
 }
 
 export const ScoreIcon = ({ score, size = "md", className }: ScoreIconProps) => {
+  // Aseguramos que score es un número
+  const numericScore = typeof score === 'string' ? parseFloat(score) : score;
+  
   // Determine icon and color based on score
   let Icon;
   let colorClass;
   
-  if (score >= 0.9) {
+  if (numericScore >= 0.9) {
     Icon = CircleCheck;
     colorClass = "text-green-500";
-  } else if (score >= 0.5) {
+  } else if (numericScore >= 0.5) {
     Icon = CircleDashed;
     colorClass = "text-orange-500";
   } else {

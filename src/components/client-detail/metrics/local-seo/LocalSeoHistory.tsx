@@ -8,7 +8,7 @@ interface LocalSeoHistoryProps {
 
 export const LocalSeoHistory = ({ clientId }: LocalSeoHistoryProps) => {
   const { metricHistory } = useLocalSeoData(clientId);
-  
+
   if (metricHistory.length === 0) {
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
@@ -20,6 +20,7 @@ export const LocalSeoHistory = ({ clientId }: LocalSeoHistoryProps) => {
   return (
     <div className="bg-white rounded-lg p-4 border">
       <h3 className="text-md font-medium mb-4 flex items-center gap-2">
+        <Search className="h-4 w-4" />
         Historial de Métricas
       </h3>
       <div className="overflow-x-auto">

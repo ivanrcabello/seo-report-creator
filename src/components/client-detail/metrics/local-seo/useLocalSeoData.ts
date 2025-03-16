@@ -5,8 +5,7 @@ import {
   getLocalSeoReports, 
   getLocalSeoSettings, 
   getLocalSeoMetricsHistory,
-  saveLocalSeoSettings,
-  saveLocalSeoMetrics
+  saveLocalSeoSettings
 } from "@/services/localSeo";
 import { SeoLocalReport } from "@/types/client";
 import * as z from "zod";

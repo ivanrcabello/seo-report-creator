@@ -1,5 +1,6 @@
 
-import { Store, MapPin, Phone, Globe, Star, Award } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Store, MapPin, Phone, Globe, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLocalSeoData } from "./useLocalSeoData";
 
@@ -9,25 +10,20 @@ interface LocalSeoOverviewProps {
 }
 
 export const LocalSeoOverview = ({ clientId, clientName }: LocalSeoOverviewProps) => {
-  const { 
-    currentReport, 
-    localSeoSettings, 
-    targetLocations
-  } = useLocalSeoData(clientId);
-  
-  // Usar los valores de localSeoSettings o valores predeterminados
+  const { localSeoSettings, targetLocations, currentReport } = useLocalSeoData(clientId);
+
   const businessName = localSeoSettings?.business_name || clientName;
   const address = localSeoSettings?.address || "Sin ubicación configurada";
-  const phone = localSeoSettings?.phone || "";
-  const website = localSeoSettings?.website || "";
-  const googleBusinessUrl = localSeoSettings?.google_business_url || "";
+  const phone = localSeoSettings?.phone;
+  const website = localSeoSettings?.website;
+  const googleBusinessUrl = localSeoSettings?.google_business_url;
   const googleMapsRanking = localSeoSettings?.google_maps_ranking || 0;
   const googleReviewsCount = localSeoSettings?.google_reviews_count || 0;
   const googleReviewsAverage = typeof localSeoSettings?.google_reviews_average === 'number' ? 
-    localSeoSettings?.google_reviews_average : 
+    localSeoSettings.google_reviews_average : 
     (parseFloat(localSeoSettings?.google_reviews_average as unknown as string) || 0);
   const listingsCount = localSeoSettings?.listings_count || 0;
-  
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

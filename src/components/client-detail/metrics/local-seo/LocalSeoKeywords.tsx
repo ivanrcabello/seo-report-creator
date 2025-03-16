@@ -1,6 +1,6 @@
 
-import { Search } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Search } from "lucide-react";
 import { useLocalSeoData } from "./useLocalSeoData";
 
 interface LocalSeoKeywordsProps {
@@ -9,7 +9,7 @@ interface LocalSeoKeywordsProps {
 
 export const LocalSeoKeywords = ({ clientId }: LocalSeoKeywordsProps) => {
   const { currentReport } = useLocalSeoData(clientId);
-  
+
   if (!currentReport?.keywordRankings || currentReport.keywordRankings.length === 0) {
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">

@@ -1050,6 +1050,34 @@ export type Database = {
         }
         Returns: boolean
       }
+      upsert_complete_local_seo_settings: {
+        Args: {
+          p_id: string
+          p_client_id: string
+          p_business_name: string
+          p_address: string
+          p_phone: string
+          p_website: string
+          p_google_business_url: string
+          p_target_locations: string[]
+          p_google_reviews_count: number
+          p_google_reviews_average: number
+          p_listings_count: number
+          p_google_maps_ranking: number
+        }
+        Returns: Json
+      }
+      upsert_local_seo_settings: {
+        Args: {
+          client_id: string
+          business_name: string
+          address: string
+          phone: string
+          website: string
+          google_business_url: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       user_role: "admin" | "client"

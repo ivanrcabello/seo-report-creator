@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { SeoLocalReport } from '@/types/client';
 import { toast } from 'sonner';
 
 /**

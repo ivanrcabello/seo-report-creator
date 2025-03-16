@@ -50,6 +50,47 @@ export type Database = {
           },
         ]
       }
+      client_keywords: {
+        Row: {
+          client_id: string
+          date_added: string | null
+          id: string
+          keyword: string
+          last_updated: string | null
+          position: number | null
+          previous_position: number | null
+          target_position: number | null
+        }
+        Insert: {
+          client_id: string
+          date_added?: string | null
+          id?: string
+          keyword: string
+          last_updated?: string | null
+          position?: number | null
+          previous_position?: number | null
+          target_position?: number | null
+        }
+        Update: {
+          client_id?: string
+          date_added?: string | null
+          id?: string
+          keyword?: string
+          last_updated?: string | null
+          position?: number | null
+          previous_position?: number | null
+          target_position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_keywords_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_metrics: {
         Row: {
           client_id: string | null
@@ -588,6 +629,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_client_keywords: {
+        Args: {
+          client_id_param: string
+        }
+        Returns: {
+          client_id: string
+          date_added: string | null
+          id: string
+          keyword: string
+          last_updated: string | null
+          position: number | null
+          previous_position: number | null
+          target_position: number | null
+        }[]
+      }
       get_client_metrics: {
         Args: {
           client_id_param: string

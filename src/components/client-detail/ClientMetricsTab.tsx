@@ -6,8 +6,9 @@ import { MetricsForm } from "./metrics/MetricsForm";
 import { LoadingState } from "./metrics/LoadingState";
 import { ErrorAlert } from "./metrics/ErrorAlert";
 import { useClientMetrics } from "./metrics/useClientMetrics";
-import { TrendingUp, BarChart2, MousePointer, Share2, Award } from "lucide-react";
+import { TrendingUp, BarChart2, MousePointer, Share2, Award, Search } from "lucide-react";
 import { MetricsSummary } from "./metrics/MetricsSummary";
+import { KeywordsSection } from "./metrics/KeywordsSection";
 
 interface ClientMetricsTabProps {
   clientId: string;
@@ -58,6 +59,8 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
           isAdmin={isAdmin}
         />
       </MetricsCard>
+      
+      <KeywordsSection clientId={clientId} />
       
       {metrics && metrics.length > 0 && (
         <MetricsCard 

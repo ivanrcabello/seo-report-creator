@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getReport, deleteReport, shareReport } from "@/services/reportService";
@@ -73,8 +74,11 @@ const ReportDetail = () => {
     
     try {
       setIsProcessing(true);
-      toast.info("Generando PDF del informe...");
+      const toastId = toast.loading("Generando PDF del informe...");
+      
       const success = await downloadReportPdf(id);
+      
+      toast.dismiss(toastId);
       if (success) {
         toast.success("PDF generado correctamente");
       } else {

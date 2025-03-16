@@ -11,16 +11,26 @@ import { toast } from "sonner";
  */
 export const downloadSeoReportPdf = async (reportId: string): Promise<boolean> => {
   try {
+    // Show loading toast
+    const toastId = toast.loading("Generando PDF...");
+    
     // Get report data
     const report = await getReport(reportId);
     
     if (!report) {
+      toast.dismiss(toastId);
       toast.error("No se encontró el informe");
       return false;
     }
     
     // Generate PDF
     const pdfBlob = await generateSeoReportPdf(report);
+    
+    if (!pdfBlob) {
+      toast.dismiss(toastId);
+      toast.error("Error al generar el PDF");
+      return false;
+    }
     
     // Create a download link
     const url = URL.createObjectURL(pdfBlob);
@@ -39,6 +49,7 @@ export const downloadSeoReportPdf = async (reportId: string): Promise<boolean> =
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
+    toast.dismiss(toastId);
     toast.success("Informe descargado correctamente");
     return true;
   } catch (error) {

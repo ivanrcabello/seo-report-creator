@@ -38,7 +38,7 @@ export const generateReportPdf = async (report: ClientReport): Promise<Blob> => 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.setTextColor(52, 152, 219); // Color azul para el subtítulo
-    doc.text(report.title, 105, 30, { align: "center" });
+    doc.text(report.title || "Informe SEO", 105, 30, { align: "center" });
     
     // Agregar línea decorativa
     doc.setDrawColor(52, 152, 219);
@@ -85,10 +85,10 @@ export const generateReportPdf = async (report: ClientReport): Promise<Blob> => 
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
     
-    const formattedDate = format(new Date(report.date), "dd/MM/yyyy", { locale: es });
+    const formattedDate = report.date ? format(new Date(report.date), "dd/MM/yyyy", { locale: es }) : "";
     
     const reportData = [
-      ["Tipo:", report.type],
+      ["Tipo:", report.type || ""],
       ["Fecha:", formattedDate],
       ["URL:", report.url || ""]
     ];
@@ -154,12 +154,17 @@ export const generateReportPdf = async (report: ClientReport): Promise<Blob> => 
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
       
-      // Resumen de métricas
+      // Resumen de métricas - Agregamos verificación para evitar errores
+      const sessionCount = report.analyticsData.sessionCount ?? 0;
+      const userCount = report.analyticsData.userCount ?? 0;
+      const bounceRate = report.analyticsData.bounceRate ?? 0;
+      const avgSessionDuration = report.analyticsData.avgSessionDuration ?? 0;
+      
       const analyticsData = [
-        ["Sesiones:", report.analyticsData.sessionCount.toString()],
-        ["Usuarios:", report.analyticsData.userCount.toString()],
-        ["Tasa de rebote:", report.analyticsData.bounceRate.toFixed(1) + "%"],
-        ["Tiempo medio de sesión:", (report.analyticsData.avgSessionDuration / 60).toFixed(1) + " min"]
+        ["Sesiones:", sessionCount.toString()],
+        ["Usuarios:", userCount.toString()],
+        ["Tasa de rebote:", bounceRate.toFixed(1) + "%"],
+        ["Tiempo medio de sesión:", (avgSessionDuration / 60).toFixed(1) + " min"]
       ];
       
       autoTable(doc, {
@@ -173,7 +178,7 @@ export const generateReportPdf = async (report: ClientReport): Promise<Blob> => 
         }
       });
       
-      // Top páginas
+      // Top páginas - Verificamos que existan y tengan datos
       if (report.analyticsData.topPages && report.analyticsData.topPages.length > 0) {
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
@@ -181,9 +186,9 @@ export const generateReportPdf = async (report: ClientReport): Promise<Blob> => 
         
         const pagesHeaders = [["Página", "Visitas", "Tiempo medio"]];
         const pagesData = report.analyticsData.topPages.map(page => [
-          page.path,
-          page.views.toString(),
-          (page.avgTimeOnPage / 60).toFixed(1) + " min"
+          page.path || "",
+          (page.views || 0).toString(),
+          ((page.avgTimeOnPage || 0) / 60).toFixed(1) + " min"
         ]);
         
         autoTable(doc, {
@@ -226,12 +231,22 @@ export const generateReportPdf = async (report: ClientReport): Promise<Blob> => 
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
       
+      // Agregamos verificación para evitar errores
+      const totalClicks = report.searchConsoleData.totalClicks ?? 0;
+      const totalImpressions = report.searchConsoleData.totalImpressions ?? 0;
+      const avgPosition = report.searchConsoleData.avgPosition ?? 0;
+      
+      // Cálculo seguro del CTR para evitar división por cero
+      const ctr = totalImpressions > 0 
+        ? (totalClicks / totalImpressions * 100).toFixed(1) + "%" 
+        : "0.0%";
+      
       // Resumen de métricas
       const searchData = [
-        ["Clics totales:", report.searchConsoleData.totalClicks.toString()],
-        ["Impresiones:", report.searchConsoleData.totalImpressions.toString()],
-        ["CTR promedio:", (report.searchConsoleData.totalClicks / report.searchConsoleData.totalImpressions * 100).toFixed(1) + "%"],
-        ["Posición media:", report.searchConsoleData.avgPosition.toFixed(1)]
+        ["Clics totales:", totalClicks.toString()],
+        ["Impresiones:", totalImpressions.toString()],
+        ["CTR promedio:", ctr],
+        ["Posición media:", avgPosition.toFixed(1)]
       ];
       
       autoTable(doc, {
@@ -254,11 +269,11 @@ export const generateReportPdf = async (report: ClientReport): Promise<Blob> => 
         
         const queriesHeaders = [["Consulta", "Clics", "Impresiones", "CTR", "Posición"]];
         const queriesData = report.searchConsoleData.topQueries.map(query => [
-          query.query,
-          query.clicks.toString(),
-          query.impressions.toString(),
-          query.ctr.toFixed(1) + "%",
-          query.position.toFixed(1)
+          query.query || "",
+          (query.clicks || 0).toString(),
+          (query.impressions || 0).toString(),
+          ((query.ctr || 0) * 100).toFixed(1) + "%",
+          (query.position || 0).toFixed(1)
         ]);
         
         autoTable(doc, {
@@ -273,6 +288,63 @@ export const generateReportPdf = async (report: ClientReport): Promise<Blob> => 
           },
           styles: { fontSize: 10 }
         });
+      }
+    }
+    
+    // Agregar contenido markdown si existe
+    if (report.content) {
+      doc.addPage();
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(44, 62, 80);
+      doc.text("Informe SEO Detallado", 14, 20);
+      
+      // Agregar línea decorativa
+      doc.setDrawColor(52, 152, 219);
+      doc.setLineWidth(0.5);
+      doc.line(14, 25, 196, 25);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      
+      // Dividimos el contenido markdown por secciones
+      const sections = report.content.split('## ').filter(Boolean);
+      
+      let yPosition = 35;
+      
+      // Para cada sección, añadimos el título y el contenido
+      for (const section of sections) {
+        const lines = section.split('\n');
+        const sectionTitle = lines[0] || "Sección";
+        
+        // Si no hay espacio suficiente en la página, añadimos una nueva
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        // Agregamos el título de la sección
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(52, 152, 219);
+        doc.text(`${sectionTitle}`, 14, yPosition);
+        
+        yPosition += 10;
+        
+        // Contenido de la sección
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        
+        const contentLines = lines.slice(1).join('\n');
+        const splitText = doc.splitTextToSize(contentLines, 180);
+        
+        doc.text(splitText, 14, yPosition);
+        
+        // Calculamos la nueva posición Y basada en el número de líneas
+        yPosition += splitText.length * 7 + 15;
       }
     }
     

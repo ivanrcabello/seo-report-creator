@@ -17,13 +17,17 @@ import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { toast } from "sonner";
 
 export default function ClientDetail() {
-  const { clientId = "" } = useParams<{ clientId: string }>();
+  // Check how the route is defined in App.tsx - it uses :id as parameter
+  const { id } = useParams<{ id: string }>();
+  const clientId = id || "";
+  
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
   
-  console.log("ClientDetail component loaded with clientId:", clientId);
+  console.log("ClientDetail component loaded with id from useParams:", id);
+  console.log("Using clientId:", clientId);
 
   useEffect(() => {
     if (!clientId) {

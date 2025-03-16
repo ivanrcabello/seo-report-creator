@@ -13,14 +13,17 @@ interface ClientContractsTabProps {
 }
 
 export const ClientContractsTab = ({ clientName }: ClientContractsTabProps) => {
-  const { clientId } = useParams<{ clientId: string }>();
+  // The route parameter is :id, not :clientId, so we need to use id here
+  const { id } = useParams<{ id: string }>();
+  const clientId = id || "";
+  
   const { toast } = useToast();
   const [contracts, setContracts] = useState<SeoContract[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchContracts = async () => {
     if (!clientId) {
-      console.error("Client ID is missing in ClientContractsTab");
+      console.error("Client ID is missing in ClientContractsTab, id:", id);
       setLoading(false);
       return;
     }

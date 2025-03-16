@@ -12,13 +12,12 @@ export async function getLocalSeoMetricsHistory(clientId: string) {
     }
 
     console.log('Getting local SEO metrics history for client:', clientId);
-
+    
     const { data, error } = await supabase
       .from('local_seo_metrics')
       .select('*')
       .eq('client_id', clientId)
-      .order('date', { ascending: false })
-      .limit(10);
+      .order('date', { ascending: false });
     
     if (error) {
       console.error('Error fetching local SEO metrics history:', error);
@@ -34,7 +33,7 @@ export async function getLocalSeoMetricsHistory(clientId: string) {
 }
 
 /**
- * Save local SEO metrics for a client
+ * Save new local SEO metrics
  */
 export async function saveLocalSeoMetrics(clientId: string, metrics: {
   googleMapsRanking?: number;
@@ -49,29 +48,17 @@ export async function saveLocalSeoMetrics(clientId: string, metrics: {
     }
 
     console.log('Saving local SEO metrics for client:', clientId);
-    console.log('Metrics data:', metrics);
-
-    // Ensure numeric values and provide defaults
-    const googleMapsRanking = typeof metrics.googleMapsRanking === 'number' ? metrics.googleMapsRanking : 0;
-    const googleReviewsCount = typeof metrics.googleReviewsCount === 'number' ? metrics.googleReviewsCount : 0;
-    const googleReviewsAverage = typeof metrics.googleReviewsAverage === 'number' ? 
-      metrics.googleReviewsAverage : (parseFloat(String(metrics.googleReviewsAverage)) || 0);
-    const listingsCount = typeof metrics.listingsCount === 'number' ? metrics.listingsCount : 0;
-
-    const dataToSave = {
-      client_id: clientId,
-      google_maps_ranking: googleMapsRanking,
-      google_reviews_count: googleReviewsCount,
-      google_reviews_average: googleReviewsAverage,
-      listings_count: listingsCount,
-      date: new Date().toISOString(),
-    };
-
-    console.log('Final metrics data to save:', dataToSave);
-
+    
     const { data, error } = await supabase
       .from('local_seo_metrics')
-      .insert(dataToSave)
+      .insert({
+        client_id: clientId,
+        google_maps_ranking: metrics.googleMapsRanking,
+        google_reviews_count: metrics.googleReviewsCount,
+        google_reviews_average: metrics.googleReviewsAverage,
+        listings_count: metrics.listingsCount,
+        date: new Date().toISOString()
+      })
       .select()
       .single();
     
@@ -80,10 +67,10 @@ export async function saveLocalSeoMetrics(clientId: string, metrics: {
       throw error;
     }
     
-    console.log('Metrics saved successfully:', data);
+    console.log('Local SEO metrics saved:', data);
     return data;
   } catch (error) {
     console.error('Error in saveLocalSeoMetrics:', error);
-    throw error;
+    return null;
   }
 }

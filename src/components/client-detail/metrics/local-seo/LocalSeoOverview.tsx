@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Store, MapPin, Phone, Globe, Star } from "lucide-react";
+import { Store, MapPin, Phone, Globe, Star, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLocalSeoData } from "./useLocalSeoData";
 

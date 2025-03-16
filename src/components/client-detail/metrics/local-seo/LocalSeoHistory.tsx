@@ -1,5 +1,5 @@
 
-import { Star } from "lucide-react";
+import { Star, Calendar, Search } from "lucide-react";
 import { useLocalSeoData } from "./useLocalSeoData";
 
 interface LocalSeoHistoryProps {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,16 +64,28 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
       
       if (data) {
         console.log("Retrieved settings:", data);
-        setSettings({
-          id: data.id,
-          clientId: data.client_id,
-          businessName: data.business_name,
-          address: data.address,
-          phone: data.phone || "",
-          website: data.website || "",
-          googleBusinessUrl: data.google_business_url || "",
-          targetLocations: data.target_locations || []
-        });
+        
+        // Check if data is an object and has the expected properties
+        if (typeof data === 'object' && data !== null) {
+          const settings = data as Record<string, any>;
+          setSettings({
+            id: settings.id,
+            clientId: settings.client_id,
+            businessName: settings.business_name,
+            address: settings.address,
+            phone: settings.phone || "",
+            website: settings.website || "",
+            googleBusinessUrl: settings.google_business_url || "",
+            targetLocations: settings.target_locations || []
+          });
+        } else {
+          console.error("Unexpected data format from getLocalSeoSettings:", data);
+          setSettings(prev => ({
+            ...prev,
+            clientId,
+            businessName: clientName || prev.businessName
+          }));
+        }
       } else {
         console.log("No existing settings found, using defaults with clientId:", clientId);
         setSettings(prev => ({
@@ -143,24 +156,33 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
       
       if (result) {
         console.log("Settings saved successfully:", result);
-        setSettings(prev => ({
-          ...prev,
-          id: result.id
-        }));
         
-        toast.success("Local SEO settings saved successfully");
-        
-        if (onSave) {
-          onSave({
-            id: result.id,
-            clientId: result.client_id,
-            businessName: result.business_name,
-            address: result.address,
-            phone: result.phone,
-            website: result.website,
-            googleBusinessUrl: result.google_business_url,
-            targetLocations: result.target_locations
-          });
+        // Check if result is an object and has the expected properties
+        if (typeof result === 'object' && result !== null) {
+          const savedData = result as Record<string, any>;
+          
+          setSettings(prev => ({
+            ...prev,
+            id: savedData.id
+          }));
+          
+          toast.success("Local SEO settings saved successfully");
+          
+          if (onSave) {
+            onSave({
+              id: savedData.id,
+              clientId: savedData.client_id,
+              businessName: savedData.business_name,
+              address: savedData.address,
+              phone: savedData.phone,
+              website: savedData.website,
+              googleBusinessUrl: savedData.google_business_url,
+              targetLocations: savedData.target_locations || []
+            });
+          }
+        } else {
+          console.error("Unexpected result format from saveLocalSeoSettings:", result);
+          toast.warning("Settings saved but response format was unexpected");
         }
       }
     } catch (error) {

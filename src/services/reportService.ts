@@ -23,7 +23,7 @@ export const getClientReports = async (clientId: string): Promise<ClientReport[]
       title: item.title,
       date: item.date,
       type: item.type,
-      content: item.content,
+      content: item.content || "",
       url: item.url,
       notes: item.notes,
       documentIds: item.document_ids || [],
@@ -31,7 +31,7 @@ export const getClientReports = async (clientId: string): Promise<ClientReport[]
       sharedAt: item.shared_at,
       includeInProposal: item.include_in_proposal || false,
       analyticsData: item.analytics_data || {},
-      status: item.status || 'draft'
+      status: (item.status as 'draft' | 'published' | 'shared') || 'draft'
     }));
   } catch (error) {
     console.error("Error getting client reports:", error);
@@ -42,21 +42,24 @@ export const getClientReports = async (clientId: string): Promise<ClientReport[]
 // Function to get a single report by ID
 export const getReport = async (reportId: string): Promise<ClientReport | null> => {
   try {
+    if (!reportId || reportId === 'undefined' || reportId === 'null') {
+      console.error("Invalid report ID provided:", reportId);
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('client_reports')
       .select('*')
       .eq('id', reportId)
-      .single();
+      .maybeSingle();
     
     if (error) {
-      if (error.code === 'PGRST116') {
-        // Record not found
-        return null;
-      }
-      throw error;
+      console.error("Error fetching report:", error);
+      return null;
     }
 
     if (!data) {
+      console.warn("No report found with ID:", reportId);
       return null;
     }
 
@@ -66,7 +69,7 @@ export const getReport = async (reportId: string): Promise<ClientReport | null> 
       title: data.title,
       date: data.date,
       type: data.type,
-      content: data.content,
+      content: data.content || "",
       url: data.url,
       notes: data.notes,
       documentIds: data.document_ids || [],
@@ -74,11 +77,11 @@ export const getReport = async (reportId: string): Promise<ClientReport | null> 
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
       analyticsData: data.analytics_data || {},
-      status: data.status || 'draft'
+      status: (data.status as 'draft' | 'published' | 'shared') || 'draft'
     };
   } catch (error) {
     console.error("Error getting report:", error);
-    throw error;
+    return null;
   }
 };
 
@@ -110,7 +113,7 @@ export const getAllReports = async (): Promise<ClientReport[]> => {
       title: item.title,
       date: item.date,
       type: item.type,
-      content: item.content,
+      content: item.content || "",
       url: item.url,
       notes: item.notes,
       documentIds: item.document_ids || [],
@@ -118,7 +121,7 @@ export const getAllReports = async (): Promise<ClientReport[]> => {
       sharedAt: item.shared_at,
       includeInProposal: item.include_in_proposal || false,
       analyticsData: item.analytics_data || {},
-      status: item.status || 'draft'
+      status: (item.status as 'draft' | 'published' | 'shared') || 'draft'
     }));
   } catch (error) {
     console.error("Error getting all reports:", error);
@@ -136,7 +139,7 @@ export const addReport = async (report: Omit<ClientReport, "id">): Promise<Clien
         title: report.title,
         date: report.date,
         type: report.type,
-        content: report.content,
+        content: report.content || "",
         url: report.url,
         notes: report.notes,
         document_ids: report.documentIds,
@@ -158,7 +161,7 @@ export const addReport = async (report: Omit<ClientReport, "id">): Promise<Clien
       title: data.title,
       date: data.date,
       type: data.type,
-      content: data.content,
+      content: data.content || "",
       url: data.url || "",
       notes: data.notes || "",
       documentIds: data.document_ids || [],
@@ -166,7 +169,7 @@ export const addReport = async (report: Omit<ClientReport, "id">): Promise<Clien
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
       analyticsData: data.analytics_data || {},
-      status: data.status || 'draft'
+      status: (data.status as 'draft' | 'published' | 'shared') || 'draft'
     };
   } catch (error) {
     console.error("Error adding report:", error);
@@ -177,6 +180,10 @@ export const addReport = async (report: Omit<ClientReport, "id">): Promise<Clien
 // Function to update an existing report
 export const updateReport = async (report: ClientReport): Promise<ClientReport> => {
   try {
+    if (!report.id) {
+      throw new Error("Report ID is required for update");
+    }
+
     const { data, error } = await supabase
       .from('client_reports')
       .update({
@@ -203,7 +210,7 @@ export const updateReport = async (report: ClientReport): Promise<ClientReport> 
       title: data.title,
       date: data.date,
       type: data.type,
-      content: data.content,
+      content: data.content || "",
       url: data.url || "",
       notes: data.notes || "",
       documentIds: data.document_ids || [],
@@ -211,7 +218,7 @@ export const updateReport = async (report: ClientReport): Promise<ClientReport> 
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
       analyticsData: data.analytics_data || {},
-      status: data.status || 'draft'
+      status: (data.status as 'draft' | 'published' | 'shared') || 'draft'
     };
   } catch (error) {
     console.error("Error updating report:", error);
@@ -222,6 +229,10 @@ export const updateReport = async (report: ClientReport): Promise<ClientReport> 
 // Function to delete a report
 export const deleteReport = async (reportId: string): Promise<void> => {
   try {
+    if (!reportId) {
+      throw new Error("Report ID is required for deletion");
+    }
+    
     const { error } = await supabase
       .from('client_reports')
       .delete()

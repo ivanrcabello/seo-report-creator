@@ -22,7 +22,8 @@ import {
   Printer, 
   Download, 
   Gem,
-  ArrowLeft
+  ArrowLeft,
+  RefreshCw
 } from "lucide-react";
 import {
   AlertDialog,
@@ -43,10 +44,42 @@ const SeoReport = () => {
   const { toast: uiToast } = useToast();
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [report, setReport] = useState<ClientReport | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
+
+  const fetchReport = async () => {
+    if (id) {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const reportData = await getReport(id);
+        if (reportData) {
+          setReport(reportData);
+          
+          // If the report has audit results, use those
+          if (reportData.analyticsData?.auditResult) {
+            setAuditResult(reportData.analyticsData.auditResult);
+          }
+        } else {
+          setError("No se encontró el informe. Es posible que haya sido eliminado o que no exista.");
+          console.error("No report found with ID:", id);
+        }
+      } catch (error) {
+        console.error("Error fetching report:", error);
+        setError("Error al cargar el informe. Por favor, inténtalo de nuevo más tarde.");
+        uiToast({
+          title: "Error",
+          description: "No se pudo cargar el informe",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   useEffect(() => {
     // Get audit result from location state
@@ -55,34 +88,12 @@ const SeoReport = () => {
     }
     
     // If we have a report ID, fetch the report
-    const fetchReport = async () => {
-      if (id) {
-        setIsLoading(true);
-        try {
-          const reportData = await getReport(id);
-          if (reportData) {
-            setReport(reportData);
-            
-            // If the report has audit results, use those
-            if (reportData.analyticsData?.auditResult) {
-              setAuditResult(reportData.analyticsData.auditResult);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching report:", error);
-          uiToast({
-            title: "Error",
-            description: "No se pudo cargar el informe",
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-    
     fetchReport();
   }, [location, id, uiToast]);
+
+  const handleRetry = () => {
+    fetchReport();
+  };
 
   const handlePrint = () => {
     window.print();
@@ -155,8 +166,53 @@ const SeoReport = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-4 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="flex flex-col gap-3">
+            <Button 
+              variant="outline"
+              className="w-full"
+              onClick={handleRetry}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Reintentar
+            </Button>
+            <Button 
+              variant="default"
+              className="w-full"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!auditResult && !report?.content) {
-    return <NoDataCard />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <Button 
+            variant="ghost" 
+            className="gap-2 mb-6" 
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver
+          </Button>
+          
+          <NoDataCard />
+        </div>
+      </div>
+    );
   }
 
   return (

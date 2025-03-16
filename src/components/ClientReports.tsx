@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ClientReport } from "@/types/client";
@@ -20,7 +21,8 @@ import {
   BarChart,
   Globe,
   Cog,
-  Share
+  Share,
+  AlertCircle 
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -37,16 +39,21 @@ interface ClientReportsProps {
 export const ClientReports = ({ reports: propReports, clientId, clientName, onAddReport }: ClientReportsProps) => {
   const [reports, setReports] = useState<ClientReport[]>(propReports || []);
   const [isLoading, setIsLoading] = useState(!propReports);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!propReports && clientId) {
       const fetchReports = async () => {
         setIsLoading(true);
+        setError(null);
         try {
+          console.log("Fetching reports for client:", clientId);
           const fetchedReports = await getClientReports(clientId);
+          console.log("Fetched reports:", fetchedReports);
           setReports(fetchedReports);
         } catch (error) {
           console.error("Error fetching client reports:", error);
+          setError("No se pudieron cargar los informes. Por favor, inténtelo de nuevo más tarde.");
           toast.error("No se pudieron cargar los informes del cliente");
         } finally {
           setIsLoading(false);
@@ -82,6 +89,8 @@ export const ClientReports = ({ reports: propReports, clientId, clientName, onAd
         return 'Técnico';
       case 'social':
         return 'Social';
+      case 'local-seo':
+        return 'SEO Local';
       default:
         return type;
     }
@@ -97,8 +106,19 @@ export const ClientReports = ({ reports: propReports, clientId, clientName, onAd
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'social':
         return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'local-seo':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "d MMM yyyy", { locale: es });
+    } catch (e) {
+      console.error("Error formatting date:", dateString, e);
+      return "Fecha inválida";
     }
   };
 
@@ -118,6 +138,31 @@ export const ClientReports = ({ reports: propReports, clientId, clientName, onAd
               <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
               <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            Error al cargar informes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+              className="mx-auto"
+            >
+              Reintentar
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -163,7 +208,7 @@ export const ClientReports = ({ reports: propReports, clientId, clientName, onAd
             <TableBody>
               {reports.map((report) => (
                 <TableRow key={report.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{report.title}</TableCell>
+                  <TableCell className="font-medium">{report.title || 'Sin título'}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={`font-normal gap-1 ${getReportTypeColor(report.type)}`}>
                       {getReportIcon(report.type)}
@@ -172,7 +217,7 @@ export const ClientReports = ({ reports: propReports, clientId, clientName, onAd
                   </TableCell>
                   <TableCell className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5 text-gray-500" />
-                    <span className="text-sm">{format(new Date(report.date), "d MMM yyyy", { locale: es })}</span>
+                    <span className="text-sm">{formatDate(report.date)}</span>
                   </TableCell>
                   <TableCell>
                     {report.url ? (
@@ -182,7 +227,13 @@ export const ClientReports = ({ reports: propReports, clientId, clientName, onAd
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline flex items-center gap-1.5 text-sm"
                       >
-                        {new URL(report.url).hostname}
+                        {(() => {
+                          try {
+                            return new URL(report.url).hostname;
+                          } catch (e) {
+                            return report.url;
+                          }
+                        })()}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     ) : (

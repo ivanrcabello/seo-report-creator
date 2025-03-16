@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClientReport } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
@@ -255,7 +254,7 @@ export const shareReport = async (reportId: string): Promise<ClientReport> => {
       .update({
         shared_at: new Date().toISOString(),
         share_token: uuidv4(), // Generate a new UUID for sharing
-        status: 'shared'
+        status: 'shared' as const
       })
       .eq('id', reportId)
       .select()
@@ -279,7 +278,7 @@ export const shareReport = async (reportId: string): Promise<ClientReport> => {
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
       analyticsData: data.analytics_data || {},
-      status: data.status
+      status: (data.status as 'draft' | 'published' | 'shared')
     };
   } catch (error) {
     console.error("Error sharing report:", error);
@@ -301,7 +300,7 @@ export const saveReportWithAIData = async (currentReport: ClientReport, aiReport
         ...currentReport.analyticsData,
         aiReport: aiReport
       },
-      status: 'draft'
+      status: 'draft' as const
     };
     
     // Update the report in the database
@@ -337,7 +336,7 @@ export const saveReportWithAIData = async (currentReport: ClientReport, aiReport
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
       analyticsData: data.analytics_data || {},
-      status: data.status
+      status: (data.status as 'draft' | 'published' | 'shared')
     };
   } catch (error) {
     console.error("Error saving report with AI data:", error);
@@ -351,7 +350,7 @@ export const publishReport = async (reportId: string): Promise<ClientReport> => 
     const { data, error } = await supabase
       .from('client_reports')
       .update({
-        status: 'published',
+        status: 'published' as const,
         updated_at: new Date().toISOString()
       })
       .eq('id', reportId)
@@ -376,7 +375,7 @@ export const publishReport = async (reportId: string): Promise<ClientReport> => 
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
       analyticsData: data.analytics_data || {},
-      status: data.status
+      status: (data.status as 'draft' | 'published' | 'shared')
     };
   } catch (error) {
     console.error("Error publishing report:", error);

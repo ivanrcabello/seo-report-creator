@@ -46,6 +46,8 @@ export const PageSpeedUrlAnalyzer = ({
       }
       
       console.log("Analizando URL con PageSpeed:", formattedUrl);
+      
+      // Call the API service
       const report = await analyzeWebsite(formattedUrl);
       
       if (report) {

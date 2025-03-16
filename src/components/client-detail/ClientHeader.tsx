@@ -10,6 +10,7 @@ import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface ClientHeaderProps {
   client: Client;
@@ -24,6 +25,11 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
   onDelete,
   onToggleActive 
 }) => {
+  const handleToggleActive = (checked: boolean) => {
+    onToggleActive(checked);
+    toast.success(`Cliente ${checked ? 'activado' : 'desactivado'} correctamente`);
+  };
+
   return (
     <>
       <div className="flex items-center mb-6">
@@ -100,7 +106,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
               <Switch 
                 id="client-active" 
                 checked={client.isActive} 
-                onCheckedChange={onToggleActive}
+                onCheckedChange={handleToggleActive}
               />
             </div>
           </div>

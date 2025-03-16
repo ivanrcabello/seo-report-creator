@@ -6,30 +6,171 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
+import { format, differenceInDays, differenceInMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { Client } from "@/types/client";
-import { Eye, Plus, User, Building, Mail, Calendar, Search, UserPlus, FileText, ScrollText } from "lucide-react";
+import { 
+  Eye, Plus, User, Building, Mail, Calendar, Search, UserPlus, 
+  FileText, ScrollText, Edit, Trash2, Power, Filter, 
+  ChevronsUpDown, CheckCircle2, XCircle, AlertCircle 
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface ClientsListProps {
   clients: Client[];
   onAddClient: () => void;
+  onEditClient: (clientId: string) => void;
+  onDeleteClient: (client: Client) => void;
+  onToggleStatus: (clientId: string, isActive: boolean) => void;
   isLoading?: boolean;
 }
 
-export const ClientsList: React.FC<ClientsListProps> = ({ clients, onAddClient, isLoading = false }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+type SortField = 'name' | 'createdAt' | 'lastReport';
+type SortOrder = 'asc' | 'desc';
+type Filter = 'all' | 'active' | 'inactive' | 'noReports';
 
-  const filteredClients = clients.filter(client => 
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.company && client.company.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+export const ClientsList: React.FC<ClientsListProps> = ({ 
+  clients, 
+  onAddClient, 
+  onEditClient, 
+  onDeleteClient,
+  onToggleStatus,
+  isLoading = false 
+}) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [activeFilter, setActiveFilter] = useState<Filter>('all');
+
+  const toggleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Filter clients based on search term and active filter
+  const filteredClients = clients.filter(client => {
+    const matchesSearch = 
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (client.company && client.company.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    if (!matchesSearch) return false;
+
+    switch (activeFilter) {
+      case 'active':
+        return client.isActive;
+      case 'inactive':
+        return !client.isActive;
+      case 'noReports':
+        return !client.lastReport;
+      default:
+        return true;
+    }
+  });
+
+  // Sort clients
+  const sortedClients = [...filteredClients].sort((a, b) => {
+    if (sortField === 'name') {
+      const comparison = a.name.localeCompare(b.name);
+      return sortOrder === 'asc' ? comparison : -comparison;
+    } 
+    else if (sortField === 'createdAt') {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    }
+    else if (sortField === 'lastReport') {
+      // Handle null lastReport values
+      if (!a.lastReport && !b.lastReport) return 0;
+      if (!a.lastReport) return sortOrder === 'asc' ? -1 : 1;
+      if (!b.lastReport) return sortOrder === 'asc' ? 1 : -1;
+      
+      const dateA = new Date(a.lastReport).getTime();
+      const dateB = new Date(b.lastReport).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    }
+    return 0;
+  });
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return "No hay informes";
+    if (!dateString) return "Sin informes";
     return format(new Date(dateString), "d 'de' MMMM, yyyy", { locale: es });
+  };
+
+  const getClientStatus = (client: Client) => {
+    if (!client.isActive) {
+      return (
+        <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">
+          Inactivo
+        </Badge>
+      );
+    }
+
+    if (!client.lastReport) {
+      return (
+        <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200 flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          Sin informes
+        </Badge>
+      );
+    }
+
+    const lastReportDate = new Date(client.lastReport);
+    const daysSinceReport = differenceInDays(new Date(), lastReportDate);
+
+    if (daysSinceReport < 30) {
+      return (
+        <Badge variant="default" className="bg-green-500 flex items-center gap-1">
+          <CheckCircle2 className="h-3 w-3" />
+          Al día
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200 flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          Informe pendiente
+        </Badge>
+      );
+    }
+  };
+
+  // Get client tenure to identify new vs long-term clients
+  const getClientTenure = (createdAt: string) => {
+    const months = differenceInMonths(new Date(), new Date(createdAt));
+    
+    if (months < 1) {
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          Nuevo
+        </Badge>
+      );
+    } else if (months >= 12) {
+      return (
+        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+          +1 año
+        </Badge>
+      );
+    } else if (months >= 6) {
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          +6 meses
+        </Badge>
+      );
+    }
+    return null;
   };
 
   return (
@@ -54,6 +195,47 @@ export const ClientsList: React.FC<ClientsListProps> = ({ clients, onAddClient, 
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-1 border-gray-200 hover:bg-gray-50">
+                <Filter className="h-4 w-4 text-gray-500" />
+                Filtrar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem 
+                className={activeFilter === 'all' ? 'bg-gray-100' : ''} 
+                onClick={() => setActiveFilter('all')}
+              >
+                <CheckCircle2 className={`h-4 w-4 mr-2 ${activeFilter === 'all' ? 'opacity-100 text-seo-blue' : 'opacity-0'}`} />
+                Todos los clientes
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className={activeFilter === 'active' ? 'bg-gray-100' : ''} 
+                onClick={() => setActiveFilter('active')}
+              >
+                <CheckCircle2 className={`h-4 w-4 mr-2 ${activeFilter === 'active' ? 'opacity-100 text-seo-blue' : 'opacity-0'}`} />
+                Clientes activos
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className={activeFilter === 'inactive' ? 'bg-gray-100' : ''} 
+                onClick={() => setActiveFilter('inactive')}
+              >
+                <CheckCircle2 className={`h-4 w-4 mr-2 ${activeFilter === 'inactive' ? 'opacity-100 text-seo-blue' : 'opacity-0'}`} />
+                Clientes inactivos
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className={activeFilter === 'noReports' ? 'bg-gray-100' : ''} 
+                onClick={() => setActiveFilter('noReports')}
+              >
+                <CheckCircle2 className={`h-4 w-4 mr-2 ${activeFilter === 'noReports' ? 'opacity-100 text-seo-blue' : 'opacity-0'}`} />
+                Sin informes
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button onClick={onAddClient} className="gap-1 bg-gradient-to-r from-seo-blue to-seo-purple hover:opacity-90 transition-all">
             <UserPlus className="h-4 w-4" />
             Nuevo Cliente
@@ -74,7 +256,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({ clients, onAddClient, 
               </div>
             ))}
           </div>
-        ) : filteredClients.length === 0 ? (
+        ) : sortedClients.length === 0 ? (
           <div className="text-center py-16 px-4">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
               <User className="h-8 w-8 text-gray-400" />
@@ -90,18 +272,43 @@ export const ClientsList: React.FC<ClientsListProps> = ({ clients, onAddClient, 
             <Table>
               <TableHeader className="bg-gray-50">
                 <TableRow>
-                  <TableHead>Cliente</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => toggleSort('name')}>
+                    <div className="flex items-center gap-1">
+                      Cliente
+                      {sortField === 'name' && (
+                        <ChevronsUpDown className={`h-4 w-4 ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
+                  </TableHead>
                   <TableHead>Contacto</TableHead>
                   <TableHead>Empresa</TableHead>
-                  <TableHead>Registro</TableHead>
-                  <TableHead>Último Informe</TableHead>
-                  <TableHead className="text-right">Acción</TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => toggleSort('createdAt')}>
+                    <div className="flex items-center gap-1">
+                      Registro
+                      {sortField === 'createdAt' && (
+                        <ChevronsUpDown className={`h-4 w-4 ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer" onClick={() => toggleSort('lastReport')}>
+                    <div className="flex items-center gap-1">
+                      Último Informe
+                      {sortField === 'lastReport' && (
+                        <ChevronsUpDown className={`h-4 w-4 ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredClients.map((client) => (
+                {sortedClients.map((client) => (
                   <TableRow key={client.id} className="hover:bg-gray-50 transition-colors">
-                    <TableCell className="font-medium">{client.name}</TableCell>
+                    <TableCell className="font-medium flex items-center gap-2">
+                      {client.name}
+                      {getClientTenure(client.createdAt)}
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="text-sm flex items-center gap-1.5">
@@ -131,7 +338,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({ clients, onAddClient, 
                       {client.lastReport ? (
                         <Badge variant="secondary" className="font-normal gap-1 bg-seo-purple/10 text-seo-purple">
                           <ScrollText className="h-3 w-3" />
-                          {formatDate(client.lastReport)}
+                          {format(new Date(client.lastReport), "d MMM yyyy", { locale: es })}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="text-gray-500 font-normal">
@@ -139,13 +346,45 @@ export const ClientsList: React.FC<ClientsListProps> = ({ clients, onAddClient, 
                         </Badge>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {getClientStatus(client)}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" asChild className="border-seo-blue/30 text-seo-blue hover:bg-seo-blue/10 hover:text-seo-blue">
-                        <Link to={`/clients/${client.id}`} className="flex items-center gap-1.5">
-                          <Eye className="h-3.5 w-3.5" />
-                          Ver Detalles
-                        </Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Switch
+                          checked={client.isActive}
+                          onCheckedChange={(checked) => onToggleStatus(client.id, checked)}
+                          className="data-[state=checked]:bg-green-500"
+                        />
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link to={`/clients/${client.id}`} className="flex items-center">
+                                <Eye className="h-4 w-4 mr-2" />
+                                Ver detalles
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onEditClient(client.id)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => onDeleteClient(client)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -157,3 +396,5 @@ export const ClientsList: React.FC<ClientsListProps> = ({ clients, onAddClient, 
     </Card>
   );
 };
+
+import { MoreVertical } from "lucide-react";

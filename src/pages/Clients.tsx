@@ -3,10 +3,20 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ClientsList } from "@/components/ClientsList";
 import { ClientForm } from "@/components/ClientForm";
-import { getClients, addClient, getClient, updateClient } from "@/services/clientService";
+import { getClients, addClient, getClient, updateClient, deleteClient, updateClientActiveStatus } from "@/services/clientService";
 import { Client } from "@/types/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Clients = () => {
   const { toast } = useToast();
@@ -15,6 +25,8 @@ const Clients = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const params = useParams();
   const navigate = useNavigate();
 
@@ -79,6 +91,42 @@ const Clients = () => {
     navigate("/clients/new");
   };
 
+  const handleEditClient = (clientId: string) => {
+    navigate(`/clients/edit/${clientId}`);
+  };
+
+  const handleDeleteClient = (client: Client) => {
+    setClientToDelete(client);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteClient = async () => {
+    if (!clientToDelete) return;
+    
+    try {
+      await deleteClient(clientToDelete.id);
+      setClients(clients.filter(c => c.id !== clientToDelete.id));
+      toast.success(`Cliente ${clientToDelete.name} eliminado correctamente`);
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      toast.error("No se pudo eliminar el cliente");
+    } finally {
+      setShowDeleteDialog(false);
+      setClientToDelete(null);
+    }
+  };
+
+  const handleToggleClientStatus = async (clientId: string, isActive: boolean) => {
+    try {
+      const updatedClient = await updateClientActiveStatus(clientId, isActive);
+      setClients(clients.map(c => c.id === clientId ? updatedClient : c));
+      toast.success(`Cliente ${isActive ? 'activado' : 'desactivado'} correctamente`);
+    } catch (error) {
+      console.error("Error updating client status:", error);
+      toast.error(`No se pudo ${isActive ? 'activar' : 'desactivar'} el cliente`);
+    }
+  };
+
   const handleCancelForm = () => {
     setShowForm(false);
     // Navigate back to clients list
@@ -94,37 +142,30 @@ const Clients = () => {
           name: clientData.name,
           email: clientData.email,
           phone: clientData.phone,
-          company: clientData.company
+          company: clientData.company,
+          isActive: currentClient.isActive
         };
         
         // Call updateClient with the complete client object
         const updatedClient = await updateClient(updatedClientData);
         setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
-        toast({
-          title: "Cliente actualizado",
-          description: `${updatedClient.name} ha sido actualizado correctamente.`,
-        });
+        toast.success(`Cliente ${updatedClient.name} actualizado correctamente`);
       } else {
         // Create new client
         const newClient = await addClient(clientData);
         setClients([...clients, newClient]);
-        toast({
-          title: "Cliente creado",
-          description: `${newClient.name} ha sido añadido correctamente.`,
-        });
+        toast.success(`Cliente ${newClient.name} creado correctamente`);
       }
       
       setShowForm(false);
       navigate("/clients");
     } catch (error) {
       console.error("Error saving client:", error);
-      toast({
-        title: "Error",
-        description: isEditMode 
+      toast.error(
+        isEditMode 
           ? "No se pudo actualizar el cliente. Inténtalo de nuevo."
-          : "No se pudo crear el cliente. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
+          : "No se pudo crear el cliente. Inténtalo de nuevo."
+      );
     }
   };
 
@@ -144,11 +185,35 @@ const Clients = () => {
             <ClientsList 
               clients={clients} 
               onAddClient={handleAddClient}
+              onEditClient={handleEditClient}
+              onDeleteClient={handleDeleteClient}
+              onToggleStatus={handleToggleClientStatus}
               isLoading={isLoading}
             />
           </div>
         )}
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará al cliente {clientToDelete?.name} y no se puede deshacer.
+              Todos los datos asociados a este cliente serán eliminados permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteClient}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -418,7 +418,7 @@ export const getReportByShareToken = async (shareToken: string): Promise<ClientR
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
       analyticsData: data.analytics_data || {},
-      status: data.status || 'draft'
+      status: (data.status as 'draft' | 'published' | 'shared') || 'draft'
     };
   } catch (error) {
     console.error("Error getting report by share token:", error);

@@ -52,7 +52,10 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
         handleInputChange={() => {}}
         handleSaveMetrics={async () => {}}
       />
-      <MetricsSummary currentMetric={metrics && metrics.length > 0 ? metrics[0] : null} clientId={clientId} />
+      <MetricsSummary 
+        currentMetric={metrics && metrics.length > 0 ? metrics[0] : null} 
+        clientId={clientId} 
+      />
       <PageSpeedSection clientId={clientId} clientName={clientName} />
       <KeywordsSection clientId={clientId} />
       <LocalSeoMetrics clientId={clientId} clientName={clientName} />

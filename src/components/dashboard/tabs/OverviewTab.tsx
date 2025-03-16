@@ -1,4 +1,6 @@
+
 import { ClientSummary } from "@/types/client";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +33,8 @@ export const OverviewTab = ({
   contractStats, 
   clientSummaries 
 }: OverviewTabProps) => {
-  const [clients, setClients] = useState<ClientSummary[]>([]);
+  // Fix: Initialize clients state with clientSummaries
+  const [clients, setClients] = useState<ClientSummary[]>(clientSummaries);
 
   return (
     <div className="space-y-6">
@@ -87,6 +90,7 @@ export const OverviewTab = ({
             <CardTitle className="text-xl font-medium">Clientes Activos</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Fix: Pass clientSummaries directly instead of clients state */}
             <ActiveUsers clients={clientSummaries.filter(client => client.isActive).slice(0, 5)} />
             <Button asChild variant="outline" size="sm" className="mt-4 w-full">
               <Link to="/clients">Ver todos los clientes</Link>

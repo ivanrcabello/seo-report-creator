@@ -1,9 +1,7 @@
 
 import { Store, MapPin, Phone, Globe, Star, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useForm } from "react-hook-form";
-import { useLocalSeoData, LocalSeoMetricsFormValues, localSeoMetricsSchema } from "./useLocalSeoData";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useLocalSeoData } from "./useLocalSeoData";
 
 interface LocalSeoOverviewProps {
   clientId: string;
@@ -16,35 +14,19 @@ export const LocalSeoOverview = ({ clientId, clientName }: LocalSeoOverviewProps
     localSeoSettings, 
     targetLocations
   } = useLocalSeoData(clientId);
-
-  const form = useForm<LocalSeoMetricsFormValues>({
-    resolver: zodResolver(localSeoMetricsSchema),
-    defaultValues: {
-      businessName: localSeoSettings?.business_name || clientName,
-      address: localSeoSettings?.address || "",
-      phone: localSeoSettings?.phone || "",
-      website: localSeoSettings?.website || "",
-      googleBusinessUrl: localSeoSettings?.google_business_url || "",
-      googleMapsRanking: localSeoSettings?.google_maps_ranking || 0,
-      googleReviewsCount: localSeoSettings?.google_reviews_count || 0,
-      googleReviewsAverage: typeof localSeoSettings?.google_reviews_average === 'number' ? 
-        localSeoSettings?.google_reviews_average : 
-        (parseFloat(localSeoSettings?.google_reviews_average as unknown as string) || 0),
-      listingsCount: localSeoSettings?.listings_count || 0,
-    },
-  });
   
-  const businessName = form.watch("businessName") || clientName;
-  const address = form.watch("address") || "Sin ubicación configurada";
-  const phone = form.watch("phone");
-  const website = form.watch("website");
-  const googleBusinessUrl = form.watch("googleBusinessUrl");
-  const googleMapsRanking = form.watch("googleMapsRanking") || 0;
-  const googleReviewsCount = form.watch("googleReviewsCount") || 0;
-  const googleReviewsAverage = typeof form.watch("googleReviewsAverage") === 'number' ? 
-    form.watch("googleReviewsAverage") : 
-    (parseFloat(form.watch("googleReviewsAverage") as unknown as string) || 0);
-  const listingsCount = form.watch("listingsCount") || 0;
+  // Usar los valores de localSeoSettings o valores predeterminados
+  const businessName = localSeoSettings?.business_name || clientName;
+  const address = localSeoSettings?.address || "Sin ubicación configurada";
+  const phone = localSeoSettings?.phone || "";
+  const website = localSeoSettings?.website || "";
+  const googleBusinessUrl = localSeoSettings?.google_business_url || "";
+  const googleMapsRanking = localSeoSettings?.google_maps_ranking || 0;
+  const googleReviewsCount = localSeoSettings?.google_reviews_count || 0;
+  const googleReviewsAverage = typeof localSeoSettings?.google_reviews_average === 'number' ? 
+    localSeoSettings?.google_reviews_average : 
+    (parseFloat(localSeoSettings?.google_reviews_average as unknown as string) || 0);
+  const listingsCount = localSeoSettings?.listings_count || 0;
   
   return (
     <div className="space-y-6">

@@ -1,5 +1,5 @@
 
-// Export all functions from the various modules
+// Reexportar todas las funciones relacionadas con SEO local
 export * from './core';
-export * from './metrics';
 export * from './reports';
+export * from './metrics';

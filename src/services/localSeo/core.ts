@@ -53,16 +53,7 @@ export async function saveBasicLocalSeoSettings(clientId: string, data: {
     console.log('Saving basic local SEO settings for client:', clientId);
     console.log('Basic settings data:', data);
     
-    // First check if a record already exists
-    const { data: existingSettings } = await supabase
-      .from('client_local_seo_settings')
-      .select('id')
-      .eq('client_id', clientId)
-      .maybeSingle();
-    
-    let result;
-    
-    // Format the data for saving
+    // Format the data for saving via RPC function
     const dataToSave = {
       client_id: clientId,
       business_name: data.businessName,
@@ -72,33 +63,13 @@ export async function saveBasicLocalSeoSettings(clientId: string, data: {
       google_business_url: data.googleBusinessUrl || null
     };
     
-    if (existingSettings?.id) {
-      // Update existing record
-      const { data: updatedData, error } = await supabase
-        .from('client_local_seo_settings')
-        .update(dataToSave)
-        .eq('id', existingSettings.id)
-        .select()
-        .single();
+    // Call a stored procedure or RPC function instead of direct insert
+    const { data: result, error } = await supabase
+      .rpc('upsert_local_seo_settings', dataToSave);
         
-      if (error) {
-        console.error('Error updating basic local SEO settings:', error);
-        throw error;
-      }
-      result = updatedData;
-    } else {
-      // Insert new record
-      const { data: newData, error } = await supabase
-        .from('client_local_seo_settings')
-        .insert(dataToSave)
-        .select()
-        .single();
-        
-      if (error) {
-        console.error('Error inserting basic local SEO settings:', error);
-        throw error;
-      }
-      result = newData;
+    if (error) {
+      console.error('Error updating basic local SEO settings:', error);
+      throw error;
     }
     
     console.log('Basic settings saved successfully:', result);
@@ -125,6 +96,7 @@ export async function saveLocalSeoSettings({
   googleReviewsCount,
   googleReviewsAverage,
   listingsCount,
+  googleMapsRanking,
 }: {
   id?: string;
   clientId: string;
@@ -137,6 +109,7 @@ export async function saveLocalSeoSettings({
   googleReviewsCount?: number;
   googleReviewsAverage?: number;
   listingsCount?: number;
+  googleMapsRanking?: number;
 }) {
   try {
     // Validate clientId
@@ -153,52 +126,31 @@ export async function saveLocalSeoSettings({
       googleReviewsAverage : 
       (parseFloat(String(googleReviewsAverage)) || 0);
     
-    // Only include fields that exist in the database table
+    // Prepare data for RPC call
     const dataToSave = {
-      client_id: clientId,
-      business_name: businessName,
-      address: address,
-      phone: phone || null,
-      website: website || null,
-      google_business_url: googleBusinessUrl || null,
-      target_locations: targetLocations || [],
-      google_reviews_count: googleReviewsCount || 0,
-      google_reviews_average: normalizedReviewsAvg,
-      listings_count: listingsCount || 0,
+      p_id: id || null,
+      p_client_id: clientId,
+      p_business_name: businessName,
+      p_address: address,
+      p_phone: phone || null,
+      p_website: website || null,
+      p_google_business_url: googleBusinessUrl || null,
+      p_target_locations: targetLocations || [],
+      p_google_reviews_count: googleReviewsCount || 0,
+      p_google_reviews_average: normalizedReviewsAvg,
+      p_listings_count: listingsCount || 0,
+      p_google_maps_ranking: googleMapsRanking || 0
     };
     
-    let result;
+    console.log('Final settings data to save via RPC:', dataToSave);
     
-    if (id && id.trim() !== '') {
-      // Update existing record
-      console.log('Updating existing record with ID:', id);
-      const { data, error } = await supabase
-        .from('client_local_seo_settings')
-        .update(dataToSave)
-        .eq('id', id)
-        .eq('client_id', clientId)
-        .select()
-        .single();
-        
-      if (error) {
-        console.error('Error updating local SEO settings:', error);
-        throw error;
-      }
-      result = data;
-    } else {
-      // Insert new record
-      console.log('Inserting new record for client:', clientId);
-      const { data, error } = await supabase
-        .from('client_local_seo_settings')
-        .insert(dataToSave)
-        .select()
-        .single();
-        
-      if (error) {
-        console.error('Error inserting local SEO settings:', error);
-        throw error;
-      }
-      result = data;
+    // Call RPC function to save data
+    const { data: result, error } = await supabase
+      .rpc('upsert_complete_local_seo_settings', dataToSave);
+    
+    if (error) {
+      console.error('Error saving local SEO settings:', error);
+      throw error;
     }
     
     console.log('Settings saved successfully:', result);

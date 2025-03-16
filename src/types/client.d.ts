@@ -1,3 +1,4 @@
+
 // Client types definitions
 
 export interface Client {
@@ -88,6 +89,7 @@ export interface SeoLocalReport {
   title: string;
   date: string;
   businessName: string;
+  location?: string;
   address: string;
   phone: string | null;
   website: string | null;
@@ -102,7 +104,6 @@ export interface SeoLocalReport {
   recommendations?: string[];
   keywordRankings?: any;
   localListings?: any;
-  location?: string;
   shareToken?: string;
   sharedAt?: string | null;
 }

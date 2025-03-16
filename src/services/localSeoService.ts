@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { SeoLocalReport } from '@/types/client';
@@ -31,7 +32,12 @@ export async function generateLocalSeoAnalysis(clientId: string, businessName: s
     googleMapsRanking: googleMapsRanking,
     googleReviewsCount: googleReviewsCount,
     keywordRankings: keywordRankings,
-    recommendations: recommendations
+    recommendations: recommendations,
+    // Add required properties that were missing
+    date: new Date().toISOString(),
+    address: "",
+    phone: null,
+    website: null
   };
 
   return report;
@@ -58,7 +64,7 @@ export async function createLocalSeoReport(reportData: {
     const { clientId, title, businessName, location, recommendations, phone, website, googleBusinessUrl, keywordRankings, localListings, googleMapsRanking, googleReviewsCount } = reportData;
 
     const { data, error } = await supabase
-      .from('local_seo_reports')
+      .from('seo_local_reports')
       .insert([
         {
           client_id: clientId,
@@ -72,7 +78,8 @@ export async function createLocalSeoReport(reportData: {
           keyword_rankings: keywordRankings,
           local_listings: localListings,
           google_maps_ranking: googleMapsRanking,
-          google_reviews_count: googleReviewsCount
+          google_reviews_count: googleReviewsCount,
+          date: new Date().toISOString()
         }
       ])
       .select();
@@ -109,7 +116,7 @@ export async function updateLocalSeoReport(reportId: string, reportData: {
     const { title, businessName, location, recommendations, phone, website, googleBusinessUrl, keywordRankings, localListings, googleMapsRanking, googleReviewsCount } = reportData;
 
     const { data, error } = await supabase
-      .from('local_seo_reports')
+      .from('seo_local_reports')
       .update({
         title: title,
         business_name: businessName,
@@ -146,7 +153,7 @@ export async function getLocalSeoReports(clientId: string): Promise<SeoLocalRepo
     console.log("Getting local SEO reports for client:", clientId);
 
     const { data, error } = await supabase
-      .from('local_seo_reports')
+      .from('seo_local_reports')
       .select('*')
       .eq('client_id', clientId);
 
@@ -156,7 +163,29 @@ export async function getLocalSeoReports(clientId: string): Promise<SeoLocalRepo
     }
 
     console.log("Local SEO reports retrieved:", data);
-    return data || [];
+    
+    // Transform database schema to match our TypeScript interface
+    const reports: SeoLocalReport[] = (data || []).map(report => ({
+      id: report.id,
+      clientId: report.client_id,
+      title: report.title,
+      date: report.date,
+      businessName: report.business_name,
+      location: report.location || "",
+      address: report.address || "",
+      phone: report.phone,
+      website: report.website,
+      googleBusinessUrl: report.google_business_url,
+      googleMapsRanking: report.google_maps_ranking,
+      googleReviewsCount: report.google_reviews_count,
+      keywordRankings: report.keyword_rankings,
+      localListings: report.local_listings,
+      recommendations: report.recommendations,
+      shareToken: report.share_token,
+      sharedAt: report.shared_at
+    }));
+    
+    return reports;
   } catch (error) {
     console.error("Error in getLocalSeoReports:", error);
     return [];
@@ -171,7 +200,7 @@ export async function getLocalSeoReport(reportId: string): Promise<SeoLocalRepor
     console.log("Getting local SEO report with ID:", reportId);
 
     const { data, error } = await supabase
-      .from('local_seo_reports')
+      .from('seo_local_reports')
       .select('*')
       .eq('id', reportId)
       .single();
@@ -182,7 +211,31 @@ export async function getLocalSeoReport(reportId: string): Promise<SeoLocalRepor
     }
 
     console.log("Local SEO report retrieved:", data);
-    return data || null;
+    
+    if (!data) return null;
+    
+    // Transform database schema to match our TypeScript interface
+    const report: SeoLocalReport = {
+      id: data.id,
+      clientId: data.client_id,
+      title: data.title,
+      date: data.date,
+      businessName: data.business_name,
+      location: data.location || "",
+      address: data.address || "",
+      phone: data.phone,
+      website: data.website,
+      googleBusinessUrl: data.google_business_url,
+      googleMapsRanking: data.google_maps_ranking,
+      googleReviewsCount: data.google_reviews_count,
+      keywordRankings: data.keyword_rankings,
+      localListings: data.local_listings,
+      recommendations: data.recommendations,
+      shareToken: data.share_token,
+      sharedAt: data.shared_at
+    };
+    
+    return report;
   } catch (error) {
     console.error("Error in getLocalSeoReport:", error);
     return null;

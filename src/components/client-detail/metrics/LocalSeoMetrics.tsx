@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { MetricsCard } from "./MetricsCard";
-import { MapPin, Store, Award, Search, RefreshCcw, Globe, Phone, Star, PlusCircle, Save } from "lucide-react";
+import { MapPin, Store, Award, Search, RefreshCcw, Globe, Phone, Star, PlusCircle, Save, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SeoLocalReport } from "@/types/client";
@@ -28,7 +27,6 @@ interface LocalSeoMetricsProps {
   clientName: string;
 }
 
-// Form schema for quick metrics update
 const localSeoMetricsSchema = z.object({
   businessName: z.string().min(1, "El nombre del negocio es obligatorio"),
   address: z.string().min(1, "La dirección es obligatoria"),
@@ -55,7 +53,6 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
   const [newLocation, setNewLocation] = useState("");
   const [targetLocations, setTargetLocations] = useState<string[]>([]);
   
-  // Setup form
   const form = useForm<LocalSeoMetricsFormValues>({
     resolver: zodResolver(localSeoMetricsSchema),
     defaultValues: {
@@ -193,7 +190,6 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
     }
   };
   
-  // Save metrics function
   const onSubmit = async (data: LocalSeoMetricsFormValues) => {
     if (!clientId || clientId.trim() === '') {
       toast.error("ID de cliente no válido");
@@ -205,7 +201,6 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       console.log("Saving Local SEO settings with data:", data);
       console.log("Target locations:", targetLocations);
       
-      // Save to local SEO settings
       const settingsToSave = {
         id: localSeoSettings?.id,
         clientId: clientId,
@@ -223,11 +218,9 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       
       console.log("Final data to save:", settingsToSave);
       
-      // Save to settings
       const savedSettings = await saveLocalSeoSettings(settingsToSave);
       console.log("Settings saved successfully:", savedSettings);
       
-      // Also save to historical metrics if metrics values are provided
       if (data.googleMapsRanking || data.googleReviewsCount || data.googleReviewsAverage || data.listingsCount) {
         const metricsResult = await saveLocalSeoMetrics(clientId, {
           googleMapsRanking: data.googleMapsRanking,
@@ -239,7 +232,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       }
       
       toast.success("Configuración de SEO local guardada correctamente");
-      await loadData(); // Refresh all data
+      await loadData();
     } catch (error) {
       console.error("Error saving local SEO settings:", error);
       toast.error("Error al guardar la configuración de SEO Local");
@@ -265,7 +258,6 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
     );
   }
   
-  // Main data for display
   const businessName = form.watch("businessName") || clientName;
   const address = form.watch("address") || "Sin ubicación configurada";
   const phone = form.watch("phone");
@@ -458,7 +450,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <h3 className="text-sm font-medium">Información básica del negocio</h3>
+                        <h3 className="text-sm font-medium">Informaci��n básica del negocio</h3>
                         
                         <div className="grid grid-cols-1 gap-4">
                           <FormField

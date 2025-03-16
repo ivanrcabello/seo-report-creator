@@ -129,6 +129,8 @@ export const generateUnifiedReport = async (data: UnifiedReportData): Promise<Cl
     };
     
     console.log("Saving report to database");
+    
+    // Fix: Properly format data for Supabase insert
     const { data: savedReport, error } = await supabase
       .from('client_reports')
       .insert([{
@@ -137,7 +139,7 @@ export const generateUnifiedReport = async (data: UnifiedReportData): Promise<Cl
         date: reportData.date,
         type: reportData.type,
         content: reportData.content,
-        analytics_data: reportData.analyticsData,
+        analytics_data: reportData.analyticsData as any, // Cast to any to bypass type checking since Supabase expects Json
         document_ids: []
       }])
       .select()

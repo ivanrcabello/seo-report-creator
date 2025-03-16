@@ -95,12 +95,15 @@ const generateFormattedReportContent = (report: PageSpeedReport, clientName: str
   // Recommendations based on audit results
   const recommendations = generateRecommendations(report);
   
+  // Format current date as the analysis date
+  const analysisDate = new Date().toLocaleDateString('es-ES');
+  
   return `# Informe de Rendimiento Web para ${clientName}
 
 ## Resumen Ejecutivo
 
 Análisis realizado en: **${metrics.url || "URL no especificada"}**  
-Fecha: **${new Date(metrics.last_analyzed).toLocaleDateString('es-ES')}**
+Fecha: **${analysisDate}**
 
 ### Puntuaciones Generales
 
@@ -123,11 +126,11 @@ Fecha: **${new Date(metrics.last_analyzed).toLocaleDateString('es-ES')}**
 
 ## Problemas Críticos a Resolver
 
-${failingAudits.map(audit => `### ${audit.title}\n**Puntuación:** ${Math.round(audit.score * 100)}/100 ${getScoreIndicator(audit.score * 100)}\n\n${audit.description}\n\n${audit.display_value ? `**Valor actual:** ${audit.display_value}` : ''}`).join('\n\n')}
+${failingAudits.map(audit => `### ${audit.title}\n**Puntuación:** ${Math.round(audit.score * 100)}/100 ${getScoreIndicator(audit.score * 100)}\n\n${audit.description}\n\n${audit.displayValue ? `**Valor actual:** ${audit.displayValue}` : ''}`).join('\n\n')}
 
 ## Oportunidades de Mejora
 
-${opportunities.map(audit => `### ${audit.title}\n**Puntuación:** ${Math.round(audit.score * 100)}/100 ${getScoreIndicator(audit.score * 100)}\n\n${audit.description}\n\n${audit.display_value ? `**Valor actual:** ${audit.display_value}` : ''}`).join('\n\n')}
+${opportunities.map(audit => `### ${audit.title}\n**Puntuación:** ${Math.round(audit.score * 100)}/100 ${getScoreIndicator(audit.score * 100)}\n\n${audit.description}\n\n${audit.displayValue ? `**Valor actual:** ${audit.displayValue}` : ''}`).join('\n\n')}
 
 ## Puntos Fuertes
 

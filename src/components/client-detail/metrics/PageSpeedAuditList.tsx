@@ -105,9 +105,9 @@ export const PageSpeedAuditList = ({ audits }: PageSpeedAuditListProps) => {
                       {getScoreIcon(audit.score)}
                       <div>
                         <span className="font-medium">{audit.title}</span>
-                        {audit.display_value && (
+                        {audit.displayValue && (
                           <span className="ml-2 text-gray-500 text-sm">
-                            {audit.display_value}
+                            {audit.displayValue}
                           </span>
                         )}
                       </div>
@@ -139,9 +139,9 @@ export const PageSpeedAuditList = ({ audits }: PageSpeedAuditListProps) => {
                       {getScoreIcon(audit.score)}
                       <div>
                         <span className="font-medium">{audit.title}</span>
-                        {audit.display_value && (
+                        {audit.displayValue && (
                           <span className="ml-2 text-gray-500 text-sm">
-                            {audit.display_value}
+                            {audit.displayValue}
                           </span>
                         )}
                       </div>
@@ -173,9 +173,9 @@ export const PageSpeedAuditList = ({ audits }: PageSpeedAuditListProps) => {
                       {getScoreIcon(audit.score)}
                       <div>
                         <span className="font-medium">{audit.title}</span>
-                        {audit.display_value && (
+                        {audit.displayValue && (
                           <span className="ml-2 text-gray-500 text-sm">
-                            {audit.display_value}
+                            {audit.displayValue}
                           </span>
                         )}
                       </div>

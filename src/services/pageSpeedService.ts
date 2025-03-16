@@ -54,7 +54,28 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
     }
     
     console.log("PageSpeed report retrieved:", data);
-    return data as PageSpeedReport;
+    
+    // Transform the data to match the PageSpeedReport interface
+    const report: PageSpeedReport = {
+      id: data.id,
+      created_at: data.created_at,
+      metrics: {
+        url: data.url || '',
+        performance_score: data.performance_score || 0,
+        accessibility_score: data.accessibility_score || 0,
+        best_practices_score: data.best_practices_score || 0,
+        seo_score: data.seo_score || 0,
+        first_contentful_paint: data.first_contentful_paint || 0,
+        speed_index: data.speed_index || 0,
+        largest_contentful_paint: data.largest_contentful_paint || 0,
+        time_to_interactive: data.time_to_interactive || 0,
+        total_blocking_time: data.total_blocking_time || 0,
+        cumulative_layout_shift: data.cumulative_layout_shift || 0
+      },
+      audits: data.audits as PageSpeedAudit[] || []
+    };
+    
+    return report;
   } catch (error) {
     console.error("Exception fetching PageSpeed report:", error);
     return null;
@@ -66,16 +87,26 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
   try {
     console.log("Saving PageSpeed report for client:", clientId);
     
+    const reportData = {
+      client_id: clientId,
+      url: report.metrics.url,
+      performance_score: report.metrics.performance_score,
+      accessibility_score: report.metrics.accessibility_score,
+      best_practices_score: report.metrics.best_practices_score,
+      seo_score: report.metrics.seo_score,
+      first_contentful_paint: report.metrics.first_contentful_paint,
+      speed_index: report.metrics.speed_index,
+      largest_contentful_paint: report.metrics.largest_contentful_paint,
+      time_to_interactive: report.metrics.time_to_interactive,
+      total_blocking_time: report.metrics.total_blocking_time,
+      cumulative_layout_shift: report.metrics.cumulative_layout_shift,
+      audits: report.audits
+    };
+    
     // First save to client_pagespeed table
     const { data, error } = await supabase
       .from('client_pagespeed')
-      .insert([
-        {
-          client_id: clientId,
-          metrics: report.metrics,
-          audits: report.audits
-        }
-      ])
+      .insert([reportData])
       .select()
       .single();
     
@@ -93,6 +124,27 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
   } catch (error) {
     console.error("Exception saving PageSpeed report:", error);
     return false;
+  }
+};
+
+// Get historical PageSpeed metrics for a client (from the metrics table)
+export const getPageSpeedHistory = async (clientId: string): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('pagespeed_metrics')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching PageSpeed history:", error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Exception fetching PageSpeed history:", error);
+    return [];
   }
 };
 

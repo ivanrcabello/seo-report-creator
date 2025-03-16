@@ -503,6 +503,50 @@ export type Database = {
           },
         ]
       }
+      pagespeed_metrics: {
+        Row: {
+          accessibility_score: number
+          best_practices_score: number
+          client_id: string
+          created_at: string | null
+          id: string
+          performance_score: number
+          seo_score: number
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          accessibility_score: number
+          best_practices_score: number
+          client_id: string
+          created_at?: string | null
+          id?: string
+          performance_score: number
+          seo_score: number
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          accessibility_score?: number
+          best_practices_score?: number
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          performance_score?: number
+          seo_score?: number
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagespeed_metrics_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

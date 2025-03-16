@@ -47,6 +47,7 @@ export const savePageSpeedMetrics = async (
     
     if (error) {
       console.error("Error saving PageSpeed metrics:", error);
+      toast.error("Error al guardar métricas de PageSpeed");
       return false;
     }
     
@@ -73,10 +74,11 @@ export const getPageSpeedMetrics = async (
     
     if (error) {
       console.error("Error fetching PageSpeed metrics:", error);
+      toast.error("Error al obtener métricas de PageSpeed");
       return [];
     }
     
-    return data || [];
+    return data as PageSpeedMetric[];
   } catch (error) {
     console.error("Exception fetching PageSpeed metrics:", error);
     return [];

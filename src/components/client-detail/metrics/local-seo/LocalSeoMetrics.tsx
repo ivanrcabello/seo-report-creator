@@ -25,7 +25,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
     refreshData, 
     currentReport,
     metricHistory
-  } = useLocalSeoData(clientId, clientName);
+  } = useLocalSeoData(clientId);
   
   if (isLoading) {
     return (
@@ -74,11 +74,11 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
           </TabsList>
           
           <TabsContent value="overview">
-            <LocalSeoOverview clientId={clientId} />
+            <LocalSeoOverview clientId={clientId} clientName={clientName} />
           </TabsContent>
           
           <TabsContent value="settings">
-            <LocalSeoSettings clientId={clientId} />
+            <LocalSeoSettings clientId={clientId} clientName={clientName} />
           </TabsContent>
           
           <TabsContent value="history">
@@ -86,7 +86,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
           </TabsContent>
           
           <TabsContent value="keywords">
-            <LocalSeoKeywords />
+            <LocalSeoKeywords clientId={clientId} />
           </TabsContent>
         </Tabs>
       </MetricsCard>

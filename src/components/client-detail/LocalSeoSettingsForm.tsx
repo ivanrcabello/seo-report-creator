@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Globe, Building, Phone, Save, Plus, X, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { saveLocalSeoSettings, getLocalSeoSettings } from "@/services/localSeoService";
+import { saveLocalSeoSettings, getLocalSeoSettings } from "@/services/localSeo";
 
 interface LocalSeoSettings {
   id?: string;
@@ -75,7 +74,6 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
           targetLocations: data.target_locations || []
         });
       } else {
-        // Set client ID and name for new settings
         console.log("No existing settings found, using defaults with clientId:", clientId);
         setSettings(prev => ({
           ...prev,
@@ -135,7 +133,6 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
         throw new Error("Client ID is required");
       }
       
-      // Make sure clientId is set correctly before saving
       const settingsToSave = {
         ...settings,
         clientId
@@ -146,7 +143,6 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
       
       if (result) {
         console.log("Settings saved successfully:", result);
-        // Update state with the new id if this was a new record
         setSettings(prev => ({
           ...prev,
           id: result.id

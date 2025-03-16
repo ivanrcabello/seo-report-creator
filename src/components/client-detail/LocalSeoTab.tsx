@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SeoLocalReport } from "@/types/client";
@@ -10,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Building, MapPin, Phone, Globe, Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { saveBasicLocalSeoSettings, getLocalSeoSettings } from "@/services/localSeoService";
+import { saveBasicLocalSeoSettings, getLocalSeoSettings } from "@/services/localSeo";
 
 interface LocalSeoTabProps {
   isGeneratingReport: boolean;
@@ -30,7 +29,6 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
   const { clientId } = useParams<{ clientId: string }>();
   const client = clientId || '';
   
-  // Use client's business name from current report if available
   const [clientName, setClientName] = useState(currentLocalSeoReport?.businessName || '');
   const [address, setAddress] = useState(currentLocalSeoReport?.location || '');
   const [phone, setPhone] = useState(currentLocalSeoReport?.phone || '');
@@ -83,7 +81,6 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
       });
       
       toast.success("Configuración básica guardada correctamente");
-      // Refresh data
       setActiveTab('local-seo');
     } catch (error) {
       console.error("Error saving basic settings:", error);
@@ -217,7 +214,6 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
             clientId={client} 
             clientName={clientName}
             onSave={() => {
-              // Refresh reports after saving
               setActiveTab('local-seo');
             }}
           />

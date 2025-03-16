@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { MetricsCard } from "./MetricsCard";
 import { MapPin, Store, Award, Search, RefreshCcw, Globe, Phone, Star, Save } from "lucide-react";
@@ -11,7 +12,7 @@ import {
   saveLocalSeoSettings, 
   getLocalSeoMetricsHistory,
   saveLocalSeoMetrics
-} from "@/services/localSeoService";
+} from "@/services/localSeo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";

@@ -22,12 +22,14 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
   const navigate = useNavigate();
 
   const generateComprehensiveReport = async () => {
+    console.log("Starting comprehensive report generation for client:", clientId, clientName);
     setIsGenerating(true);
     setProgress(10);
     const toastId = toast.loading("Preparando datos para generar informe...");
     
     try {
       // Recopilar todos los datos de métricas en paralelo
+      console.log("Fetching all metrics data in parallel");
       setProgress(20);
       const [pageSpeedData, metricsData, localSeoData, keywordsData] = await Promise.allSettled([
         getPageSpeedReport(clientId),
@@ -44,6 +46,13 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         (localSeoData.value.length > 0 ? localSeoData.value[0] : null) : null;
       const keywords = keywordsData.status === 'fulfilled' ? keywordsData.value : [];
       
+      console.log("Data collected:", { 
+        pageSpeed: pageSpeed ? "Available" : "Not available", 
+        metrics: metrics.length, 
+        localSeo: localSeo ? "Available" : "Not available",
+        keywords: keywords.length 
+      });
+      
       // Comprobar si hay suficientes datos para generar un informe
       if (!pageSpeed && metrics.length === 0 && !localSeo && keywords.length === 0) {
         toast.dismiss(toastId);
@@ -57,6 +66,7 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       setProgress(60);
       
       // Generar el informe unificado
+      console.log("Generating unified report with available data");
       const report = await generateUnifiedReport({
         clientId,
         clientName,
@@ -69,12 +79,14 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       setProgress(90);
       
       if (report && report.id) {
+        console.log("Report generated successfully with ID:", report.id);
         toast.dismiss();
         toast.success("Informe generado correctamente");
         setProgress(100);
         
         // Navegar a la vista del informe
         setTimeout(() => {
+          console.log("Navigating to report view:", `/reports/${report.id}`);
           navigate(`/reports/${report.id}`);
         }, 1000);
       } else {

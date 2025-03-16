@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Client, SeoLocalReport } from "@/types/client";
+import { Client } from "@/types/client";
 import { getClient } from "@/services/clientService";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
@@ -12,11 +12,10 @@ import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
-import { AIReportGenerator } from "@/components/unified-metrics/AIReportGenerator";
 import { toast } from "sonner";
 
 export default function ClientDetail() {
-  // Update to correctly extract the client ID from the URL parameter
+  // Extract the client ID from the URL parameter
   const { clientId } = useParams<{ clientId: string }>();
   const id = clientId || "";
   
@@ -105,10 +104,6 @@ export default function ClientDetail() {
         
         <TabsContent value="metrics">
           <ClientMetricsTab clientId={id} clientName={client.name} />
-          
-          <div className="mt-8 border-t pt-6">
-            <AIReportGenerator clientId={id} clientName={client.name} />
-          </div>
         </TabsContent>
         
         <TabsContent value="invoices">

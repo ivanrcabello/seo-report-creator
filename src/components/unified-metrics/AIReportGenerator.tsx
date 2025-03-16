@@ -77,13 +77,11 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       });
       
       // Aunque no tengamos datos completos, procedemos con lo que tenemos
-      // Definimos valores por defecto para datos faltantes
-      
       toast.dismiss(toastId);
       toast.loading("Generando informe con IA de Gemini...");
       setProgress(60);
       
-      // Preparamos datos de la auditoría para el informe
+      // Preparamos datos de la auditoría para el informe con valores por defecto sólidos
       const auditResult = {
         url: pageSpeed?.metrics?.url || "https://example.com",
         companyName: clientName,
@@ -190,7 +188,7 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       setProgress(80);
       console.log("Sending audit data to generateAndSaveReport function");
       
-      console.log("Audit result data check:");
+      console.log("Audit result data verification:");
       console.log("- URL: ", auditResult.url);
       console.log("- Company name: ", auditResult.companyName);
       console.log("- SEO score: ", auditResult.seoScore);
@@ -209,10 +207,11 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         toast.dismiss();
         toast.success("Informe generado correctamente con Gemini");
         
+        // Small delay to allow the user to see the success message
         setTimeout(() => {
           console.log("Navigating to report view:", `/reports/${report.id}`);
           navigate(`/reports/${report.id}`);
-        }, 1000);
+        }, 1500);
       } else {
         throw new Error("No se pudo crear el informe");
       }
@@ -240,7 +239,10 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
           <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
           <p className="text-xs text-gray-500 mt-1 text-center">
-            {progress < 50 ? "Recopilando datos..." : progress < 80 ? "Generando informe..." : "Finalizando..."}
+            {progress < 30 ? "Recopilando datos..." : 
+             progress < 60 ? "Procesando información..." : 
+             progress < 80 ? "Generando informe con IA..." : 
+             "Finalizando y guardando..."}
           </p>
         </div>
       )}

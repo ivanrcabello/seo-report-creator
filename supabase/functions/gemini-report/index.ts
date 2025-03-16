@@ -14,6 +14,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -63,6 +64,7 @@ serve(async (req) => {
     // Create a template for the report based on audit data
     const prompt = createSeoReportPrompt(auditData, templateType)
     console.log("Prompt created, sending to Gemini API")
+    console.log("Prompt length:", prompt.length)
 
     // Generate response with Gemini
     try {
@@ -80,6 +82,7 @@ serve(async (req) => {
       const generatedText = response.text()
       console.log("Gemini response received successfully")
       console.log("Response length:", generatedText.length)
+      console.log("First 200 chars:", generatedText.substring(0, 200))
 
       // Return the generated content
       return new Response(
@@ -92,15 +95,33 @@ serve(async (req) => {
       )
     } catch (error) {
       console.error('Error calling Gemini API:', error)
+      // Add more details about the error for debugging
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error && error.stack ? error.stack : 'No stack available';
+      console.error('Error details:', errorMessage);
+      console.error('Stack trace:', errorStack);
+      
       return new Response(
-        JSON.stringify({ error: `Error calling Gemini API: ${error.message || 'Unknown error'}` }),
+        JSON.stringify({ 
+          error: `Error calling Gemini API: ${errorMessage}`, 
+          details: errorStack
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
   } catch (error) {
     console.error('Unhandled error in gemini-report function:', error)
+    // Add more details about the error for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error && error.stack ? error.stack : 'No stack available';
+    console.error('Error details:', errorMessage);
+    console.error('Stack trace:', errorStack);
+    
     return new Response(
-      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+      JSON.stringify({ 
+        error: `Unhandled error in gemini-report function: ${errorMessage}`,
+        details: errorStack
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

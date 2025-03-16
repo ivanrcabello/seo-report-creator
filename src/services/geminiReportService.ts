@@ -88,11 +88,21 @@ export const saveGeminiReport = async (
       serializableAuditData = { error: "Data could not be serialized" };
     }
     
+    // Determine report type based on the audit data
+    let reportType: 'seo' | 'local' | 'technical' | 'performance' = 'seo';
+    if (auditData.localData && auditData.localData.businessName) {
+      reportType = 'local';
+    } else if (auditData.technicalResults && Object.keys(auditData.technicalResults).length > 0) {
+      reportType = 'technical';
+    } else if (auditData.performanceResults && Object.keys(auditData.performanceResults).length > 0) {
+      reportType = 'performance';
+    }
+    
     const reportData = {
       client_id: clientId,
-      title: `Informe SEO - ${clientName} - ${new Date().toLocaleDateString('es-ES')}`,
+      title: `Informe ${reportType.toUpperCase()} - ${clientName} - ${new Date().toLocaleDateString('es-ES')}`,
       date: new Date().toISOString(),
-      type: "seo" as const,
+      type: reportType,
       content: reportContent,
       analytics_data: {
         auditResult: serializableAuditData,
@@ -103,7 +113,7 @@ export const saveGeminiReport = async (
       status: 'draft' as 'draft' | 'published' | 'shared'
     };
     
-    console.log("Inserting report into database");
+    console.log("Inserting report into database", reportData);
     
     // Save to database
     const { data, error } = await supabase

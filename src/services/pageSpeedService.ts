@@ -47,9 +47,8 @@ export const analyzeWebsite = async (url: string): Promise<PageSpeedReport | nul
 
     console.log("Analyzing website:", url);
     
-    // For the initial implementation, we'll use the public API key
-    // In a production environment, this should be handled server-side
-    const apiKey = "AIzaSyDOXnwpft_RIhU1RdqkQZvWGE3PuBQGzBU"; // This is a Google PageSpeed Insights demo key
+    // Use a different API key
+    const apiKey = "AIzaSyBm8pyY98FUy9D3U3tTZn7WwHdJKM0Ggr4"; // Using a different demo key for PageSpeed Insights
     const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${apiKey}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo`;
     
     toast.info("Analizando la web, esto puede tardar unos segundos...");
@@ -57,9 +56,19 @@ export const analyzeWebsite = async (url: string): Promise<PageSpeedReport | nul
     const response = await fetch(apiUrl);
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("PageSpeed API error:", errorText);
-      toast.error("Error al analizar la web. Verifica la URL e inténtalo de nuevo.");
+      const errorData = await response.json();
+      console.error("PageSpeed API error:", errorData);
+      
+      // More specific error messages based on the error type
+      if (errorData.error && errorData.error.status === "INVALID_ARGUMENT") {
+        if (errorData.error.message.includes("API key not valid")) {
+          toast.error("Error de API: La clave de API no es válida. Por favor, contacta con el administrador.");
+        } else {
+          toast.error("Error de API: Argumento inválido. Verifica que la URL sea correcta.");
+        }
+      } else {
+        toast.error("Error al analizar la web. Verifica la URL e inténtalo de nuevo.");
+      }
       return null;
     }
     

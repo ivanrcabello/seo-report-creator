@@ -15,7 +15,6 @@ import { PageSpeedScoreCards } from "./PageSpeedScoreCards";
 import { PageSpeedPerformanceMetrics } from "./PageSpeedPerformanceMetrics";
 import { PageSpeedAuditList } from "./PageSpeedAuditList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect } from "react";
 
@@ -61,12 +60,6 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
     } finally {
       setIsAnalyzing(false);
     }
-  };
-  
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-green-500";
-    if (score >= 50) return "text-orange-500";
-    return "text-red-500";
   };
   
   return (

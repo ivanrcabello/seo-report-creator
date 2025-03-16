@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Invoice, Client } from "@/types/client";
+import { Invoice } from "@/types/invoice";
+import { Client } from "@/types/client";
 import { getInvoice, createInvoice, updateInvoice } from "@/services/invoiceService";
 import { getClient, getClients } from "@/services/clientService";
 import { Button } from "@/components/ui/button";
@@ -186,13 +188,15 @@ export const InvoiceForm = () => {
           taxAmount,
           totalAmount,
           total: totalAmount,
+          paymentDate: null,
           paidAt: null
-        } as any);
+        });
       } else {
         result = await updateInvoice({
           ...invoice,
           ...data,
-          clientName: client?.name || invoice?.clientName || 'Unknown Client',
+          id: invoice?.id,
+          clientName: client?.name || 'Unknown Client',
           date: data.issueDate,
           number: data.invoiceNumber || invoice?.invoiceNumber || '',
           baseAmount: baseAmountValue,
@@ -202,8 +206,9 @@ export const InvoiceForm = () => {
           taxAmount,
           totalAmount,
           total: totalAmount,
-          paidAt: invoice?.paidAt || null
-        } as any);
+          paymentDate: invoice?.paymentDate,
+          paidAt: invoice?.paymentDate
+        });
       }
       
       if (result) {

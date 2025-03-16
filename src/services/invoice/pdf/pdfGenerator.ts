@@ -11,18 +11,18 @@ import { mapInvoiceFromDB } from '../invoiceMappers';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
-// Utility functions for PDF generation
+// Import functions from pdfSections.ts
 import { 
-  PDFHeaderSection, 
-  PDFClientSection, 
-  PDFInvoiceDetailsSection,
-  PDFItemsSection,
-  PDFTotalsSection,
-  PDFFooterSection
+  addCompanyHeader,
+  addClientInfo,
+  addInvoiceInfo,
+  addInvoiceItems,
+  addInvoiceTotals,
+  addFooterWithPaymentInfo
 } from './pdfSections';
 
-// PDF styling
-import { getBaseStyles, getPDFColors } from './pdfStyles';
+// Import styles from pdfStyles.ts
+import { textStyles, tableStyles, getStatusColor, getStatusText } from './pdfStyles';
 
 /**
  * Generates an invoice PDF
@@ -52,27 +52,23 @@ export const generateInvoicePdf = async (invoice: Invoice): Promise<Blob | null>
       format: 'a4',
     });
     
-    // Set PDF styles
-    const styles = getBaseStyles();
-    const colors = getPDFColors(companySettings);
-    
     // Add company header
-    PDFHeaderSection(doc, companySettings, colors, styles);
+    addCompanyHeader(doc);
     
     // Add client details
-    PDFClientSection(doc, client, styles);
+    addClientInfo(doc, client);
     
     // Add invoice details (invoice number, date, etc.)
-    PDFInvoiceDetailsSection(doc, invoice, styles);
+    addInvoiceInfo(doc, invoice);
     
     // Add invoice items (if any)
-    PDFItemsSection(doc, invoice, colors, styles);
+    addInvoiceItems(doc, invoice);
     
     // Add invoice totals
-    PDFTotalsSection(doc, invoice, styles);
+    addInvoiceTotals(doc, invoice);
     
     // Add footer
-    PDFFooterSection(doc, companySettings, styles);
+    addFooterWithPaymentInfo(doc, invoice);
     
     // Create a blob from the PDF
     const pdfBlob = doc.output('blob');

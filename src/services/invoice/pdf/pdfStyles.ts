@@ -79,3 +79,35 @@ export const tableStyles = {
     fillColor: [249, 250, 251]  // Gray-50
   }
 };
+
+// Añadimos estas funciones que se estaban importando en pdfGenerator.ts
+export const getBaseStyles = () => {
+  return {
+    text: textStyles,
+    table: tableStyles
+  };
+};
+
+export const getPDFColors = (companySettings: any) => {
+  // Si hay colores personalizados en la configuración de la empresa, los usamos
+  // Si no, usamos colores predeterminados
+  return {
+    primary: companySettings.primaryColor ? hexToRgb(companySettings.primaryColor) : [59, 130, 246],
+    secondary: companySettings.secondaryColor ? hexToRgb(companySettings.secondaryColor) : [75, 85, 99],
+    accent: companySettings.accentColor ? hexToRgb(companySettings.accentColor) : [16, 185, 129]
+  };
+};
+
+// Función auxiliar para convertir colores hexadecimales a RGB
+const hexToRgb = (hex: string): [number, number, number] => {
+  // Eliminar # si está presente
+  hex = hex.replace(/^#/, '');
+  
+  // Parsear componentes
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  
+  return [r, g, b];
+};

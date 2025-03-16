@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Invoice, Client } from "@/types/client";
+import { Invoice } from "@/types/invoice";
+import { Client } from "@/types/client";
 import { getInvoice, createInvoice, updateInvoice } from "@/services/invoiceService";
 import { getClient, getClients } from "@/services/clientService";
 import { Button } from "@/components/ui/button";
@@ -200,6 +201,7 @@ export const InvoiceForm = () => {
           date: data.issueDate,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          paymentDate: null,
           paidAt: null
         };
         
@@ -213,7 +215,7 @@ export const InvoiceForm = () => {
           ...(invoice || {}),
           id,
           clientId: data.clientId,
-          clientName: client?.name || invoice?.clientName || 'Unknown Client',
+          clientName: client?.name || 'Unknown Client',
           packId: data.packId,
           proposalId: data.proposalId,
           baseAmount: baseAmountValue,

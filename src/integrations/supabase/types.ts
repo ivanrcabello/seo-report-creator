@@ -205,7 +205,9 @@ export type Database = {
       }
       client_reports: {
         Row: {
+          analytics_data: Json | null
           client_id: string
+          content: string | null
           date: string
           document_ids: string[] | null
           id: string
@@ -218,7 +220,9 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          analytics_data?: Json | null
           client_id: string
+          content?: string | null
           date?: string
           document_ids?: string[] | null
           id?: string
@@ -231,7 +235,9 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          analytics_data?: Json | null
           client_id?: string
+          content?: string | null
           date?: string
           document_ids?: string[] | null
           id?: string

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { addReport, updateReport, getReport } from "@/services/reportService";
@@ -101,12 +102,12 @@ const ReportForm = () => {
       type,
       url,
       notes,
-      content: "",
+      content: "", // Required field
       documentIds: [],
       shareToken: null,
       sharedAt: null,
       includeInProposal: false,
-      analyticsData: {}
+      analyticsData: {} // Required field
     };
 
     try {

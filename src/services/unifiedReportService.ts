@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClientReport } from "@/types/client";
 import { PageSpeedReport } from "@/services/pageSpeedService";

@@ -36,6 +36,8 @@ export const shareReport = async (reportId: string): Promise<ClientReport> => {
  */
 export const getReportByShareToken = async (shareToken: string): Promise<ClientReport | null> => {
   try {
+    console.log("Getting report by share token:", shareToken);
+    
     const { data, error } = await supabase
       .from('client_reports')
       .select('*')
@@ -43,13 +45,16 @@ export const getReportByShareToken = async (shareToken: string): Promise<ClientR
       .maybeSingle();
     
     if (error) {
+      console.error("Error in getReportByShareToken:", error);
       throw error;
     }
 
     if (!data) {
+      console.warn("No report found with share token:", shareToken);
       return null;
     }
 
+    console.log("Report found by share token:", data.id, data.title);
     return mapDbReportToClientReport(data);
   } catch (error) {
     console.error("Error getting report by share token:", error);

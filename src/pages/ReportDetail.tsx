@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getReport, deleteReport, shareReport } from "@/services/reportService";
@@ -42,6 +43,7 @@ import {
   AlertTriangle,
   Share2,
   FileDown,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -136,22 +138,32 @@ const ReportDetail = () => {
           return;
         }
         
+        // Check if ID is "new" which is not valid for viewing
         if (id === "new") {
           setError("ID de informe no válido");
           setIsLoading(false);
           return;
         }
 
+        console.log("Loading report with ID:", id);
         const reportData = await getReport(id);
         
         if (reportData) {
+          console.log("Report loaded successfully:", reportData.id, reportData.title);
           setReport(reportData);
           
-          const clientData = await getClient(reportData.clientId);
-          if (clientData) {
-            setClient(clientData);
+          // Only try to get client if we have a valid client ID
+          if (reportData.clientId) {
+            const clientData = await getClient(reportData.clientId);
+            if (clientData) {
+              setClient(clientData);
+            } else {
+              console.warn("Client not found for ID:", reportData.clientId);
+              setError("No se encontró el cliente asociado");
+            }
           } else {
-            setError("No se encontró el cliente asociado");
+            console.error("Report has no client ID:", reportData);
+            setError("El informe no tiene un cliente asociado");
           }
           
           if (reportData.shareToken) {
@@ -159,10 +171,11 @@ const ReportDetail = () => {
             setSharedUrl(shareUrl);
           }
         } else {
+          console.error("Report not found with ID:", id);
           setError("No se encontró el informe");
         }
       } catch (error) {
-        console.error("Error cargando informe:", error);
+        console.error("Error loading report:", error);
         setError("Error al cargar el informe");
       } finally {
         setIsLoading(false);
@@ -173,7 +186,14 @@ const ReportDetail = () => {
   }, [id, navigate]);
 
   if (isLoading) {
-    return <div className="container mx-auto py-8">Cargando informe...</div>;
+    return (
+      <div className="container mx-auto py-8 flex items-center justify-center min-h-[300px]">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
+          <p className="text-gray-600">Cargando informe...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error || !report || !client) {

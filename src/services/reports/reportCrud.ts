@@ -37,6 +37,8 @@ export const getReport = async (reportId: string): Promise<ClientReport | null> 
       return null;
     }
 
+    console.log("Fetching report with ID:", reportId);
+    
     const { data, error } = await supabase
       .from('client_reports')
       .select('*')
@@ -45,7 +47,7 @@ export const getReport = async (reportId: string): Promise<ClientReport | null> 
     
     if (error) {
       console.error("Error fetching report:", error);
-      return null;
+      throw error;
     }
 
     if (!data) {
@@ -53,6 +55,7 @@ export const getReport = async (reportId: string): Promise<ClientReport | null> 
       return null;
     }
 
+    console.log("Report found:", data.id, data.title);
     return mapDbReportToClientReport(data);
   } catch (error) {
     console.error("Error getting report:", error);

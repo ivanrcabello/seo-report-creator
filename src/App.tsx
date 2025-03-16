@@ -11,6 +11,8 @@ import ClientDetail from './pages/ClientDetail';
 import ClientForm from './pages/ClientForm';
 import AllReports from './pages/AllReports';
 import ReportDetail from './pages/ReportDetail';
+import SeoReport from './pages/SeoReport';
+import ReportShare from './pages/ReportShare';
 import Packages from './pages/Packages';
 import Proposals from './pages/Proposals';
 import ProposalForm from './pages/ProposalForm';
@@ -47,6 +49,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/share/report/:token" element={<ReportShare />} />
             <Route path="*" element={<AppRoutes />} />
           </Routes>
         </AuthProvider>
@@ -66,6 +69,7 @@ function AppRoutes() {
         <Route path="/clients/:clientId" element={<ClientDetail />} />
         <Route path="/reports" element={<AllReports />} />
         <Route path="/reports/:reportId" element={<ReportDetail />} />
+        <Route path="/reports/seo/:id" element={<SeoReport />} />
         <Route path="/packages" element={<Packages />} />
         <Route path="/proposals" element={<Proposals />} />
         <Route path="/proposals/new" element={<ProposalForm />} />

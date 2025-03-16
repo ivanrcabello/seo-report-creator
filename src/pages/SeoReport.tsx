@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { AuditResult } from "@/services/pdfAnalyzer";
@@ -23,7 +22,8 @@ import {
   Download, 
   Gem,
   ArrowLeft,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from "lucide-react";
 import {
   AlertDialog,
@@ -55,20 +55,25 @@ const SeoReport = () => {
       setIsLoading(true);
       setError(null);
       try {
+        console.log("Fetching SEO report with ID:", id);
         const reportData = await getReport(id);
         if (reportData) {
+          console.log("SEO report loaded successfully:", reportData.id, reportData.title);
           setReport(reportData);
           
           // If the report has audit results, use those
           if (reportData.analyticsData?.auditResult) {
+            console.log("Report has audit results");
             setAuditResult(reportData.analyticsData.auditResult);
+          } else {
+            console.log("Report has no audit results");
           }
         } else {
+          console.error("No SEO report found with ID:", id);
           setError("No se encontró el informe. Es posible que haya sido eliminado o que no exista.");
-          console.error("No report found with ID:", id);
         }
       } catch (error) {
-        console.error("Error fetching report:", error);
+        console.error("Error fetching SEO report:", error);
         setError("Error al cargar el informe. Por favor, inténtalo de nuevo más tarde.");
         uiToast({
           title: "Error",
@@ -84,12 +89,13 @@ const SeoReport = () => {
   useEffect(() => {
     // Get audit result from location state
     if (location.state?.auditResult) {
+      console.log("Using audit result from location state");
       setAuditResult(location.state.auditResult);
     }
     
     // If we have a report ID, fetch the report
     fetchReport();
-  }, [location, id, uiToast]);
+  }, [location, id]);
 
   const handleRetry = () => {
     fetchReport();
@@ -159,7 +165,7 @@ const SeoReport = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-4 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-blue-600">Cargando informe...</p>
         </div>
       </div>

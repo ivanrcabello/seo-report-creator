@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ClientReport } from "@/types/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getReportByShareToken } from "@/services/reportSharingService";
+import { getReportByShareToken } from "@/services/reportService";
 import { getClient } from "@/services/clientService";
 import { ReportShareView } from "@/components/ReportShareView";
 
@@ -26,45 +26,34 @@ const ReportShare = () => {
       
       setIsLoading(true);
       try {
-        // Obtener informe usando el token compartido
+        console.log("Fetching shared report with token:", token);
+        // Get report using share token
         const reportData = await getReportByShareToken(token);
         
         if (!reportData) {
+          console.error("No report found with token:", token);
           setError("El informe no existe o el enlace no es válido");
+          setIsLoading(false);
           return;
         }
         
-        // Convertir el formato de la base de datos al formato de la aplicación
-        const clientReport: ClientReport = {
-          id: reportData.id,
-          clientId: reportData.client_id,
-          title: reportData.title,
-          date: reportData.date,
-          type: reportData.type,
-          url: reportData.url,
-          notes: reportData.notes,
-          content: reportData.content || "", // Ensure content is always defined
-          documentIds: reportData.document_ids || [],
-          shareToken: reportData.share_token,
-          sharedAt: reportData.shared_at,
-          includeInProposal: reportData.include_in_proposal,
-          // Ensure analytics data is always defined
-          analyticsData: reportData.analytics_data || {},
-          searchConsoleData: reportData.search_console_data,
-          auditResult: reportData.audit_result
-        };
+        console.log("Shared report loaded successfully:", reportData.id, reportData.title);
+        setReport(reportData);
         
-        setReport(clientReport);
-        
-        // Fetch client data
-        if (reportData.client_id) {
-          const clientData = await getClient(reportData.client_id);
-          setClient(clientData);
+        // Fetch client data if client ID exists
+        if (reportData.clientId) {
+          try {
+            const clientData = await getClient(reportData.clientId);
+            if (clientData) {
+              setClient(clientData);
+            }
+          } catch (clientError) {
+            console.error("Error fetching client data:", clientError);
+            // We don't set an error here since the report can still be viewed without client data
+          }
         }
-        
-        console.log("Report loaded successfully:", clientReport);
       } catch (error) {
-        console.error("Error fetching report:", error);
+        console.error("Error fetching shared report:", error);
         setError("Error al cargar el informe");
       } finally {
         setIsLoading(false);
@@ -76,9 +65,11 @@ const ReportShare = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-8">
-        <Skeleton className="h-[200px] w-full mb-4 rounded-lg" />
-        <Skeleton className="h-[400px] w-full rounded-lg" />
+      <div className="container mx-auto p-8 flex items-center justify-center min-h-[300px]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-blue-600">Cargando informe compartido...</p>
+        </div>
       </div>
     );
   }

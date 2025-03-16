@@ -1,110 +1,122 @@
 
 import { ClientMetric } from "@/services/clientMetricsService";
 import { MetricCard } from "@/components/MetricCard";
-import { TrendingUp, BarChart2, MousePointer, Award, Search } from "lucide-react";
+import { CircleCheck, CircleDashed, ArrowUp, ArrowDown } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { useClientKeywords } from "./useClientKeywords";
-import { useEffect, useState } from "react";
 
 interface MetricsSummaryProps {
   currentMetric: ClientMetric;
 }
 
 export const MetricsSummary = ({ currentMetric }: MetricsSummaryProps) => {
-  const { keywords, isLoading } = useClientKeywords(currentMetric.client_id || "");
-  const [keywordStats, setKeywordStats] = useState({
-    total: 0,
-    onTarget: 0
-  });
+  // Use clientId from currentMetric to fetch keywords
+  const { keywords } = useClientKeywords(currentMetric.client_id || "");
 
-  useEffect(() => {
-    if (!isLoading && keywords.length > 0) {
-      const onTarget = keywords.filter(
-        kw => kw.position !== null && kw.position <= kw.target_position
-      ).length;
-      
-      setKeywordStats({
-        total: keywords.length,
-        onTarget
-      });
-    }
-  }, [keywords, isLoading]);
-
-  const conversionPercentage = Math.min(
-    100,
-    Math.round((currentMetric.conversions / (currentMetric.conversion_goal || 1)) * 100)
-  );
-  
-  const getConversionColor = () => {
-    if (conversionPercentage >= 80) return "text-green-600";
-    if (conversionPercentage >= 50) return "text-amber-600";
-    return "text-red-600";
+  const formatPercentage = (value: number, goal: number) => {
+    const percentage = (value / goal) * 100;
+    return Math.min(percentage, 100).toFixed(0);
   };
 
-  const keywordPercentage = keywordStats.total > 0
-    ? Math.round((keywordStats.onTarget / keywordStats.total) * 100)
+  // Count keywords in top 10 positions
+  const keywordsInTopTen = keywords.filter(k => k.position !== null && k.position <= 10).length;
+  
+  // Calculate percentage of keywords reaching their target
+  const keywordsOnTarget = keywords.filter(
+    k => k.position !== null && k.position <= k.target_position
+  ).length;
+  
+  const keywordsPercentage = keywords.length > 0 
+    ? Math.round((keywordsOnTarget / keywords.length) * 100) 
     : 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <MetricCard
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Web Visits */}
+      <MetricCard 
         title="Visitas Web"
-        value={`+${currentMetric.web_visits}%`}
-        description="Incremento en el tráfico web desde el mes pasado"
-        color="bg-green-100 text-green-600"
-        icon={<TrendingUp className="h-5 w-5" />}
-      />
-      
-      <MetricCard
-        title="Keywords en TOP10"
-        value={currentMetric.keywords_top10.toString()}
-        description="Palabras clave posicionadas en las primeras 10 posiciones de Google"
-        color="bg-blue-100 text-blue-600"
-        icon={<BarChart2 className="h-5 w-5" />}
-      />
-      
-      <MetricCard
-        title="Keywords Objetivo"
-        value={
-          isLoading ? (
-            "Cargando..."
-          ) : (
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className={keywordPercentage >= 70 ? "text-green-600" : keywordPercentage >= 40 ? "text-amber-600" : "text-red-600"}>
-                  {keywordStats.onTarget}
-                </span>
-                <span className="text-gray-500 text-sm">/ {keywordStats.total}</span>
-              </div>
-              <Progress value={keywordPercentage} className="h-2" />
-              <div className="text-xs text-gray-500">
-                {keywordPercentage}% en posición objetivo
-              </div>
-            </div>
-          )
-        }
-        description="Palabras clave que alcanzan su posición objetivo"
-        color="bg-purple-100 text-purple-600"
-        icon={<Search className="h-5 w-5" />}
-      />
-      
-      <MetricCard
-        title="Conversiones"
-        value={
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className={getConversionColor()}>{currentMetric.conversions}</span>
-              <span className="text-gray-500 text-sm">/ {currentMetric.conversion_goal}</span>
-            </div>
-            <Progress value={conversionPercentage} className="h-2" />
-            <div className="text-xs text-gray-500">
-              {conversionPercentage}% del objetivo mensual
-            </div>
+        value={currentMetric.web_visits}
+        target={currentMetric.web_visits * 1.2}
+        icon={<CircleDashed className="h-8 w-8" />}
+        footer={
+          <div className="w-full mt-2">
+            <Progress 
+              value={Number(formatPercentage(currentMetric.web_visits, currentMetric.web_visits * 1.2))} 
+              className="h-2" 
+            />
           </div>
         }
-        description="Número de conversiones vs objetivo mensual"
-        color="bg-orange-100 text-orange-600"
-        icon={<Award className="h-5 w-5" />}
+      />
+      
+      {/* Keywords in Top 10 */}
+      <MetricCard
+        title="Keywords en Top 10"
+        value={currentMetric.keywords_top10}
+        target={currentMetric.keywords_top10 * 1.5}
+        icon={<CircleCheck className="h-8 w-8" />}
+        trend={
+          <Badge 
+            variant={keywordsInTopTen > currentMetric.keywords_top10 ? "success" : "destructive"}
+          >
+            {keywordsInTopTen > currentMetric.keywords_top10 ? (
+              <span className="flex items-center">
+                <ArrowUp className="h-3 w-3 mr-1" />
+                {keywordsInTopTen - currentMetric.keywords_top10}
+              </span>
+            ) : (
+              <span className="flex items-center">
+                <ArrowDown className="h-3 w-3 mr-1" />
+                {currentMetric.keywords_top10 - keywordsInTopTen}
+              </span>
+            )}
+          </Badge>
+        }
+        footer={
+          <div className="w-full mt-2">
+            <Progress 
+              value={Number(formatPercentage(currentMetric.keywords_top10, currentMetric.keywords_top10 * 1.5))} 
+              className="h-2" 
+            />
+          </div>
+        }
+      />
+      
+      {/* Conversions */}
+      <MetricCard
+        title="Conversiones"
+        value={currentMetric.conversions}
+        target={currentMetric.conversion_goal}
+        icon={<CircleCheck className="h-8 w-8" />}
+        footer={
+          <div className="w-full mt-2">
+            <Progress 
+              value={Number(formatPercentage(currentMetric.conversions, currentMetric.conversion_goal))} 
+              className="h-2" 
+            />
+          </div>
+        }
+      />
+      
+      {/* Keywords Target Progress */}
+      <MetricCard
+        title="Keywords en Objetivo"
+        value={keywordsOnTarget}
+        target={keywords.length}
+        icon={<CircleCheck className="h-8 w-8" />}
+        trend={
+          <Badge variant={keywordsPercentage >= 50 ? "success" : "destructive"}>
+            {keywordsPercentage}%
+          </Badge>
+        }
+        footer={
+          <div className="w-full mt-2">
+            <Progress 
+              value={keywordsPercentage} 
+              className="h-2" 
+            />
+          </div>
+        }
       />
     </div>
   );

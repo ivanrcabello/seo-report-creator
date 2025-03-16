@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Clients = () => {
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast(); // Rename to avoid confusion with sonner's toast
   const [showForm, setShowForm] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +48,7 @@ const Clients = () => {
           setCurrentClient(client);
         } catch (error) {
           console.error("Error fetching client for edit:", error);
-          toast({
+          uiToast({
             title: "Error",
             description: "No se pudo cargar los datos del cliente",
             variant: "destructive",
@@ -61,7 +61,7 @@ const Clients = () => {
     };
 
     initializeComponent();
-  }, [params.id, navigate, toast]);
+  }, [params.id, navigate, uiToast]);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -71,7 +71,7 @@ const Clients = () => {
         setClients(fetchedClients);
       } catch (error) {
         console.error("Error fetching clients:", error);
-        toast({
+        uiToast({
           title: "Error",
           description: "No se pudieron cargar los clientes. Inténtalo de nuevo.",
           variant: "destructive",
@@ -82,7 +82,7 @@ const Clients = () => {
     };
 
     fetchClients();
-  }, [toast]);
+  }, [uiToast]);
 
   const handleAddClient = () => {
     setShowForm(true);

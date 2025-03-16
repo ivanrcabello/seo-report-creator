@@ -1,218 +1,157 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ClientReport } from "@/types/client";
 import { getAllReports } from "@/services/reportService";
-import { getClients } from "@/services/clientService";
-import { ClientReport, Client } from "@/types/client";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  FileText,
-  Calendar,
-  User,
-  Eye,
-  Plus,
-  AlertTriangle,
-  Loader2
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Calendar, Filter, Search } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const AllReports = () => {
+export const AllReports = () => {
   const [reports, setReports] = useState<ClientReport[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [search, setSearch] = useState("");
-  const [selectedType, setSelectedType] = useState("");
-  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [reportTypes, setReportTypes] = useState<string[]>([]);
+  const [selectedType, setSelectedType] = useState<string>("");
+  
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-      
+    const loadReports = async () => {
       try {
-        const reportsData = await getAllReports();
-        const clientsData = await getClients();
+        setIsLoading(true);
+        const allReports = await getAllReports();
+        setReports(allReports);
         
-        setReports(reportsData);
-        setClients(clientsData);
-        
-        // Extraer tipos únicos de informes y asegurar que son string[]
-        const types = Array.from(
-          new Set(reportsData.map(report => report.type))
-        ).filter(Boolean) as string[]; // Cast to string[] to fix type issue
-        
-        setAvailableTypes(types);
+        // Extract unique report types
+        const types = Array.from(new Set(allReports.map(report => report.type)));
+        setReportTypes(types.filter(Boolean) as string[]);
       } catch (error) {
-        console.error("Error fetching reports:", error);
-        setError("Error al cargar los informes");
+        console.error("Error loading reports:", error);
+        toast.error("No se pudieron cargar los informes.");
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchData();
+    loadReports();
   }, []);
-
-  const getClientName = (clientId: string) => {
-    const client = clients.find((c) => c.id === clientId);
-    return client ? client.name : "Cliente Desconocido";
-  };
-
-  const filteredReports = reports.filter((report) => {
-    if (!report || !report.clientId) return false;
-    
-    const clientName = getClientName(report.clientId).toLowerCase();
-    const reportTitle = report.title.toLowerCase();
-    const searchTerm = search.toLowerCase();
-
-    return (
-      (clientName.includes(searchTerm) ||
-      reportTitle.includes(searchTerm)) &&
-      (selectedType === "" || report.type === selectedType)
-    );
+  
+  // Filter reports based on search and type
+  const filteredReports = reports.filter(report => {
+    const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = selectedType === "" || report.type === selectedType;
+    return matchesSearch && matchesType;
   });
 
   return (
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <FileText className="h-8 w-8 text-purple-600" />
-          Informes
+          <FileText className="h-8 w-8 text-blue-600" />
+          Todos los Informes
         </h1>
-        <Link to="/reports/new">
-          <Button className="gap-1">
-            <Plus className="h-4 w-4" />
-            Nuevo Informe
-          </Button>
-        </Link>
       </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
-            <FileText className="h-5 w-5 text-blue-600" />
-            Todos los Informes
-          </CardTitle>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+          <CardDescription>Encuentra informes específicos</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between mb-4">
-            <Input
-              type="search"
-              placeholder="Buscar informe..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="max-w-md"
-            />
-            {availableTypes.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <Input 
+                  className="pl-10"
+                  placeholder="Buscar por título..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
               <Select value={selectedType} onValueChange={setSelectedType}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filtrar por tipo" />
+                <SelectTrigger className="w-full">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    <SelectValue placeholder="Filtrar por tipo" />
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los tipos</SelectItem>
-                  {availableTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type === "seo" ? "SEO" :
-                       type === "performance" ? "Rendimiento" :
-                       type === "technical" ? "Técnico" :
-                       type === "social" ? "Social" :
-                       type === "local-seo" ? "SEO Local" : type}
-                    </SelectItem>
+                  <SelectItem value="">Todos los tipos</SelectItem>
+                  {reportTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            )}
-          </div>
-
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-blue-500 animate-spin mb-4" />
-              <p className="text-gray-500">Cargando informes...</p>
             </div>
-          ) : error ? (
-            <div className="text-center py-10">
-              <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-4" />
-              <p className="text-gray-700 mb-2 font-medium">{error}</p>
-              <p className="text-gray-500 mb-4">No se pudieron cargar los informes</p>
-              <Button 
-                variant="outline" 
-                className="gap-1"
-                onClick={() => window.location.reload()}
-              >
-                <Plus className="h-4 w-4" />
-                Reintentar
-              </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Informes ({filteredReports.length})</CardTitle>
+          <CardDescription>Lista completa de informes generados</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
+              </div>
             </div>
           ) : filteredReports.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-gray-500 mb-4">No hay informes disponibles</p>
-              <Link to="/reports/new">
-                <Button variant="outline" className="gap-1">
-                  <Plus className="h-4 w-4" />
-                  Crear Primer Informe
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-2">No se encontraron informes</p>
+              {searchTerm || selectedType ? (
+                <Button variant="outline" onClick={() => {
+                  setSearchTerm("");
+                  setSelectedType("");
+                }}>
+                  Limpiar filtros
                 </Button>
-              </Link>
+              ) : null}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Cliente</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Cliente</TableHead>
                   <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead className="text-right">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReports.map((report) => (
-                  <TableRow key={report.id} className="hover:bg-gray-50">
+                {filteredReports.map(report => (
+                  <TableRow key={report.id}>
+                    <TableCell className="font-medium">{report.title}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5 font-medium">
-                        <User className="h-4 w-4 text-gray-500" />
-                        {getClientName(report.clientId)}
-                      </div>
+                      <Badge variant="outline">
+                        {report.type}
+                      </Badge>
                     </TableCell>
-                    <TableCell>{report.title}</TableCell>
+                    <TableCell>{report.clientId}</TableCell>
                     <TableCell>
-                      {report.type === "seo" ? "SEO" :
-                       report.type === "performance" ? "Rendimiento" :
-                       report.type === "technical" ? "Técnico" :
-                       report.type === "social" ? "Social" :
-                       report.type === "local-seo" ? "SEO Local" : report.type}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-gray-500" />
-                        <span className="text-sm">
-                          {format(new Date(report.date), "d MMM yyyy", { locale: es })}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        {format(new Date(report.date), "d MMMM yyyy", { locale: es })}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <Link to={`/reports/${report.id}`}>
-                        <Button variant="outline" size="sm" className="gap-1">
-                          <Eye className="h-4 w-4" />
-                          Ver
-                        </Button>
+                        <Button variant="outline" size="sm">Ver Detalle</Button>
                       </Link>
                     </TableCell>
                   </TableRow>

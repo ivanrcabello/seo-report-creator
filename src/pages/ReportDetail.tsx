@@ -95,7 +95,7 @@ const ReportDetail = () => {
     if (report) {
       try {
         setIsSharing(true);
-        const updatedReport = await shareReport(report);
+        const updatedReport = await shareReport(report.id);
         setReport(updatedReport);
         const shareUrl = await getSharedReportUrl(updatedReport.id);
         setSharedUrl(shareUrl);

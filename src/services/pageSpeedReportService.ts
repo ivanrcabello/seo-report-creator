@@ -3,6 +3,7 @@ import { ClientReport } from "@/types/client";
 import { addReport } from "@/services/reportService";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
+import { PageSpeedReport, PageSpeedMetrics, PageSpeedAudit } from "@/services/pagespeed/types";
 
 // Function to generate a professional report with visual indicators
 export const generatePageSpeedReport = async (

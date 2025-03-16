@@ -1,8 +1,10 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { ClientReport } from "@/types/client";
+import { ClientReport, Proposal } from "@/types/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { shareReport } from "../reportService";
+import { shareReport, getReport } from "../reportService";
+import { mapProposalFromDB } from "./proposalMappers";
 
 // Función para incluir un informe en una propuesta
 export const includeReportInProposal = async (proposalId: string, reportId: string): Promise<Proposal | undefined> => {
@@ -40,7 +42,7 @@ export const includeReportInProposal = async (proposalId: string, reportId: stri
   // Compartir el informe si no está compartido
   const report = await getReport(reportId);
   if (report && !report.sharedAt) {
-    await shareReport(report);
+    await shareReport(report.id);
   }
   
   return mapProposalFromDB(data);

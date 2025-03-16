@@ -31,10 +31,12 @@ export async function getSeoLocalReports(clientId: string): Promise<SeoLocalRepo
       website: report.website || null,
       googleBusinessUrl: report.google_business_url || null,
       googleMapsRanking: report.google_maps_ranking || 0,
-      // Add fallbacks for potentially missing properties
-      googleReviewsCount: report.google_reviews_count || 0,
-      googleReviewsAverage: report.google_reviews_average ? 
-                           (typeof report.google_reviews_average === 'number' ? report.google_reviews_average : parseFloat(report.google_reviews_average as string) || 0) : 0,
+      googleReviewsCount: report.google_reviews_count !== undefined ? report.google_reviews_count : 0,
+      googleReviewsAverage: report.google_reviews_average !== undefined 
+                           ? (typeof report.google_reviews_average === 'number' 
+                             ? report.google_reviews_average 
+                             : parseFloat(report.google_reviews_average as string) || 0) 
+                           : 0,
       keywordRankings: Array.isArray(report.keyword_rankings) ? report.keyword_rankings : 
                       (typeof report.keyword_rankings === 'string' ? JSON.parse(report.keyword_rankings) : []),
       localListings: Array.isArray(report.local_listings) ? report.local_listings : 
@@ -79,10 +81,12 @@ export async function getSeoLocalReportById(reportId: string): Promise<SeoLocalR
       website: data.website || null,
       googleBusinessUrl: data.google_business_url || null,
       googleMapsRanking: data.google_maps_ranking || 0,
-      // Add fallbacks for potentially missing properties
-      googleReviewsCount: data.google_reviews_count || 0,
-      googleReviewsAverage: data.google_reviews_average ? 
-                          (typeof data.google_reviews_average === 'number' ? data.google_reviews_average : parseFloat(data.google_reviews_average as string) || 0) : 0,
+      googleReviewsCount: data.google_reviews_count !== undefined ? data.google_reviews_count : 0,
+      googleReviewsAverage: data.google_reviews_average !== undefined 
+                          ? (typeof data.google_reviews_average === 'number' 
+                            ? data.google_reviews_average 
+                            : parseFloat(data.google_reviews_average as string) || 0) 
+                          : 0,
       keywordRankings: Array.isArray(data.keyword_rankings) ? data.keyword_rankings : 
                       (typeof data.keyword_rankings === 'string' ? JSON.parse(data.keyword_rankings) : []),
       localListings: Array.isArray(data.local_listings) ? data.local_listings : 

@@ -1,9 +1,12 @@
 
 import { AIReport } from "@/services/aiReportService";
-import { FileText, BarChart, Globe, Phone, Mail } from "lucide-react";
+import { FileText, Phone, Mail } from "lucide-react";
 import { ReportSection } from "@/components/seo-report/ReportSection";
 import { Accordion } from "@/components/ui/accordion";
 import { StrategySection } from "@/components/seo-report/StrategySection";
+import { ReportAnalysisSection } from "./ReportAnalysisSection";
+import { ReportPackagesSection } from "./ReportPackagesSection";
+import { ReportConclusionSection } from "./ReportConclusionSection";
 
 interface ReportContentProps {
   report: AIReport;
@@ -50,7 +53,7 @@ export const ReportContent = ({ report }: ReportContentProps) => {
       {/* Estrategia Propuesta */}
       <ReportSection
         title="Estrategia Propuesta"
-        icon={<Globe className="h-5 w-5 text-green-600" />}
+        icon={<FileText className="h-5 w-5 text-green-600" />}
         gradientFrom="from-green-50"
         gradientTo="to-green-50/30"
         titleColor="text-green-800"
@@ -60,7 +63,7 @@ export const ReportContent = ({ report }: ReportContentProps) => {
           <StrategySection 
             strategy={report.strategy} 
             title="Optimización Técnica y On-Page" 
-            icon={<Globe className="h-5 w-5 text-blue-600" />}
+            icon={<FileText className="h-5 w-5 text-blue-600" />}
             strategyType="technicalOptimization"
             iconColor="text-blue-500"
           />
@@ -68,7 +71,7 @@ export const ReportContent = ({ report }: ReportContentProps) => {
           <StrategySection 
             strategy={report.strategy} 
             title="SEO Local y Geolocalización" 
-            icon={<Globe className="h-5 w-5 text-green-600" />}
+            icon={<FileText className="h-5 w-5 text-green-600" />}
             strategyType="localSeo"
             iconColor="text-green-500"
           />

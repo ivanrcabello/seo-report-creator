@@ -40,7 +40,6 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
     } catch (error) {
       console.error("Error generando el informe:", error);
       uiToast({
-        title: "Error",
         description: "No se pudo generar el informe. Inténtalo de nuevo.",
         variant: "destructive",
       });
@@ -51,10 +50,7 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
 
   const generateAdvancedReport = async () => {
     setIsGeneratingOpenAI(true);
-    toast({
-      title: "Generando informe avanzado",
-      description: "Creando informe detallado con IA avanzada...",
-    });
+    toast.loading("Generando informe avanzado...");
     
     try {
       const content = await generateSEOReport(auditResult);
@@ -71,24 +67,13 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
           await saveReportWithAIData(currentReport, updatedReport);
         }
         
-        toast({
-          title: "Informe generado",
-          description: "El informe avanzado se ha generado con éxito",
-        });
+        toast.success("El informe avanzado se ha generado con éxito");
       } else {
-        toast({
-          title: "Error",
-          description: "No se pudo generar el informe avanzado",
-          variant: "destructive",
-        });
+        toast.error("No se pudo generar el informe avanzado");
       }
     } catch (error) {
       console.error("Error generando informe avanzado:", error);
-      toast({
-        title: "Error",
-        description: "Hubo un problema al generar el informe avanzado",
-        variant: "destructive",
-      });
+      toast.error("Hubo un problema al generar el informe avanzado");
     } finally {
       setIsGeneratingOpenAI(false);
     }
@@ -100,17 +85,10 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
     setIsSaving(true);
     try {
       await saveReportWithAIData(currentReport, report);
-      toast({
-        title: "Informe guardado",
-        description: "El informe se ha guardado correctamente.",
-      });
+      toast.success("El informe se ha guardado correctamente.");
     } catch (error) {
       console.error("Error saving report:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo guardar el informe. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
+      toast.error("No se pudo guardar el informe. Inténtalo de nuevo.");
     } finally {
       setIsSaving(false);
     }
@@ -122,20 +100,13 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
     try {
       const success = await downloadSeoReportPdf(report.id);
       if (success) {
-        toast({
-          title: "PDF generado",
-          description: "El informe se ha descargado correctamente.",
-        });
+        toast.success("El informe se ha descargado correctamente.");
       } else {
         throw new Error("Error al descargar el PDF");
       }
     } catch (error) {
       console.error("Error descargando PDF:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo descargar el PDF. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
+      toast.error("No se pudo descargar el PDF. Inténtalo de nuevo.");
     }
   };
 

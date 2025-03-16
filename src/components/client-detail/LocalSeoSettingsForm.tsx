@@ -47,6 +47,7 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   
   useEffect(() => {
+    console.log("LocalSeoSettingsForm clientId:", clientId);
     if (clientId && clientId.trim() !== '') {
       fetchSettings();
     } else {
@@ -62,6 +63,7 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
       const data = await getLocalSeoSettings(clientId);
       
       if (data) {
+        console.log("Retrieved settings:", data);
         setSettings({
           id: data.id,
           clientId: data.client_id,
@@ -74,6 +76,7 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
         });
       } else {
         // Set client ID and name for new settings
+        console.log("No existing settings found, using defaults with clientId:", clientId);
         setSettings(prev => ({
           ...prev,
           clientId,
@@ -142,6 +145,7 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
       const result = await saveLocalSeoSettings(settingsToSave);
       
       if (result) {
+        console.log("Settings saved successfully:", result);
         // Update state with the new id if this was a new record
         setSettings(prev => ({
           ...prev,

@@ -98,6 +98,9 @@ export const saveGeminiReport = async (
       reportType = 'performance';
     }
     
+    // Define the status explicitly with the correct type
+    const reportStatus: 'draft' | 'published' | 'shared' = 'draft';
+    
     const reportData = {
       client_id: clientId,
       title: `Informe ${reportType.toUpperCase()} - ${clientName} - ${new Date().toLocaleDateString('es-ES')}`,
@@ -110,7 +113,7 @@ export const saveGeminiReport = async (
         generatedBy: "gemini"
       },
       document_ids: documentIds,
-      status: 'draft' as 'draft' | 'published' | 'shared'
+      status: reportStatus
     };
     
     console.log("Inserting report into database", reportData);

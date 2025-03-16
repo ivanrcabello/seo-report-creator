@@ -98,6 +98,12 @@ const generateFormattedReportContent = (report: PageSpeedReport, clientName: str
   // Format current date as the analysis date
   const analysisDate = new Date().toLocaleDateString('es-ES');
   
+  // Convert decimal scores (0-1) to percentages (0-100) for display
+  const performanceScore = Math.round(metrics.performance_score * 100);
+  const accessibilityScore = Math.round(metrics.accessibility_score * 100);
+  const bestPracticesScore = Math.round(metrics.best_practices_score * 100);
+  const seoScore = Math.round(metrics.seo_score * 100);
+  
   return `# Informe de Rendimiento Web para ${clientName}
 
 ## Resumen Ejecutivo
@@ -109,10 +115,10 @@ Fecha: **${analysisDate}**
 
 | Categoría | Puntuación | Evaluación |
 |-----------|------------|------------|
-| Rendimiento | ${metrics.performance_score * 100}/100 | ${getScoreIndicator(metrics.performance_score * 100)} |
-| Accesibilidad | ${metrics.accessibility_score * 100}/100 | ${getScoreIndicator(metrics.accessibility_score * 100)} |
-| Mejores Prácticas | ${metrics.best_practices_score * 100}/100 | ${getScoreIndicator(metrics.best_practices_score * 100)} |
-| SEO | ${metrics.seo_score * 100}/100 | ${getScoreIndicator(metrics.seo_score * 100)} |
+| Rendimiento | ${performanceScore}/100 | ${getScoreIndicator(performanceScore)} |
+| Accesibilidad | ${accessibilityScore}/100 | ${getScoreIndicator(accessibilityScore)} |
+| Mejores Prácticas | ${bestPracticesScore}/100 | ${getScoreIndicator(bestPracticesScore)} |
+| SEO | ${seoScore}/100 | ${getScoreIndicator(seoScore)} |
 
 ## Métricas Principales de Core Web Vitals
 

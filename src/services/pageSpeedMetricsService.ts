@@ -30,13 +30,14 @@ export const savePageSpeedMetrics = async (
       return false;
     }
     
+    // Ensure we store scores as decimal values (0-1) not percentages
     const metricsData = {
       client_id: clientId,
       url: metrics.url,
-      performance_score: metrics.performance_score,
-      accessibility_score: metrics.accessibility_score,
-      best_practices_score: metrics.best_practices_score,
-      seo_score: metrics.seo_score
+      performance_score: parseFloat(metrics.performance_score.toString()),
+      accessibility_score: parseFloat(metrics.accessibility_score.toString()),
+      best_practices_score: parseFloat(metrics.best_practices_score.toString()),
+      seo_score: parseFloat(metrics.seo_score.toString())
     };
     
     console.log("Saving PageSpeed metrics:", metricsData);

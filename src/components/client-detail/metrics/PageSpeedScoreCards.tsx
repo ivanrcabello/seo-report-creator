@@ -9,32 +9,38 @@ interface PageSpeedScoreCardsProps {
 }
 
 export const PageSpeedScoreCards = ({ metrics }: PageSpeedScoreCardsProps) => {
+  // Convert decimal scores to percentages
+  const performanceScore = Math.round(metrics.performance_score * 100);
+  const accessibilityScore = Math.round(metrics.accessibility_score * 100);
+  const bestPracticesScore = Math.round(metrics.best_practices_score * 100);
+  const seoScore = Math.round(metrics.seo_score * 100);
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <ScoreCard
         title="Rendimiento"
-        score={metrics.performance_score}
+        score={performanceScore}
         icon={<Zap className="h-5 w-5 text-yellow-500" />}
         description="Rapidez de carga"
       />
       
       <ScoreCard
         title="Accesibilidad"
-        score={metrics.accessibility_score}
+        score={accessibilityScore}
         icon={<Layout className="h-5 w-5 text-blue-500" />}
         description="Facilidad de uso"
       />
       
       <ScoreCard
         title="Buenas Prácticas"
-        score={metrics.best_practices_score}
+        score={bestPracticesScore}
         icon={<Code2 className="h-5 w-5 text-indigo-500" />}
         description="Estándares web"
       />
       
       <ScoreCard
         title="SEO"
-        score={metrics.seo_score}
+        score={seoScore}
         icon={<Search className="h-5 w-5 text-pink-500" />}
         description="Optimización para buscadores"
       />

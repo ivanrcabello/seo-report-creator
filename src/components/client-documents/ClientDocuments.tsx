@@ -26,7 +26,7 @@ interface ClientDocumentsProps {
   onGenerateReport?: (documentIds: string[]) => void;
 }
 
-const ClientDocuments: React.FC<ClientDocumentsProps> = ({ 
+export const ClientDocuments: React.FC<ClientDocumentsProps> = ({ 
   clientId, 
   notes = [],
   onNoteAdded,
@@ -138,5 +138,3 @@ const ClientDocuments: React.FC<ClientDocumentsProps> = ({
     </Card>
   );
 };
-
-export default ClientDocuments;

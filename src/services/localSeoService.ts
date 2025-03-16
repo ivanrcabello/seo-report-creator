@@ -179,7 +179,7 @@ export async function getLocalSeoReports(clientId: string): Promise<SeoLocalRepo
       googleReviewsAverage: report.google_reviews_average !== undefined 
                           ? (typeof report.google_reviews_average === 'number' 
                             ? report.google_reviews_average 
-                            : parseFloat(report.google_reviews_average as string) || 0) 
+                            : parseFloat(String(report.google_reviews_average)) || 0) 
                           : 0,
       keywordRankings: report.keyword_rankings,
       localListings: report.local_listings,
@@ -234,7 +234,7 @@ export async function getLocalSeoReport(reportId: string): Promise<SeoLocalRepor
       googleReviewsAverage: data.google_reviews_average !== undefined 
                           ? (typeof data.google_reviews_average === 'number' 
                             ? data.google_reviews_average 
-                            : parseFloat(data.google_reviews_average as string) || 0) 
+                            : parseFloat(String(data.google_reviews_average)) || 0) 
                           : 0,
       keywordRankings: data.keyword_rankings,
       localListings: data.local_listings,
@@ -351,7 +351,7 @@ export async function saveLocalSeoSettings({
     // Convert googleReviewsAverage to a valid number
     const normalizedReviewsAvg = typeof googleReviewsAverage === 'number' ? 
       googleReviewsAverage : 
-      (parseFloat(googleReviewsAverage as unknown as string) || 0);
+      (parseFloat(String(googleReviewsAverage)) || 0);
     
     // Only include fields that exist in the database table
     const dataToSave = {

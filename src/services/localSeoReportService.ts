@@ -35,7 +35,7 @@ export async function getSeoLocalReports(clientId: string): Promise<SeoLocalRepo
       googleReviewsAverage: report.google_reviews_average !== undefined 
                            ? (typeof report.google_reviews_average === 'number' 
                              ? report.google_reviews_average 
-                             : parseFloat(report.google_reviews_average as string) || 0) 
+                             : parseFloat(String(report.google_reviews_average)) || 0) 
                            : 0,
       keywordRankings: Array.isArray(report.keyword_rankings) ? report.keyword_rankings : 
                       (typeof report.keyword_rankings === 'string' ? JSON.parse(report.keyword_rankings) : []),
@@ -85,7 +85,7 @@ export async function getSeoLocalReportById(reportId: string): Promise<SeoLocalR
       googleReviewsAverage: data.google_reviews_average !== undefined 
                           ? (typeof data.google_reviews_average === 'number' 
                             ? data.google_reviews_average 
-                            : parseFloat(data.google_reviews_average as string) || 0) 
+                            : parseFloat(String(data.google_reviews_average)) || 0) 
                           : 0,
       keywordRankings: Array.isArray(data.keyword_rankings) ? data.keyword_rankings : 
                       (typeof data.keyword_rankings === 'string' ? JSON.parse(data.keyword_rankings) : []),

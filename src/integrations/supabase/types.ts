@@ -874,6 +874,8 @@ export type Database = {
           date: string
           google_business_url: string | null
           google_maps_ranking: number | null
+          google_reviews_average: number | null
+          google_reviews_count: number | null
           id: string
           keyword_rankings: Json | null
           local_listings: Json | null
@@ -891,6 +893,8 @@ export type Database = {
           date?: string
           google_business_url?: string | null
           google_maps_ranking?: number | null
+          google_reviews_average?: number | null
+          google_reviews_count?: number | null
           id?: string
           keyword_rankings?: Json | null
           local_listings?: Json | null
@@ -908,6 +912,8 @@ export type Database = {
           date?: string
           google_business_url?: string | null
           google_maps_ranking?: number | null
+          google_reviews_average?: number | null
+          google_reviews_count?: number | null
           id?: string
           keyword_rankings?: Json | null
           local_listings?: Json | null

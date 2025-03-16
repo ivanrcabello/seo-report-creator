@@ -68,11 +68,11 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
         // Ensure it's an array
         if (Array.isArray(auditsData)) {
           // Map each audit object to ensure it conforms to PageSpeedAudit structure
-          parsedAudits = auditsData.map(audit => ({
+          parsedAudits = auditsData.map((audit: any) => ({
             id: audit.id || '',
             title: audit.title || '',
             description: audit.description || '',
-            score: Number(audit.score) || 0,
+            score: typeof audit.score === 'number' ? audit.score : 0,
             scoreDisplayMode: audit.scoreDisplayMode || 'numeric',
             displayValue: audit.displayValue || undefined,
             category: audit.category || 'performance',
@@ -236,8 +236,11 @@ export const analyzeWebsite = async (url: string): Promise<PageSpeedReport | nul
       // Process all audits from the API response
       if (data.lighthouseResult?.audits) {
         for (const [id, auditData] of Object.entries(data.lighthouseResult.audits)) {
+          // TypeScript safeguard - ensure auditData is an object
+          const audit = auditData as Record<string, any>;
+          
           // Skip informative audits with no score
-          if (auditData.scoreDisplayMode === 'informative' || auditData.scoreDisplayMode === 'manual') {
+          if (audit.scoreDisplayMode === 'informative' || audit.scoreDisplayMode === 'manual') {
             continue;
           }
           
@@ -253,14 +256,14 @@ export const analyzeWebsite = async (url: string): Promise<PageSpeedReport | nul
             category = 'best-practices';
           }
           
-          // Create the audit object
+          // Create the audit object with proper type checking
           audits.push({
             id,
-            title: auditData.title || '',
-            description: auditData.description || '',
-            score: auditData.score !== null ? auditData.score : 0,
-            scoreDisplayMode: auditData.scoreDisplayMode || 'numeric',
-            displayValue: auditData.displayValue,
+            title: audit.title || '',
+            description: audit.description || '',
+            score: typeof audit.score === 'number' ? audit.score : 0,
+            scoreDisplayMode: audit.scoreDisplayMode || 'numeric',
+            displayValue: audit.displayValue,
             category,
             importance: auditImportance[id] || 'medium'
           });

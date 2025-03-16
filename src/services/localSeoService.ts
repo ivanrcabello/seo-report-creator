@@ -4,6 +4,49 @@ import { v4 as uuidv4 } from 'uuid';
 import { SeoLocalReport } from '@/types/client';
 
 /**
+ * Fetch all local SEO reports for a client
+ */
+export async function getLocalSeoReports(clientId: string): Promise<SeoLocalReport[]> {
+  try {
+    const { data, error } = await supabase
+      .from('seo_local_reports')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('date', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching local SEO reports:', error);
+      return [];
+    }
+    
+    return data.map((report): SeoLocalReport => ({
+      id: report.id,
+      clientId: report.client_id,
+      title: report.title,
+      date: report.date,
+      businessName: report.business_name,
+      address: report.address || report.location, // Use location as fallback
+      location: report.location,
+      phone: report.phone || null,
+      website: report.website || null,
+      googleBusinessUrl: report.google_business_url || null,
+      googleMapsRanking: report.google_maps_ranking || 0,
+      googleReviewsCount: report.google_reviews_count || 0,
+      keywordRankings: Array.isArray(report.keyword_rankings) ? report.keyword_rankings : 
+                      (typeof report.keyword_rankings === 'string' ? JSON.parse(report.keyword_rankings) : []),
+      localListings: Array.isArray(report.local_listings) ? report.local_listings : 
+                    (typeof report.local_listings === 'string' ? JSON.parse(report.local_listings) : []),
+      recommendations: report.recommendations || [],
+      shareToken: report.share_token || null,
+      sharedAt: report.shared_at || null
+    }));
+  } catch (error) {
+    console.error('Error in getLocalSeoReports:', error);
+    return [];
+  }
+}
+
+/**
  * Generate a local SEO analysis from selected documents
  */
 export async function generateLocalSeoAnalysis(

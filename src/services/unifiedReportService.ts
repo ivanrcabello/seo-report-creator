@@ -39,7 +39,8 @@ export const generateUnifiedReport = async (data: UnifiedReportData): Promise<Cl
         position: kw.position,
         targetPosition: kw.target_position,
         difficulty: 0,
-        searchVolume: 0
+        searchVolume: 0,
+        count: 1 // Add required count property
       })),
       localData: data.localSeoData ? {
         businessName: data.localSeoData.businessName,
@@ -118,8 +119,8 @@ export const generateUnifiedReport = async (data: UnifiedReportData): Promise<Cl
       title: savedReport.title,
       date: savedReport.date,
       type: savedReport.type,
-      content: savedReport.content,
-      analyticsData: savedReport.analytics_data,
+      content: savedReport.content || "", // Handle null content
+      analyticsData: savedReport.analytics_data || {}, // Handle null analytics_data
       documentIds: savedReport.document_ids || [],
       shareToken: savedReport.share_token,
       sharedAt: savedReport.shared_at,

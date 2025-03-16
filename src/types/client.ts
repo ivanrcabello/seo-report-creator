@@ -1,4 +1,3 @@
-
 export interface ClientReport {
   id: string;
   clientId: string;
@@ -7,14 +6,14 @@ export interface ClientReport {
   type: string;
   url?: string;
   notes?: string;
-  content?: string; // For storing formatted report
+  content: string; // Change from optional to required
   documentIds: string[];
   shareToken?: string;
   sharedAt?: string | null;
   includeInProposal?: boolean;
-  analyticsData?: any; // Add analyticsData field
-  searchConsoleData?: any; // Add searchConsoleData field
-  auditResult?: any; // Add auditResult field
+  analyticsData: any; // Change from optional to required
+  searchConsoleData?: any;
+  auditResult?: any;
 }
 
 // Adding other exported interfaces for imports in the project

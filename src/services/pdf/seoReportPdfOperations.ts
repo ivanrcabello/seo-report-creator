@@ -4,6 +4,7 @@
  */
 import { generateSeoReportPdf } from './seoReportPdfCore';
 import { getReport } from '@/services/reportService';
+import { getCompanySettings } from '@/services/settingsService';
 import { toast } from "sonner";
 
 /**
@@ -23,8 +24,11 @@ export const downloadSeoReportPdf = async (reportId: string): Promise<boolean> =
       return false;
     }
     
-    // Generate PDF
-    const pdfBlob = await generateSeoReportPdf(report);
+    // Get company settings for logo and branding
+    const companySettings = await getCompanySettings();
+    
+    // Generate PDF with company branding
+    const pdfBlob = await generateSeoReportPdf(report, companySettings);
     
     if (!pdfBlob) {
       toast.dismiss(toastId);

@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getReport, deleteReport, shareReport } from "@/services/reportService";
-import { downloadReportPdf } from "@/services/reportPdfService";
+import { downloadSeoReportPdf } from "@/services/pdf/seoReportPdfService";
 import { getClient } from "@/services/clientService";
 import { getSharedReportUrl } from "@/services/reportSharingService";
 import { Client, ClientReport } from "@/types/client";
@@ -76,7 +75,7 @@ const ReportDetail = () => {
       setIsProcessing(true);
       const toastId = toast.loading("Generando PDF del informe...");
       
-      const success = await downloadReportPdf(id);
+      const success = await downloadSeoReportPdf(id);
       
       toast.dismiss(toastId);
       if (success) {
@@ -219,8 +218,17 @@ const ReportDetail = () => {
             disabled={isProcessing}
             className="gap-1"
           >
-            <FileDown className="h-4 w-4" />
-            Descargar PDF
+            {isProcessing ? (
+              <>
+                <Clock className="h-4 w-4 animate-spin" />
+                Generando PDF...
+              </>
+            ) : (
+              <>
+                <FileDown className="h-4 w-4" />
+                Descargar PDF
+              </>
+            )}
           </Button>
           {sharedUrl ? (
             <div className="flex items-center gap-2">

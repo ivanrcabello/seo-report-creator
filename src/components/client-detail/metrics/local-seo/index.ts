@@ -5,3 +5,5 @@ export * from './LocalSeoHistory';
 export * from './LocalSeoKeywords';
 export * from './LocalSeoLoadingState';
 export * from './useLocalSeoData';
+export * from './LocalSeoMetrics';
+

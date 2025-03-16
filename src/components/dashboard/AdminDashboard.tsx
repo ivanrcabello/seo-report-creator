@@ -8,8 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   MoreVertical, Mail, Building, Calendar, AlertTriangle, 
-  RefreshCw, Users, FileText, FileSpreadsheet, Briefcase, 
-  Activity, BarChart2, ArrowUpRight
+  RefreshCw, Users, FileText, FileSpreadsheet, Briefcase
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format, isValid, parseISO } from 'date-fns';
@@ -79,7 +78,7 @@ const AdminDashboard = () => {
   // Calculate total clients count
   const totalClientsCount = clientSummaries.length;
   
-  // Dummy data for stats (replace with real data later)
+  // Datos para estadísticas (reemplazar con datos reales más adelante)
   const invoiceStats = {
     pendingCount: 5,
     totalAmount: '12.450 €',
@@ -95,7 +94,27 @@ const AdminDashboard = () => {
   };
 
   if (isLoading) {
-    return <DashboardSkeleton />;
+    return (
+      <div className="container mx-auto py-10">
+        <div className="mb-8">
+          <Skeleton className="h-9 w-64 mb-2" />
+          <Skeleton className="h-5 w-96" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-5 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-4 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (isError || errorMessage) {
@@ -158,12 +177,12 @@ const AdminDashboard = () => {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-6">
-          {/* Dashboard Stats Overview */}
+          {/* Estadísticas del Dashboard */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard 
               title="Clientes Activos" 
               value={`${activeClientsCount}`}
-              change={`${((activeClientsCount/totalClientsCount)*100).toFixed(0)}%`}
+              change={`${totalClientsCount > 0 ? ((activeClientsCount/totalClientsCount)*100).toFixed(0) : 0}%`}
               trend="up"
               icon={<Users className="h-4 w-4 text-white" />}
               color="bg-blue-500"
@@ -189,137 +208,31 @@ const AdminDashboard = () => {
               value={invoiceStats.totalAmount}
               change="+12% vs mes anterior"
               trend="up"
-              icon={<BarChart2 className="h-4 w-4 text-white" />}
+              icon={<FileText className="h-4 w-4 text-white" />}
               color="bg-indigo-500"
             />
           </div>
           
-          {/* Activity and Clients Overview */}
+          {/* Actividad y Resumen de Clientes */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-blue-500" />
-                  Actividad Reciente
-                </CardTitle>
+                <CardTitle className="text-xl font-medium">Actividad Reciente</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {/* Placeholder for activity items */}
-                  <div className="flex items-start space-x-4 border-l-2 border-blue-500 pl-4 pb-2">
-                    <div>
-                      <p className="font-medium">Nueva factura creada</p>
-                      <p className="text-sm text-gray-500">Factura #INV-2023-012 para Ordemat Soluciones</p>
-                      <p className="text-xs text-gray-400 mt-1">Hace 2 horas</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4 border-l-2 border-green-500 pl-4 pb-2">
-                    <div>
-                      <p className="font-medium">Contrato firmado</p>
-                      <p className="text-sm text-gray-500">Contrato SEO Local para Desiree Abad</p>
-                      <p className="text-xs text-gray-400 mt-1">Hace 1 día</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4 border-l-2 border-amber-500 pl-4 pb-2">
-                    <div>
-                      <p className="font-medium">Nuevo cliente registrado</p>
-                      <p className="text-sm text-gray-500">Ivan Rodriguez se ha registrado en la plataforma</p>
-                      <p className="text-xs text-gray-400 mt-1">Hace 3 días</p>
-                    </div>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="mt-4 w-full">
-                  Ver toda la actividad
-                </Button>
+                <p className="text-sm text-gray-500">Aquí se mostrará la actividad reciente cuando esté disponible</p>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <Users className="h-5 w-5 text-blue-500" />
-                  Clientes Activos
-                </CardTitle>
+                <CardTitle className="text-xl font-medium">Clientes Activos</CardTitle>
               </CardHeader>
               <CardContent>
                 <ActiveUsers clients={clientSummaries.filter(client => client.isActive).slice(0, 5)} />
                 <Button asChild variant="outline" size="sm" className="mt-4 w-full">
                   <Link to="/clients">Ver todos los clientes</Link>
                 </Button>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Quick Actions and Reports */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <ArrowUpRight className="h-5 w-5 text-blue-500" />
-                  Acciones Rápidas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <Button asChild variant="secondary" className="h-auto py-4 flex flex-col items-center justify-center gap-2">
-                    <Link to="/clients/new">
-                      <Users className="h-6 w-6 mb-1" />
-                      <span>Nuevo Cliente</span>
-                    </Link>
-                  </Button>
-                  <Button asChild variant="secondary" className="h-auto py-4 flex flex-col items-center justify-center gap-2">
-                    <Link to="/invoices/new">
-                      <FileSpreadsheet className="h-6 w-6 mb-1" />
-                      <span>Nueva Factura</span>
-                    </Link>
-                  </Button>
-                  <Button asChild variant="secondary" className="h-auto py-4 flex flex-col items-center justify-center gap-2">
-                    <Link to="/contracts/new">
-                      <Briefcase className="h-6 w-6 mb-1" />
-                      <span>Nuevo Contrato</span>
-                    </Link>
-                  </Button>
-                  <Button asChild variant="secondary" className="h-auto py-4 flex flex-col items-center justify-center gap-2">
-                    <Link to="/proposals/new">
-                      <FileText className="h-6 w-6 mb-1" />
-                      <span>Nueva Propuesta</span>
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <BarChart2 className="h-5 w-5 text-blue-500" />
-                  Resumen de Facturación
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500">Emitidas</p>
-                    <p className="text-2xl font-bold mt-1">12</p>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500">Pendientes</p>
-                    <p className="text-2xl font-bold mt-1 text-amber-600">5</p>
-                  </div>
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500">Pagadas</p>
-                    <p className="text-2xl font-bold mt-1 text-green-600">7</p>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center p-4 border-t">
-                  <div>
-                    <p className="text-sm font-medium">Total Facturado</p>
-                    <p className="text-2xl font-bold">{invoiceStats.totalAmount}</p>
-                  </div>
-                  <Button asChild>
-                    <Link to="/invoices">Ver Facturas</Link>
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -334,7 +247,16 @@ const AdminDashboard = () => {
           </div>
           
           {clientSummaries.length === 0 ? (
-            <EmptyState />
+            <div className="text-center py-20 bg-gray-50 rounded-lg border border-gray-200">
+              <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 mb-2">No hay clientes registrados</h3>
+              <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                Añade tu primer cliente para empezar a gestionar tus proyectos SEO
+              </p>
+              <Button asChild>
+                <Link to="/clients/new">Añadir Cliente</Link>
+              </Button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {clientSummaries.map((client) => (
@@ -354,31 +276,22 @@ const AdminDashboard = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-medium">Resumen de Facturación</CardTitle>
+              <CardTitle>Resumen de Facturación</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <StatCard 
-                  title="Facturación Total" 
-                  value={invoiceStats.totalAmount}
-                  trend="up"
-                  icon={<BarChart2 className="h-4 w-4 text-white" />}
-                  color="bg-indigo-500"
-                />
-                <StatCard 
-                  title="Pagado" 
-                  value={invoiceStats.paidAmount}
-                  trend="up"
-                  icon={<FileText className="h-4 w-4 text-white" />}
-                  color="bg-green-500"
-                />
-                <StatCard 
-                  title="Pendiente" 
-                  value={invoiceStats.pendingAmount}
-                  trend="neutral"
-                  icon={<FileSpreadsheet className="h-4 w-4 text-white" />}
-                  color="bg-amber-500"
-                />
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">Total Facturado</p>
+                  <p className="text-2xl font-bold mt-1">{invoiceStats.totalAmount}</p>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">Pagado</p>
+                  <p className="text-2xl font-bold mt-1 text-green-600">{invoiceStats.paidAmount}</p>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">Pendiente</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">{invoiceStats.pendingAmount}</p>
+                </div>
               </div>
               <Button asChild variant="outline" className="w-full">
                 <Link to="/invoices">Ver todas las facturas</Link>
@@ -397,25 +310,25 @@ const AdminDashboard = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-medium">Estado de Contratos</CardTitle>
+              <CardTitle>Estado de Contratos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="text-center p-6 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-500">Total</p>
-                  <p className="text-3xl font-bold mt-2">{contractStats.totalCount}</p>
+                  <p className="text-2xl font-bold mt-1">{contractStats.totalCount}</p>
                 </div>
-                <div className="text-center p-6 bg-blue-50 rounded-lg">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-500">Activos</p>
-                  <p className="text-3xl font-bold mt-2 text-blue-600">{contractStats.activeCount}</p>
+                  <p className="text-2xl font-bold mt-1 text-blue-600">{contractStats.activeCount}</p>
                 </div>
-                <div className="text-center p-6 bg-green-50 rounded-lg">
+                <div className="text-center p-4 bg-green-50 rounded-lg">
                   <p className="text-sm text-green-500">Completados</p>
-                  <p className="text-3xl font-bold mt-2 text-green-600">{contractStats.completedCount}</p>
+                  <p className="text-2xl font-bold mt-1 text-green-600">{contractStats.completedCount}</p>
                 </div>
-                <div className="text-center p-6 bg-gray-100 rounded-lg">
+                <div className="text-center p-4 bg-gray-100 rounded-lg">
                   <p className="text-sm text-gray-600">Borradores</p>
-                  <p className="text-3xl font-bold mt-2 text-gray-700">{contractStats.draftCount}</p>
+                  <p className="text-2xl font-bold mt-1 text-gray-700">{contractStats.draftCount}</p>
                 </div>
               </div>
               <Button asChild variant="outline" className="w-full">
@@ -429,23 +342,8 @@ const AdminDashboard = () => {
   );
 };
 
-const EmptyState = () => {
-  return (
-    <div className="text-center py-20 bg-gray-50 rounded-lg border border-gray-200">
-      <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-xl font-medium text-gray-900 mb-2">No hay clientes registrados</h3>
-      <p className="text-gray-500 mb-6 max-w-md mx-auto">
-        Añade tu primer cliente para empezar a gestionar tus proyectos SEO
-      </p>
-      <Button asChild>
-        <Link to="/clients/new">Añadir Cliente</Link>
-      </Button>
-    </div>
-  );
-};
-
 const ClientCard = ({ client }: { client: ClientSummary }) => {
-  // Safely format the date or provide a fallback
+  // Dar formato a la fecha de forma segura
   const formatCreatedAt = () => {
     try {
       if (!client.createdAt) return "Fecha desconocida";
@@ -466,16 +364,16 @@ const ClientCard = ({ client }: { client: ClientSummary }) => {
   
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
-      <CardHeader className="p-4 pb-2">
+      <CardHeader className="p-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium truncate">{client.name}</CardTitle>
-          <Badge variant={client.isActive ? "success" : "secondary"}>
+          <Badge variant={client.isActive ? "default" : "secondary"}>
             {client.isActive ? "Activo" : "Inactivo"}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-2">
-        <div className="text-sm text-muted-foreground space-y-1">
+      <CardContent className="p-4">
+        <div className="text-sm text-muted-foreground space-y-2">
           <div className="flex items-center gap-2">
             <Mail className="h-4 w-4 opacity-70" />
             <a href={`mailto:${client.email}`} className="hover:underline truncate max-w-[200px]">
@@ -504,7 +402,7 @@ const ClientCard = ({ client }: { client: ClientSummary }) => {
               <span className="sr-only">Opciones</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" forceMount>
+          <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link to={`/clients/${client.id}`}>
                 Ver detalles
@@ -519,71 +417,6 @@ const ClientCard = ({ client }: { client: ClientSummary }) => {
         </DropdownMenu>
       </CardContent>
     </Card>
-  );
-};
-
-const DashboardSkeleton = () => {
-  return (
-    <div className="container mx-auto py-10">
-      <div className="mb-8">
-        <Skeleton className="h-9 w-64 mb-2" />
-        <Skeleton className="h-5 w-96" />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="overflow-hidden">
-            <CardHeader className="p-4">
-              <Skeleton className="h-5 w-[150px]" />
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                <Skeleton className="h-8 w-[100px]" />
-                <Skeleton className="h-4 w-[80px]" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader className="p-4">
-            <Skeleton className="h-5 w-[200px]" />
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex flex-col space-y-2">
-                  <Skeleton className="h-5 w-[250px]" />
-                  <Skeleton className="h-4 w-[200px]" />
-                  <Skeleton className="h-3 w-[100px]" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="p-4">
-            <Skeleton className="h-5 w-[150px]" />
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-3">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-2 w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
   );
 };
 

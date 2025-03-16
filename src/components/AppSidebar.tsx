@@ -1,4 +1,3 @@
-
 import { useLocation, Link } from "react-router-dom";
 import {
   Sidebar,
@@ -31,7 +30,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { signOut, userRole, user } = useAuth();
   
-  // Different navigation links based on user role
+  // Menu items.
   const adminLinks = [
     { 
       href: "/dashboard", 

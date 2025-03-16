@@ -4,7 +4,7 @@ export * from "./types";
 export * from "./pageSpeedApiService";
 export * from "./pageSpeedDbService";
 
-// Función getPageSpeedHistory que falta pero está referenciada en el código
+// Export the getPageSpeedHistory function
 export const getPageSpeedHistory = async (clientId: string): Promise<any[]> => {
   try {
     console.log("Getting PageSpeed history for client:", clientId);
@@ -33,5 +33,5 @@ export const getPageSpeedHistory = async (clientId: string): Promise<any[]> => {
   }
 };
 
-// Importar la función getPageSpeedMetrics desde pageSpeedDbService
+// Import the getPageSpeedMetrics from pageSpeedDbService
 import { getPageSpeedMetrics } from "./pageSpeedDbService";

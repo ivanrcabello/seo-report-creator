@@ -1,21 +1,16 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { PageSpeedReport, PageSpeedAudit } from "../pagespeed";
+import { PageSpeedReport } from "./types";
 import { toast } from "sonner";
 
 export const savePageSpeedReport = async (clientId: string, report: PageSpeedReport): Promise<boolean> => {
   try {
     console.log("Saving PageSpeed report for client:", clientId);
     
-    // Asegurar que todas las métricas son números
+    // Convert all metrics to numbers to ensure type consistency
     const metrics = { ...report.metrics };
-    Object.keys(metrics).forEach(key => {
-      if (typeof metrics[key] === 'string' && !isNaN(Number(metrics[key]))) {
-        metrics[key] = Number(metrics[key]);
-      }
-    });
     
-    // Preparar datos para la tabla pagespeed_metrics
+    // Prepare data for the pagespeed_metrics table
     const metricsData = {
       client_id: clientId,
       url: metrics.url,
@@ -34,7 +29,7 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
     
     console.log("Metrics data to be saved:", metricsData);
     
-    // Insertar en pagespeed_metrics
+    // Insert into pagespeed_metrics
     const { data: metricsResult, error: metricsError } = await supabase
       .from('pagespeed_metrics')
       .insert([metricsData])
@@ -54,7 +49,7 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
     
     const metricId = metricsResult[0].id;
     
-    // También almacenar audits en la tabla client_pagespeed
+    // Also store in client_pagespeed table with audits included
     const pagespeedData = {
       client_id: clientId,
       url: metrics.url,
@@ -68,11 +63,11 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
       time_to_interactive: Number(metrics.time_to_interactive),
       total_blocking_time: Number(metrics.total_blocking_time),
       cumulative_layout_shift: Number(metrics.cumulative_layout_shift),
-      audits: report.audits,
+      audits: JSON.stringify(report.audits), // Convert to JSON string before storing
       created_at: new Date().toISOString()
     };
     
-    // Insertar en client_pagespeed
+    // Insert into client_pagespeed
     const { error: reportError } = await supabase
       .from('client_pagespeed')
       .insert([pagespeedData]);
@@ -96,73 +91,24 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
   try {
     console.log("Getting PageSpeed report for client:", clientId);
     
-    // Primero, obtener los últimos datos de PageSpeed de client_pagespeed que incluye audits
+    // Get latest record from client_pagespeed that includes audits
     const { data: pagespeedData, error: pagespeedError } = await supabase
       .from('client_pagespeed')
       .select('*')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
     
-    if (pagespeedError) {
+    if (pagespeedError || !pagespeedData || pagespeedData.length === 0) {
       console.error("Error getting PageSpeed data:", pagespeedError);
-      
-      // Intentar obtener solo las métricas si no hay datos completos
       return await getLatestMetricsAsReport(clientId);
     }
     
-    if (!pagespeedData) {
-      console.log("No PageSpeed data found for client:", clientId);
-      return null;
-    }
+    const data = pagespeedData[0];
+    console.log("PageSpeed data found:", data);
     
-    console.log("PageSpeed data found:", pagespeedData);
-    
-    // Construir el reporte a partir de los datos obtenidos
+    // Build the report
     const report: PageSpeedReport = {
-      id: pagespeedData.id,
-      metrics: {
-        url: pagespeedData.url,
-        performance_score: Number(pagespeedData.performance_score),
-        seo_score: Number(pagespeedData.seo_score),
-        best_practices_score: Number(pagespeedData.best_practices_score),
-        accessibility_score: Number(pagespeedData.accessibility_score),
-        first_contentful_paint: Number(pagespeedData.first_contentful_paint),
-        speed_index: Number(pagespeedData.speed_index),
-        largest_contentful_paint: Number(pagespeedData.largest_contentful_paint),
-        time_to_interactive: Number(pagespeedData.time_to_interactive),
-        total_blocking_time: Number(pagespeedData.total_blocking_time),
-        cumulative_layout_shift: Number(pagespeedData.cumulative_layout_shift)
-      },
-      audits: Array.isArray(pagespeedData.audits) ? pagespeedData.audits : [],
-      created_at: pagespeedData.created_at
-    };
-    
-    return report;
-  } catch (error) {
-    console.error("Error getting PageSpeed report:", error);
-    return null;
-  }
-};
-
-// Función auxiliar para obtener el último reporte basado solo en métricas
-const getLatestMetricsAsReport = async (clientId: string): Promise<PageSpeedReport | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('pagespeed_metrics')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-    
-    if (error || !data) {
-      console.error("Error getting PageSpeed metrics:", error);
-      return null;
-    }
-    
-    return {
       id: data.id,
       metrics: {
         url: data.url,
@@ -177,8 +123,51 @@ const getLatestMetricsAsReport = async (clientId: string): Promise<PageSpeedRepo
         total_blocking_time: Number(data.total_blocking_time),
         cumulative_layout_shift: Number(data.cumulative_layout_shift)
       },
-      audits: [],
+      audits: Array.isArray(data.audits) ? data.audits : 
+              (typeof data.audits === 'string' ? JSON.parse(data.audits) : []),
       created_at: data.created_at
+    };
+    
+    return report;
+  } catch (error) {
+    console.error("Error getting PageSpeed report:", error);
+    return null;
+  }
+};
+
+// Helper function to get latest metrics as a report
+const getLatestMetricsAsReport = async (clientId: string): Promise<PageSpeedReport | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('pagespeed_metrics')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    if (error || !data || data.length === 0) {
+      console.error("Error getting PageSpeed metrics:", error);
+      return null;
+    }
+    
+    const metricData = data[0];
+    return {
+      id: metricData.id,
+      metrics: {
+        url: metricData.url,
+        performance_score: Number(metricData.performance_score),
+        seo_score: Number(metricData.seo_score),
+        best_practices_score: Number(metricData.best_practices_score),
+        accessibility_score: Number(metricData.accessibility_score),
+        first_contentful_paint: Number(metricData.first_contentful_paint),
+        speed_index: Number(metricData.speed_index),
+        largest_contentful_paint: Number(metricData.largest_contentful_paint),
+        time_to_interactive: Number(metricData.time_to_interactive),
+        total_blocking_time: Number(metricData.total_blocking_time),
+        cumulative_layout_shift: Number(metricData.cumulative_layout_shift)
+      },
+      audits: [],
+      created_at: metricData.created_at
     };
   } catch (error) {
     console.error("Error in getLatestMetricsAsReport:", error);

@@ -15,6 +15,27 @@ interface SectionEditorProps {
 export const SectionEditor = ({ section, onUpdate }: SectionEditorProps) => {
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   
+  // Define preview data for template variables
+  const previewData = {
+    clientName: "Nombre del Cliente",
+    companyName: "Nombre de la Empresa",
+    reportTitle: "Título del Informe",
+    reportDate: new Date().toLocaleDateString(),
+    currentPage: 1,
+    totalPages: 5
+  };
+  
+  // Function to replace variables in content
+  const replaceVariables = (content: string) => {
+    return content
+      .replace(/{{clientName}}/g, previewData.clientName)
+      .replace(/{{companyName}}/g, previewData.companyName)
+      .replace(/{{reportTitle}}/g, previewData.reportTitle)
+      .replace(/{{reportDate}}/g, previewData.reportDate)
+      .replace(/{{currentPage}}/g, previewData.currentPage.toString())
+      .replace(/{{totalPages}}/g, previewData.totalPages.toString());
+  };
+  
   const handleChange = (field: keyof TemplateSection, value: any) => {
     onUpdate({
       ...section,
@@ -57,13 +78,13 @@ export const SectionEditor = ({ section, onUpdate }: SectionEditorProps) => {
             className="font-mono min-h-[400px]"
           />
           <p className="text-xs text-gray-500 mt-2">
-            Variables disponibles: {{clientName}}, {{companyName}}, {{reportTitle}}, {{reportDate}}, etc.
+            Variables disponibles: {'{{clientName}}, {{companyName}}, {{reportTitle}}, {{reportDate}}, etc.'}
           </p>
         </TabsContent>
         
         <TabsContent value="preview">
           <div className="border rounded-md p-6 min-h-[400px] bg-white">
-            <div dangerouslySetInnerHTML={{ __html: section.content }} />
+            <div dangerouslySetInnerHTML={{ __html: replaceVariables(section.content) }} />
           </div>
         </TabsContent>
       </Tabs>

@@ -1,24 +1,15 @@
+
 import { useState, useEffect } from "react";
-import { 
-  getPageSpeedReport, 
-  PageSpeedReport, 
-  analyzeWebsite, 
-  savePageSpeedReport 
-} from "@/services/pagespeed";
-import { generatePageSpeedReport } from "@/services/pageSpeedReportService";
+import { getPageSpeedReport, PageSpeedReport } from "@/services/pagespeed";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageSpeedMetricCards } from "./PageSpeedMetricCards";
-import { PageSpeedScoreCards } from "./PageSpeedScoreCards";
-import { PageSpeedPerformanceMetrics } from "./PageSpeedPerformanceMetrics";
-import { PageSpeedAuditList } from "./PageSpeedAuditList";
-import { Gauge, FileText, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { PageSpeedIndicator } from "./PageSpeedIndicator";
+import { Gauge } from "lucide-react";
 import { ErrorAlert } from "./ErrorAlert";
+import { PageSpeedIndicator } from "./PageSpeedIndicator";
+import { PageSpeedUrlAnalyzer } from "./PageSpeedUrlAnalyzer";
+import { PageSpeedReportGenerator } from "./PageSpeedReportGenerator";
+import { PageSpeedLoadingState } from "./PageSpeedLoadingState";
+import { PageSpeedEmptyState } from "./PageSpeedEmptyState";
+import { PageSpeedReportTabs } from "./PageSpeedReportTabs";
 
 interface PageSpeedSectionProps {
   clientId: string;
@@ -28,8 +19,6 @@ interface PageSpeedSectionProps {
 export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps) => {
   const [url, setUrl] = useState("");
   const [pageSpeedReport, setPageSpeedReport] = useState<PageSpeedReport | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [loadingReport, setLoadingReport] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,71 +46,6 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
     }
   }, [clientId]);
 
-  const handleAnalyzeUrl = async () => {
-    if (!url.trim()) {
-      toast.error("Por favor, introduce una URL válida");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      let formattedUrl = url;
-      if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-        formattedUrl = 'https://' + formattedUrl;
-        setUrl(formattedUrl);
-      }
-      
-      const report = await analyzeWebsite(formattedUrl);
-      
-      if (report) {
-        console.log("PageSpeed analysis completed:", report);
-        setPageSpeedReport(report);
-        
-        try {
-          const saved = await savePageSpeedReport(clientId, report);
-          if (saved) {
-            console.log("PageSpeed report saved successfully");
-            toast.success("Análisis de PageSpeed completado y guardado");
-          } else {
-            console.error("Failed to save PageSpeed report");
-            toast.error("Análisis completado, pero no se pudo guardar el informe");
-          }
-        } catch (saveError) {
-          console.error("Error saving PageSpeed report:", saveError);
-          toast.error("Análisis completado, pero no se pudo guardar el informe");
-        }
-      } else {
-        throw new Error("No se pudo obtener un informe válido");
-      }
-    } catch (err) {
-      console.error("Error analyzing URL:", err);
-      setError("No se pudo analizar la URL. Por favor, inténtalo de nuevo más tarde.");
-      toast.error("Error al analizar la URL. Por favor, inténtalo de nuevo.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateReport = async () => {
-    if (!pageSpeedReport) {
-      toast.error("No hay datos de PageSpeed para generar un informe");
-      return;
-    }
-
-    try {
-      setIsGenerating(true);
-      await generatePageSpeedReport(pageSpeedReport, clientId, clientName);
-      toast.success("Informe de PageSpeed generado y guardado correctamente");
-    } catch (err) {
-      console.error("Error generating report:", err);
-      toast.error("Error al generar el informe. Por favor, inténtalo de nuevo.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -140,24 +64,11 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
                 score={pageSpeedReport.metrics.performance_score} 
                 showLabel 
               />
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={handleGenerateReport}
-                disabled={isGenerating}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generando...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Generar Informe
-                  </>
-                )}
-              </Button>
+              <PageSpeedReportGenerator 
+                pageSpeedReport={pageSpeedReport} 
+                clientId={clientId} 
+                clientName={clientName} 
+              />
             </div>
           )}
         </div>
@@ -165,74 +76,22 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
 
       <CardContent>
         <div className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <Label htmlFor="pageSpeedUrl">URL del sitio web</Label>
-              <div className="flex mt-1">
-                <Input
-                  id="pageSpeedUrl"
-                  placeholder="https://www.ejemplo.com"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  className="flex-1 rounded-r-none"
-                />
-                <Button
-                  onClick={handleAnalyzeUrl}
-                  disabled={isLoading || !url.trim()}
-                  className="rounded-l-none"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Analizando...
-                    </>
-                  ) : (
-                    'Analizar'
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
+          <PageSpeedUrlAnalyzer 
+            clientId={clientId} 
+            url={url} 
+            setUrl={setUrl} 
+            setPageSpeedReport={setPageSpeedReport} 
+            setError={setError}
+          />
 
           {loadingReport ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
-              <p className="ml-2 text-gray-500">Cargando informe de PageSpeed...</p>
-            </div>
+            <PageSpeedLoadingState />
           ) : error ? (
             <ErrorAlert error={{ message: error }} />
           ) : !pageSpeedReport ? (
-            <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
-              <p>No hay datos de PageSpeed para este cliente.</p>
-              <p className="text-sm text-gray-500 mt-1">
-                Introduce una URL y haz clic en "Analizar" para obtener métricas de rendimiento.
-              </p>
-            </div>
+            <PageSpeedEmptyState />
           ) : (
-            <Tabs defaultValue="scores" className="mt-6">
-              <TabsList>
-                <TabsTrigger value="scores">Puntuaciones</TabsTrigger>
-                <TabsTrigger value="metrics">Métricas</TabsTrigger>
-                <TabsTrigger value="audits">Auditorías</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="scores">
-                <PageSpeedScoreCards metrics={pageSpeedReport.metrics} />
-              </TabsContent>
-              
-              <TabsContent value="metrics">
-                <div className="space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <PageSpeedMetricCards metrics={pageSpeedReport.metrics} />
-                  </div>
-                  <PageSpeedPerformanceMetrics metrics={pageSpeedReport.metrics} />
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="audits">
-                <PageSpeedAuditList audits={pageSpeedReport.audits} />
-              </TabsContent>
-            </Tabs>
+            <PageSpeedReportTabs pageSpeedReport={pageSpeedReport} />
           )}
         </div>
       </CardContent>

@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { ClientKeyword } from "@/services/clientKeywordsService";
 import { useClientKeywords } from "./useClientKeywords";
@@ -50,6 +49,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import {
   Select,
@@ -91,20 +91,16 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   
-  // Filtering state
   const [positionFilter, setPositionFilter] = useState<string>("all");
   const [isFilterActive, setIsFilterActive] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   
-  // Apply filters and pagination to keywords
   const filteredKeywords = useMemo(() => {
     let filtered = [...keywords];
     
-    // Apply position filter
     if (positionFilter !== "all") {
       if (positionFilter === "no-position") {
         filtered = filtered.filter(kw => kw.position === null);
@@ -129,17 +125,14 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
     return filtered;
   }, [keywords, positionFilter]);
   
-  // Get current page keywords
   const currentKeywords = useMemo(() => {
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     return filteredKeywords.slice(indexOfFirstItem, indexOfLastItem);
   }, [filteredKeywords, currentPage, itemsPerPage]);
   
-  // Calculate total pages
   const totalPages = Math.ceil(filteredKeywords.length / itemsPerPage);
   
-  // Update currentPage when filter changes
   useMemo(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
@@ -189,12 +182,47 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-  
-  const handleClearFilters = () => {
-    setPositionFilter("all");
-    setIsFilterActive(false);
-  };
 
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      pageNumbers.push(1);
+      
+      let startPage = Math.max(2, currentPage - 1);
+      let endPage = Math.min(totalPages - 1, currentPage + 1);
+      
+      if (currentPage <= 2) {
+        endPage = Math.min(totalPages - 1, 4);
+      }
+      
+      if (currentPage >= totalPages - 1) {
+        startPage = Math.max(2, totalPages - 3);
+      }
+      
+      if (startPage > 2) {
+        pageNumbers.push('ellipsis1');
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+      
+      if (endPage < totalPages - 1) {
+        pageNumbers.push('ellipsis2');
+      }
+      
+      pageNumbers.push(totalPages);
+    }
+    
+    return pageNumbers;
+  };
+  
   const getPositionChangeIcon = (current: number | null, previous: number | null) => {
     if (current === null || previous === null) return null;
     
@@ -547,7 +575,6 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
           </div>
         )}
         
-        {/* Pagination */}
         {filteredKeywords.length > 0 && totalPages > 1 && (
           <Pagination className="mt-4">
             <PaginationContent>
@@ -562,19 +589,25 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
                 />
               </PaginationItem>
               
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <PaginationItem key={page}>
-                  <PaginationLink 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(page);
-                    }}
-                    isActive={currentPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
+              {getPageNumbers().map((page, index) => (
+                page === 'ellipsis1' || page === 'ellipsis2' ? (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={`page-${page}`}>
+                    <PaginationLink 
+                      href="#" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(page as number);
+                      }}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
               ))}
               
               <PaginationItem>
@@ -591,7 +624,6 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
           </Pagination>
         )}
         
-        {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen && !!editingKeyword} onOpenChange={setIsEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -679,7 +711,6 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation Dialog */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -700,7 +731,6 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
           </AlertDialogContent>
         </AlertDialog>
         
-        {/* CSV Import Dialog */}
         <KeywordCSVImport
           isOpen={isImportDialogOpen}
           onClose={() => setIsImportDialogOpen(false)}

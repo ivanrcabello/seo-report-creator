@@ -140,6 +140,7 @@ export type Database = {
           client_id: string
           created_at: string
           google_business_url: string | null
+          google_maps_ranking: number | null
           google_reviews_average: number | null
           google_reviews_count: number | null
           id: string
@@ -157,6 +158,7 @@ export type Database = {
           client_id: string
           created_at?: string
           google_business_url?: string | null
+          google_maps_ranking?: number | null
           google_reviews_average?: number | null
           google_reviews_count?: number | null
           id?: string
@@ -174,6 +176,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           google_business_url?: string | null
+          google_maps_ranking?: number | null
           google_reviews_average?: number | null
           google_reviews_count?: number | null
           id?: string

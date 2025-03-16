@@ -141,7 +141,16 @@ export async function saveLocalSeoSettings({
     }
     
     console.log('Saving local SEO settings for client:', clientId);
-    console.log('Settings data:', { id, clientId, businessName, address });
+    console.log('Settings data to save:', { 
+      id, 
+      clientId, 
+      businessName, 
+      address, 
+      googleMapsRanking,
+      googleReviewsCount,
+      googleReviewsAverage,
+      listingsCount
+    });
     
     // Normalize values to proper format
     const reviewsAvg = googleReviewsAverage != null ? Number(googleReviewsAverage) : null;
@@ -177,7 +186,10 @@ export async function saveLocalSeoSettings({
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating by ID:', error);
+        throw error;
+      }
       result = updatedData;
     } else {
       // Check if there's an existing record for this client
@@ -196,7 +208,10 @@ export async function saveLocalSeoSettings({
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating by client_id:', error);
+          throw error;
+        }
         result = updatedData;
       } else {
         // Insert new record
@@ -209,7 +224,10 @@ export async function saveLocalSeoSettings({
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error inserting new record:', error);
+          throw error;
+        }
         result = insertedData;
       }
     }
@@ -221,16 +239,36 @@ export async function saveLocalSeoSettings({
         googleReviewsAverage != null || listingsCount != null) {
       
       try {
-        const metricsResult = await saveMetricsHistory(clientId, {
+        console.log('Saving metrics history with data:', {
+          clientId,
           googleMapsRanking: mapsRanking,
-          googleReviewsCount: reviewsCount, 
+          googleReviewsCount: reviewsCount,
           googleReviewsAverage: reviewsAvg,
           listingsCount: listings
         });
         
-        console.log('Metrics history saved:', metricsResult);
+        const metricsData = {
+          client_id: clientId,
+          google_maps_ranking: mapsRanking,
+          google_reviews_count: reviewsCount,
+          google_reviews_average: reviewsAvg,
+          listings_count: listings,
+          date: new Date().toISOString()
+        };
+        
+        const { data: metricsResult, error } = await supabase
+          .from('local_seo_metrics')
+          .insert(metricsData)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Error saving metrics history:', error);
+        } else {
+          console.log('Metrics history saved successfully:', metricsResult);
+        }
       } catch (metricsError) {
-        console.error('Error saving metrics history:', metricsError);
+        console.error('Error in saveMetricsHistory:', metricsError);
         // Continue, don't throw error here so settings still save
       }
     }
@@ -240,35 +278,4 @@ export async function saveLocalSeoSettings({
     console.error('Error in saveLocalSeoSettings:', error);
     throw error;
   }
-}
-
-// Helper function to save metrics history
-async function saveMetricsHistory(clientId: string, metrics: {
-  googleMapsRanking?: number | null;
-  googleReviewsCount?: number | null;
-  googleReviewsAverage?: number | null;
-  listingsCount?: number | null;
-}) {
-  const metricsData = {
-    client_id: clientId,
-    google_maps_ranking: metrics.googleMapsRanking,
-    google_reviews_count: metrics.googleReviewsCount,
-    google_reviews_average: metrics.googleReviewsAverage,
-    listings_count: metrics.listingsCount,
-    date: new Date().toISOString()
-  };
-  
-  console.log('Saving metrics history:', metricsData);
-  
-  const { data, error } = await supabase
-    .from('local_seo_metrics')
-    .insert(metricsData)
-    .select();
-  
-  if (error) {
-    console.error('Error saving metrics history:', error);
-    throw error;
-  }
-  
-  return data;
 }

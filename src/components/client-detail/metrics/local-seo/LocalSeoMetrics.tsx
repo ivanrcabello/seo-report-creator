@@ -4,12 +4,13 @@ import { MetricsCard } from "../MetricsCard";
 import { MapPin, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { useLocalSeoData } from "./useLocalSeoData";
 import { LocalSeoOverview } from "./LocalSeoOverview";
 import { LocalSeoSettings } from "./LocalSeoSettings";
 import { LocalSeoHistory } from "./LocalSeoHistory";
 import { LocalSeoKeywords } from "./LocalSeoKeywords";
+import { LocalSeoLoadingState } from "./LocalSeoLoadingState";
 
 interface LocalSeoMetricsProps {
   clientId: string;
@@ -29,20 +30,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
   } = useLocalSeoData(clientId);
   
   if (isLoading) {
-    return (
-      <MetricsCard 
-        title="SEO Local" 
-        icon={<MapPin className="h-5 w-5 text-seo-blue" />}
-      >
-        <div className="space-y-4">
-          <Skeleton className="h-16 w-full" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        </div>
-      </MetricsCard>
-    );
+    return <LocalSeoLoadingState />;
   }
   
   // Extract data from current report or settings to pass to the overview

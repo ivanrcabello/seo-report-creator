@@ -49,17 +49,7 @@ export const PageSpeedUrlAnalyzer = ({
       if (report) {
         console.log("Análisis de PageSpeed completado con éxito");
         
-        // Convertimos explícitamente las métricas a números antes de guardarlas
-        if (report.metrics) {
-          Object.keys(report.metrics).forEach(key => {
-            // Si la propiedad es un número en forma de string, lo convertimos a número
-            const value = report.metrics[key];
-            if (typeof value === 'string' && !isNaN(Number(value))) {
-              report.metrics[key] = Number(value);
-            }
-          });
-        }
-        
+        // Set the report in state before saving to database
         setPageSpeedReport(report);
         
         try {

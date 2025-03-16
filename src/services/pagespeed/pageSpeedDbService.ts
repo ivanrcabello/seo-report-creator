@@ -11,13 +11,14 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
     const metrics = { ...report.metrics };
     
     // Prepare data for the pagespeed_metrics table
+    // Important: Multiply decimal scores by 100 to store as integers as required by the database
     const metricsData = {
       client_id: clientId,
       url: metrics.url,
-      performance_score: Number(metrics.performance_score),
-      seo_score: Number(metrics.seo_score),
-      best_practices_score: Number(metrics.best_practices_score),
-      accessibility_score: Number(metrics.accessibility_score),
+      performance_score: Math.round(Number(metrics.performance_score) * 100),
+      seo_score: Math.round(Number(metrics.seo_score) * 100),
+      best_practices_score: Math.round(Number(metrics.best_practices_score) * 100),
+      accessibility_score: Math.round(Number(metrics.accessibility_score) * 100),
       first_contentful_paint: Number(metrics.first_contentful_paint),
       speed_index: Number(metrics.speed_index),
       largest_contentful_paint: Number(metrics.largest_contentful_paint),
@@ -50,13 +51,14 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
     const metricId = metricsResult[0].id;
     
     // Also store in client_pagespeed table with audits included
+    // Again, multiply decimal scores by 100 to store as integers
     const pagespeedData = {
       client_id: clientId,
       url: metrics.url,
-      performance_score: Number(metrics.performance_score),
-      accessibility_score: Number(metrics.accessibility_score),
-      best_practices_score: Number(metrics.best_practices_score),
-      seo_score: Number(metrics.seo_score),
+      performance_score: Math.round(Number(metrics.performance_score) * 100),
+      accessibility_score: Math.round(Number(metrics.accessibility_score) * 100),
+      best_practices_score: Math.round(Number(metrics.best_practices_score) * 100),
+      seo_score: Math.round(Number(metrics.seo_score) * 100),
       first_contentful_paint: Number(metrics.first_contentful_paint),
       speed_index: Number(metrics.speed_index),
       largest_contentful_paint: Number(metrics.largest_contentful_paint),
@@ -108,14 +110,15 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
     console.log("PageSpeed data found:", data);
     
     // Build the report
+    // Important: Divide integer scores by 100 to convert back to decimals (0-1)
     const report: PageSpeedReport = {
       id: data.id,
       metrics: {
         url: data.url,
-        performance_score: Number(data.performance_score),
-        seo_score: Number(data.seo_score),
-        best_practices_score: Number(data.best_practices_score),
-        accessibility_score: Number(data.accessibility_score),
+        performance_score: Number(data.performance_score) / 100,
+        seo_score: Number(data.seo_score) / 100,
+        best_practices_score: Number(data.best_practices_score) / 100,
+        accessibility_score: Number(data.accessibility_score) / 100,
         first_contentful_paint: Number(data.first_contentful_paint),
         speed_index: Number(data.speed_index),
         largest_contentful_paint: Number(data.largest_contentful_paint),
@@ -151,14 +154,15 @@ const getLatestMetricsAsReport = async (clientId: string): Promise<PageSpeedRepo
     }
     
     const metricData = data[0];
+    // Divide integer scores by 100 to convert back to decimals (0-1)
     return {
       id: metricData.id,
       metrics: {
         url: metricData.url,
-        performance_score: Number(metricData.performance_score),
-        seo_score: Number(metricData.seo_score),
-        best_practices_score: Number(metricData.best_practices_score),
-        accessibility_score: Number(metricData.accessibility_score),
+        performance_score: Number(metricData.performance_score) / 100,
+        seo_score: Number(metricData.seo_score) / 100,
+        best_practices_score: Number(metricData.best_practices_score) / 100,
+        accessibility_score: Number(metricData.accessibility_score) / 100,
         first_contentful_paint: Number(metricData.first_contentful_paint),
         speed_index: Number(metricData.speed_index),
         largest_contentful_paint: Number(metricData.largest_contentful_paint),
@@ -189,7 +193,16 @@ export const getPageSpeedMetrics = async (clientId: string, limit = 10): Promise
       return [];
     }
     
-    return data || [];
+    // Map the data to convert scores back from integers to decimals (0-1)
+    const mappedData = data?.map(item => ({
+      ...item,
+      performance_score: Number(item.performance_score) / 100,
+      accessibility_score: Number(item.accessibility_score) / 100,
+      best_practices_score: Number(item.best_practices_score) / 100,
+      seo_score: Number(item.seo_score) / 100
+    })) || [];
+    
+    return mappedData;
   } catch (error) {
     console.error("Error getting PageSpeed metrics:", error);
     return [];

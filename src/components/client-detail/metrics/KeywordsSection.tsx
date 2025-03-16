@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ClientKeyword } from "@/services/clientKeywordsService";
 import { useClientKeywords } from "./useClientKeywords";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -19,7 +19,9 @@ import {
   Target,
   Loader2,
   FileUp,
-  ExternalLink
+  ExternalLink,
+  Filter,
+  FilterX
 } from "lucide-react";
 import { 
   Dialog, 
@@ -41,6 +43,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { MetricsCard } from "./MetricsCard";
 import { KeywordCSVImport } from "./KeywordCSVImport";
 import { toast } from "sonner";
@@ -73,6 +90,61 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  
+  // Filtering state
+  const [positionFilter, setPositionFilter] = useState<string>("all");
+  const [isFilterActive, setIsFilterActive] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Apply filters and pagination to keywords
+  const filteredKeywords = useMemo(() => {
+    let filtered = [...keywords];
+    
+    // Apply position filter
+    if (positionFilter !== "all") {
+      if (positionFilter === "no-position") {
+        filtered = filtered.filter(kw => kw.position === null);
+      } else if (positionFilter === "in-top-10") {
+        filtered = filtered.filter(kw => kw.position !== null && kw.position <= 10);
+      } else if (positionFilter === "in-top-30") {
+        filtered = filtered.filter(kw => kw.position !== null && kw.position <= 30);
+      } else if (positionFilter === "below-target") {
+        filtered = filtered.filter(kw => 
+          kw.position !== null && kw.position > kw.target_position
+        );
+      } else if (positionFilter === "above-target") {
+        filtered = filtered.filter(kw => 
+          kw.position !== null && kw.position <= kw.target_position
+        );
+      }
+      setIsFilterActive(true);
+    } else {
+      setIsFilterActive(false);
+    }
+    
+    return filtered;
+  }, [keywords, positionFilter]);
+  
+  // Get current page keywords
+  const currentKeywords = useMemo(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return filteredKeywords.slice(indexOfFirstItem, indexOfLastItem);
+  }, [filteredKeywords, currentPage, itemsPerPage]);
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredKeywords.length / itemsPerPage);
+  
+  // Update currentPage when filter changes
+  useMemo(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
   const handleAddSubmit = () => {
     addKeyword(
@@ -112,6 +184,15 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
       toast.error("Error al importar el archivo CSV");
       return false;
     }
+  };
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  
+  const handleClearFilters = () => {
+    setPositionFilter("all");
+    setIsFilterActive(false);
   };
 
   const getPositionChangeIcon = (current: number | null, previous: number | null) => {
@@ -153,9 +234,26 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
         )}
         
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Total: {keywords.length} palabras clave</h3>
+          <h3 className="text-lg font-medium">
+            Total: {keywords.length} palabras clave
+            {isFilterActive && (
+              <span className="ml-2 text-sm text-blue-600">
+                ({filteredKeywords.length} filtradas)
+              </span>
+            )}
+          </h3>
           
           <div className="flex items-center gap-2">
+            <Button 
+              variant={showFilters ? "default" : "outline"} 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              {showFilters ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+              {showFilters ? "Ocultar filtros" : "Filtrar"}
+            </Button>
+
             <Button 
               variant="outline" 
               size="sm" 
@@ -262,11 +360,55 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
           </div>
         </div>
         
+        {showFilters && (
+          <div className="flex flex-wrap gap-4 p-4 bg-slate-50 rounded-md border">
+            <div className="w-full sm:w-auto">
+              <Label htmlFor="position-filter" className="text-sm">Filtrar por posición</Label>
+              <Select 
+                value={positionFilter} 
+                onValueChange={setPositionFilter}
+              >
+                <SelectTrigger id="position-filter" className="w-full sm:w-[200px] mt-1">
+                  <SelectValue placeholder="Todas las posiciones" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las posiciones</SelectItem>
+                  <SelectItem value="no-position">Sin posición</SelectItem>
+                  <SelectItem value="in-top-10">En top 10</SelectItem>
+                  <SelectItem value="in-top-30">En top 30</SelectItem>
+                  <SelectItem value="above-target">Dentro del objetivo</SelectItem>
+                  <SelectItem value="below-target">Fuera del objetivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {isFilterActive && (
+              <div className="flex items-end">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleClearFilters}
+                  className="flex items-center gap-1 mt-[26px]"
+                >
+                  <FilterX className="h-3 w-3" />
+                  Limpiar filtros
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+        
         {keywords.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p>No hay palabras clave añadidas todavía.</p>
             <p className="text-sm mt-2">Añade palabras clave para hacer seguimiento de sus posiciones.</p>
+          </div>
+        ) : filteredKeywords.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p>No hay palabras clave que coincidan con los filtros.</p>
+            <p className="text-sm mt-2">Ajusta los filtros para ver resultados.</p>
           </div>
         ) : (
           <div className="border rounded-md overflow-hidden">
@@ -281,7 +423,7 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {keywords.map((keyword) => (
+                {currentKeywords.map((keyword) => (
                   <TableRow key={keyword.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center">
@@ -403,6 +545,50 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
               </TableBody>
             </Table>
           </div>
+        )}
+        
+        {/* Pagination */}
+        {filteredKeywords.length > 0 && totalPages > 1 && (
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) handlePageChange(currentPage - 1);
+                  }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <PaginationItem key={page}>
+                  <PaginationLink 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(page);
+                    }}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                  }}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         )}
         
         {/* Edit Dialog */}

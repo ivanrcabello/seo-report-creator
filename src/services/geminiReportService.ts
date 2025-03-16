@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { ClientReport } from "@/types/client";
@@ -17,6 +18,12 @@ export const generateGeminiReport = async (
   try {
     console.log("Generating report with Gemini API");
     console.log("Template type:", templateType);
+    console.log("Audit data:", JSON.stringify(auditData, null, 2));
+    
+    // Validate essential data
+    if (!auditData || !auditData.companyName) {
+      throw new Error("Datos de auditoría incompletos. Se requiere al menos el nombre de la empresa.");
+    }
     
     // Call the Supabase Edge Function for Gemini
     const { data, error } = await supabase.functions.invoke('gemini-report', {
@@ -31,7 +38,13 @@ export const generateGeminiReport = async (
       throw new Error(`Error llamando a Gemini API: ${error.message}`);
     }
     
-    if (!data || !data.content) {
+    if (!data) {
+      console.error("No data received from Gemini API");
+      throw new Error("No se recibieron datos de la API de Gemini");
+    }
+    
+    if (!data.content) {
+      console.error("No content in Gemini API response:", data);
       throw new Error("No se recibió contenido de la API de Gemini");
     }
     
@@ -62,8 +75,16 @@ export const saveGeminiReport = async (
   documentIds: string[] = []
 ): Promise<ClientReport | null> => {
   try {
+    console.log("Saving Gemini report to database for client:", clientId);
+    
     // Create a serializable version of auditData for storage
-    const serializableAuditData = JSON.parse(JSON.stringify(auditData));
+    let serializableAuditData;
+    try {
+      serializableAuditData = JSON.parse(JSON.stringify(auditData));
+    } catch (err) {
+      console.error("Error serializing audit data:", err);
+      serializableAuditData = { error: "Data could not be serialized" };
+    }
     
     const reportData = {
       client_id: clientId,
@@ -76,8 +97,11 @@ export const saveGeminiReport = async (
         generatedAt: new Date().toISOString(),
         generatedBy: "gemini"
       },
-      document_ids: documentIds
+      document_ids: documentIds,
+      status: 'draft'
     };
+    
+    console.log("Inserting report into database");
     
     // Save to database
     const { data, error } = await supabase
@@ -87,8 +111,11 @@ export const saveGeminiReport = async (
       .single();
     
     if (error) {
+      console.error("Error saving report to database:", error);
       throw new Error(`Error guardando el informe: ${error.message}`);
     }
+    
+    console.log("Report saved successfully with ID:", data.id);
     
     // Map database response to ClientReport type
     return {
@@ -104,7 +131,8 @@ export const saveGeminiReport = async (
       notes: data.notes,
       shareToken: data.share_token,
       sharedAt: data.shared_at,
-      includeInProposal: data.include_in_proposal || false
+      includeInProposal: data.include_in_proposal || false,
+      status: data.status || 'draft'
     };
   } catch (error) {
     console.error("Error in saveGeminiReport:", error);
@@ -129,20 +157,29 @@ export const generateAndSaveReport = async (
   documentIds: string[] = []
 ): Promise<ClientReport | null> => {
   try {
+    console.log("Starting generateAndSaveReport for client:", clientId, clientName);
     toast.loading("Generando informe con IA...");
+    
+    // Ensure auditData has the client name
+    const enhancedAuditData = {
+      ...auditData,
+      companyName: clientName
+    };
     
     // Determine the report type based on the audit data
     let reportType: 'seo' | 'local' | 'technical' | 'performance' = 'seo';
-    if (auditData.localData && auditData.localData.businessName) {
+    if (enhancedAuditData.localData && enhancedAuditData.localData.businessName) {
       reportType = 'local';
-    } else if (auditData.technicalResults && Object.keys(auditData.technicalResults).length > 0) {
+    } else if (enhancedAuditData.technicalResults && Object.keys(enhancedAuditData.technicalResults).length > 0) {
       reportType = 'technical';
-    } else if (auditData.performanceResults && Object.keys(auditData.performanceResults).length > 0) {
+    } else if (enhancedAuditData.performanceResults && Object.keys(enhancedAuditData.performanceResults).length > 0) {
       reportType = 'performance';
     }
     
+    console.log(`Using report type: ${reportType}`);
+    
     // Generate the report content
-    const reportContent = await generateGeminiReport(auditData, reportType);
+    const reportContent = await generateGeminiReport(enhancedAuditData, reportType);
     
     if (!reportContent) {
       toast.dismiss();
@@ -150,12 +187,14 @@ export const generateAndSaveReport = async (
       return null;
     }
     
+    console.log("Report content generated, saving to database");
+    
     // Save the report
     const savedReport = await saveGeminiReport(
       clientId,
       clientName,
       reportContent,
-      auditData,
+      enhancedAuditData,
       documentIds
     );
     

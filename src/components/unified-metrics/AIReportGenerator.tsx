@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, FileText, AlertCircle, Clock } from "lucide-react";
@@ -28,21 +29,42 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
     const toastId = toast.loading("Preparando datos para generar informe...");
     
     try {
+      if (!clientId || !clientName) {
+        throw new Error("Se requiere ID y nombre del cliente para generar el informe");
+      }
+      
       console.log("Fetching all metrics data in parallel");
       setProgress(20);
+      
+      // Utilizamos Promise.allSettled para que si una falla, las otras sigan
       const [pageSpeedData, metricsData, localSeoData, keywordsData, documentsData] = await Promise.allSettled([
-        getPageSpeedReport(clientId),
-        getClientMetrics(clientId),
-        getLocalSeoReports(clientId),
-        getClientKeywords(clientId),
-        getClientDocuments(clientId)
+        getPageSpeedReport(clientId).catch(err => {
+          console.error("Error fetching page speed:", err);
+          return null;
+        }),
+        getClientMetrics(clientId).catch(err => {
+          console.error("Error fetching metrics:", err);
+          return [];
+        }),
+        getLocalSeoReports(clientId).catch(err => {
+          console.error("Error fetching local SEO:", err);
+          return [];
+        }),
+        getClientKeywords(clientId).catch(err => {
+          console.error("Error fetching keywords:", err);
+          return [];
+        }),
+        getClientDocuments(clientId).catch(err => {
+          console.error("Error fetching documents:", err);
+          return [];
+        })
       ]);
       
       setProgress(40);
       const pageSpeed = pageSpeedData.status === 'fulfilled' ? pageSpeedData.value : null;
       const metrics = metricsData.status === 'fulfilled' ? metricsData.value : [];
       const localSeo = localSeoData.status === 'fulfilled' ? 
-        (localSeoData.value.length > 0 ? localSeoData.value[0] : null) : null;
+        (localSeoData.value && localSeoData.value.length > 0 ? localSeoData.value[0] : null) : null;
       const keywords = keywordsData.status === 'fulfilled' ? keywordsData.value : [];
       const documents = documentsData.status === 'fulfilled' ? documentsData.value : [];
       
@@ -54,25 +76,22 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         documents: documents.length
       });
       
-      if (!pageSpeed && metrics.length === 0 && !localSeo && keywords.length === 0 && documents.length === 0) {
-        toast.dismiss(toastId);
-        toast.error("No hay suficientes datos para generar un informe");
-        setIsGenerating(false);
-        return;
-      }
+      // Aunque no tengamos datos completos, procedemos con lo que tenemos
+      // Definimos valores por defecto para datos faltantes
       
       toast.dismiss(toastId);
       toast.loading("Generando informe con IA de Gemini...");
       setProgress(60);
       
+      // Preparamos datos de la auditoría para el informe
       const auditResult = {
-        url: pageSpeed?.metrics.url || "",
+        url: pageSpeed?.metrics?.url || "",
         companyName: clientName,
         companyType: "",
         location: localSeo?.location || "",
-        seoScore: pageSpeed?.metrics.seo_score || 0,
-        performance: pageSpeed?.metrics.performance_score || 0,
-        webVisibility: 0,
+        seoScore: pageSpeed?.metrics?.seo_score || 0,
+        performance: pageSpeed?.metrics?.performance_score || 0,
+        webVisibility: metrics.length > 0 ? (metrics[0].web_visits || 0) : 0,
         keywordsCount: keywords.length,
         technicalIssues: [],
         seoResults: {
@@ -93,16 +112,16 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
           sitemap: true,
           technologies: ['WordPress', 'PHP']
         },
-        performanceResults: {
+        performanceResults: pageSpeed ? {
           pageSpeed: {
-            desktop: pageSpeed?.metrics.performance_score || 0,
-            mobile: pageSpeed?.metrics.performance_score || 0
+            desktop: pageSpeed.metrics.performance_score || 0,
+            mobile: pageSpeed.metrics.performance_score || 0
           },
-          loadTime: '2.5s',
+          loadTime: `${((pageSpeed.metrics.largest_contentful_paint || 0) / 1000).toFixed(1)}s`,
           resourceCount: 35,
           imageOptimization: true,
           cacheImplementation: true
-        },
+        } : undefined,
         socialPresence: {
           facebook: true,
           twitter: true,
@@ -120,14 +139,14 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         })),
         localData: localSeo ? {
           businessName: localSeo.businessName,
-          address: localSeo.address,
+          address: localSeo.address || "",
           googleMapsRanking: localSeo.googleMapsRanking || 0,
           googleReviews: localSeo.googleReviewsCount || 0
         } : undefined,
         metrics: {
-          visits: metrics.length > 0 ? metrics[0].web_visits : 0,
-          keywordsTop10: metrics.length > 0 ? metrics[0].keywords_top10 : 0,
-          conversions: metrics.length > 0 ? metrics[0].conversions : 0
+          visits: metrics.length > 0 ? metrics[0].web_visits || 0 : 0,
+          keywordsTop10: metrics.length > 0 ? metrics[0].keywords_top10 || 0 : 0,
+          conversions: metrics.length > 0 ? metrics[0].conversions || 0 : 0
         },
         pagespeed: pageSpeed ? {
           performance: pageSpeed.metrics.performance_score,
@@ -148,6 +167,7 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       };
       
       setProgress(80);
+      console.log("Sending audit data to generateAndSaveReport function");
       const report = await generateAndSaveReport(
         clientId,
         clientName,

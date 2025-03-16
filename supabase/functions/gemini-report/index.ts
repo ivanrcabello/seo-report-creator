@@ -19,14 +19,33 @@ serve(async (req) => {
   }
 
   try {
-    const { auditData, templateType } = await req.json()
+    console.log("Gemini Report function called")
+    
+    // Parse request body
+    let body;
+    try {
+      body = await req.json()
+      console.log("Request body parsed successfully")
+    } catch (e) {
+      console.error("Error parsing request body:", e)
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+    
+    const { auditData, templateType } = body
     
     if (!auditData) {
+      console.error("Missing audit data in request")
       return new Response(
         JSON.stringify({ error: 'Audit data is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
+    
+    console.log("Template type:", templateType || 'seo')
+    console.log("Audit data received, company name:", auditData.companyName || 'Not provided')
 
     // Initialize the Gemini API
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
@@ -34,32 +53,42 @@ serve(async (req) => {
 
     // Create a template for the report based on SEO audit data
     const prompt = createSeoReportPrompt(auditData, templateType)
+    console.log("Prompt created, sending to Gemini API")
 
     // Generate response with Gemini
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        topK: 32,
-        topP: 0.95,
-        maxOutputTokens: 8000,
-      },
-    })
+    try {
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          topK: 32,
+          topP: 0.95,
+          maxOutputTokens: 8000,
+        },
+      })
 
-    const response = result.response
-    const generatedText = response.text()
+      const response = result.response
+      const generatedText = response.text()
+      console.log("Gemini response received successfully")
 
-    // Return the generated content
-    return new Response(
-      JSON.stringify({ 
-        content: generatedText,
-        model: "gemini-pro",
-        prompt: "SEO Report generation"
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      // Return the generated content
+      return new Response(
+        JSON.stringify({ 
+          content: generatedText,
+          model: "gemini-pro",
+          prompt: "SEO Report generation"
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    } catch (error) {
+      console.error('Error calling Gemini API:', error)
+      return new Response(
+        JSON.stringify({ error: `Error calling Gemini API: ${error.message || 'Unknown error'}` }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
+    }
   } catch (error) {
-    console.error('Error generating report with Gemini:', error)
+    console.error('Unhandled error in gemini-report function:', error)
     return new Response(
       JSON.stringify({ error: error.message || 'Unknown error occurred' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -69,92 +98,124 @@ serve(async (req) => {
 
 // Create a prompt for the SEO report
 function createSeoReportPrompt(auditData, templateType = 'seo') {
-  const { url, companyName, seoResults, technicalResults, performanceResults, 
-          keywords, localData, metrics, pagespeed } = auditData
-
+  console.log("Creating prompt with template type:", templateType)
+  
+  // Safety check for null or undefined auditData
+  if (!auditData) {
+    console.error("auditData is null or undefined")
+    return "Please provide audit data for the SEO report."
+  }
+  
+  // Safely extract data with fallbacks to prevent errors
+  const url = auditData.url || 'No URL provided'
+  const companyName = auditData.companyName || 'the company'
+  const seoScore = auditData.seoScore || 0
+  const performanceScore = auditData.performance || 0
+  const keywordsCount = auditData.keywordsCount || 0
+  
   let basePrompt = `Genera un informe SEO detallado para ${companyName} sobre el sitio web ${url}. 
 El informe debe estar en formato markdown y en español.
 
 Datos del análisis:
 - URL: ${url}
 - Empresa: ${companyName}
-- Puntuación SEO: ${auditData.seoScore}/100
-- Rendimiento: ${auditData.performance}/100
-- Palabras clave rastreadas: ${auditData.keywordsCount}
+- Puntuación SEO: ${seoScore}/100
+- Rendimiento: ${performanceScore}/100
+- Palabras clave rastreadas: ${keywordsCount}
 
 `
 
   // Add specific sections based on the template type
   if (templateType === 'seo') {
-    basePrompt += `
+    if (auditData.seoResults) {
+      basePrompt += `
 Sección SEO On-Page:
-${seoResults ? `
-- Meta título: ${seoResults.metaTitle ? 'Correcto' : 'Falta o incorrecto'}
-- Meta descripción: ${seoResults.metaDescription ? 'Correcta' : 'Falta o incorrecta'}
-- Etiquetas H1: ${seoResults.h1Tags} encontradas
-- Etiqueta canónica: ${seoResults.canonicalTag ? 'Implementada' : 'No implementada'}
-- Densidad de palabras clave: ${seoResults.keywordDensity}%
-- Longitud del contenido: ${seoResults.contentLength} palabras
-- Enlaces internos: ${seoResults.internalLinks}
-- Enlaces externos: ${seoResults.externalLinks}
-` : '- No hay datos disponibles de SEO On-Page'}
+- Meta título: ${auditData.seoResults.metaTitle ? 'Correcto' : 'Falta o incorrecto'}
+- Meta descripción: ${auditData.seoResults.metaDescription ? 'Correcta' : 'Falta o incorrecta'}
+- Etiquetas H1: ${auditData.seoResults.h1Tags || 'No detectadas'} encontradas
+- Etiqueta canónica: ${auditData.seoResults.canonicalTag ? 'Implementada' : 'No implementada'}
+- Densidad de palabras clave: ${auditData.seoResults.keywordDensity || 'No disponible'}%
+- Longitud del contenido: ${auditData.seoResults.contentLength || 'No disponible'} palabras
+- Enlaces internos: ${auditData.seoResults.internalLinks || 'No disponible'}
+- Enlaces externos: ${auditData.seoResults.externalLinks || 'No disponible'}
+`
+    } else {
+      basePrompt += `
+Sección SEO On-Page:
+- No hay datos disponibles de SEO On-Page
+`
+    }
 
+    if (auditData.technicalResults) {
+      basePrompt += `
 Sección SEO Técnico:
-${technicalResults ? `
-- Estado SSL: ${technicalResults.sslStatus}
-- Redirección HTTPS: ${technicalResults.httpsRedirection ? 'Implementada' : 'No implementada'}
-- Optimización móvil: ${technicalResults.mobileOptimization ? 'Correcta' : 'Necesita mejoras'}
-- Robots.txt: ${technicalResults.robotsTxt ? 'Correcto' : 'Falta o incorrecto'}
-- Sitemap: ${technicalResults.sitemap ? 'Encontrado' : 'No encontrado'}
-- Tecnologías detectadas: ${technicalResults.technologies.join(', ')}
-` : '- No hay datos disponibles de SEO Técnico'}
+- Estado SSL: ${auditData.technicalResults.sslStatus || 'No verificado'}
+- Redirección HTTPS: ${auditData.technicalResults.httpsRedirection ? 'Implementada' : 'No implementada'}
+- Optimización móvil: ${auditData.technicalResults.mobileOptimization ? 'Correcta' : 'Necesita mejoras'}
+- Robots.txt: ${auditData.technicalResults.robotsTxt ? 'Correcto' : 'Falta o incorrecto'}
+- Sitemap: ${auditData.technicalResults.sitemap ? 'Encontrado' : 'No encontrado'}
+- Tecnologías detectadas: ${Array.isArray(auditData.technicalResults.technologies) ? auditData.technicalResults.technologies.join(', ') : 'No disponible'}
+`
+    } else {
+      basePrompt += `
+Sección SEO Técnico:
+- No hay datos disponibles de SEO Técnico
+`
+    }
 
+    if (auditData.performanceResults) {
+      basePrompt += `
 Sección Rendimiento:
-${performanceResults ? `
-- Puntuación de velocidad (desktop): ${performanceResults.pageSpeed?.desktop || 'N/A'}/100
-- Puntuación de velocidad (mobile): ${performanceResults.pageSpeed?.mobile || 'N/A'}/100
-- Tiempo de carga: ${performanceResults.loadTime || 'N/A'}
-- Recursos totales: ${performanceResults.resourceCount || 'N/A'}
-- Optimización de imágenes: ${performanceResults.imageOptimization ? 'Correcta' : 'Necesita mejoras'}
-- Implementación de caché: ${performanceResults.cacheImplementation ? 'Correcta' : 'Necesita mejoras'}
-` : '- No hay datos disponibles de Rendimiento'}
-
-${keywords && keywords.length > 0 ? `Palabras clave principales:
-${keywords.slice(0, 10).map(kw => `- "${kw.word}": Posición actual ${kw.position || 'No posicionada'} (Objetivo: ${kw.targetPosition || 'Top 10'})`).join('\n')}
-` : '- No hay datos disponibles de palabras clave'}
-
-${metrics ? `Métricas actuales:
-- Visitas mensuales: ${metrics.visits || 'N/A'}
-- Keywords en top 10: ${metrics.keywordsTop10 || 'N/A'}
-- Conversiones: ${metrics.conversions || 'N/A'}
-` : ''}
+- Puntuación de velocidad (desktop): ${auditData.performanceResults.pageSpeed?.desktop || 'N/A'}/100
+- Puntuación de velocidad (mobile): ${auditData.performanceResults.pageSpeed?.mobile || 'N/A'}/100
+- Tiempo de carga: ${auditData.performanceResults.loadTime || 'N/A'}
+- Recursos totales: ${auditData.performanceResults.resourceCount || 'N/A'}
+- Optimización de imágenes: ${auditData.performanceResults.imageOptimization ? 'Correcta' : 'Necesita mejoras'}
+- Implementación de caché: ${auditData.performanceResults.cacheImplementation ? 'Correcta' : 'Necesita mejoras'}
 `
+    } else {
+      basePrompt += `
+Sección Rendimiento:
+- No hay datos disponibles de Rendimiento
+`
+    }
   } else if (templateType === 'local') {
-    basePrompt += `
+    if (auditData.localData) {
+      basePrompt += `
 Sección SEO Local:
-${localData ? `
-- Nombre del negocio: ${localData.businessName}
-- Dirección: ${localData.address}
-- Posición en Google Maps: ${localData.googleMapsRanking || 'No disponible'}
-- Reseñas en Google: ${localData.googleReviews || 0}
-` : '- No hay datos disponibles de SEO Local'}
-
-${keywords && keywords.length > 0 ? `Palabras clave locales principales:
-${keywords.slice(0, 10).map(kw => `- "${kw.word}": Posición actual ${kw.position || 'No posicionada'} (Objetivo: ${kw.targetPosition || 'Top 10'})`).join('\n')}
-` : '- No hay datos disponibles de palabras clave locales'}
+- Nombre del negocio: ${auditData.localData.businessName || 'No disponible'}
+- Dirección: ${auditData.localData.address || 'No disponible'}
+- Posición en Google Maps: ${auditData.localData.googleMapsRanking || 'No disponible'}
+- Reseñas en Google: ${auditData.localData.googleReviews || 0}
 `
+    } else {
+      basePrompt += `
+Sección SEO Local:
+- No hay datos disponibles de SEO Local
+`
+    }
   }
   
   // Core web vitals if available
-  if (pagespeed) {
+  if (auditData.pagespeed) {
     basePrompt += `
 Core Web Vitals:
-- LCP (Largest Contentful Paint): ${pagespeed.lcp || 'N/A'}ms
-- FID/TBT (First Input Delay / Total Blocking Time): ${pagespeed.tbt || 'N/A'}ms
-- CLS (Cumulative Layout Shift): ${pagespeed.cls || 'N/A'}
-- Puntuación SEO: ${pagespeed.seo || 'N/A'}/100
-- Puntuación Accesibilidad: ${pagespeed.accessibility || 'N/A'}/100
-- Puntuación Mejores Prácticas: ${pagespeed.bestPractices || 'N/A'}/100
+- LCP (Largest Contentful Paint): ${auditData.pagespeed.lcp || 'N/A'}ms
+- FID/TBT (First Input Delay / Total Blocking Time): ${auditData.pagespeed.tbt || 'N/A'}ms
+- CLS (Cumulative Layout Shift): ${auditData.pagespeed.cls || 'N/A'}
+- Puntuación SEO: ${auditData.pagespeed.seo || 'N/A'}/100
+- Puntuación Accesibilidad: ${auditData.pagespeed.accessibility || 'N/A'}/100
+- Puntuación Mejores Prácticas: ${auditData.pagespeed.bestPractices || 'N/A'}/100
+`
+  }
+  
+  // Add a section about the documents if available
+  if (auditData.documents && auditData.documents.length > 0) {
+    basePrompt += `
+Documentos analizados:
+${auditData.documents.map((doc, index) => `${index + 1}. ${doc.name || 'Documento sin nombre'}`).join('\n')}
+
+Basado en estos documentos, incluye recomendaciones específicas en el informe.
 `
   }
   
@@ -171,5 +232,6 @@ Estructura el informe con las siguientes secciones:
 El informe debe ser profesional, informativo y práctico. Usa markdown para formatear el informe con encabezados, listas y énfasis donde sea apropiado.
 `
 
+  console.log("Prompt created successfully")
   return basePrompt
 }

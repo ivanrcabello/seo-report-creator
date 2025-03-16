@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { SeoLocalReport } from '@/types/client';
@@ -291,6 +292,8 @@ export async function getLocalSeoMetricsHistory(clientId: string) {
       return [];
     }
 
+    console.log('Getting local SEO metrics history for client:', clientId);
+
     const { data, error } = await supabase
       .from('local_seo_metrics')
       .select('*')
@@ -303,6 +306,7 @@ export async function getLocalSeoMetricsHistory(clientId: string) {
       throw error;
     }
     
+    console.log('Local SEO metrics history retrieved:', data);
     return data || [];
   } catch (error) {
     console.error('Error in getLocalSeoMetricsHistory:', error);
@@ -424,14 +428,26 @@ export async function saveLocalSeoMetrics(clientId: string, metrics: {
       throw new Error('Client ID is required');
     }
 
+    console.log('Saving local SEO metrics for client:', clientId);
+    console.log('Metrics data:', metrics);
+
+    // Ensure numeric values and provide defaults
+    const googleMapsRanking = typeof metrics.googleMapsRanking === 'number' ? metrics.googleMapsRanking : 0;
+    const googleReviewsCount = typeof metrics.googleReviewsCount === 'number' ? metrics.googleReviewsCount : 0;
+    const googleReviewsAverage = typeof metrics.googleReviewsAverage === 'number' ? 
+      metrics.googleReviewsAverage : (parseFloat(String(metrics.googleReviewsAverage)) || 0);
+    const listingsCount = typeof metrics.listingsCount === 'number' ? metrics.listingsCount : 0;
+
     const dataToSave = {
       client_id: clientId,
-      google_maps_ranking: metrics.googleMapsRanking || 0,
-      google_reviews_count: metrics.googleReviewsCount || 0,
-      google_reviews_average: metrics.googleReviewsAverage || 0,
-      listings_count: metrics.listingsCount || 0,
+      google_maps_ranking: googleMapsRanking,
+      google_reviews_count: googleReviewsCount,
+      google_reviews_average: googleReviewsAverage,
+      listings_count: listingsCount,
       date: new Date().toISOString(),
     };
+
+    console.log('Final metrics data to save:', dataToSave);
 
     const { data, error } = await supabase
       .from('local_seo_metrics')
@@ -444,6 +460,7 @@ export async function saveLocalSeoMetrics(clientId: string, metrics: {
       throw error;
     }
     
+    console.log('Metrics saved successfully:', data);
     return data;
   } catch (error) {
     console.error('Error in saveLocalSeoMetrics:', error);

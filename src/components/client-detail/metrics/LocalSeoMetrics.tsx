@@ -208,7 +208,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       
       const reviewsAvg = typeof data.googleReviewsAverage === 'number' ? 
         data.googleReviewsAverage : 
-        (parseFloat(data.googleReviewsAverage as unknown as string) || 0);
+        (parseFloat(String(data.googleReviewsAverage)) || 0);
       
       const settingsToSave = {
         id: localSeoSettings?.id,
@@ -224,18 +224,30 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
         listingsCount: data.listingsCount,
       };
       
-      console.log("Final data to save:", settingsToSave);
+      console.log("Final settings data to save:", settingsToSave);
       
       const savedSettings = await saveLocalSeoSettings(settingsToSave);
       console.log("Settings saved successfully:", savedSettings);
       
-      if (data.googleMapsRanking || data.googleReviewsCount || data.googleReviewsAverage || data.listingsCount) {
+      if (data.googleMapsRanking !== undefined || 
+          data.googleReviewsCount !== undefined || 
+          data.googleReviewsAverage !== undefined || 
+          data.listingsCount !== undefined) {
+        
+        console.log("Saving metrics history with data:", {
+          googleMapsRanking: data.googleMapsRanking,
+          googleReviewsCount: data.googleReviewsCount,
+          googleReviewsAverage: reviewsAvg,
+          listingsCount: data.listingsCount
+        });
+        
         const metricsResult = await saveLocalSeoMetrics(clientId, {
           googleMapsRanking: data.googleMapsRanking,
           googleReviewsCount: data.googleReviewsCount,
           googleReviewsAverage: reviewsAvg,
           listingsCount: data.listingsCount,
         });
+        
         console.log("Metrics history saved:", metricsResult);
       }
       

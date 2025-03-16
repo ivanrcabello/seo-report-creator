@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClientReport } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
@@ -253,6 +252,55 @@ export const shareReport = async (reportId: string): Promise<ClientReport> => {
     };
   } catch (error) {
     console.error("Error sharing report:", error);
+    throw error;
+  }
+};
+
+// Function to save report with AI generated data
+export const saveReportWithAIData = async (currentReport: ClientReport, aiReport: any): Promise<ClientReport> => {
+  try {
+    // Create the updated report object with AI data
+    const updatedReport = {
+      ...currentReport,
+      content: aiReport.content || currentReport.content,
+      analyticsData: {
+        ...currentReport.analyticsData,
+        aiReport: aiReport
+      }
+    };
+    
+    // Update the report in the database
+    const { data, error } = await supabase
+      .from('client_reports')
+      .update({
+        content: updatedReport.content,
+        analytics_data: updatedReport.analyticsData
+      })
+      .eq('id', currentReport.id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      id: data.id,
+      clientId: data.client_id,
+      title: data.title,
+      date: data.date,
+      type: data.type,
+      content: data.content,
+      url: data.url || "",
+      notes: data.notes || "",
+      documentIds: data.document_ids || [],
+      shareToken: data.share_token,
+      sharedAt: data.shared_at,
+      includeInProposal: data.include_in_proposal || false,
+      analyticsData: data.analytics_data || {}
+    };
+  } catch (error) {
+    console.error("Error saving report with AI data:", error);
     throw error;
   }
 };

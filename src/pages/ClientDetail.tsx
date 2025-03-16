@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Client, SeoLocalReport } from "@/types/client";
@@ -15,19 +16,20 @@ import { AIReportGenerator } from "@/components/unified-metrics/AIReportGenerato
 import { toast } from "sonner";
 
 export default function ClientDetail() {
-  const { id } = useParams<{ id: string }>();
-  const clientId = id || "";
+  // Update to correctly extract the client ID from the URL parameter
+  const { clientId } = useParams<{ clientId: string }>();
+  const id = clientId || "";
   
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
   
-  console.log("ClientDetail component loaded with id from useParams:", id);
-  console.log("Using clientId:", clientId);
+  console.log("ClientDetail component loaded with id from useParams:", clientId);
+  console.log("Using clientId:", id);
 
   useEffect(() => {
-    if (!clientId) {
+    if (!id) {
       console.error("Client ID is missing from URL params");
       setError("Client ID is required");
       setIsLoading(false);
@@ -38,8 +40,8 @@ export default function ClientDetail() {
       setIsLoading(true);
       setError(null);
       try {
-        console.log("Fetching client data for ID:", clientId);
-        const clientData = await getClient(clientId);
+        console.log("Fetching client data for ID:", id);
+        const clientData = await getClient(id);
         console.log("Client data received:", clientData);
         setClient(clientData);
       } catch (e: any) {
@@ -52,7 +54,7 @@ export default function ClientDetail() {
     };
 
     fetchClient();
-  }, [clientId]);
+  }, [id]);
 
   const handleUpdateClient = (updatedClient: Client) => {
     setClient(updatedClient);
@@ -79,7 +81,7 @@ export default function ClientDetail() {
         </div>
         <div>
           <Button asChild variant="outline">
-            <Link to={`/clients/edit/${clientId}`} className="flex items-center gap-2">
+            <Link to={`/clients/edit/${id}`} className="flex items-center gap-2">
               <Pencil className="h-4 w-4" />
               Editar Cliente
             </Link>
@@ -102,20 +104,20 @@ export default function ClientDetail() {
         </TabsContent>
         
         <TabsContent value="metrics">
-          <ClientMetricsTab clientId={clientId} clientName={client.name} />
+          <ClientMetricsTab clientId={id} clientName={client.name} />
           
           <div className="mt-8 border-t pt-6">
-            <AIReportGenerator clientId={clientId} clientName={client.name} />
+            <AIReportGenerator clientId={id} clientName={client.name} />
           </div>
         </TabsContent>
         
         <TabsContent value="invoices">
-          <ClientInvoicesTab clientId={clientId} clientName={client?.name || ""} />
+          <ClientInvoicesTab clientId={id} clientName={client?.name || ""} />
         </TabsContent>
         
         <TabsContent value="proposals">
           <ClientProposalsList 
-            clientId={clientId} 
+            clientId={id} 
             proposals={[]} 
           />
         </TabsContent>

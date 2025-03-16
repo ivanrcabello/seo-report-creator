@@ -54,6 +54,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/clients" element={<Clients />} />
+        {/* Change the route parameter name from :id to :clientId to match the useParams in ClientDetail */}
         <Route path="/clients/:clientId" element={<ClientDetail />} />
         <Route path="/reports" element={<AllReports />} />
         <Route path="/report/:reportId" element={<ReportDetail />} />

@@ -13,16 +13,16 @@ interface ClientContractsTabProps {
 }
 
 export const ClientContractsTab = ({ clientName }: ClientContractsTabProps) => {
-  // The route parameter is :id, not :clientId, so we need to use id here
-  const { id } = useParams<{ id: string }>();
-  const clientId = id || "";
+  // Update to correctly extract the client ID from the URL parameter
+  const { clientId } = useParams<{ clientId: string }>();
+  const id = clientId || "";
   
   const { toast } = useToast();
   const [contracts, setContracts] = useState<SeoContract[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchContracts = async () => {
-    if (!clientId) {
+    if (!id) {
       console.error("Client ID is missing in ClientContractsTab, id:", id);
       setLoading(false);
       return;
@@ -30,8 +30,8 @@ export const ClientContractsTab = ({ clientName }: ClientContractsTabProps) => {
     
     setLoading(true);
     try {
-      console.log("Fetching contracts for client ID:", clientId);
-      const contractsData = await getClientContracts(clientId);
+      console.log("Fetching contracts for client ID:", id);
+      const contractsData = await getClientContracts(id);
       console.log("Contracts data received:", contractsData);
       setContracts(contractsData);
     } catch (error) {
@@ -48,7 +48,7 @@ export const ClientContractsTab = ({ clientName }: ClientContractsTabProps) => {
 
   useEffect(() => {
     fetchContracts();
-  }, [clientId, toast]);
+  }, [id, toast]);
 
   if (loading) {
     return (
@@ -74,7 +74,7 @@ export const ClientContractsTab = ({ clientName }: ClientContractsTabProps) => {
       onContractDeleted={fetchContracts}
       emptyMessage={`No hay contratos disponibles para ${clientName}`}
       allowNewContract={true}
-      clientId={clientId}
+      clientId={id}
     />
   );
 };

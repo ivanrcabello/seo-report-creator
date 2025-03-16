@@ -11,8 +11,8 @@ interface MetricsSummaryProps {
 }
 
 export const MetricsSummary = ({ currentMetric }: MetricsSummaryProps) => {
-  // Use clientId from currentMetric
-  const { keywords } = useClientKeywords(currentMetric.id ? currentMetric.id.split('-')[0] : "");
+  // Use full clientId from currentMetric
+  const { keywords } = useClientKeywords(currentMetric.client_id);
 
   const formatPercentage = (value: number, goal: number) => {
     const percentage = (value / goal) * 100;

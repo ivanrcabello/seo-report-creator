@@ -56,9 +56,11 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
           
           <TabsContent value="markdown" className="mt-2">
             <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 overflow-auto">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} className="prose max-w-none">
-                {report.content}
-              </ReactMarkdown>
+              <div className="prose max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {report.content}
+                </ReactMarkdown>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

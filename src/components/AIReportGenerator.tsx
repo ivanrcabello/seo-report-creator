@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AIReport, generateAIReport } from "@/services/aiReportService";
 import { AuditResult } from "@/services/pdfAnalyzer";
@@ -27,7 +28,7 @@ import { downloadSeoReportPdf } from "@/services/seoReportPdfService";
 import { useToast } from "@/components/ui/use-toast";
 import { saveReportWithAIData } from "@/services/reportService";
 import { ClientReport } from "@/types/client";
-import { generateSEOReport } from "@/services/openaiService";
+import { generateSEOReport } from "@/services/openai/seoReportService";
 import { toast } from "sonner";
 
 interface AIReportGeneratorProps {

@@ -12,14 +12,14 @@ import { Recommendations } from "@/components/seo-report/Recommendations";
 import { NoDataCard } from "@/components/seo-report/NoDataCard";
 import { getReport } from "@/services/reportService";
 import { ClientReport } from "@/types/client";
-import { generateSEOReport } from "@/services/openaiService";
+import { generateSEOReport } from "@/services/openai/seoReportService";
 import { toast } from "sonner";
 import "../styles/print.css";
 
 const SeoReport = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [report, setReport] = useState<ClientReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +48,7 @@ const SeoReport = () => {
           }
         } catch (error) {
           console.error("Error fetching report:", error);
-          toast({
+          uiToast({
             title: "Error",
             description: "No se pudo cargar el informe",
             variant: "destructive",
@@ -60,18 +60,18 @@ const SeoReport = () => {
     };
     
     fetchReport();
-  }, [location, id, toast]);
+  }, [location, id, uiToast]);
 
   const handlePrint = () => {
     window.print();
-    toast({
+    uiToast({
       title: "Imprimiendo informe",
       description: "El informe se está enviando a la impresora",
     });
   };
 
   const handleDownload = () => {
-    toast({
+    uiToast({
       title: "Descargando informe",
       description: "El informe se descargará en formato PDF",
     });

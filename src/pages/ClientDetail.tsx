@@ -10,9 +10,7 @@ import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
 import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
 import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
-import { ClientDocuments } from "@/components/client-documents";
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
-import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { toast } from "sonner";
 
@@ -25,9 +23,6 @@ export default function ClientDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [localSeoReports, setLocalSeoReports] = useState<SeoLocalReport[]>([]);
-  const [currentLocalSeoReport, setCurrentLocalSeoReport] = useState<SeoLocalReport | null>(null);
   
   console.log("ClientDetail component loaded with id from useParams:", id);
   console.log("Using clientId:", clientId);
@@ -48,19 +43,6 @@ export default function ClientDetail() {
         const clientData = await getClient(clientId);
         console.log("Client data received:", clientData);
         setClient(clientData);
-        
-        // Fetch local SEO reports
-        try {
-          const { getLocalSeoReports } = await import("@/services/localSeoService");
-          const reports = await getLocalSeoReports(clientId);
-          setLocalSeoReports(reports);
-          if (reports.length > 0) {
-            setCurrentLocalSeoReport(reports[0]);
-          }
-        } catch (e) {
-          console.error("Error fetching local SEO reports:", e);
-          // Don't block the UI for this secondary data
-        }
       } catch (e: any) {
         console.error("Error fetching client:", e);
         setError(e.message || "Failed to fetch client");
@@ -75,34 +57,6 @@ export default function ClientDetail() {
 
   const handleUpdateClient = (updatedClient: Client) => {
     setClient(updatedClient);
-  };
-
-  const handleGenerateLocalSeoReport = async (documentIds: string[]) => {
-    if (!client) return;
-    
-    setIsGeneratingReport(true);
-    setActiveTab("localseo");
-    
-    try {
-      const { generateLocalSeoAnalysis, createLocalSeoReport } = await import("@/services/localSeoService");
-      
-      // Generate analysis from documents
-      const analysis = await generateLocalSeoAnalysis(documentIds, clientId, client.name);
-      
-      // Create report in the database
-      const report = await createLocalSeoReport(analysis, clientId, client.name);
-      
-      // Update local state
-      setLocalSeoReports(prev => [report, ...prev]);
-      setCurrentLocalSeoReport(report);
-      
-      toast.success("Informe SEO local generado exitosamente");
-    } catch (error) {
-      console.error("Error generating local SEO report:", error);
-      toast.error("Error al generar el informe SEO local");
-    } finally {
-      setIsGeneratingReport(false);
-    }
   };
 
   if (isLoading) {
@@ -140,9 +94,7 @@ export default function ClientDetail() {
           <TabsTrigger value="metrics">Métricas</TabsTrigger>
           <TabsTrigger value="invoices">Facturas</TabsTrigger>
           <TabsTrigger value="proposals">Propuestas</TabsTrigger>
-          <TabsTrigger value="documents">Documentos</TabsTrigger>
           <TabsTrigger value="contract">Contrato</TabsTrigger>
-          <TabsTrigger value="localseo">SEO Local</TabsTrigger>
           <TabsTrigger value="report">Informe</TabsTrigger>
         </TabsList>
         
@@ -165,25 +117,8 @@ export default function ClientDetail() {
           />
         </TabsContent>
         
-        <TabsContent value="documents">
-          <ClientDocuments 
-            clientId={clientId} 
-            onGenerateReport={handleGenerateLocalSeoReport}
-          />
-        </TabsContent>
-        
         <TabsContent value="contract">
           <ClientContractsTab clientName={client.name} />
-        </TabsContent>
-        
-        <TabsContent value="localseo">
-          <LocalSeoTab 
-            isGeneratingReport={isGeneratingReport}
-            localSeoReports={localSeoReports}
-            currentLocalSeoReport={currentLocalSeoReport}
-            setCurrentLocalSeoReport={setCurrentLocalSeoReport}
-            setActiveTab={setActiveTab}
-          />
         </TabsContent>
         
         <TabsContent value="report">
@@ -192,4 +127,4 @@ export default function ClientDetail() {
       </Tabs>
     </div>
   );
-}
+};

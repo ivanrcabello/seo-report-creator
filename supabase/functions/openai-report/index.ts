@@ -44,6 +44,8 @@ serve(async (req) => {
       );
     }
 
+    console.log("Received audit data:", JSON.stringify(auditResult).slice(0, 200) + "...");
+
     // Prepare the prompt for OpenAI
     const systemPrompt = `You are an expert SEO consultant. Generate a detailed, professional SEO report based on the audit data provided. 
 Format the report using Markdown. Include the following sections:
@@ -60,6 +62,7 @@ Be concise but detailed. Use a professional tone.`;
     // Convert the audit result to a string representation for the prompt
     const auditDescription = JSON.stringify(auditResult, null, 2);
 
+    console.log("Sending request to OpenAI API");
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -81,6 +84,7 @@ Be concise but detailed. Use a professional tone.`;
     });
 
     const data = await response.json();
+    console.log("Received response from OpenAI API");
     
     if (data.error) {
       console.error('OpenAI API error:', data.error);
@@ -88,6 +92,7 @@ Be concise but detailed. Use a professional tone.`;
     }
 
     const content = data.choices[0].message.content;
+    console.log("Successfully generated content");
 
     return new Response(
       JSON.stringify({ content }),

@@ -68,6 +68,7 @@ function App() {
                 <Route path="/clients" element={<AppLayout><Clients /></AppLayout>} />
                 <Route path="/clients/new" element={<AppLayout><Clients /></AppLayout>} />
                 <Route path="/clients/:id" element={<AppLayout><ClientDetail /></AppLayout>} />
+                <Route path="/clients/edit/:id" element={<AppLayout><Clients /></AppLayout>} />
                 <Route path="/reports/:id" element={<AppLayout><ReportDetail /></AppLayout>} />
                 <Route path="/reports/edit/:id" element={<AppLayout><ReportForm /></AppLayout>} />
                 <Route path="/reports/new" element={<AppLayout><ReportForm /></AppLayout>} />

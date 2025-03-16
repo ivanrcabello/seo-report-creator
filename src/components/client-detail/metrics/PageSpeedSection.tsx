@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { getPageSpeedReport, PageSpeedReport } from "@/services/pageSpeedService";
+import { getPageSpeedReport, PageSpeedReport, analyzeWebsite } from "@/services/pageSpeedService";
 import { generatePageSpeedReport } from "@/services/pageSpeedReportService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { PageSpeedAuditList } from "./PageSpeedAuditList";
 import { Gauge, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageSpeedIndicator } from "./PageSpeedIndicator";
+import { ErrorAlert } from "./ErrorAlert";
 
 interface PageSpeedSectionProps {
   clientId: string;
@@ -70,9 +71,16 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
         setUrl(formattedUrl);
       }
       
-      const report = await getPageSpeedReport(clientId, formattedUrl, true);
-      setPageSpeedReport(report);
-      toast.success("Análisis de PageSpeed completado");
+      // Analyze the URL
+      const report = await analyzeWebsite(formattedUrl);
+      if (report) {
+        setPageSpeedReport(report);
+        // Save the report for this client
+        const saved = await savePageSpeedReport(clientId, report);
+        if (saved) {
+          toast.success("Análisis de PageSpeed completado y guardado");
+        }
+      }
     } catch (err) {
       console.error("Error analyzing URL:", err);
       setError("No se pudo analizar la URL. Por favor, inténtalo de nuevo más tarde.");
@@ -97,6 +105,18 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
       toast.error("Error al generar el informe. Por favor, inténtalo de nuevo.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // Helper function to save the PageSpeed report
+  const savePageSpeedReport = async (clientId: string, report: PageSpeedReport): Promise<boolean> => {
+    try {
+      // Import here to avoid circular dependencies
+      const { savePageSpeedReport } = await import('@/services/pageSpeedService');
+      return await savePageSpeedReport(clientId, report);
+    } catch (error) {
+      console.error("Error saving PageSpeed report:", error);
+      return false;
     }
   };
 
@@ -178,9 +198,7 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
               <p className="ml-2 text-gray-500">Cargando informe de PageSpeed...</p>
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-600">
-              {error}
-            </div>
+            <ErrorAlert error={{ message: error }} />
           ) : !pageSpeedReport ? (
             <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
               <p>No hay datos de PageSpeed para este cliente.</p>
@@ -202,7 +220,9 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
               
               <TabsContent value="metrics">
                 <div className="space-y-8">
-                  <PageSpeedMetricCards metrics={pageSpeedReport.metrics} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <PageSpeedMetricCards metrics={pageSpeedReport.metrics} />
+                  </div>
                   <PageSpeedPerformanceMetrics metrics={pageSpeedReport.metrics} />
                 </div>
               </TabsContent>

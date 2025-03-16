@@ -1,35 +1,45 @@
 
 import { useEffect, useState } from "react";
 import { MetricCard } from "@/components/MetricCard";
-import { getPageSpeedReport, PageSpeedReport } from "@/services/pageSpeedService";
+import { getPageSpeedReport, PageSpeedReport, PageSpeedMetrics } from "@/services/pageSpeedService";
 import { LineChart, Gauge, Zap, MousePointer } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PageSpeedMetricCardsProps {
-  clientId: string;
+  clientId?: string;
+  metrics?: PageSpeedMetrics;
 }
 
-export const PageSpeedMetricCards = ({ clientId }: PageSpeedMetricCardsProps) => {
+export const PageSpeedMetricCards = ({ clientId, metrics }: PageSpeedMetricCardsProps) => {
   const [report, setReport] = useState<PageSpeedReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const fetchReport = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getPageSpeedReport(clientId);
-        setReport(data);
-      } catch (error) {
-        console.error("Error fetching PageSpeed report:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchReport();
-  }, [clientId]);
+    // Only fetch report if clientId is provided and metrics are not provided
+    if (clientId && !metrics) {
+      const fetchReport = async () => {
+        setIsLoading(true);
+        try {
+          const data = await getPageSpeedReport(clientId);
+          setReport(data);
+        } catch (error) {
+          console.error("Error fetching PageSpeed report:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchReport();
+    } else if (metrics) {
+      // If metrics are provided directly, use them
+      setReport({ metrics, audits: [] });
+      setIsLoading(false);
+    } else {
+      setIsLoading(false);
+    }
+  }, [clientId, metrics]);
   
   if (isLoading) {
     return (
@@ -42,7 +52,7 @@ export const PageSpeedMetricCards = ({ clientId }: PageSpeedMetricCardsProps) =>
     );
   }
   
-  if (!report) {
+  if (!report || !report.metrics) {
     return null;
   }
   

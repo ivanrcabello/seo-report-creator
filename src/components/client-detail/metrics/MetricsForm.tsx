@@ -37,7 +37,7 @@ export const MetricsForm = ({
   };
 
   return (
-    <Card>
+    <Card className="mb-8">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl font-semibold flex items-center gap-2">
           <BarChart2 className="h-5 w-5 text-blue-500" />
@@ -193,3 +193,4 @@ export const MetricsForm = ({
     </Card>
   );
 };
+

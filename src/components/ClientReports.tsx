@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ClientReport } from "@/types/client";
 import { 
@@ -25,14 +25,40 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { getClientReports } from "@/services/reportService";
 
 interface ClientReportsProps {
-  reports: ClientReport[];
-  clientName?: string;
+  reports?: ClientReport[];
+  clientId: string;
+  clientName: string;
   onAddReport?: () => void;
 }
 
-export const ClientReports = ({ reports, clientName, onAddReport }: ClientReportsProps) => {
+export const ClientReports = ({ reports: propReports, clientId, clientName, onAddReport }: ClientReportsProps) => {
+  const [reports, setReports] = useState<ClientReport[]>(propReports || []);
+  const [isLoading, setIsLoading] = useState(!propReports);
+
+  useEffect(() => {
+    if (!propReports && clientId) {
+      const fetchReports = async () => {
+        setIsLoading(true);
+        try {
+          const fetchedReports = await getClientReports(clientId);
+          setReports(fetchedReports);
+        } catch (error) {
+          console.error("Error fetching client reports:", error);
+          toast.error("No se pudieron cargar los informes del cliente");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchReports();
+    }
+  }, [clientId, propReports]);
+
   const getReportIcon = (type: ClientReport['type']) => {
     switch (type) {
       case 'seo':
@@ -77,6 +103,28 @@ export const ClientReports = ({ reports, clientName, onAddReport }: ClientReport
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <FileText className="h-5 w-5 text-blue-600" />
+            Cargando informes...
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+              <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

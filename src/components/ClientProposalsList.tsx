@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Proposal, Invoice } from "@/types/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,21 +13,7 @@ interface ClientProposalsListProps {
 }
 
 export const ClientProposalsList = ({ proposals, clientId }: ClientProposalsListProps) => {
-  const [linkedInvoices, setLinkedInvoices] = useState<Invoice[]>([]);
-
-  useEffect(() => {
-    const loadInvoices = async () => {
-      // Como no existe getInvoicesByProposalId, usamos un array vacío por ahora
-      // Esto se podría implementar después si es necesario
-      setLinkedInvoices([]);
-    };
-
-    if (proposals && proposals.length > 0) {
-      loadInvoices();
-    } else {
-      setLinkedInvoices([]);
-    }
-  }, [proposals]);
+  const [linkedInvoices] = useState<Invoice[]>([]);
   
   return (
     <Card>

@@ -1,19 +1,19 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Client, Proposal } from "@/types/client";
-import { getClientById } from "@/services/clientService";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Client } from "@/types/client";
+import { getClient } from "@/services/clientService";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClientProfileTab } from "@/components/ClientProfileTab";
-import { ClientMetricsTab } from "@/components/ClientMetricsTab";
-import { ClientInvoicesTab } from "@/components/ClientInvoicesTab";
+import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
+import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
+import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
-import { ClientDocumentsView } from "@/components/ClientDocumentsView";
-import { ClientContractsTab } from "@/components/ClientContractsTab";
-import { LocalSeoTab } from "@/components/LocalSeoTab";
-import { PdfUploadTab } from "@/components/PdfUploadTab";
+import { ClientDocumentsView } from "@/components/client-documents/ClientDocumentsView";
+import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
+import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
+import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { toast } from "sonner";
 
 export default function ClientDetail() {
@@ -33,7 +33,7 @@ export default function ClientDetail() {
       setIsLoading(true);
       setError(null);
       try {
-        const clientData = await getClientById(clientId);
+        const clientData = await getClient(clientId);
         setClient(clientData);
       } catch (e: any) {
         setError(e.message || "Failed to fetch client");
@@ -106,7 +106,7 @@ export default function ClientDetail() {
         <TabsContent value="proposals">
           <ClientProposalsList 
             clientId={clientId} 
-            proposals={client?.proposals || []} 
+            proposals={[]} 
           />
         </TabsContent>
         

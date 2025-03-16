@@ -9,6 +9,7 @@ import { useClientMetrics } from "./metrics/useClientMetrics";
 import { TrendingUp, BarChart2, MousePointer, Share2, Award, Search } from "lucide-react";
 import { MetricsSummary } from "./metrics/MetricsSummary";
 import { KeywordsSection } from "./metrics/KeywordsSection";
+import { PageSpeedSection } from "./metrics/PageSpeedSection";
 
 interface ClientMetricsTabProps {
   clientId: string;
@@ -59,6 +60,8 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
           isAdmin={isAdmin}
         />
       </MetricsCard>
+      
+      <PageSpeedSection clientId={clientId} clientName={clientName} />
       
       <KeywordsSection clientId={clientId} />
       

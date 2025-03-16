@@ -164,7 +164,7 @@ export const downloadInvoicePdf = async (id: string): Promise<boolean> => {
     
     // Generate and download the PDF
     const result = await generateInvoicePdf(invoice);
-    return result;
+    return result !== null; // Return true if PDF was generated successfully
   } catch (error) {
     console.error("Error downloading invoice PDF:", error);
     return false;

@@ -199,7 +199,8 @@ export const InvoiceForm = () => {
           total: totalAmount,
           date: data.issueDate,
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          paidAt: null
         };
         
         result = await createInvoice(invoiceData as any);
@@ -230,7 +231,7 @@ export const InvoiceForm = () => {
           invoiceNumber: data.invoiceNumber || invoice?.invoiceNumber || "",
           number: data.invoiceNumber || invoice?.invoiceNumber || "",
           paymentDate: invoice?.paymentDate || null,
-          paidAt: invoice?.paidAt || null,
+          paidAt: invoice?.paymentDate || null,
           pdfUrl: invoice?.pdfUrl || null,
           createdAt: invoice?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()

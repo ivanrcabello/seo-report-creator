@@ -186,6 +186,7 @@ export const InvoiceForm = () => {
           taxAmount,
           totalAmount,
           total: totalAmount,
+          paidAt: null
         } as any);
       } else {
         result = await updateInvoice({
@@ -201,6 +202,7 @@ export const InvoiceForm = () => {
           taxAmount,
           totalAmount,
           total: totalAmount,
+          paidAt: invoice?.paidAt || null
         } as any);
       }
       

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { Client, SeoLocalReport } from "@/types/client";
 import { getClient } from "@/services/clientService";
 import { Button } from "@/components/ui/button";
@@ -14,16 +14,20 @@ import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { toast } from "sonner";
 import { getLocalSeoReports } from "@/services/localSeoService";
+import { ClientReports } from "@/components/ClientReports";
 
 export default function ClientDetail() {
   // Extract the client ID from the URL parameter
   const { clientId } = useParams<{ clientId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const id = clientId || "";
   
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(() => {
+    return searchParams.get("tab") || "profile";
+  });
   
   // Local SEO states - kept for future references but not used in the main tabs anymore
   const [localSeoReports, setLocalSeoReports] = useState<SeoLocalReport[]>([]);
@@ -31,6 +35,21 @@ export default function ClientDetail() {
   
   console.log("ClientDetail component loaded with id from useParams:", clientId);
   console.log("Using clientId:", id);
+
+  // Effect to handle URL tab parameter
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  // Update the URL when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    searchParams.set("tab", value);
+    setSearchParams(searchParams);
+  };
 
   useEffect(() => {
     if (!id) {
@@ -106,14 +125,18 @@ export default function ClientDetail() {
         </div>
       </div>
       
-      <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs 
+        value={activeTab} 
+        onValueChange={handleTabChange} 
+        className="w-full"
+      >
         <TabsList>
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="metrics">Métricas</TabsTrigger>
           <TabsTrigger value="invoices">Facturas</TabsTrigger>
           <TabsTrigger value="proposals">Propuestas</TabsTrigger>
           <TabsTrigger value="contract">Contrato</TabsTrigger>
-          <TabsTrigger value="report">Informe</TabsTrigger>
+          <TabsTrigger value="reports">Informes</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
@@ -139,8 +162,8 @@ export default function ClientDetail() {
           <ClientContractsTab clientName={client.name} />
         </TabsContent>
         
-        <TabsContent value="report">
-          <PdfUploadTab clientName={client.name} onAnalysisComplete={() => {}} />
+        <TabsContent value="reports">
+          <ClientReports clientId={id} clientName={client.name} />
         </TabsContent>
       </Tabs>
     </div>

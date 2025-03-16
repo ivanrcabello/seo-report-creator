@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { getClientMetrics, updateClientMetrics, ClientMetric } from "@/services/clientMetricsService";
 import { getPageSpeedReport } from "@/services/pageSpeedService";
@@ -13,6 +14,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AIReportGenerator } from "@/components/unified-metrics/AIReportGenerator";
+import { ClientDocument } from "@/types/client";
+import { DocumentUploadSection } from "@/components/client-documents/DocumentUploadSection";
+import { getClientDocuments } from "@/services/documentService";
+import { FileText } from "lucide-react";
 
 interface ClientMetricsTabProps {
   clientId: string;
@@ -26,6 +31,11 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const [isSaving, setIsSaving] = useState(false);
   const [activeMetricsTab, setActiveMetricsTab] = useState<string>("general");
   const { user } = useAuth();
+  
+  // Document related states
+  const [documents, setDocuments] = useState<ClientDocument[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -58,8 +68,22 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       }
     };
 
+    const fetchDocuments = async () => {
+      try {
+        setLoadingDocuments(true);
+        const fetchedDocuments = await getClientDocuments(clientId);
+        setDocuments(fetchedDocuments);
+      } catch (err) {
+        console.error("Error fetching documents:", err);
+        toast.error("No se pudieron cargar los documentos del cliente");
+      } finally {
+        setLoadingDocuments(false);
+      }
+    };
+
     if (clientId) {
       fetchMetrics();
+      fetchDocuments();
     }
   }, [clientId]);
 
@@ -93,6 +117,17 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     }
   };
 
+  const handleGenerateReport = (documentIds: string[]) => {
+    if (documentIds.length === 0) {
+      toast.error("Selecciona al menos un documento para generar un informe");
+      return;
+    }
+    
+    toast.success("Generando informe con los documentos seleccionados...");
+    // Aquí se implementaría la lógica para generar el informe
+    // Por ahora solo mostramos una notificación
+  };
+
   if (loading) return <LoadingState />;
   
   if (error) return <ErrorAlert error={error} />;
@@ -120,6 +155,10 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
           <TabsTrigger value="pagespeed">Rendimiento Web</TabsTrigger>
           <TabsTrigger value="keywords">Palabras Clave</TabsTrigger>
           <TabsTrigger value="local-seo">SEO Local</TabsTrigger>
+          <TabsTrigger value="documents" className="flex items-center gap-1.5">
+            <FileText className="h-4 w-4" />
+            Documentos
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="general">
@@ -148,6 +187,46 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
         
         <TabsContent value="local-seo">
           <LocalSeoMetrics clientId={clientId} clientName={clientName} />
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <div className="space-y-6">
+            <DocumentUploadSection
+              clientId={clientId}
+              isUploading={isUploading}
+              documents={documents}
+              setDocuments={setDocuments}
+              setIsUploading={setIsUploading}
+            />
+            
+            {documents.length > 0 && (
+              <div className="mt-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Documentos subidos ({documents.length})</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {documents.map(doc => (
+                        <Card key={doc.id} className="p-4 hover:shadow-md transition-shadow">
+                          <div className="flex items-start gap-3">
+                            <FileText className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="font-medium truncate">{doc.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(doc.uploadDate).toLocaleDateString('es-ES')}
+                              </p>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
       

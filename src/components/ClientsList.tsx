@@ -103,11 +103,11 @@ export const ClientsList: React.FC<ClientsListProps> = ({ clients, onAddClient, 
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link to={`/clients/${client.id}`}>
-                      <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/clients/${client.id}`}>
                         Ver Detalles
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

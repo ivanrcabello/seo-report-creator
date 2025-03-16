@@ -10,7 +10,7 @@ import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
 import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
 import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
-import { ClientDocumentsView } from "@/components/client-documents"; // Fixed import
+import { ClientDocuments } from "@/components/client-documents"; // Fixed import
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
 import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
@@ -112,7 +112,7 @@ export default function ClientDetail() {
         </TabsContent>
         
         <TabsContent value="documents">
-          <ClientDocumentsView clientId={clientId} />
+          <ClientDocuments clientId={clientId} />
         </TabsContent>
         
         <TabsContent value="contract">

@@ -4,8 +4,9 @@ import { Badge } from "@/components/ui/badge";
 
 interface LocalSeoOverviewProps {
   clientId: string;
-  businessName: string;
-  address: string;
+  clientName: string;  // Add clientName to the props interface
+  businessName?: string;
+  address?: string;
   phone?: string;
   website?: string;
   googleBusinessUrl?: string;
@@ -19,6 +20,7 @@ interface LocalSeoOverviewProps {
 
 export const LocalSeoOverview = ({
   clientId,
+  clientName,  // Include it in the destructuring
   businessName,
   address,
   phone,
@@ -31,6 +33,10 @@ export const LocalSeoOverview = ({
   targetLocations,
   recommendations
 }: LocalSeoOverviewProps) => {
+  // Use clientName as fallback for businessName
+  const displayName = businessName || clientName;
+  const displayAddress = address || "Sin ubicación configurada";
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -39,8 +45,8 @@ export const LocalSeoOverview = ({
             <Store className="h-4 w-4" />
             Negocio
           </h3>
-          <p className="text-lg font-semibold">{businessName}</p>
-          <p className="text-gray-600">{address}</p>
+          <p className="text-lg font-semibold">{displayName}</p>
+          <p className="text-gray-600">{displayAddress}</p>
           
           <div className="mt-3 space-y-1">
             {phone && (

@@ -35,7 +35,8 @@ export async function getLocalSeoReports(clientId: string): Promise<SeoLocalRepo
       date: report.date,
       businessName: report.business_name,
       location: report.location,
-      address: report.address || report.business_name, // Fallback to business_name if address is missing
+      // Use location as a fallback for address if address is missing
+      address: report.location || report.business_name, // Use location or business name as fallback
       phone: report.phone,
       website: report.website,
       googleBusinessUrl: report.google_business_url,
@@ -76,7 +77,8 @@ export async function saveLocalSeoReport(report: SeoLocalReport): Promise<SeoLoc
       date: report.date,
       business_name: report.businessName,
       location: report.location || null,
-      address: report.address,
+      // We need to ensure location is set if there's no address field in the database
+      // Since we're using location as our address field in the database
       phone: report.phone,
       website: report.website,
       google_business_url: report.googleBusinessUrl,
@@ -111,7 +113,8 @@ export async function saveLocalSeoReport(report: SeoLocalReport): Promise<SeoLoc
       date: data.date,
       businessName: data.business_name,
       location: data.location,
-      address: data.address || data.business_name, // Fallback to business_name if address is missing
+      // Use location as address since address doesn't exist in the database
+      address: data.location || data.business_name, // Use location or business name as fallback
       phone: data.phone,
       website: data.website,
       googleBusinessUrl: data.google_business_url,

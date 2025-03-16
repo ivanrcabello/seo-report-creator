@@ -24,7 +24,8 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
     isRefreshing, 
     refreshData, 
     currentReport,
-    metricHistory
+    metricHistory,
+    localSeoSettings
   } = useLocalSeoData(clientId);
   
   if (isLoading) {
@@ -43,6 +44,19 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       </MetricsCard>
     );
   }
+  
+  // Extract data from current report or settings to pass to the overview
+  const businessName = currentReport?.businessName || localSeoSettings?.business_name;
+  const address = currentReport?.address || localSeoSettings?.address;
+  const phone = currentReport?.phone || localSeoSettings?.phone;
+  const website = currentReport?.website || localSeoSettings?.website;
+  const googleBusinessUrl = currentReport?.googleBusinessUrl || localSeoSettings?.google_business_url;
+  const googleMapsRanking = currentReport?.googleMapsRanking || localSeoSettings?.google_maps_ranking;
+  const googleReviewsCount = currentReport?.googleReviewsCount || localSeoSettings?.google_reviews_count;
+  const googleReviewsAverage = currentReport?.googleReviewsAverage || localSeoSettings?.google_reviews_average;
+  const listingsCount = localSeoSettings?.listings_count;
+  const targetLocations = localSeoSettings?.target_locations;
+  const recommendations = currentReport?.recommendations;
   
   return (
     <>
@@ -74,7 +88,21 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
           </TabsList>
           
           <TabsContent value="overview">
-            <LocalSeoOverview clientId={clientId} clientName={clientName} />
+            <LocalSeoOverview 
+              clientId={clientId} 
+              clientName={clientName}
+              businessName={businessName}
+              address={address}
+              phone={phone}
+              website={website}
+              googleBusinessUrl={googleBusinessUrl}
+              googleMapsRanking={googleMapsRanking}
+              googleReviewsCount={googleReviewsCount}
+              googleReviewsAverage={googleReviewsAverage}
+              listingsCount={listingsCount}
+              targetLocations={targetLocations}
+              recommendations={recommendations}
+            />
           </TabsContent>
           
           <TabsContent value="settings">

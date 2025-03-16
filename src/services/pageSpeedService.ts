@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define interfaces for PageSpeed API responses
 export interface PageSpeedMetrics {
@@ -213,33 +214,143 @@ export const analyzeWebsite = async (url: string): Promise<PageSpeedReport | nul
   }
 };
 
-// Function to save PageSpeed data to database (to be implemented with Supabase)
+// Function to save PageSpeed data to Supabase
 export const savePageSpeedReport = async (clientId: string, report: PageSpeedReport): Promise<boolean> => {
   try {
-    // This would be implemented with Supabase in a production environment
-    // For now, we'll just log the report and return success
-    console.log("Saving PageSpeed report for client:", clientId, report);
-    localStorage.setItem(`pagespeed_${clientId}`, JSON.stringify({
-      ...report,
-      timestamp: new Date().toISOString()
-    }));
+    console.log("Saving PageSpeed report to Supabase for client:", clientId);
+    
+    const { data, error } = await supabase
+      .from('client_pagespeed')
+      .insert({
+        client_id: clientId,
+        url: report.metrics.url,
+        performance_score: report.metrics.performance_score,
+        accessibility_score: report.metrics.accessibility_score,
+        best_practices_score: report.metrics.best_practices_score,
+        seo_score: report.metrics.seo_score,
+        first_contentful_paint: report.metrics.first_contentful_paint,
+        speed_index: report.metrics.speed_index,
+        largest_contentful_paint: report.metrics.largest_contentful_paint,
+        time_to_interactive: report.metrics.time_to_interactive,
+        total_blocking_time: report.metrics.total_blocking_time,
+        cumulative_layout_shift: report.metrics.cumulative_layout_shift,
+        screenshot: report.screenshot,
+        audits: report.audits
+      })
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("Error saving PageSpeed report:", error);
+      toast.error("Error al guardar el informe de PageSpeed");
+      return false;
+    }
+    
+    console.log("PageSpeed report saved successfully:", data);
     return true;
   } catch (error) {
     console.error("Error saving PageSpeed report:", error);
+    toast.error("Error al guardar el informe de PageSpeed");
     return false;
   }
 };
 
-// Function to get saved PageSpeed data from database
-export const getPageSpeedReport = (clientId: string): PageSpeedReport | null => {
+// Function to get latest PageSpeed report from Supabase
+export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedReport | null> => {
   try {
-    const savedReport = localStorage.getItem(`pagespeed_${clientId}`);
-    if (savedReport) {
-      return JSON.parse(savedReport);
+    console.log("Getting latest PageSpeed report for client:", clientId);
+    
+    const { data, error } = await supabase
+      .from('client_pagespeed')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+      
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No data found
+        console.log("No PageSpeed report found for client:", clientId);
+        return null;
+      }
+      
+      console.error("Error getting PageSpeed report:", error);
+      return null;
     }
-    return null;
+    
+    if (!data) {
+      return null;
+    }
+    
+    // Convert Supabase data to PageSpeedReport format
+    const report: PageSpeedReport = {
+      metrics: {
+        performance_score: data.performance_score,
+        accessibility_score: data.accessibility_score,
+        best_practices_score: data.best_practices_score,
+        seo_score: data.seo_score,
+        first_contentful_paint: data.first_contentful_paint,
+        speed_index: data.speed_index,
+        largest_contentful_paint: data.largest_contentful_paint,
+        time_to_interactive: data.time_to_interactive,
+        total_blocking_time: data.total_blocking_time,
+        cumulative_layout_shift: data.cumulative_layout_shift,
+        last_analyzed: data.created_at,
+        url: data.url
+      },
+      audits: data.audits || [],
+      screenshot: data.screenshot
+    };
+    
+    console.log("Retrieved PageSpeed report:", report);
+    return report;
   } catch (error) {
     console.error("Error getting PageSpeed report:", error);
     return null;
+  }
+};
+
+// Function to get PageSpeed history
+export const getPageSpeedHistory = async (clientId: string): Promise<PageSpeedReport[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('client_pagespeed')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+      
+    if (error) {
+      console.error("Error getting PageSpeed history:", error);
+      return [];
+    }
+    
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    // Convert Supabase data to PageSpeedReport format
+    return data.map(item => ({
+      metrics: {
+        performance_score: item.performance_score,
+        accessibility_score: item.accessibility_score,
+        best_practices_score: item.best_practices_score,
+        seo_score: item.seo_score,
+        first_contentful_paint: item.first_contentful_paint,
+        speed_index: item.speed_index,
+        largest_contentful_paint: item.largest_contentful_paint,
+        time_to_interactive: item.time_to_interactive,
+        total_blocking_time: item.total_blocking_time,
+        cumulative_layout_shift: item.cumulative_layout_shift,
+        last_analyzed: item.created_at,
+        url: item.url
+      },
+      audits: item.audits || [],
+      screenshot: item.screenshot
+    }));
+  } catch (error) {
+    console.error("Error getting PageSpeed history:", error);
+    return [];
   }
 };

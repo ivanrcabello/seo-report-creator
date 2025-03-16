@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   PageSpeedReport, 
   analyzeWebsite, 
@@ -16,7 +16,6 @@ import { PageSpeedPerformanceMetrics } from "./PageSpeedPerformanceMetrics";
 import { PageSpeedAuditList } from "./PageSpeedAuditList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect } from "react";
 
 interface PageSpeedSectionProps {
   clientId: string;
@@ -26,19 +25,31 @@ interface PageSpeedSectionProps {
 export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps) => {
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [pageSpeedReport, setPageSpeedReport] = useState<PageSpeedReport | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   
   // Load saved report on component mount
   useEffect(() => {
-    const savedReport = getPageSpeedReport(clientId);
-    if (savedReport) {
-      setPageSpeedReport(savedReport);
-      // If there's a saved URL, populate the input field
-      if (savedReport.metrics.url) {
-        setUrl(savedReport.metrics.url);
+    const loadSavedReport = async () => {
+      setIsLoading(true);
+      try {
+        const savedReport = await getPageSpeedReport(clientId);
+        if (savedReport) {
+          setPageSpeedReport(savedReport);
+          // If there's a saved URL, populate the input field
+          if (savedReport.metrics.url) {
+            setUrl(savedReport.metrics.url);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading saved report:", error);
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
+    
+    loadSavedReport();
   }, [clientId]);
   
   const handleAnalyze = async () => {
@@ -97,7 +108,7 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
           </Button>
         </div>
         
-        {isAnalyzing && (
+        {(isAnalyzing || isLoading) && (
           <div className="space-y-4">
             <Skeleton className="h-16 w-full" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -107,7 +118,7 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
           </div>
         )}
         
-        {!isAnalyzing && pageSpeedReport && (
+        {!isAnalyzing && !isLoading && pageSpeedReport && (
           <div className="space-y-6">
             <div className="bg-gray-50 border rounded-md p-4 text-sm">
               <p className="font-medium flex items-center gap-1">
@@ -167,7 +178,7 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
           </div>
         )}
         
-        {!isAnalyzing && !pageSpeedReport && (
+        {!isAnalyzing && !isLoading && !pageSpeedReport && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
             <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
               <Zap className="h-8 w-8 text-seo-blue" />

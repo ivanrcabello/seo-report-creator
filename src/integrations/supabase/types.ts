@@ -135,6 +135,74 @@ export type Database = {
           },
         ]
       }
+      client_pagespeed: {
+        Row: {
+          accessibility_score: number | null
+          audits: Json | null
+          best_practices_score: number | null
+          client_id: string
+          created_at: string | null
+          cumulative_layout_shift: number | null
+          first_contentful_paint: number | null
+          id: string
+          largest_contentful_paint: number | null
+          performance_score: number | null
+          screenshot: string | null
+          seo_score: number | null
+          speed_index: number | null
+          time_to_interactive: number | null
+          total_blocking_time: number | null
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          accessibility_score?: number | null
+          audits?: Json | null
+          best_practices_score?: number | null
+          client_id: string
+          created_at?: string | null
+          cumulative_layout_shift?: number | null
+          first_contentful_paint?: number | null
+          id?: string
+          largest_contentful_paint?: number | null
+          performance_score?: number | null
+          screenshot?: string | null
+          seo_score?: number | null
+          speed_index?: number | null
+          time_to_interactive?: number | null
+          total_blocking_time?: number | null
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          accessibility_score?: number | null
+          audits?: Json | null
+          best_practices_score?: number | null
+          client_id?: string
+          created_at?: string | null
+          cumulative_layout_shift?: number | null
+          first_contentful_paint?: number | null
+          id?: string
+          largest_contentful_paint?: number | null
+          performance_score?: number | null
+          screenshot?: string | null
+          seo_score?: number | null
+          speed_index?: number | null
+          time_to_interactive?: number | null
+          total_blocking_time?: number | null
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_pagespeed_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_reports: {
         Row: {
           client_id: string

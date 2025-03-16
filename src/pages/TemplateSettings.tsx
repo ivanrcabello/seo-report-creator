@@ -1,8 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DocumentTemplate, DocumentType } from "@/types/templates";
-import { getTemplates, createTemplate, deleteTemplate, setAsDefaultTemplate } from "@/services/templateService";
+import { 
+  getTemplates, 
+  createTemplate, 
+  deleteTemplate, 
+  setAsDefaultTemplate,
+  createAllDefaultTemplates 
+} from "@/services/templateService";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -18,6 +23,7 @@ const TemplateSettings = () => {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
+  const [hasCreatedDefaults, setHasCreatedDefaults] = useState(false);
 
   // Cargar las plantillas cuando cambie el tipo de documento activo
   useEffect(() => {
@@ -26,10 +32,20 @@ const TemplateSettings = () => {
       const data = await getTemplates(activeDocType);
       setTemplates(data);
       setIsLoading(false);
+      
+      // Si no hay plantillas y aún no hemos creado las predeterminadas, crearlas
+      if (data.length === 0 && !hasCreatedDefaults) {
+        await createAllDefaultTemplates();
+        setHasCreatedDefaults(true);
+        // Recargar las plantillas después de crear las predeterminadas
+        const updatedData = await getTemplates(activeDocType);
+        setTemplates(updatedData);
+        toast.success("Se han creado plantillas de ejemplo para todos los tipos de documentos");
+      }
     };
     
     loadTemplates();
-  }, [activeDocType]);
+  }, [activeDocType, hasCreatedDefaults]);
 
   // Crear una nueva plantilla
   const handleCreateTemplate = async () => {
@@ -100,6 +116,16 @@ const TemplateSettings = () => {
     }
   };
 
+  // Forzar la creación de todas las plantillas predeterminadas
+  const handleCreateAllDefaults = async () => {
+    setIsLoading(true);
+    await createAllDefaultTemplates();
+    const updatedData = await getTemplates(activeDocType);
+    setTemplates(updatedData);
+    setIsLoading(false);
+    toast.success("Se han creado plantillas de ejemplo para todos los tipos de documentos");
+  };
+
   return (
     <div className="container py-8">
       <div className="max-w-5xl mx-auto">
@@ -117,6 +143,13 @@ const TemplateSettings = () => {
                 <TabsTrigger value="invoice">Facturas</TabsTrigger>
                 <TabsTrigger value="contract">Contratos</TabsTrigger>
               </TabsList>
+              
+              <div className="flex justify-end mb-4">
+                <Button onClick={handleCreateAllDefaults} variant="outline" className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Crear Plantillas de Ejemplo
+                </Button>
+              </div>
               
               {["seo-report", "proposal", "invoice", "contract"].map((docType) => (
                 <TabsContent key={docType} value={docType}>

@@ -1,36 +1,49 @@
 
-import { AIReport } from "@/services/aiReportService";
-import { AuditResult } from "@/services/pdfAnalyzer";
-import { generateSeoReportPdf } from "./seoReportPdfCore";
+/**
+ * PDF operations (download, share) for SEO reports
+ */
+import { generateSeoReportPdf } from './seoReportPdfCore';
+import { getReport } from '@/services/reportService';
+import { toast } from "sonner";
 
 /**
- * Downloads the SEO report as a PDF file
- * @param report The AI report data
- * @param auditData The audit result data
- * @returns A Promise that resolves to a boolean indicating success or failure
+ * Downloads a SEO report as PDF
  */
-export const downloadSeoReportPdf = async (report: AIReport, auditData: AuditResult): Promise<boolean> => {
+export const downloadSeoReportPdf = async (reportId: string): Promise<boolean> => {
   try {
-    // Generate the PDF
-    const pdfBlob = await generateSeoReportPdf(report, auditData);
+    // Get report data
+    const report = await getReport(reportId);
     
-    // Create URL for the blob
-    const blobUrl = URL.createObjectURL(pdfBlob);
+    if (!report) {
+      toast.error("No se encontró el informe");
+      return false;
+    }
     
-    // Create a element for download
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = `informe-seo-${auditData.domain || "sitio"}.pdf`;
-    document.body.appendChild(a);
-    a.click();
+    // Generate PDF
+    const pdfBlob = await generateSeoReportPdf(report);
     
-    // Clean up
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
+    // Create a download link
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
     
+    // Set the filename
+    const filename = `informe-seo-${report.id.slice(0, 8)}.pdf`;
+    link.setAttribute('download', filename);
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success("Informe descargado correctamente");
     return true;
   } catch (error) {
-    console.error("Error downloading SEO report PDF:", error);
+    console.error("Error downloading report PDF:", error);
+    toast.error("Error al descargar el informe");
     return false;
   }
 };

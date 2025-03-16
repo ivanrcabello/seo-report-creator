@@ -73,7 +73,17 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
               {report.url && (
                 <div className="flex items-center gap-2">
                   <Globe className="h-5 w-5 text-seo-purple" />
-                  <span className="truncate">{report.url}</span>
+                  <span className="truncate">
+                    <a 
+                      href={report.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-blue-600 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {report.url}
+                    </a>
+                  </span>
                 </div>
               )}
             </div>

@@ -99,6 +99,7 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
       const report = await generatePageSpeedReport(pageSpeedReport, clientId, clientName);
       
       if (report && report.id) {
+        toast.dismiss();
         toast.success("Informe generado correctamente");
         
         // Navigate to the report view after a short delay
@@ -111,6 +112,7 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
       
     } catch (error) {
       console.error("Error generating AI report:", error);
+      toast.dismiss();
       toast.error(`Error al generar el informe: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setIsGeneratingAIReport(false);

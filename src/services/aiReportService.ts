@@ -1,4 +1,3 @@
-
 import { AuditResult } from "./pdfAnalyzer";
 
 export interface PriorityKeyword {
@@ -46,15 +45,12 @@ export interface AIReport {
   conclusion?: string;
   contactEmail?: string;
   contactPhone?: string;
-  // Add formatted content field for report display
   content?: string;
 }
 
 export const generateAIReport = async (auditResult: AuditResult): Promise<AIReport> => {
-  // Generate a temporary ID for the report
   const tempId = 'report-' + Math.random().toString(36).substring(2, 9);
   
-  // Generate sample report based on provided data
   const report: AIReport = {
     id: tempId,
     introduction: `Este informe presenta un análisis completo de la presencia online de ${auditResult.companyName || "su empresa"} en ${auditResult.location || "su ubicación"}. El objetivo es mejorar su visibilidad en los motores de búsqueda, aumentar el tráfico orgánico y local, y captar nuevos clientes a través de estrategias SEO adaptadas a su sector (${auditResult.companyType || "industria"}).`,
@@ -190,10 +186,8 @@ export const generateAIReport = async (auditResult: AuditResult): Promise<AIRepo
     contactPhone: "+34 612 345 678"
   };
   
-  // Generate the formatted content for display
   report.content = await generateFormattedContent(report, auditResult);
   
-  // Simulate processing time
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(report);
@@ -201,9 +195,7 @@ export const generateAIReport = async (auditResult: AuditResult): Promise<AIRepo
   });
 };
 
-// Helper function to generate formatted markdown content for the report
 async function generateFormattedContent(report: AIReport, auditResult: AuditResult): Promise<string> {
-  // Try to get enhanced content using OpenAI
   try {
     const enhancedContent = await getOpenAIReport(auditResult);
     if (enhancedContent) {
@@ -211,16 +203,13 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
     }
   } catch (error) {
     console.error("Error generating OpenAI report:", error);
-    // Continue with fallback report generation if OpenAI fails
+    return null;
   }
 
-  // Fallback to basic report generation
   let content = '';
   
-  // Introduction section
   content += `## Introducción\n\n${report.introduction || ''}\n\n`;
   
-  // Analysis section
   content += `## Análisis de la Situación Actual\n\n`;
   content += `La web analizada (${auditResult.url || 'No especificada'}) presenta los siguientes indicadores:\n\n`;
   content += `- **Authority Score**: ${report.authorityScore}/100 - ${report.authorityScoreComment}\n`;
@@ -228,8 +217,8 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
   content += `- **Palabras Clave Posicionadas**: ${report.keywordsPositioned} - ${report.keywordsComment}\n`;
   content += `- **Backlinks**: ${report.backlinksCount} - ${report.backlinksComment}\n\n`;
   
-  // Technical issues section if available in the audit data
-  if (auditResult && 'technicalIssues' in auditResult && Array.isArray(auditResult['technicalIssues']) && auditResult['technicalIssues']?.length > 0) {
+  if (auditResult && typeof auditResult === 'object' && 'technicalIssues' in auditResult && 
+      Array.isArray(auditResult['technicalIssues']) && auditResult['technicalIssues']?.length > 0) {
     content += `### Problemas Técnicos Detectados\n\n`;
     auditResult['technicalIssues'].forEach((issue: any) => {
       content += `- **${issue.type || 'Problema'}**: ${issue.description || 'Sin descripción'}\n`;
@@ -237,7 +226,6 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
     content += `\n`;
   }
   
-  // Keywords section
   if (report.priorityKeywords && report.priorityKeywords.length > 0) {
     content += `## Palabras Clave Prioritarias\n\n`;
     content += `Las siguientes palabras clave representan oportunidades de posicionamiento para su negocio:\n\n`;
@@ -250,7 +238,6 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
     });
   }
   
-  // Competitors section
   if (report.competitors && report.competitors.length > 0) {
     content += `## Análisis de Competidores\n\n`;
     report.competitors.forEach(competitor => {
@@ -262,7 +249,6 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
     });
   }
   
-  // Strategy section
   content += `## Estrategia Propuesta\n\n`;
   
   if (report.strategy?.technicalOptimization) {
@@ -297,7 +283,6 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
     content += `\n`;
   }
   
-  // Packages section
   if (report.packages && report.packages.length > 0) {
     content += `## Planes Recomendados\n\n`;
     report.packages.forEach(pkg => {
@@ -309,10 +294,8 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
     });
   }
   
-  // Conclusion section
   content += `## Conclusión\n\n${report.conclusion || ''}\n\n`;
   
-  // Contact info
   content += `## Contacto\n\n`;
   content += `Para más información, no dude en contactar con nosotros:\n\n`;
   content += `- Email: ${report.contactEmail || 'info@agenciaseo.com'}\n`;
@@ -321,7 +304,6 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
   return content;
 }
 
-// Function to generate a report using OpenAI
 async function getOpenAIReport(auditResult: AuditResult): Promise<string | null> {
   try {
     const response = await fetch('/api/openai-report', {

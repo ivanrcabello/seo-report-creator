@@ -1,6 +1,8 @@
 
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function ProposalDetail() {
   const { proposalId } = useParams<{ proposalId: string }>();
@@ -8,17 +10,21 @@ export default function ProposalDetail() {
   
   return (
     <div className="container mx-auto py-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold mb-6">Detalle de Propuesta</h1>
-        <p>Visualizando propuesta con ID: {proposalId}</p>
-        <p>La página de detalle de propuestas está en desarrollo.</p>
-        <button 
-          onClick={() => navigate("/proposals")}
-          className="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-        >
-          Volver a Propuestas
-        </button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Detalle de Propuesta</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500 mb-2">Visualizando propuesta con ID: {proposalId}</p>
+          <p className="text-gray-500 mb-4">La página de detalle de propuestas está en desarrollo.</p>
+          <Button 
+            onClick={() => navigate("/proposals")}
+            variant="outline"
+          >
+            Volver a Propuestas
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

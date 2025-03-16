@@ -1,22 +1,28 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function ProposalForm() {
   const navigate = useNavigate();
   
   return (
     <div className="container mx-auto py-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold mb-6">Nueva Propuesta</h1>
-        <p>El formulario de propuestas está en desarrollo.</p>
-        <button 
-          onClick={() => navigate("/proposals")}
-          className="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-        >
-          Volver a Propuestas
-        </button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Nueva Propuesta</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500 mb-4">El formulario de propuestas está en desarrollo.</p>
+          <Button 
+            onClick={() => navigate("/proposals")}
+            variant="outline"
+          >
+            Volver a Propuestas
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

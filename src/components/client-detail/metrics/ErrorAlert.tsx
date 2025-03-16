@@ -3,11 +3,12 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export interface ErrorAlertProps {
-  error: any;
+  error: Error | any;
+  message?: string;
 }
 
-export const ErrorAlert = ({ error }: ErrorAlertProps) => {
-  const errorMessage = error?.message || "Se produjo un error al cargar los datos";
+export const ErrorAlert = ({ error, message }: ErrorAlertProps) => {
+  const errorMessage = message || error?.message || "Se produjo un error al cargar los datos";
   
   return (
     <Alert variant="destructive">

@@ -58,7 +58,7 @@ export const generateSeoReportPdf = async (
       if (i > 1) { // Skip header on cover page
         addHeader(doc, report.title || "Informe SEO", companySettings);
       }
-      addFooter(doc, i, companySettings);
+      addFooter(doc, i, totalPages, companySettings);
     }
     
     // Add Introduction section

@@ -1,4 +1,3 @@
-
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { AIReport } from "@/services/aiReportService";
@@ -136,11 +135,10 @@ export const createCoverPage = (
     doc.setFontSize(10);
     
     const companyInfo = [
-      companySettings.name || "Tu Empresa de SEO",
+      companySettings.companyName || "Tu Empresa de SEO",
       companySettings.address || "",
       companySettings.email || "",
       companySettings.phone || "",
-      companySettings.website || ""
     ].filter(Boolean).join(" | ");
     
     doc.text(companyInfo, doc.internal.pageSize.width / 2, 270, { align: "center" });
@@ -200,7 +198,7 @@ export const addFooter = (doc: jsPDF, pageNumber: number, totalPages?: number, c
     doc.setTextColor(COLORS.textDark[0], COLORS.textDark[1], COLORS.textDark[2]);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.text(companySettings.website || companySettings.name || "", 10, pageHeight - 6);
+    doc.text(companySettings.companyName || "", 10, pageHeight - 6);
   }
   
   // Page numbers
@@ -367,8 +365,8 @@ export const addWebsiteAnalysisSection = (doc: jsPDF, auditResult: AuditResult, 
   const scores = [
     { title: "Puntuación SEO", value: auditResult.seoScore || 0, color: getScoreColor(auditResult.seoScore) },
     { title: "Rendimiento", value: auditResult.performance || 0, color: getScoreColor(auditResult.performance) },
-    { title: "Accesibilidad", value: auditResult.accessibility || 0, color: getScoreColor(auditResult.accessibility) },
-    { title: "Mejores Prácticas", value: auditResult.bestPractices || 0, color: getScoreColor(auditResult.bestPractices) }
+    { title: "Visibilidad", value: auditResult.webVisibility || 0, color: getScoreColor(auditResult.webVisibility) },
+    { title: "Palabras Clave", value: auditResult.keywordsCount || 0, color: getScoreColor(75) } // Default score color
   ];
   
   // Create score cards in a 2x2 grid
@@ -404,8 +402,8 @@ export const addWebsiteAnalysisSection = (doc: jsPDF, auditResult: AuditResult, 
   // Website metrics table
   const metricsData = [];
   
-  if (auditResult.keyMetrics) {
-    for (const [key, value] of Object.entries(auditResult.keyMetrics)) {
+  if (auditResult.metrics) {
+    for (const [key, value] of Object.entries(auditResult.metrics)) {
       // Format metric name from camelCase to readable text
       const metricName = key
         .replace(/([A-Z])/g, ' $1')
@@ -615,8 +613,8 @@ export const addTechnicalSEOSection = (doc: jsPDF, auditResult: AuditResult, sta
   yPos += splitIntro.length * 6 + 10;
   
   // Create technical issues table
-  if (auditResult.issues && auditResult.issues.length > 0) {
-    const issuesData = auditResult.issues.map(issue => [
+  if (auditResult.technicalIssues && auditResult.technicalIssues.length > 0) {
+    const issuesData = auditResult.technicalIssues.map(issue => [
       issue.name || "Error desconocido",
       issue.severity || "Media",
       issue.description || ""
@@ -667,8 +665,8 @@ export const addTechnicalSEOSection = (doc: jsPDF, auditResult: AuditResult, sta
     yPos += 15;
   }
   
-  // Performance metrics visualization if available
-  if (auditResult.performanceMetrics) {
+  // Add PageSpeed metrics from AuditResult.pagespeed if available
+  if (auditResult.pagespeed) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
@@ -677,12 +675,12 @@ export const addTechnicalSEOSection = (doc: jsPDF, auditResult: AuditResult, sta
     yPos += 10;
     
     const metrics = [
-      { name: "First Contentful Paint", value: auditResult.performanceMetrics.firstContentfulPaint },
-      { name: "Speed Index", value: auditResult.performanceMetrics.speedIndex },
-      { name: "Largest Contentful Paint", value: auditResult.performanceMetrics.largestContentfulPaint },
-      { name: "Time to Interactive", value: auditResult.performanceMetrics.timeToInteractive },
-      { name: "Total Blocking Time", value: auditResult.performanceMetrics.totalBlockingTime },
-      { name: "Cumulative Layout Shift", value: auditResult.performanceMetrics.cumulativeLayoutShift }
+      { name: "First Contentful Paint", value: auditResult.pagespeed.fcp ? `${auditResult.pagespeed.fcp}s` : "N/A" },
+      { name: "Largest Contentful Paint", value: auditResult.pagespeed.lcp ? `${auditResult.pagespeed.lcp}s` : "N/A" },
+      { name: "Cumulative Layout Shift", value: auditResult.pagespeed.cls?.toString() || "N/A" },
+      { name: "Total Blocking Time", value: auditResult.pagespeed.tbt ? `${auditResult.pagespeed.tbt}ms` : "N/A" },
+      { name: "Performance", value: auditResult.pagespeed.performance ? `${auditResult.pagespeed.performance}%` : "N/A" },
+      { name: "SEO", value: auditResult.pagespeed.seo ? `${auditResult.pagespeed.seo}%` : "N/A" }
     ];
     
     // Create horizontal bar chart
@@ -711,17 +709,24 @@ export const addTechnicalSEOSection = (doc: jsPDF, auditResult: AuditResult, sta
       
       // Value bar (normalized between 0-1 where applicable)
       let barValue = 0.5; // Default middle value
-      if (typeof metric.value === 'number') {
-        if (metric.name === "Cumulative Layout Shift") {
-          // CLS is good when low (0-0.1 is good, 0.1-0.25 is ok, >0.25 is poor)
-          barValue = Math.min(1, Math.max(0, 1 - metric.value * 4));
-        } else if (metric.value <= 1) {
-          // Already normalized value (0-1)
-          barValue = metric.value;
-        } else {
-          // Assume time in ms, normalize roughly (faster is better)
-          // This is a simplification and would need adjustment for real data
-          barValue = Math.min(1, Math.max(0, 1 - (metric.value / 5000)));
+      
+      if (typeof metric.value === 'string') {
+        // Extract numeric value from string (e.g. "80%" -> 80, "1.2s" -> 1.2)
+        const numericMatch = metric.value.match(/^([\d.]+)/);
+        if (numericMatch && numericMatch[1]) {
+          const numericValue = parseFloat(numericMatch[1]);
+          
+          if (metric.name.includes("Performance") || metric.name.includes("SEO")) {
+            // Score metrics (higher is better)
+            barValue = Math.min(1, Math.max(0, numericValue / 100));
+          } else if (metric.name.includes("Layout Shift")) {
+            // CLS (lower is better, 0-0.1 is good, 0.1-0.25 is ok, >0.25 is poor)
+            barValue = Math.min(1, Math.max(0, 1 - numericValue * 4));
+          } else if (metric.name.includes("Paint") || metric.name.includes("Time")) {
+            // Time metrics (lower is better)
+            // Normalize approximately (this is simplified)
+            barValue = Math.min(1, Math.max(0, 1 - (numericValue / 5)));
+          }
         }
       }
       
@@ -1133,10 +1138,9 @@ export const addContactSection = (doc: jsPDF, companySettings?: CompanySettings,
     doc.setFontSize(10);
     
     const contactText = [
-      companySettings.name || "Tu Empresa de SEO",
+      companySettings.companyName || "Tu Empresa de SEO",
       companySettings.email ? `Email: ${companySettings.email}` : "",
       companySettings.phone ? `Teléfono: ${companySettings.phone}` : "",
-      companySettings.website || ""
     ].filter(Boolean).join(" | ");
     
     doc.text(contactText, doc.internal.pageSize.width / 2, yPos + 20, { align: "center" });

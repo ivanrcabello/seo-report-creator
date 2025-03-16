@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { SeoLocalReport } from "@/types/client";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   getLocalSeoReports, 
   getLocalSeoSettings, 

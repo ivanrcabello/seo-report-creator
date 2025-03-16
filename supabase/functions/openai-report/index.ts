@@ -83,6 +83,7 @@ Be concise but detailed. Use a professional tone.`;
     const data = await response.json();
     
     if (data.error) {
+      console.error('OpenAI API error:', data.error);
       throw new Error(`OpenAI API error: ${data.error.message}`);
     }
 

@@ -26,10 +26,16 @@ export const generatePageSpeedReport = async (
       shareToken: uuidv4(),
       sharedAt: null,
       includeInProposal: false,
-      // Store data in format compatible with database schema
-      data: {
-        metrics: report.metrics,
-        audits: report.audits
+      auditResult: {
+        url: report.metrics.url || "",
+        seoScore: report.metrics.seo_score,
+        performance: report.metrics.performance_score,
+        accessibility: report.metrics.accessibility_score,
+        bestPractices: report.metrics.best_practices_score,
+        seoData: [],
+        performanceData: [],
+        socialData: [],
+        technicalData: []
       }
     };
     

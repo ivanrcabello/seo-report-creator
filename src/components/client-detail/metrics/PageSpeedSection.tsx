@@ -111,12 +111,11 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
       
     } catch (error) {
       console.error("Error generating AI report:", error);
-      toast.error("Error al generar el informe. Por favor, inténtalo de nuevo.");
+      toast.error(`Error al generar el informe: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setIsGeneratingAIReport(false);
     }
   };
-  
   
   return (
     <MetricsCard 

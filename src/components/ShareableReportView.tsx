@@ -9,6 +9,7 @@ import { SeoDetailsCard } from "@/components/seo-report/SeoDetailsCard";
 import { Recommendations } from "@/components/seo-report/Recommendations";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { AlertCircle } from "lucide-react";
 
 interface ShareableReportViewProps {
   report: ClientReport;
@@ -68,14 +69,15 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
     );
   }
 
-  // If the report has auditResult, show the SEO components
-  if (report.auditResult) {
+  // If the report has analyticsData with auditResult, show the SEO components
+  if (report.analyticsData?.auditResult) {
+    const auditResult = report.analyticsData.auditResult;
     return (
       <div className="space-y-8">
-        <ScoreCards auditResult={report.auditResult} />
-        <MetricCards auditResult={report.auditResult} />
-        <SeoDetailsCard auditResult={report.auditResult} />
-        <Recommendations auditResult={report.auditResult} />
+        <ScoreCards auditResult={auditResult} />
+        <MetricCards auditResult={auditResult} />
+        <SeoDetailsCard auditResult={auditResult} />
+        <Recommendations auditResult={auditResult} />
         
         {report.notes && (
           <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mt-8">
@@ -90,6 +92,7 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
   // Fallback if neither content nor auditResult is available
   return (
     <div className="p-10 text-center border border-dashed border-gray-300 rounded-lg bg-gray-50">
+      <AlertCircle className="h-10 w-10 text-amber-500 mx-auto mb-3" />
       <h3 className="text-xl font-semibold text-gray-700 mb-2">Este informe no contiene datos de análisis</h3>
       <p className="text-gray-500 mb-6">El informe fue creado pero no contiene datos de análisis SEO.</p>
       

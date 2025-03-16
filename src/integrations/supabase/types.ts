@@ -322,8 +322,10 @@ export type Database = {
           notes: string | null
           share_token: string | null
           shared_at: string | null
+          status: string
           title: string
           type: string
+          updated_at: string | null
           url: string | null
         }
         Insert: {
@@ -337,8 +339,10 @@ export type Database = {
           notes?: string | null
           share_token?: string | null
           shared_at?: string | null
+          status?: string
           title: string
           type: string
+          updated_at?: string | null
           url?: string | null
         }
         Update: {
@@ -352,8 +356,10 @@ export type Database = {
           notes?: string | null
           share_token?: string | null
           shared_at?: string | null
+          status?: string
           title?: string
           type?: string
+          updated_at?: string | null
           url?: string | null
         }
         Relationships: [

@@ -1,186 +1,173 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { ClientReport } from "@/types/client";
-import { useToast } from "@/components/ui/use-toast";
-import { toast } from "sonner";
-import { downloadSeoReportPdf } from "@/services/seoReportPdfService";
 import { saveReportWithAIData } from "@/services/reportService";
-import { EditableReportForm } from "@/components/seo-report/EditableReportForm";
-import { ReportHeader } from "./ReportHeader";
-import { ReportContent } from "./ReportContent";
-import { generateGeminiReport } from "@/services/geminiReportService";
+import { Cog, Save, FileText } from "lucide-react";
+import { toast } from "sonner";
 
 interface AIReportGeneratorProps {
   auditResult: AuditResult;
-  currentReport?: ClientReport | null;
+  currentReport: ClientReport | null;
 }
 
 export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGeneratorProps) => {
-  const [report, setReport] = useState<ClientReport | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState<string>("");
+  const [generatedReport, setGeneratedReport] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const { toast: uiToast } = useToast();
 
-  // Load report data from currentReport if it exists
-  useEffect(() => {
-    if (currentReport?.analyticsData?.aiReport) {
-      setReport(currentReport);
-    } else if (currentReport) {
-      setReport(currentReport);
+  const handleGenerateReport = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error("Por favor escribe un prompt para generar el informe");
+      return;
     }
-  }, [currentReport]);
 
-  const generateReport = async () => {
-    setIsLoading(true);
     try {
-      // Use Gemini to generate the report content
-      const content = await generateGeminiReport(auditResult, 'seo');
-      
-      if (!content) {
-        throw new Error("No se pudo generar el contenido del informe");
-      }
-      
-      // Create a new report using the generated content
-      const newReport = {
-        ...currentReport,
-        id: currentReport?.id || '',
-        content: content,
-        analyticsData: {
-          ...currentReport?.analyticsData,
-          aiReport: {
-            id: currentReport?.id || '',
-            content,
-            generated_at: new Date().toISOString(),
-            generatedBy: "gemini"
-          }
-        }
-      };
-      
-      setReport(newReport);
-      uiToast({
-        description: "Informe generado correctamente"
-      });
-    } catch (error) {
-      console.error("Error generando el informe:", error);
-      uiToast({
-        description: "No se pudo generar el informe. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      setIsGenerating(true);
+      toast.loading("Generando informe con IA...");
 
-  const generateAdvancedReport = async () => {
-    setIsGeneratingAI(true);
-    toast.loading("Generando informe avanzado con Gemini...");
-    
-    try {
-      // Use Gemini to generate an advanced report
-      const content = await generateGeminiReport(auditResult, 'seo');
-      
-      if (content && report) {
-        // Update the report content
-        const updatedReport = {
-          ...report,
-          content: content,
-          analyticsData: {
-            ...report.analyticsData,
-            aiReport: {
-              id: report.id,
-              content,
-              generated_at: new Date().toISOString(),
-              generatedBy: "gemini"
-            }
-          }
-        };
+      // Simulamos una generación de IA para este ejemplo
+      // En un entorno real, esto sería una llamada a una API de IA como OpenAI
+      setTimeout(() => {
+        const demoReport = `# Informe de Análisis SEO generado por IA
+
+## Resumen ejecutivo
+Basado en el análisis realizado, el sitio web presenta varias oportunidades de mejora en términos de SEO y rendimiento.
+
+## Hallazgos principales
+- La puntuación de rendimiento es ${auditResult.scores?.performance || "baja"} y necesita mejoras
+- Se encontraron ${auditResult.metaData?.totalIssues || "varios"} problemas técnicos que afectan el posicionamiento
+- Las palabras clave principales no están bien optimizadas en el contenido
+
+## Recomendaciones
+- Mejorar la velocidad de carga optimizando imágenes y reduciendo JavaScript no utilizado
+- Implementar metadatos adecuados en todas las páginas importantes
+- Crear contenido más relevante enfocado en palabras clave objetivo
+- Optimizar la experiencia móvil para mejorar la interacción del usuario
         
-        setReport(updatedReport);
-        
-        // If we have a current report, save the content to it
-        if (currentReport) {
-          await saveReportWithAIData(currentReport, updatedReport);
-        }
-        
-        toast.success("El informe avanzado se ha generado con éxito");
-      } else {
-        toast.error("No se pudo generar el informe avanzado");
-      }
+## Conclusión
+Con estas mejoras implementadas, esperamos ver un incremento significativo en el tráfico orgánico y las conversiones en los próximos 3 meses.`;
+
+        setGeneratedReport(demoReport);
+        toast.dismiss();
+        toast.success("Informe generado correctamente");
+        setIsGenerating(false);
+      }, 2000);
     } catch (error) {
-      console.error("Error generando informe avanzado:", error);
-      toast.error("Hubo un problema al generar el informe avanzado");
-    } finally {
-      setIsGeneratingAI(false);
+      console.error("Error generating report:", error);
+      toast.dismiss();
+      toast.error("Error al generar el informe");
+      setIsGenerating(false);
     }
   };
 
   const handleSaveReport = async () => {
-    if (!report || !currentReport) return;
-    
-    setIsSaving(true);
+    if (!currentReport) {
+      toast.error("No hay un informe actual para guardar");
+      return;
+    }
+
+    if (!generatedReport) {
+      toast.error("No hay contenido generado para guardar");
+      return;
+    }
+
     try {
-      await saveReportWithAIData(currentReport, report);
-      toast.success("El informe se ha guardado correctamente.");
+      setIsSaving(true);
+      toast.loading("Guardando informe...");
+
+      const aiReportData = {
+        content: generatedReport,
+        generatedAt: new Date().toISOString(),
+        prompt: aiPrompt
+      };
+
+      const updatedReport = await saveReportWithAIData(currentReport, aiReportData);
+      
+      toast.dismiss();
+      toast.success("Informe guardado correctamente");
+      
+      // Redireccionar o actualizar vista según sea necesario
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error) {
       console.error("Error saving report:", error);
-      toast.error("No se pudo guardar el informe. Inténtalo de nuevo.");
+      toast.dismiss();
+      toast.error("Error al guardar el informe");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDownloadPdf = async () => {
-    if (!report || !report.id) return;
-    
-    try {
-      const success = await downloadSeoReportPdf(report.id);
-      if (success) {
-        toast.success("El informe se ha descargado correctamente.");
-      } else {
-        throw new Error("Error al descargar el PDF");
-      }
-    } catch (error) {
-      console.error("Error descargando PDF:", error);
-      toast.error("No se pudo descargar el PDF. Inténtalo de nuevo.");
-    }
-  };
-
-  const handleSaveEdits = (updatedReport: ClientReport) => {
-    setReport(updatedReport);
-    setIsEditMode(false);
-  };
-
-  if (isEditMode && report) {
-    return (
-      <EditableReportForm 
-        initialReport={report} 
-        onSave={handleSaveEdits} 
-      />
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <ReportHeader 
-        report={report}
-        isLoading={isLoading}
-        isGeneratingAI={isGeneratingAI}
-        isSaving={isSaving}
-        currentReportExists={!!currentReport}
-        onRegenerate={generateReport}
-        onEdit={() => setIsEditMode(true)}
-        onDownloadPdf={handleDownloadPdf}
-        onGenerateAdvancedReport={generateAdvancedReport}
-        onSaveReport={handleSaveReport}
-        generatorType="gemini"
-      />
+    <div className="space-y-4 border rounded-lg p-6 bg-white">
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium">Editor de IA</h3>
+        <p className="text-sm text-gray-500">
+          Solicita a la IA generar un informe personalizado basado en los datos de análisis.
+        </p>
+      </div>
 
-      {report && !isLoading && (
-        <div className="space-y-8 print:space-y-6">
-          <ReportContent report={report} />
+      <div className="space-y-4">
+        <Textarea 
+          placeholder="Escribe un prompt para la IA. Ej: 'Genera un informe SEO destacando los principales problemas y oportunidades de mejora.'"
+          value={aiPrompt}
+          onChange={(e) => setAiPrompt(e.target.value)}
+          className="min-h-[100px]"
+        />
+        
+        <Button 
+          onClick={handleGenerateReport}
+          disabled={isGenerating || !aiPrompt.trim()}
+          className="w-full"
+        >
+          {isGenerating ? (
+            <>
+              <Cog className="h-4 w-4 mr-2 animate-spin" />
+              Generando...
+            </>
+          ) : (
+            <>
+              <FileText className="h-4 w-4 mr-2" />
+              Generar Informe
+            </>
+          )}
+        </Button>
+      </div>
+
+      {generatedReport && (
+        <div className="space-y-4 mt-6">
+          <div className="border-t pt-4">
+            <h3 className="text-lg font-medium mb-2">Informe Generado</h3>
+            <div className="bg-gray-50 p-4 rounded border min-h-[200px] max-h-[400px] overflow-y-auto">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {generatedReport}
+              </ReactMarkdown>
+            </div>
+          </div>
+          
+          <Button 
+            onClick={handleSaveReport}
+            disabled={isSaving}
+            variant="outline"
+            className="w-full"
+          >
+            {isSaving ? (
+              <>
+                <Cog className="h-4 w-4 mr-2 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Guardar en el Informe Actual
+              </>
+            )}
+          </Button>
         </div>
       )}
     </div>

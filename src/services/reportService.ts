@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClientReport } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
@@ -29,7 +30,8 @@ export const getClientReports = async (clientId: string): Promise<ClientReport[]
       shareToken: item.share_token,
       sharedAt: item.shared_at,
       includeInProposal: item.include_in_proposal || false,
-      analyticsData: item.analytics_data || {}
+      analyticsData: item.analytics_data || {},
+      status: item.status || 'draft'
     }));
   } catch (error) {
     console.error("Error getting client reports:", error);
@@ -71,7 +73,8 @@ export const getReport = async (reportId: string): Promise<ClientReport | null> 
       shareToken: data.share_token,
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
-      analyticsData: data.analytics_data || {}
+      analyticsData: data.analytics_data || {},
+      status: data.status || 'draft'
     };
   } catch (error) {
     console.error("Error getting report:", error);
@@ -82,14 +85,23 @@ export const getReport = async (reportId: string): Promise<ClientReport | null> 
 // Function to get all reports
 export const getAllReports = async (): Promise<ClientReport[]> => {
   try {
+    console.log("Getting all reports");
     const { data, error } = await supabase
       .from('client_reports')
       .select('*')
       .order('date', { ascending: false });
     
     if (error) {
+      console.error("Supabase error getting all reports:", error);
       throw error;
     }
+
+    if (!data || data.length === 0) {
+      console.log("No reports found");
+      return [];
+    }
+
+    console.log(`Found ${data.length} reports`);
 
     // Map the database result to ClientReport format
     return data.map((item): ClientReport => ({
@@ -105,7 +117,8 @@ export const getAllReports = async (): Promise<ClientReport[]> => {
       shareToken: item.share_token,
       sharedAt: item.shared_at,
       includeInProposal: item.include_in_proposal || false,
-      analyticsData: item.analytics_data || {}
+      analyticsData: item.analytics_data || {},
+      status: item.status || 'draft'
     }));
   } catch (error) {
     console.error("Error getting all reports:", error);
@@ -129,7 +142,8 @@ export const addReport = async (report: Omit<ClientReport, "id">): Promise<Clien
         document_ids: report.documentIds,
         share_token: report.shareToken || uuidv4(),
         include_in_proposal: report.includeInProposal || false,
-        analytics_data: report.analyticsData || {}
+        analytics_data: report.analyticsData || {},
+        status: report.status || 'draft'
       })
       .select()
       .single();
@@ -151,7 +165,8 @@ export const addReport = async (report: Omit<ClientReport, "id">): Promise<Clien
       shareToken: data.share_token,
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
-      analyticsData: data.analytics_data || {}
+      analyticsData: data.analytics_data || {},
+      status: data.status || 'draft'
     };
   } catch (error) {
     console.error("Error adding report:", error);
@@ -170,7 +185,9 @@ export const updateReport = async (report: ClientReport): Promise<ClientReport> 
         url: report.url,
         notes: report.notes,
         document_ids: report.documentIds,
-        include_in_proposal: report.includeInProposal
+        include_in_proposal: report.includeInProposal,
+        status: report.status || 'draft',
+        analytics_data: report.analyticsData || {}
       })
       .eq('id', report.id)
       .select()
@@ -193,7 +210,8 @@ export const updateReport = async (report: ClientReport): Promise<ClientReport> 
       shareToken: data.share_token,
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
-      analyticsData: data.analytics_data || {}
+      analyticsData: data.analytics_data || {},
+      status: data.status || 'draft'
     };
   } catch (error) {
     console.error("Error updating report:", error);
@@ -225,7 +243,8 @@ export const shareReport = async (reportId: string): Promise<ClientReport> => {
       .from('client_reports')
       .update({
         shared_at: new Date().toISOString(),
-        share_token: uuidv4() // Generate a new UUID for sharing
+        share_token: uuidv4(), // Generate a new UUID for sharing
+        status: 'shared'
       })
       .eq('id', reportId)
       .select()
@@ -248,7 +267,8 @@ export const shareReport = async (reportId: string): Promise<ClientReport> => {
       shareToken: data.share_token,
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
-      analyticsData: data.analytics_data || {}
+      analyticsData: data.analytics_data || {},
+      status: data.status
     };
   } catch (error) {
     console.error("Error sharing report:", error);
@@ -259,6 +279,9 @@ export const shareReport = async (reportId: string): Promise<ClientReport> => {
 // Function to save report with AI generated data
 export const saveReportWithAIData = async (currentReport: ClientReport, aiReport: any): Promise<ClientReport> => {
   try {
+    console.log("Saving report with AI data:", currentReport.id);
+    console.log("AI report data:", aiReport);
+    
     // Create the updated report object with AI data
     const updatedReport = {
       ...currentReport,
@@ -266,7 +289,8 @@ export const saveReportWithAIData = async (currentReport: ClientReport, aiReport
       analyticsData: {
         ...currentReport.analyticsData,
         aiReport: aiReport
-      }
+      },
+      status: 'draft'
     };
     
     // Update the report in the database
@@ -274,9 +298,52 @@ export const saveReportWithAIData = async (currentReport: ClientReport, aiReport
       .from('client_reports')
       .update({
         content: updatedReport.content,
-        analytics_data: updatedReport.analyticsData
+        analytics_data: updatedReport.analyticsData,
+        status: updatedReport.status
       })
       .eq('id', currentReport.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating report with AI data:", error);
+      throw error;
+    }
+
+    console.log("Report updated successfully:", data);
+
+    return {
+      id: data.id,
+      clientId: data.client_id,
+      title: data.title,
+      date: data.date,
+      type: data.type,
+      content: data.content,
+      url: data.url || "",
+      notes: data.notes || "",
+      documentIds: data.document_ids || [],
+      shareToken: data.share_token,
+      sharedAt: data.shared_at,
+      includeInProposal: data.include_in_proposal || false,
+      analyticsData: data.analytics_data || {},
+      status: data.status
+    };
+  } catch (error) {
+    console.error("Error saving report with AI data:", error);
+    throw error;
+  }
+};
+
+// Function to publish a report
+export const publishReport = async (reportId: string): Promise<ClientReport> => {
+  try {
+    const { data, error } = await supabase
+      .from('client_reports')
+      .update({
+        status: 'published',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', reportId)
       .select()
       .single();
 
@@ -297,10 +364,54 @@ export const saveReportWithAIData = async (currentReport: ClientReport, aiReport
       shareToken: data.share_token,
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
-      analyticsData: data.analytics_data || {}
+      analyticsData: data.analytics_data || {},
+      status: data.status
     };
   } catch (error) {
-    console.error("Error saving report with AI data:", error);
+    console.error("Error publishing report:", error);
+    throw error;
+  }
+};
+
+// Function to get a report by share token
+export const getReportByShareToken = async (shareToken: string): Promise<ClientReport | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('client_reports')
+      .select('*')
+      .eq('share_token', shareToken)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // Record not found
+        return null;
+      }
+      throw error;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return {
+      id: data.id,
+      clientId: data.client_id,
+      title: data.title,
+      date: data.date,
+      type: data.type,
+      content: data.content,
+      url: data.url,
+      notes: data.notes,
+      documentIds: data.document_ids || [],
+      shareToken: data.share_token,
+      sharedAt: data.shared_at,
+      includeInProposal: data.include_in_proposal || false,
+      analyticsData: data.analytics_data || {},
+      status: data.status || 'draft'
+    };
+  } catch (error) {
+    console.error("Error getting report by share token:", error);
     throw error;
   }
 };

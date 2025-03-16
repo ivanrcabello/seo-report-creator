@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Calendar, Filter, Search } from "lucide-react";
+import { FileText, Calendar, Filter, Search, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
@@ -20,25 +20,29 @@ export const AllReports = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [reportTypes, setReportTypes] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  
+  const loadReports = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const allReports = await getAllReports();
+      console.log("Informes cargados:", allReports);
+      setReports(allReports);
+      
+      // Extract unique report types
+      const types = Array.from(new Set(allReports.map(report => report.type)));
+      setReportTypes(types.filter(Boolean) as string[]);
+    } catch (err) {
+      console.error("Error loading reports:", err);
+      setError("No se pudieron cargar los informes. Por favor, inténtalo de nuevo más tarde.");
+      toast.error("No se pudieron cargar los informes.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   useEffect(() => {
-    const loadReports = async () => {
-      try {
-        setIsLoading(true);
-        const allReports = await getAllReports();
-        setReports(allReports);
-        
-        // Extract unique report types
-        const types = Array.from(new Set(allReports.map(report => report.type)));
-        setReportTypes(types.filter(Boolean) as string[]);
-      } catch (error) {
-        console.error("Error loading reports:", error);
-        toast.error("No se pudieron cargar los informes.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     loadReports();
   }, []);
   
@@ -48,6 +52,10 @@ export const AllReports = () => {
     const matchesType = selectedType === "" || report.type === selectedType;
     return matchesSearch && matchesType;
   });
+
+  const handleRetry = () => {
+    loadReports();
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -98,7 +106,15 @@ export const AllReports = () => {
       
       <Card>
         <CardHeader>
-          <CardTitle>Informes ({filteredReports.length})</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Informes ({filteredReports.length})</CardTitle>
+            {!isLoading && (
+              <Button variant="outline" size="sm" onClick={handleRetry} className="flex items-center gap-1">
+                <RefreshCw className="h-4 w-4" />
+                Actualizar
+              </Button>
+            )}
+          </div>
           <CardDescription>Lista completa de informes generados</CardDescription>
         </CardHeader>
         <CardContent>
@@ -109,6 +125,14 @@ export const AllReports = () => {
                 <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
                 <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
               </div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">{error}</p>
+              <Button variant="outline" onClick={handleRetry} className="flex items-center gap-1">
+                <RefreshCw className="h-4 w-4" />
+                Reintentar
+              </Button>
             </div>
           ) : filteredReports.length === 0 ? (
             <div className="text-center py-8">
@@ -130,6 +154,7 @@ export const AllReports = () => {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Fecha</TableHead>
+                  <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acción</TableHead>
                 </TableRow>
               </TableHeader>
@@ -148,6 +173,19 @@ export const AllReports = () => {
                         <Calendar className="h-4 w-4 text-gray-500" />
                         {format(new Date(report.date), "d MMMM yyyy", { locale: es })}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        className={
+                          report.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                          report.status === 'published' ? 'bg-green-100 text-green-800' :
+                          'bg-blue-100 text-blue-800'
+                        }
+                      >
+                        {report.status === 'draft' ? 'Borrador' : 
+                         report.status === 'published' ? 'Publicado' : 
+                         'Compartido'}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <Link to={`/reports/${report.id}`}>

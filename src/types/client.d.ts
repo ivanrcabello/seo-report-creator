@@ -1,30 +1,64 @@
 
-// Client types definitions
-
 export interface Client {
   id: string;
   name: string;
   email: string;
-  phone?: string;
   company?: string;
-  createdAt: string;
-  lastReport?: string;
+  phone?: string;
+  created_at?: string;
+  last_report?: string;
+  is_active?: boolean;
   notes?: string[];
-  documents?: ClientDocument[];
-  analyticsConnected?: boolean;
-  searchConsoleConnected?: boolean;
-  isActive?: boolean;
+  analytics_connected?: boolean;
+  search_console_connected?: boolean;
 }
 
 export interface ClientDocument {
   id: string;
-  clientId: string;
   name: string;
-  type: "pdf" | "doc" | "image" | "text";
+  client_id: string;
   url: string;
-  uploadDate: string;
-  analyzedStatus: "pending" | "analyzed" | "processed" | "error" | "failed";
+  type: string;
+  upload_date: string;
   content?: string;
+  analyzed_status?: 'pending' | 'processing' | 'completed' | 'failed';
+}
+
+export interface ClientKeyword {
+  id: string;
+  client_id: string;
+  keyword: string;
+  position?: number | null;
+  target_position?: number;
+  previous_position?: number | null;
+  date_added?: string;
+  last_updated?: string;
+  search_volume?: number;
+  keyword_difficulty?: number;
+  cpc?: number;
+  traffic?: number;
+  traffic_percentage?: number;
+  traffic_cost?: number;
+  competition?: number;
+  trends?: string;
+  serp_features?: string;
+  keyword_intent?: string;
+  position_type?: string;
+  url?: string;
+  backlinks_count?: number;
+  timestamp?: string;
+}
+
+export interface ClientMetric {
+  id: string;
+  client_id?: string;
+  month: string;
+  web_visits: number;
+  keywords_top10: number;
+  conversions: number;
+  conversion_goal: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ClientReport {
@@ -32,80 +66,48 @@ export interface ClientReport {
   clientId: string;
   title: string;
   date: string;
-  type: "seo" | "performance" | "technical" | "social" | "local-seo" | "seo_report";
+  type: string;
+  content?: string;
   url?: string;
   notes?: string;
-  content: string;
-  documentIds: string[];
-  shareToken?: string | null;
-  sharedAt?: string | null;
-  includeInProposal?: boolean;
-  analyticsData: any;
-  searchConsoleData?: any;
-  auditResult?: any;
-}
-
-export interface SeoContract {
-  id: string;
-  clientId: string;
-  title: string;
-  startDate: string;
-  endDate?: string;
-  phase1Fee: number;
-  monthlyFee: number;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
-  content: {
-    sections: ContractSection[];
-    clientInfo: {
-      name: string;
-      company?: string;
-      address?: string;
-      taxId?: string;
-    };
-    professionalInfo: {
-      name: string;
-      company: string;
-      address: string;
-      taxId: string;
-    };
-  };
-  createdAt: string;
-  updatedAt: string;
-  signedAt?: string;
-  signedByClient: boolean;
-  signedByProfessional: boolean;
-  pdfUrl?: string;
-}
-
-export interface ContractSection {
-  title: string;
-  content: string;
-  order: number;
-}
-
-export interface SeoLocalReport {
-  id: string;
-  clientId: string;
-  title: string;
-  date: string;
-  businessName: string;
-  location?: string;
-  address: string;
-  phone: string | null;
-  website: string | null;
-  googleBusinessUrl?: string | null;
-  googleMapsRanking?: number;
-  googleReviewsCount?: number;
-  directoryListings?: {
-    name: string;
-    listed: boolean;
-    url?: string;
-  }[];
-  recommendations?: string[];
-  keywordRankings?: any;
-  localListings?: any;
+  documentIds?: string[];
   shareToken?: string;
-  sharedAt?: string | null;
+  sharedAt?: string;
+  includeInProposal?: boolean;
+  analyticsData?: any;
+  status?: 'draft' | 'published' | 'shared';
+  auditResult?: any; // Para compatibilidad con versiones anteriores
+}
+
+export interface ClientLocalSEOSettings {
+  id: string;
+  client_id: string;
+  business_name: string;
+  address: string;
+  phone?: string;
+  website?: string;
+  google_business_url?: string;
+  target_locations?: string[];
+  google_reviews_count?: number;
+  google_reviews_average?: number;
+  listings_count?: number;
+  google_maps_ranking?: number;
+  rank_tracking_enabled?: boolean;
+  last_metrics_update?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LocalSEOMetric {
+  id: string;
+  client_id: string;
+  google_maps_ranking?: number;
+  google_reviews_count?: number;
+  google_reviews_average?: number;
+  listings_count?: number;
+  date: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface SeoPack {
@@ -114,8 +116,8 @@ export interface SeoPack {
   description: string;
   price: number;
   features: string[];
-  isActive: boolean;
-  createdAt: string;
+  is_active: boolean;
+  created_at?: string;
 }
 
 export interface Proposal {
@@ -124,54 +126,13 @@ export interface Proposal {
   title: string;
   description: string;
   packId: string;
-  status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  customPrice?: number;
+  customFeatures?: string[];
+  reportIds?: string[];
+  status: string;
+  publicUrl?: string;
   createdAt: string;
   updatedAt: string;
   sentAt?: string;
   expiresAt?: string;
-  customPrice?: number;
-  customFeatures?: string[];
-  reportIds?: string[];
-  publicUrl?: string;
-}
-
-export interface CompanySettings {
-  id: string;
-  companyName: string;
-  taxId: string;
-  address: string;
-  phone?: string;
-  email?: string;
-  logoUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Invoice {
-  id: string;
-  invoiceNumber: string;
-  clientId: string;
-  issueDate: string;
-  dueDate?: string;
-  packId?: string;
-  proposalId?: string;
-  baseAmount: number;
-  taxRate: number;
-  taxAmount: number;
-  totalAmount: number;
-  status: "pending" | "paid" | "cancelled" | "draft";
-  paymentDate?: string;
-  notes?: string;
-  pdfUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ClientSummary {
-  id: string;
-  name: string;
-  email: string;
-  company?: string;
-  createdAt: string | Date;
-  isActive: boolean;
 }

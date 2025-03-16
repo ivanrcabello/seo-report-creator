@@ -16,6 +16,7 @@ export interface ClientKeyword {
 // Get all keywords for a client
 export const getClientKeywords = async (clientId: string): Promise<ClientKeyword[]> => {
   try {
+    console.log("Fetching keywords with client ID:", clientId);
     const { data, error } = await supabase
       .rpc('get_client_keywords', { client_id_param: clientId });
     
@@ -25,6 +26,7 @@ export const getClientKeywords = async (clientId: string): Promise<ClientKeyword
       return [];
     }
     
+    console.log("Keywords fetched successfully:", data);
     return data || [];
   } catch (error) {
     console.error("Exception fetching client keywords:", error);
@@ -37,16 +39,20 @@ export const getClientKeywords = async (clientId: string): Promise<ClientKeyword
 export const addClientKeyword = async (
   clientId: string, 
   keyword: string, 
-  position?: number,
+  position?: number | null,
   targetPosition?: number
 ): Promise<ClientKeyword | null> => {
   try {
+    console.log(`Adding keyword "${keyword}" to client ${clientId}`);
+    console.log("Position:", position, "Type:", typeof position);
+    console.log("Target position:", targetPosition);
+    
     const { data, error } = await supabase
       .from('client_keywords')
       .insert([{
         client_id: clientId,
         keyword: keyword,
-        position: position || null,
+        position: position,
         target_position: targetPosition || 10
       }])
       .select()
@@ -62,6 +68,7 @@ export const addClientKeyword = async (
       return null;
     }
     
+    console.log("Keyword added successfully:", data);
     toast.success(`Palabra clave "${keyword}" añadida correctamente`);
     return data;
   } catch (error) {
@@ -77,6 +84,8 @@ export const updateClientKeyword = async (
   updates: Partial<ClientKeyword>
 ): Promise<ClientKeyword | null> => {
   try {
+    console.log(`Updating keyword ${keywordId}:`, updates);
+    
     // Store the previous position before updating
     if (updates.position !== undefined) {
       const { data: currentData } = await supabase
@@ -103,6 +112,7 @@ export const updateClientKeyword = async (
       return null;
     }
     
+    console.log("Keyword updated successfully:", data);
     toast.success("Palabra clave actualizada correctamente");
     return data;
   } catch (error) {
@@ -115,6 +125,7 @@ export const updateClientKeyword = async (
 // Delete a keyword
 export const deleteClientKeyword = async (keywordId: string): Promise<boolean> => {
   try {
+    console.log(`Deleting keyword ${keywordId}`);
     const { error } = await supabase
       .from('client_keywords')
       .delete()
@@ -126,6 +137,7 @@ export const deleteClientKeyword = async (keywordId: string): Promise<boolean> =
       return false;
     }
     
+    console.log("Keyword deleted successfully");
     toast.success("Palabra clave eliminada correctamente");
     return true;
   } catch (error) {

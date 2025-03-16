@@ -40,8 +40,14 @@ export const useClientKeywords = (clientId: string) => {
     }
   };
 
-  const handleAddKeyword = async (keyword: string, position?: number, targetPosition?: number) => {
+  const handleAddKeyword = async (keyword: string, position?: number | null, targetPosition?: number) => {
     try {
+      if (!clientId) {
+        throw new Error("No se ha proporcionado un ID de cliente");
+      }
+      
+      console.log(`Adding keyword "${keyword}" with position ${position} and target ${targetPosition} for client ${clientId}`);
+      
       setIsSaving(true);
       setError(null);
       
@@ -49,11 +55,17 @@ export const useClientKeywords = (clientId: string) => {
         throw new Error("La palabra clave es obligatoria");
       }
       
-      const newKeyword = await addClientKeyword(clientId, keyword, position, targetPosition);
+      // Convert position to null if it's 0 to match the expected behavior in the database
+      const posToSend = position === 0 ? null : position;
+      
+      const newKeyword = await addClientKeyword(clientId, keyword, posToSend, targetPosition || 10);
+      console.log("New keyword added:", newKeyword);
       
       if (newKeyword) {
         setKeywords(prevKeywords => [...prevKeywords, newKeyword]);
       }
+      
+      return newKeyword;
     } catch (error) {
       console.error("Error adding client keyword:", error);
       
@@ -63,6 +75,7 @@ export const useClientKeywords = (clientId: string) => {
       }
       
       setError(errorMessage);
+      throw error;
     } finally {
       setIsSaving(false);
     }
@@ -73,13 +86,23 @@ export const useClientKeywords = (clientId: string) => {
       setIsSaving(true);
       setError(null);
       
+      console.log(`Updating keyword ${keywordId} with:`, updates);
+      
+      // Handle position specifically to convert 0 to null
+      if (updates.position === 0) {
+        updates.position = null;
+      }
+      
       const updatedKeyword = await updateClientKeyword(keywordId, updates);
+      console.log("Keyword updated:", updatedKeyword);
       
       if (updatedKeyword) {
         setKeywords(prevKeywords => 
           prevKeywords.map(kw => kw.id === keywordId ? updatedKeyword : kw)
         );
       }
+      
+      return updatedKeyword;
     } catch (error) {
       console.error("Error updating client keyword:", error);
       
@@ -89,6 +112,7 @@ export const useClientKeywords = (clientId: string) => {
       }
       
       setError(errorMessage);
+      throw error;
     } finally {
       setIsSaving(false);
     }
@@ -99,11 +123,14 @@ export const useClientKeywords = (clientId: string) => {
       setIsSaving(true);
       setError(null);
       
+      console.log(`Deleting keyword ${keywordId}`);
       const success = await deleteClientKeyword(keywordId);
       
       if (success) {
         setKeywords(prevKeywords => prevKeywords.filter(kw => kw.id !== keywordId));
       }
+      
+      return success;
     } catch (error) {
       console.error("Error deleting client keyword:", error);
       
@@ -113,6 +140,7 @@ export const useClientKeywords = (clientId: string) => {
       }
       
       setError(errorMessage);
+      throw error;
     } finally {
       setIsSaving(false);
     }

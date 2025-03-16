@@ -1,4 +1,3 @@
-
 import { ClientSummary } from "@/types/client";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +31,8 @@ export const OverviewTab = ({
   contractStats, 
   clientSummaries 
 }: OverviewTabProps) => {
+  const [clients, setClients] = useState<ClientSummary[]>([]);
+
   return (
     <div className="space-y-6">
       {/* Estadísticas del Dashboard */}

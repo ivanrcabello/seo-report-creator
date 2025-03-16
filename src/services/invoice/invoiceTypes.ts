@@ -1,4 +1,9 @@
 
+import { Client } from "@/types/client";
+
+/**
+ * Invoice type interface
+ */
 export interface Invoice {
   id: string;
   invoiceNumber: string;
@@ -14,7 +19,7 @@ export interface Invoice {
   totalAmount: number;
   status: "pending" | "paid" | "cancelled" | "draft";
   paymentDate?: string;
-  paidAt?: string; // Added for compatibility with forms
+  paidAt?: string; // Added for compatibility
   notes?: string;
   pdfUrl?: string;
   createdAt: string;

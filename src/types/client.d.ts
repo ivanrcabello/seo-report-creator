@@ -1,4 +1,3 @@
-
 // Client types definitions
 
 export interface Client {
@@ -32,15 +31,15 @@ export interface ClientReport {
   clientId: string;
   title: string;
   date: string;
-  type: "seo" | "performance" | "technical" | "social" | "local-seo";
+  type: "seo" | "performance" | "technical" | "social" | "local-seo" | "seo_report";
   url?: string;
   notes?: string;
-  content?: string; // For storing formatted report
+  content: string; // Changed from optional to required
   documentIds: string[];
   shareToken?: string | null;
   sharedAt?: string | null;
   includeInProposal?: boolean;
-  analyticsData?: any;
+  analyticsData: any; // Changed from optional to required
   searchConsoleData?: any;
   auditResult?: any;
 }

@@ -1,4 +1,3 @@
-
 import { ClientDocument } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -128,14 +127,11 @@ export const extractFileContent = async (file: File): Promise<string> => {
   if (fileType === "pdf") {
     // For PDFs, we'll use the existing pdfToText functionality
     const { pdfToText } = await import("@/services/pdfAnalyzer");
-    const fileURL = URL.createObjectURL(file);
     try {
-      return await pdfToText(fileURL);
+      return await pdfToText(file);
     } catch (error) {
       console.error("Error extracting text from PDF:", error);
       return "";
-    } finally {
-      URL.revokeObjectURL(fileURL);
     }
   }
   

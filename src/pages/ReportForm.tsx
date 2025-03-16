@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { addReport, updateReport, getReport } from "@/services/reportService";
@@ -41,7 +40,6 @@ const ReportForm = () => {
   const [report, setReport] = useState<ClientReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Handle date selection with proper typing
   const handleDateSelect = (selectedDate: Date | Date[] | undefined) => {
     if (selectedDate instanceof Date) {
       setDate(selectedDate);
@@ -54,7 +52,6 @@ const ReportForm = () => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        // Cargar el informe si estamos editando
         if (id) {
           const reportData = await getReport(id);
           if (reportData) {
@@ -72,11 +69,9 @@ const ReportForm = () => {
           }
         }
         
-        // Cargar clientes
         const clientsData = await getClients();
         setClients(clientsData);
         
-        // Si estamos creando un nuevo informe y tenemos un cliente preseleccionado
         if (clientIdParam && !id) {
           setClientId(clientIdParam);
         }
@@ -106,23 +101,23 @@ const ReportForm = () => {
       type,
       url,
       notes,
+      content: "",
       documentIds: [],
       shareToken: null,
       sharedAt: null,
-      includeInProposal: false
+      includeInProposal: false,
+      analyticsData: {}
     };
 
     try {
       setIsLoading(true);
       if (id) {
-        // Actualizar informe existente
         if (report) {
           const updatedReport: ClientReport = { ...report, ...reportData };
           await updateReport(updatedReport);
           toast.success("Informe actualizado correctamente");
         }
       } else {
-        // Crear nuevo informe
         await addReport(reportData);
         toast.success("Informe creado correctamente");
       }

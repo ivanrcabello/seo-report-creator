@@ -43,12 +43,13 @@ const ReportShare = () => {
           type: reportData.type,
           url: reportData.url,
           notes: reportData.notes,
+          content: reportData.content || "", // Ensure content is always defined
           documentIds: reportData.document_ids || [],
           shareToken: reportData.share_token,
           sharedAt: reportData.shared_at,
           includeInProposal: reportData.include_in_proposal,
-          // Añadimos los datos de análisis si existen
-          analyticsData: reportData.analytics_data,
+          // Ensure analytics data is always defined
+          analyticsData: reportData.analytics_data || {},
           searchConsoleData: reportData.search_console_data,
           auditResult: reportData.audit_result
         };

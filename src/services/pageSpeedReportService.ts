@@ -26,6 +26,7 @@ export const generatePageSpeedReport = async (
       shareToken: uuidv4(),
       sharedAt: null,
       includeInProposal: false,
+      analyticsData: {}, // Add empty object to satisfy the type requirement
       auditResult: {
         url: report.metrics.url || "",
         seoScore: report.metrics.seo_score,

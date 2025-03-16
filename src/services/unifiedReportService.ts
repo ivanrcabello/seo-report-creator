@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClientReport } from "@/types/client";
 import { PageSpeedReport } from "@/services/pageSpeedService";
@@ -56,7 +55,7 @@ export const generateUnifiedReport = async (data: UnifiedReportData): Promise<Cl
       performanceResults: {
         pageSpeed: {
           desktop: data.pageSpeedData?.metrics.performance_score || 0,
-          mobile: data.pageSpeedData?.metrics.performance_score_mobile || 0
+          mobile: data.pageSpeedData?.metrics.performance_score || 0
         },
         loadTime: '2.5s',
         resourceCount: 35,
@@ -155,8 +154,8 @@ export const generateUnifiedReport = async (data: UnifiedReportData): Promise<Cl
       title: savedReport.title,
       date: savedReport.date,
       type: savedReport.type,
-      content: savedReport.content || "", // Handle null content
-      analyticsData: savedReport.analytics_data || {}, // Handle null analytics_data
+      content: savedReport.content || "", // Ensure content is always defined
+      analyticsData: savedReport.analytics_data || {}, // Ensure analytics_data is always defined
       documentIds: savedReport.document_ids || [],
       shareToken: savedReport.share_token,
       sharedAt: savedReport.shared_at,

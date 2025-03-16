@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Client } from "@/types/client";
+import { Client, SeoLocalReport } from "@/types/client";
 import { getClient } from "@/services/clientService";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
@@ -12,7 +12,9 @@ import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
+import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
 import { toast } from "sonner";
+import { getLocalSeoReports } from "@/services/localSeoService";
 
 export default function ClientDetail() {
   // Extract the client ID from the URL parameter
@@ -23,6 +25,11 @@ export default function ClientDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
+  
+  // Local SEO states
+  const [localSeoReports, setLocalSeoReports] = useState<SeoLocalReport[]>([]);
+  const [currentLocalSeoReport, setCurrentLocalSeoReport] = useState<SeoLocalReport | null>(null);
+  const [isGeneratingLocalSeoReport, setIsGeneratingLocalSeoReport] = useState(false);
   
   console.log("ClientDetail component loaded with id from useParams:", clientId);
   console.log("Using clientId:", id);
@@ -51,8 +58,21 @@ export default function ClientDetail() {
         setIsLoading(false);
       }
     };
+    
+    const fetchLocalSeoReports = async () => {
+      try {
+        const reports = await getLocalSeoReports(id);
+        setLocalSeoReports(reports);
+        if (reports.length > 0) {
+          setCurrentLocalSeoReport(reports[0]);
+        }
+      } catch (e) {
+        console.error("Error fetching local SEO reports:", e);
+      }
+    };
 
     fetchClient();
+    fetchLocalSeoReports();
   }, [id]);
 
   const handleUpdateClient = (updatedClient: Client) => {
@@ -96,6 +116,7 @@ export default function ClientDetail() {
           <TabsTrigger value="proposals">Propuestas</TabsTrigger>
           <TabsTrigger value="contract">Contrato</TabsTrigger>
           <TabsTrigger value="report">Informe</TabsTrigger>
+          <TabsTrigger value="local-seo">SEO Local</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
@@ -123,6 +144,16 @@ export default function ClientDetail() {
         
         <TabsContent value="report">
           <PdfUploadTab clientName={client.name} onAnalysisComplete={() => {}} />
+        </TabsContent>
+        
+        <TabsContent value="local-seo">
+          <LocalSeoTab 
+            isGeneratingReport={isGeneratingLocalSeoReport} 
+            localSeoReports={localSeoReports}
+            currentLocalSeoReport={currentLocalSeoReport}
+            setCurrentLocalSeoReport={setCurrentLocalSeoReport}
+            setActiveTab={setActiveTab}
+          />
         </TabsContent>
       </Tabs>
     </div>

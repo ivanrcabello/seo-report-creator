@@ -25,14 +25,21 @@ import { GeneralInfoTab } from "./form/GeneralInfoTab";
 import { PartiesTab } from "./form/PartiesTab";
 import { SectionsTab } from "./form/SectionsTab";
 
-export const ContractForm = () => {
-  const { id, clientId } = useParams<{ id: string; clientId: string }>();
+interface ContractFormProps {
+  clientId?: string;
+}
+
+export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sections, setSections] = useState<ContractSection[]>([]);
+
+  // Use either the prop clientId or the one from URL params
+  const clientId = propClientId || useParams<{ clientId: string }>().clientId;
 
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractFormSchema),

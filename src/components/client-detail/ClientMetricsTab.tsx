@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { getClientMetrics, updateClientMetrics, ClientMetric } from "@/services/clientMetricsService";
 import { getPageSpeedReport } from "@/services/pageSpeedService";
@@ -8,7 +7,7 @@ import { LoadingState } from "./metrics/LoadingState";
 import { ErrorAlert } from "./metrics/ErrorAlert";
 import { PageSpeedSection } from "./metrics/PageSpeedSection";
 import { KeywordsSection } from "./metrics/KeywordsSection";
-import { LocalSeoMetrics } from "./metrics/LocalSeoMetrics";
+import { LocalSeoMetrics } from "./metrics/local-seo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";

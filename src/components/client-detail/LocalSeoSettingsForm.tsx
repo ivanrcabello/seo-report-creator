@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Globe, Building, Phone, Save, Plus, X, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { saveLocalSeoSettings, getLocalSeoSettings } from "@/services/localSeoService";
 
 interface LocalSeoSettings {
   id?: string;
@@ -47,21 +47,19 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   
   useEffect(() => {
-    fetchSettings();
+    if (clientId && clientId.trim() !== '') {
+      fetchSettings();
+    } else {
+      console.error("Invalid clientId provided to LocalSeoSettingsForm");
+      setIsLoading(false);
+    }
   }, [clientId]);
   
   const fetchSettings = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('client_local_seo_settings')
-        .select('*')
-        .eq('client_id', clientId)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') { // PGRST116 is the error code for "no rows returned"
-        throw error;
-      }
+      console.log("Fetching settings for client ID:", clientId);
+      const data = await getLocalSeoSettings(clientId);
       
       if (data) {
         setSettings({
@@ -74,6 +72,13 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
           googleBusinessUrl: data.google_business_url || "",
           targetLocations: data.target_locations || []
         });
+      } else {
+        // Set client ID and name for new settings
+        setSettings(prev => ({
+          ...prev,
+          clientId,
+          businessName: clientName
+        }));
       }
     } catch (error) {
       console.error("Error fetching local SEO settings:", error);
@@ -123,60 +128,40 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
     setIsSaving(true);
     
     try {
-      const dataToSave = {
-        client_id: settings.clientId,
-        business_name: settings.businessName,
-        address: settings.address,
-        phone: settings.phone || null,
-        website: settings.website || null,
-        google_business_url: settings.googleBusinessUrl || null,
-        target_locations: settings.targetLocations
+      if (!clientId || clientId.trim() === '') {
+        throw new Error("Client ID is required");
+      }
+      
+      // Make sure clientId is set correctly before saving
+      const settingsToSave = {
+        ...settings,
+        clientId
       };
       
-      let result;
+      console.log("Saving settings:", settingsToSave);
+      const result = await saveLocalSeoSettings(settingsToSave);
       
-      if (settings.id) {
-        // Update existing record
-        const { data, error } = await supabase
-          .from('client_local_seo_settings')
-          .update(dataToSave)
-          .eq('id', settings.id)
-          .select()
-          .single();
-          
-        if (error) throw error;
-        result = data;
-      } else {
-        // Insert new record
-        const { data, error } = await supabase
-          .from('client_local_seo_settings')
-          .insert(dataToSave)
-          .select()
-          .single();
-          
-        if (error) throw error;
-        result = data;
-        
-        // Update state with the new id
+      if (result) {
+        // Update state with the new id if this was a new record
         setSettings(prev => ({
           ...prev,
           id: result.id
         }));
-      }
-      
-      toast.success("Local SEO settings saved successfully");
-      
-      if (onSave) {
-        onSave({
-          id: result.id,
-          clientId: result.client_id,
-          businessName: result.business_name,
-          address: result.address,
-          phone: result.phone,
-          website: result.website,
-          googleBusinessUrl: result.google_business_url,
-          targetLocations: result.target_locations
-        });
+        
+        toast.success("Local SEO settings saved successfully");
+        
+        if (onSave) {
+          onSave({
+            id: result.id,
+            clientId: result.client_id,
+            businessName: result.business_name,
+            address: result.address,
+            phone: result.phone,
+            website: result.website,
+            googleBusinessUrl: result.google_business_url,
+            targetLocations: result.target_locations
+          });
+        }
       }
     } catch (error) {
       console.error("Error saving local SEO settings:", error);
@@ -349,7 +334,7 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
         <CardFooter className="border-t pt-4 flex justify-end">
           <Button 
             type="submit" 
-            disabled={isSaving || !settings.businessName || !settings.address}
+            disabled={isSaving || !settings.businessName || !settings.address || !clientId}
             className="bg-gradient-to-r from-seo-blue to-seo-purple hover:opacity-90"
           >
             {isSaving ? (

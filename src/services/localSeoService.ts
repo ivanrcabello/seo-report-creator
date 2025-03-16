@@ -8,6 +8,12 @@ import { SeoLocalReport } from '@/types/client';
  */
 export async function getLocalSeoReports(clientId: string): Promise<SeoLocalReport[]> {
   try {
+    // Validate clientId before querying
+    if (!clientId || clientId.trim() === '') {
+      console.error('Invalid clientId provided to getLocalSeoReports');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('seo_local_reports')
       .select('*')
@@ -55,6 +61,11 @@ export async function generateLocalSeoAnalysis(
   clientName: string
 ) {
   try {
+    // Validate clientId
+    if (!clientId || clientId.trim() === '') {
+      throw new Error('Invalid clientId provided to generateLocalSeoAnalysis');
+    }
+    
     // Notify the user that we're starting the AI analysis
     console.log('Generating local SEO analysis...');
     
@@ -120,6 +131,11 @@ export async function createLocalSeoReport(
   clientName: string
 ): Promise<SeoLocalReport> {
   try {
+    // Validate clientId
+    if (!clientId || clientId.trim() === '') {
+      throw new Error('Invalid clientId provided to createLocalSeoReport');
+    }
+    
     const reportId = uuidv4();
     const reportData = {
       id: reportId,
@@ -184,6 +200,12 @@ export async function updateLocalSeoReport(
   updates: Partial<SeoLocalReport>
 ): Promise<boolean> {
   try {
+    // Validate reportId
+    if (!reportId || reportId.trim() === '') {
+      console.error('Invalid reportId provided to updateLocalSeoReport');
+      return false;
+    }
+    
     // Convert application model to DB structure
     const reportData: Record<string, any> = {};
     
@@ -221,13 +243,21 @@ export async function updateLocalSeoReport(
  */
 export async function getLocalSeoSettings(clientId: string) {
   try {
+    // Validate clientId before querying
+    if (!clientId || clientId.trim() === '') {
+      console.error('Invalid clientId provided to getLocalSeoSettings');
+      return null;
+    }
+    
+    console.log('Fetching local SEO settings for client:', clientId);
+    
     const { data, error } = await supabase
       .from('client_local_seo_settings')
       .select('*')
       .eq('client_id', clientId)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error when no row is found
       
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+    if (error) {
       console.error('Error fetching local SEO settings:', error);
       throw error;
     }
@@ -257,6 +287,14 @@ export async function saveLocalSeoSettings(settings: {
   listingsCount?: number;
 }) {
   try {
+    // Validate clientId
+    if (!settings.clientId || settings.clientId.trim() === '') {
+      console.error('Invalid clientId provided to saveLocalSeoSettings');
+      throw new Error('Client ID is required');
+    }
+    
+    console.log('Saving local SEO settings for client:', settings.clientId);
+    
     const dataToSave = {
       client_id: settings.clientId,
       business_name: settings.businessName,
@@ -275,6 +313,7 @@ export async function saveLocalSeoSettings(settings: {
     
     if (settings.id) {
       // Update existing record
+      console.log('Updating existing settings with ID:', settings.id);
       const { data, error } = await supabase
         .from('client_local_seo_settings')
         .update(dataToSave)
@@ -286,6 +325,7 @@ export async function saveLocalSeoSettings(settings: {
       result = data;
     } else {
       // Insert new record
+      console.log('Inserting new settings for client:', settings.clientId);
       const { data, error } = await supabase
         .from('client_local_seo_settings')
         .insert(dataToSave)
@@ -308,6 +348,12 @@ export async function saveLocalSeoSettings(settings: {
  */
 export async function getLocalSeoMetricsHistory(clientId: string) {
   try {
+    // Validate clientId
+    if (!clientId || clientId.trim() === '') {
+      console.error('Invalid clientId provided to getLocalSeoMetricsHistory');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('local_seo_metrics')
       .select('*')
@@ -339,6 +385,12 @@ export async function saveLocalSeoMetrics(
   }
 ) {
   try {
+    // Validate clientId
+    if (!clientId || clientId.trim() === '') {
+      console.error('Invalid clientId provided to saveLocalSeoMetrics');
+      return false;
+    }
+    
     const { error } = await supabase
       .from('local_seo_metrics')
       .insert({

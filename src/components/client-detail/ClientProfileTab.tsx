@@ -7,7 +7,7 @@ import { es } from "date-fns/locale";
 import { User, Mail, Phone, Building, Calendar, FileText, Award, AlertCircle, BarChart2, Check, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 
 interface ClientProfileTabProps {
@@ -16,6 +16,9 @@ interface ClientProfileTabProps {
 }
 
 export const ClientProfileTab: React.FC<ClientProfileTabProps> = ({ client, onSave }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   // Calculate client tenure in months
   const calculateTenure = () => {
     const startDate = new Date(client.createdAt);
@@ -26,6 +29,12 @@ export const ClientProfileTab: React.FC<ClientProfileTabProps> = ({ client, onSa
   };
 
   const clientTenure = calculateTenure();
+  
+  // Function to navigate to metrics tab
+  const handleNavigateToMetrics = () => {
+    const baseUrl = location.pathname;
+    navigate(`${baseUrl}?tab=metrics`);
+  };
   
   return (
     <div className="space-y-8">
@@ -194,13 +203,11 @@ export const ClientProfileTab: React.FC<ClientProfileTabProps> = ({ client, onSa
           <div className="mt-8 flex justify-end">
             <Button 
               variant="outline" 
-              className="flex items-center gap-2 text-seo-blue hover:bg-blue-50 shadow-sm"
-              asChild
+              className="flex items-center gap-2 text-seo-blue hover:bg-blue-50 shadow-sm transition-all"
+              onClick={handleNavigateToMetrics}
             >
-              <Link to="?tab=metrics">
-                <BarChart2 className="h-4 w-4" />
-                Ver métricas detalladas
-              </Link>
+              <BarChart2 className="h-4 w-4" />
+              Ver métricas detalladas
             </Button>
           </div>
         </CardContent>

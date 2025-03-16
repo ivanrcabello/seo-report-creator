@@ -1,20 +1,37 @@
 
 import { useState, useEffect } from "react";
 import { MetricsCard } from "./MetricsCard";
-import { MapPin, Store, Award, Search, RefreshCcw, Globe, Phone } from "lucide-react";
+import { MapPin, Store, Award, Search, RefreshCcw, Globe, Phone, Star, PlusCircle, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SeoLocalReport } from "@/types/client";
-import { getLocalSeoReports, getLocalSeoSettings } from "@/services/localSeoService";
+import { getLocalSeoReports, getLocalSeoSettings, saveLocalSeoSettings } from "@/services/localSeoService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LocalSeoMetricsProps {
   clientId: string;
   clientName: string;
 }
+
+// Form schema for quick metrics update
+const localSeoMetricsSchema = z.object({
+  googleMapsRanking: z.coerce.number().min(0).max(100).optional(),
+  googleReviewsCount: z.coerce.number().min(0).optional(),
+  googleReviewsAverage: z.coerce.number().min(0).max(5).optional(),
+  listingsCount: z.coerce.number().min(0).optional(),
+});
+
+type LocalSeoMetricsFormValues = z.infer<typeof localSeoMetricsSchema>;
 
 export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -22,11 +39,36 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
   const [currentReport, setCurrentReport] = useState<SeoLocalReport | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [localSeoSettings, setLocalSeoSettings] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Setup form
+  const form = useForm<LocalSeoMetricsFormValues>({
+    resolver: zodResolver(localSeoMetricsSchema),
+    defaultValues: {
+      googleMapsRanking: 0,
+      googleReviewsCount: 0,
+      googleReviewsAverage: 0,
+      listingsCount: 0,
+    },
+  });
   
   useEffect(() => {
     loadReports();
     loadSettings();
   }, [clientId]);
+  
+  useEffect(() => {
+    // Update form values when settings load
+    if (localSeoSettings) {
+      form.reset({
+        googleMapsRanking: localSeoSettings.google_maps_ranking || 0,
+        googleReviewsCount: localSeoSettings.google_reviews_count || 0,
+        googleReviewsAverage: localSeoSettings.google_reviews_average || 0,
+        listingsCount: localSeoSettings.listings_count || 0,
+      });
+    }
+  }, [localSeoSettings, form]);
   
   const loadReports = async () => {
     setIsLoading(true);
@@ -39,7 +81,6 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       }
     } catch (error) {
       console.error("Error loading local SEO reports:", error);
-      toast.error("Error al cargar informes de SEO Local");
     } finally {
       setIsLoading(false);
     }
@@ -61,8 +102,53 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       toast.success("Datos de SEO Local actualizados");
     } catch (error) {
       console.error("Error refreshing local SEO data:", error);
+      toast.error("Error al actualizar datos de SEO Local");
     } finally {
       setIsRefreshing(false);
+    }
+  };
+  
+  // Save metrics function
+  const onSubmit = async (data: LocalSeoMetricsFormValues) => {
+    setIsSaving(true);
+    try {
+      // Use current settings as base and update with new metrics
+      const settingsToSave = {
+        id: localSeoSettings?.id,
+        clientId: clientId,
+        businessName: localSeoSettings?.business_name || clientName,
+        address: localSeoSettings?.address || "",
+        phone: localSeoSettings?.phone || null,
+        website: localSeoSettings?.website || null,
+        googleBusinessUrl: localSeoSettings?.google_business_url || null,
+        targetLocations: localSeoSettings?.target_locations || [],
+        googleMapsRanking: data.googleMapsRanking,
+        googleReviewsCount: data.googleReviewsCount,
+        googleReviewsAverage: data.googleReviewsAverage,
+        listingsCount: data.listingsCount,
+      };
+      
+      // Save to settings
+      await saveLocalSeoSettings(settingsToSave);
+      
+      // Also record historical metrics in local_seo_metrics table
+      const { error } = await supabase.from('local_seo_metrics').insert({
+        client_id: clientId,
+        google_maps_ranking: data.googleMapsRanking,
+        google_reviews_count: data.googleReviewsCount,
+        google_reviews_average: data.googleReviewsAverage,
+        listings_count: data.listingsCount,
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Métricas SEO local guardadas correctamente");
+      refreshData();
+    } catch (error) {
+      console.error("Error saving local SEO metrics:", error);
+      toast.error("Error al guardar métricas de SEO Local");
+    } finally {
+      setIsSaving(false);
     }
   };
   
@@ -110,6 +196,10 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
   const website = currentReport?.website || localSeoSettings?.website;
   const googleBusinessUrl = currentReport?.googleBusinessUrl || localSeoSettings?.google_business_url;
   const targetLocations = localSeoSettings?.target_locations || [];
+  const googleMapsRanking = currentReport?.googleMapsRanking || localSeoSettings?.google_maps_ranking || 0;
+  const googleReviewsCount = currentReport?.googleReviewsCount || localSeoSettings?.google_reviews_count || 0;
+  const googleReviewsAverage = localSeoSettings?.google_reviews_average || 0;
+  const listingsCount = localSeoSettings?.listings_count || 0;
   
   return (
     <>
@@ -128,129 +218,290 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
           </Button>
         }
       >
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4 border">
-              <h3 className="text-md font-medium mb-3 flex items-center gap-2">
-                <Store className="h-4 w-4" />
-                Negocio
-              </h3>
-              <p className="text-lg font-semibold">{businessName}</p>
-              <p className="text-gray-600">{location}</p>
-              
-              <div className="mt-3 space-y-1">
-                {phone && (
-                  <p className="text-gray-600 text-sm flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5 text-gray-400" />
-                    {phone}
-                  </p>
-                )}
-                
-                {website && (
-                  <p className="text-gray-600 text-sm flex items-center gap-1.5">
-                    <Globe className="h-3.5 w-3.5 text-gray-400" />
-                    <a href={website.startsWith('http') ? website : `https://${website}`} 
-                       target="_blank" 
-                       rel="noopener noreferrer"
-                       className="text-blue-600 hover:underline truncate max-w-[180px]">
-                      {website.replace(/^https?:\/\//, '')}
-                    </a>
-                  </p>
-                )}
-                
-                {googleBusinessUrl && (
-                  <p className="text-gray-600 text-sm flex items-center gap-1.5">
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Google_My_Business_Logo.svg/512px-Google_My_Business_Logo.svg.png" 
-                      alt="Google My Business" 
-                      className="h-3.5 w-3.5" 
-                    />
-                    <a href={googleBusinessUrl} 
-                       target="_blank" 
-                       rel="noopener noreferrer"
-                       className="text-blue-600 hover:underline">
-                      Perfil de Google Business
-                    </a>
-                  </p>
-                )}
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4 border">
-              <h3 className="text-md font-medium mb-2 flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Google Maps
-              </h3>
-              {currentReport?.googleMapsRanking ? (
-                <div className="text-center">
-                  <span className="text-3xl font-bold text-seo-blue">
-                    #{currentReport.googleMapsRanking}
-                  </span>
-                  <p className="text-gray-600 mt-1">Posición en Google Maps</p>
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="overview">Visión General</TabsTrigger>
+            <TabsTrigger value="metrics">Actualizar Métricas</TabsTrigger>
+            {currentReport?.keywordRankings && currentReport.keywordRankings.length > 0 && (
+              <TabsTrigger value="keywords">Palabras Clave</TabsTrigger>
+            )}
+          </TabsList>
+          
+          <TabsContent value="overview">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4 border">
+                  <h3 className="text-md font-medium mb-3 flex items-center gap-2">
+                    <Store className="h-4 w-4" />
+                    Negocio
+                  </h3>
+                  <p className="text-lg font-semibold">{businessName}</p>
+                  <p className="text-gray-600">{location}</p>
+                  
+                  <div className="mt-3 space-y-1">
+                    {phone && (
+                      <p className="text-gray-600 text-sm flex items-center gap-1.5">
+                        <Phone className="h-3.5 w-3.5 text-gray-400" />
+                        {phone}
+                      </p>
+                    )}
+                    
+                    {website && (
+                      <p className="text-gray-600 text-sm flex items-center gap-1.5">
+                        <Globe className="h-3.5 w-3.5 text-gray-400" />
+                        <a href={website.startsWith('http') ? website : `https://${website}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline truncate max-w-[180px]">
+                          {website.replace(/^https?:\/\//, '')}
+                        </a>
+                      </p>
+                    )}
+                    
+                    {googleBusinessUrl && (
+                      <p className="text-gray-600 text-sm flex items-center gap-1.5">
+                        <img 
+                          src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Google_My_Business_Logo.svg/512px-Google_My_Business_Logo.svg.png" 
+                          alt="Google My Business" 
+                          className="h-3.5 w-3.5" 
+                        />
+                        <a href={googleBusinessUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline">
+                          Perfil de Google Business
+                        </a>
+                      </p>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <p className="text-gray-600 italic">No hay datos de ranking en Google Maps</p>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Google Maps
+                    </h3>
+                    <div className="text-center">
+                      <span className="text-2xl font-bold text-seo-blue">
+                        #{googleMapsRanking || "N/A"}
+                      </span>
+                      <p className="text-xs text-gray-600 mt-1">Posición</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Star className="h-4 w-4" />
+                      Reseñas
+                    </h3>
+                    <div className="text-center">
+                      <span className="text-2xl font-bold text-amber-500">
+                        {googleReviewsCount || "0"}
+                      </span>
+                      <p className="text-xs text-gray-600 mt-1">Total</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Star className="h-4 w-4" />
+                      Puntuación
+                    </h3>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center">
+                        <span className="text-2xl font-bold text-amber-500 mr-1">
+                          {googleReviewsAverage.toFixed(1) || "0.0"}
+                        </span>
+                        <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">Promedio</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      Directorios
+                    </h3>
+                    <div className="text-center">
+                      <span className="text-2xl font-bold text-indigo-500">
+                        {listingsCount || "0"}
+                      </span>
+                      <p className="text-xs text-gray-600 mt-1">Listados</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {targetLocations && targetLocations.length > 0 && (
+                <div className="bg-white rounded-lg p-4 border">
+                  <h3 className="text-md font-medium mb-3 flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Ubicaciones objetivo
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {targetLocations.map((location: string, index: number) => (
+                      <Badge key={index} variant="outline" className="py-1">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {location}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {currentReport?.recommendations && currentReport.recommendations.length > 0 && (
+                <div className="bg-white rounded-lg p-4 border">
+                  <h3 className="text-md font-medium mb-4 flex items-center gap-2">
+                    <Award className="h-4 w-4" />
+                    Recomendaciones
+                  </h3>
+                  <ul className="list-disc pl-5 space-y-2">
+                    {currentReport.recommendations.map((rec: string, index: number) => (
+                      <li key={index}>{rec}</li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
-          </div>
+          </TabsContent>
           
-          {targetLocations && targetLocations.length > 0 && (
-            <div className="bg-white rounded-lg p-4 border">
-              <h3 className="text-md font-medium mb-3 flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Ubicaciones objetivo
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {targetLocations.map((location: string, index: number) => (
-                  <Badge key={index} variant="outline" className="py-1">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {location}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {currentReport?.keywordRankings && currentReport.keywordRankings.length > 0 && (
-            <div className="bg-white rounded-lg p-4 border">
-              <h3 className="text-md font-medium mb-4 flex items-center gap-2">
-                <Search className="h-4 w-4" />
-                Palabras Clave Locales
-              </h3>
-              <div className="space-y-4">
-                {currentReport.keywordRankings.map((kw: any, index: number) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="font-medium">{kw.keyword}</span>
-                      <span className={
-                        kw.position <= 3 ? "text-green-600 font-semibold" : 
-                        kw.position <= 10 ? "text-amber-600 font-semibold" : 
-                        "text-gray-600"
-                      }>
-                        {kw.position === 0 ? "No posicionada" : `#${kw.position}`}
-                      </span>
+          <TabsContent value="metrics">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Actualizar Métricas SEO Local</CardTitle>
+                <CardDescription>
+                  Mantén actualizadas las métricas de SEO local para este cliente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="googleMapsRanking"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Posición en Google Maps</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                placeholder="Ej: 3" 
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="googleReviewsCount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Número de Reseñas en Google</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                placeholder="Ej: 25" 
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="googleReviewsAverage"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Puntuación Media (0-5)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                placeholder="Ej: 4.5" 
+                                step="0.1"
+                                min="0"
+                                max="5"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="listingsCount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Número de Directorios</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                placeholder="Ej: 10" 
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                    <Progress value={kw.position === 0 ? 0 : Math.max(5, 100 - (kw.position * 5))} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Guardar Métricas
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
           
-          {currentReport?.recommendations && currentReport.recommendations.length > 0 && (
-            <div className="bg-white rounded-lg p-4 border">
-              <h3 className="text-md font-medium mb-4 flex items-center gap-2">
-                <Award className="h-4 w-4" />
-                Recomendaciones
-              </h3>
-              <ul className="list-disc pl-5 space-y-2">
-                {currentReport.recommendations.map((rec: string, index: number) => (
-                  <li key={index}>{rec}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+          <TabsContent value="keywords">
+            {currentReport?.keywordRankings && currentReport.keywordRankings.length > 0 && (
+              <div className="bg-white rounded-lg p-4 border">
+                <h3 className="text-md font-medium mb-4 flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  Palabras Clave Locales
+                </h3>
+                <div className="space-y-4">
+                  {currentReport.keywordRankings.map((kw: any, index: number) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="font-medium">{kw.keyword}</span>
+                        <span className={
+                          kw.position <= 3 ? "text-green-600 font-semibold" : 
+                          kw.position <= 10 ? "text-amber-600 font-semibold" : 
+                          "text-gray-600"
+                        }>
+                          {kw.position === 0 ? "No posicionada" : `#${kw.position}`}
+                        </span>
+                      </div>
+                      <Progress value={kw.position === 0 ? 0 : Math.max(5, 100 - (kw.position * 5))} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </MetricsCard>
     </>
   );

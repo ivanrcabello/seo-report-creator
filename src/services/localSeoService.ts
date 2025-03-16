@@ -251,6 +251,10 @@ export async function saveLocalSeoSettings(settings: {
   website?: string | null;
   googleBusinessUrl?: string | null;
   targetLocations?: string[];
+  googleMapsRanking?: number;
+  googleReviewsCount?: number;
+  googleReviewsAverage?: number;
+  listingsCount?: number;
 }) {
   try {
     const dataToSave = {
@@ -260,7 +264,11 @@ export async function saveLocalSeoSettings(settings: {
       phone: settings.phone || null,
       website: settings.website || null,
       google_business_url: settings.googleBusinessUrl || null,
-      target_locations: settings.targetLocations || []
+      target_locations: settings.targetLocations || [],
+      google_maps_ranking: settings.googleMapsRanking || 0,
+      google_reviews_count: settings.googleReviewsCount || 0,
+      google_reviews_average: settings.googleReviewsAverage || 0,
+      listings_count: settings.listingsCount || 0,
     };
     
     let result;
@@ -292,5 +300,28 @@ export async function saveLocalSeoSettings(settings: {
   } catch (error) {
     console.error('Error in saveLocalSeoSettings:', error);
     throw error;
+  }
+}
+
+/**
+ * Get historical local SEO metrics
+ */
+export async function getLocalSeoMetricsHistory(clientId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('local_seo_metrics')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('date', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching local SEO metrics history:', error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in getLocalSeoMetricsHistory:', error);
+    return [];
   }
 }

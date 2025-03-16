@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { SeoLocalReport } from '@/types/client';
@@ -175,8 +176,10 @@ export async function getLocalSeoReports(clientId: string): Promise<SeoLocalRepo
       website: report.website,
       googleBusinessUrl: report.google_business_url,
       googleMapsRanking: report.google_maps_ranking || 0,
+      // Add fallbacks for potentially missing properties
       googleReviewsCount: report.google_reviews_count || 0,
-      googleReviewsAverage: typeof report.google_reviews_average === 'number' ? report.google_reviews_average : 0,
+      googleReviewsAverage: report.google_reviews_average ? 
+                          (typeof report.google_reviews_average === 'number' ? report.google_reviews_average : parseFloat(report.google_reviews_average as string) || 0) : 0,
       keywordRankings: report.keyword_rankings,
       localListings: report.local_listings,
       recommendations: report.recommendations,
@@ -226,8 +229,10 @@ export async function getLocalSeoReport(reportId: string): Promise<SeoLocalRepor
       website: data.website,
       googleBusinessUrl: data.google_business_url,
       googleMapsRanking: data.google_maps_ranking || 0,
+      // Add fallbacks for potentially missing properties
       googleReviewsCount: data.google_reviews_count || 0,
-      googleReviewsAverage: typeof data.google_reviews_average === 'number' ? data.google_reviews_average : 0,
+      googleReviewsAverage: data.google_reviews_average ? 
+                          (typeof data.google_reviews_average === 'number' ? data.google_reviews_average : parseFloat(data.google_reviews_average as string) || 0) : 0,
       keywordRankings: data.keyword_rankings,
       localListings: data.local_listings,
       recommendations: data.recommendations,

@@ -44,25 +44,25 @@ serve(async (req) => {
       );
     }
 
-    console.log("Received audit data:", JSON.stringify(auditResult).slice(0, 200) + "...");
+    console.log("Datos de auditoría recibidos:", JSON.stringify(auditResult).slice(0, 200) + "...");
 
-    // Prepare the prompt for OpenAI
-    const systemPrompt = `You are an expert SEO consultant. Generate a detailed, professional SEO report based on the audit data provided. 
-Format the report using Markdown. Include the following sections:
-1. Introduction
-2. Analysis of Current Situation
-3. Technical SEO Issues
-4. Content Analysis
-5. Recommended Strategy
-6. Proposed Timeline
-7. Expected Results
+    // Preparar el prompt para OpenAI con instrucciones detalladas
+    const systemPrompt = `Eres un consultor SEO experto especializado en crear informes profesionales para clientes. 
+Genera un informe SEO detallado en español basado en los datos proporcionados.
+El informe debe tener un formato profesional y estar estructurado en estas secciones:
 
-Be concise but detailed. Use a professional tone.`;
+1. Introducción personalizada
+2. Análisis de la situación actual con métricas
+3. Análisis de palabras clave
+4. SEO Local (si hay datos disponibles)
+5. Recomendaciones técnicas
+6. Estrategia de contenidos
+7. Plan de acción y timeline
+8. Conclusiones
 
-    // Convert the audit result to a string representation for the prompt
-    const auditDescription = JSON.stringify(auditResult, null, 2);
+Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y profesional.`;
 
-    console.log("Sending request to OpenAI API");
+    console.log("Enviando solicitud a OpenAI API");
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -70,29 +70,29 @@ Be concise but detailed. Use a professional tone.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o-mini',  // Usando un modelo más rápido y económico
         messages: [
           { role: 'system', content: systemPrompt },
           { 
             role: 'user', 
-            content: `Generate a comprehensive SEO report based on this audit data: ${auditDescription}` 
+            content: `Genera un informe SEO profesional y detallado basado en estos datos de auditoría: ${JSON.stringify(auditResult, null, 2)}` 
           }
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 3000,  // Permitimos más tokens para un informe más detallado
       }),
     });
 
     const data = await response.json();
-    console.log("Received response from OpenAI API");
+    console.log("Respuesta recibida de OpenAI API");
     
     if (data.error) {
-      console.error('OpenAI API error:', data.error);
-      throw new Error(`OpenAI API error: ${data.error.message}`);
+      console.error('Error de OpenAI API:', data.error);
+      throw new Error(`Error de OpenAI API: ${data.error.message}`);
     }
 
     const content = data.choices[0].message.content;
-    console.log("Successfully generated content");
+    console.log("Contenido generado exitosamente");
 
     return new Response(
       JSON.stringify({ content }),
@@ -104,7 +104,7 @@ Be concise but detailed. Use a professional tone.`;
       }
     );
   } catch (error) {
-    console.error('Error in openai-report function:', error);
+    console.error('Error en la función openai-report:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

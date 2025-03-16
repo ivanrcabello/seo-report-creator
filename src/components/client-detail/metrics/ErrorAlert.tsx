@@ -17,6 +17,12 @@ export const ErrorAlert = ({ error, message }: ErrorAlertProps) => {
       <AlertTitle>Error</AlertTitle>
       <AlertDescription>
         {errorMessage}
+        {error && !message && error.stack && process.env.NODE_ENV !== 'production' && (
+          <details className="mt-2 text-xs">
+            <summary>Detalles técnicos</summary>
+            <pre className="mt-2 whitespace-pre-wrap">{error.stack}</pre>
+          </details>
+        )}
       </AlertDescription>
     </Alert>
   );

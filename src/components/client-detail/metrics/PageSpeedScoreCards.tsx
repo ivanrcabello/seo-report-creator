@@ -1,67 +1,83 @@
 
+import { Card, CardContent } from "@/components/ui/card";
 import { PageSpeedMetrics } from "@/services/pageSpeedService";
-import { Gauge, BarChart2, Shield, Search } from "lucide-react";
+import { Zap, Layout, Code2, Search } from "lucide-react";
+import { PageSpeedIndicator } from "./PageSpeedIndicator";
 
 interface PageSpeedScoreCardsProps {
   metrics: PageSpeedMetrics;
 }
 
 export const PageSpeedScoreCards = ({ metrics }: PageSpeedScoreCardsProps) => {
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-green-500 bg-green-50";
-    if (score >= 50) return "text-orange-500 bg-orange-50";
-    return "text-red-500 bg-red-50";
-  };
-
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`p-2 rounded-full ${getScoreColor(metrics.performance_score).split(' ')[1]}`}>
-            <Gauge className={`h-5 w-5 ${getScoreColor(metrics.performance_score).split(' ')[0]}`} />
-          </div>
-          <h3 className="font-medium">Rendimiento</h3>
-        </div>
-        <div className={`text-3xl font-bold ${getScoreColor(metrics.performance_score).split(' ')[0]}`}>
-          {metrics.performance_score}
-        </div>
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <ScoreCard
+        title="Rendimiento"
+        score={metrics.performance_score}
+        icon={<Zap className="h-5 w-5 text-yellow-500" />}
+        description="Rapidez de carga"
+      />
       
-      <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`p-2 rounded-full ${getScoreColor(metrics.accessibility_score).split(' ')[1]}`}>
-            <BarChart2 className={`h-5 w-5 ${getScoreColor(metrics.accessibility_score).split(' ')[0]}`} />
-          </div>
-          <h3 className="font-medium">Accesibilidad</h3>
-        </div>
-        <div className={`text-3xl font-bold ${getScoreColor(metrics.accessibility_score).split(' ')[0]}`}>
-          {metrics.accessibility_score}
-        </div>
-      </div>
+      <ScoreCard
+        title="Accesibilidad"
+        score={metrics.accessibility_score}
+        icon={<Layout className="h-5 w-5 text-blue-500" />}
+        description="Facilidad de uso"
+      />
       
-      <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`p-2 rounded-full ${getScoreColor(metrics.best_practices_score).split(' ')[1]}`}>
-            <Shield className={`h-5 w-5 ${getScoreColor(metrics.best_practices_score).split(' ')[0]}`} />
-          </div>
-          <h3 className="font-medium">Buenas Prácticas</h3>
-        </div>
-        <div className={`text-3xl font-bold ${getScoreColor(metrics.best_practices_score).split(' ')[0]}`}>
-          {metrics.best_practices_score}
-        </div>
-      </div>
+      <ScoreCard
+        title="Buenas Prácticas"
+        score={metrics.best_practices_score}
+        icon={<Code2 className="h-5 w-5 text-indigo-500" />}
+        description="Estándares web"
+      />
       
-      <div className="bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`p-2 rounded-full ${getScoreColor(metrics.seo_score).split(' ')[1]}`}>
-            <Search className={`h-5 w-5 ${getScoreColor(metrics.seo_score).split(' ')[0]}`} />
-          </div>
-          <h3 className="font-medium">SEO</h3>
-        </div>
-        <div className={`text-3xl font-bold ${getScoreColor(metrics.seo_score).split(' ')[0]}`}>
-          {metrics.seo_score}
-        </div>
-      </div>
+      <ScoreCard
+        title="SEO"
+        score={metrics.seo_score}
+        icon={<Search className="h-5 w-5 text-pink-500" />}
+        description="Optimización para buscadores"
+      />
     </div>
+  );
+};
+
+interface ScoreCardProps {
+  title: string;
+  score: number;
+  icon: React.ReactNode;
+  description: string;
+}
+
+const ScoreCard = ({ title, score, icon, description }: ScoreCardProps) => {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              {icon}
+              <h3 className="font-medium">{title}</h3>
+            </div>
+            <p className="text-xs text-gray-500">{description}</p>
+          </div>
+          
+          <PageSpeedIndicator score={score} showLabel={false} />
+        </div>
+        
+        <div className="mt-2 relative pt-1">
+          <div className="bg-gray-200 rounded-full h-2 w-full">
+            <div 
+              className={`h-2 rounded-full ${
+                score >= 90 ? 'bg-green-500' : 
+                score >= 50 ? 'bg-amber-500' : 
+                'bg-red-500'
+              }`}
+              style={{ width: `${score}%` }}
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

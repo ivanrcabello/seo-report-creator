@@ -1,210 +1,195 @@
 
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Loader2, Save, BarChart, TrendingUp, Award, MousePointer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ClientMetric } from "@/services/clientMetricsService";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
+import { Info, Save, BarChart2, Users, Target } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MetricsFormProps {
   currentMetric: ClientMetric | null;
   isSaving: boolean;
-  handleInputChange: (field: keyof ClientMetric, value: string) => void;
+  handleInputChange: (field: keyof ClientMetric, value: any) => void;
   handleSaveMetrics: () => Promise<void>;
-  userRole?: string;
-  isAdmin?: boolean;
 }
 
-export const MetricsForm = ({
-  currentMetric,
-  isSaving,
-  handleInputChange,
-  handleSaveMetrics,
-  userRole,
-  isAdmin
+export const MetricsForm = ({ 
+  currentMetric, 
+  isSaving, 
+  handleInputChange, 
+  handleSaveMetrics 
 }: MetricsFormProps) => {
   if (!currentMetric) {
-    return <div>No hay datos de métricas disponibles.</div>;
+    return null;
   }
   
-  return (
-    <div className="space-y-6">
-      {process.env.NODE_ENV === 'development' && (
-        <div className="col-span-2 p-2 bg-gray-100 rounded mb-4 text-xs">
-          <div>Role: {userRole || 'No role'}</div>
-          <div>Is Admin: {isAdmin ? 'Yes' : 'No'}</div>
-        </div>
-      )}
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSaveMetrics();
+  };
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="month" className="flex items-center gap-2">
-              <BarChart className="h-4 w-4 text-seo-blue" />
-              Mes
-            </Label>
-            <Input 
-              id="month" 
-              type="month" 
-              value={currentMetric.month || ''} 
-              onChange={(e) => 
-                handleInputChange('month', e.target.value)
-              }
-              className="mt-1"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="web_visits" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-seo-blue" />
-              Visitas Web (%)
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-4 w-4 text-gray-400" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Incremento porcentual de visitas respecto al mes anterior</p>
-                </TooltipContent>
-              </Tooltip>
-            </Label>
-            <div className="flex items-center gap-4">
-              <Slider
-                defaultValue={[Number(currentMetric.web_visits) || 0]}
-                max={100}
-                step={1}
-                onValueChange={(values) => handleInputChange('web_visits', values[0].toString())}
-                className="flex-1"
-              />
-              <Input 
-                id="web_visits" 
-                type="number" 
-                min="0"
-                className="w-20"
-                value={currentMetric.web_visits || 0} 
-                onChange={(e) => handleInputChange('web_visits', e.target.value)}
+  const handleNumberInput = (field: keyof ClientMetric, value: string) => {
+    const numValue = value === '' ? 0 : parseInt(value, 10);
+    if (!isNaN(numValue)) {
+      handleInputChange(field, numValue);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl font-semibold flex items-center gap-2">
+          <BarChart2 className="h-5 w-5 text-blue-500" />
+          Métricas de Rendimiento
+        </CardTitle>
+        <CardDescription>
+          Ingresa las métricas mensuales para hacer seguimiento del progreso SEO
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-2">
+              <Label htmlFor="month">
+                Mes
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 ml-1 text-gray-400 inline cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-[200px]">Mes para el que se registran estas métricas</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </Label>
+              <Input
+                id="month"
+                type="month"
+                value={currentMetric.month}
+                onChange={(e) => handleInputChange('month', e.target.value)}
+                required
               />
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="keywords_top10" className="flex items-center gap-2">
-              <Award className="h-4 w-4 text-seo-blue" />
-              Keywords en Top 10
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-4 w-4 text-gray-400" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Número de palabras clave posicionadas en las primeras 10 posiciones</p>
-                </TooltipContent>
-              </Tooltip>
-            </Label>
-            <div className="flex items-center gap-4">
-              <Slider
-                defaultValue={[Number(currentMetric.keywords_top10) || 0]}
-                max={100}
-                step={1}
-                onValueChange={(values) => handleInputChange('keywords_top10', values[0].toString())}
-                className="flex-1"
-              />
-              <Input 
-                id="keywords_top10" 
-                type="number" 
+            
+            <div className="lg:col-span-2">
+              <Label htmlFor="webVisits" className="flex items-center">
+                <Users className="h-4 w-4 mr-1 text-green-500" />
+                Visitas Web %
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 ml-1 text-gray-400 inline cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-[200px]">Incremento porcentual de visitas mensuales</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </Label>
+              <Input
+                id="webVisits"
+                type="number"
                 min="0"
-                className="w-20"
-                value={currentMetric.keywords_top10 || 0} 
-                onChange={(e) => handleInputChange('keywords_top10', e.target.value)}
+                value={currentMetric.web_visits}
+                onChange={(e) => handleNumberInput('web_visits', e.target.value)}
+                required
               />
             </div>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="conversions" className="flex items-center gap-2">
-              <MousePointer className="h-4 w-4 text-seo-blue" />
-              Conversiones
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-4 w-4 text-gray-400" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Número de conversiones logradas en el periodo</p>
-                </TooltipContent>
-              </Tooltip>
-            </Label>
-            <div className="flex items-center gap-4">
-              <Slider
-                defaultValue={[Number(currentMetric.conversions) || 0]}
-                max={100}
-                step={1}
-                onValueChange={(values) => handleInputChange('conversions', values[0].toString())}
-                className="flex-1"
-              />
-              <Input 
-                id="conversions" 
-                type="number" 
+            
+            <div className="lg:col-span-2">
+              <Label htmlFor="keywordsTop10" className="flex items-center">
+                <BarChart2 className="h-4 w-4 mr-1 text-blue-500" />
+                Keywords TOP10
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 ml-1 text-gray-400 inline cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-[200px]">Número de palabras clave posicionadas en el TOP10 de Google</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </Label>
+              <Input
+                id="keywordsTop10"
+                type="number"
                 min="0"
-                className="w-20"
-                value={currentMetric.conversions || 0} 
-                onChange={(e) => handleInputChange('conversions', e.target.value)}
+                value={currentMetric.keywords_top10}
+                onChange={(e) => handleNumberInput('keywords_top10', e.target.value)}
+                required
               />
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="conversion_goal" className="flex items-center gap-2">
-              <Award className="h-4 w-4 text-seo-blue" />
-              Objetivo de Conversión
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-4 w-4 text-gray-400" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Meta de conversiones para el periodo</p>
-                </TooltipContent>
-              </Tooltip>
-            </Label>
-            <div className="flex items-center gap-4">
-              <Slider
-                defaultValue={[Number(currentMetric.conversion_goal) || 30]}
-                max={100}
-                step={1}
-                onValueChange={(values) => handleInputChange('conversion_goal', values[0].toString())}
-                className="flex-1"
+            
+            <div className="lg:col-span-2">
+              <Label htmlFor="conversions" className="flex items-center">
+                <Target className="h-4 w-4 mr-1 text-orange-500" />
+                Conversiones
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 ml-1 text-gray-400 inline cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-[200px]">Número de conversiones obtenidas este mes</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </Label>
+              <Input
+                id="conversions"
+                type="number"
+                min="0"
+                value={currentMetric.conversions}
+                onChange={(e) => handleNumberInput('conversions', e.target.value)}
+                required
               />
-              <Input 
-                id="conversion_goal" 
-                type="number" 
+            </div>
+            
+            <div className="lg:col-span-2">
+              <Label htmlFor="conversionGoal" className="flex items-center">
+                Meta Conversiones
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 ml-1 text-gray-400 inline cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-[200px]">Meta de conversiones para este mes</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </Label>
+              <Input
+                id="conversionGoal"
+                type="number"
                 min="1"
-                className="w-20"
-                value={currentMetric.conversion_goal || 30} 
-                onChange={(e) => handleInputChange('conversion_goal', e.target.value)}
+                value={currentMetric.conversion_goal}
+                onChange={(e) => handleNumberInput('conversion_goal', e.target.value)}
+                required
               />
             </div>
+            
+            <div className="lg:col-span-2 flex items-end">
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSaving}
+              >
+                {isSaving ? 'Guardando...' : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Guardar Métricas
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-          
-          <Button 
-            className="w-full mt-8"
-            onClick={handleSaveMetrics}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Guardando...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Guardar Métricas
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-    </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };

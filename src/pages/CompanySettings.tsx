@@ -1,6 +1,7 @@
+
 import React from "react";
-import CompanySettingsForm from "@/components/settings/CompanySettingsForm";
 import { SettingsNavigation } from "@/components/settings/SettingsNavigation";
+import CompanySettingsForm from "@/components/settings/CompanySettingsForm";
 
 const CompanySettings = () => {
   return (

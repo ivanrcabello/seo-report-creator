@@ -17,14 +17,17 @@ import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
 import { toast } from "sonner";
 
 export default function ClientDetail() {
-  const { clientId } = useParams<{ clientId: string }>();
+  const { clientId = "" } = useParams<{ clientId: string }>();
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
+  
+  console.log("ClientDetail component loaded with clientId:", clientId);
 
   useEffect(() => {
     if (!clientId) {
+      console.error("Client ID is missing from URL params");
       setError("Client ID is required");
       setIsLoading(false);
       return;
@@ -34,9 +37,12 @@ export default function ClientDetail() {
       setIsLoading(true);
       setError(null);
       try {
+        console.log("Fetching client data for ID:", clientId);
         const clientData = await getClient(clientId);
+        console.log("Client data received:", clientData);
         setClient(clientData);
       } catch (e: any) {
+        console.error("Error fetching client:", e);
         setError(e.message || "Failed to fetch client");
         toast.error("Failed to fetch client");
       } finally {
@@ -52,15 +58,15 @@ export default function ClientDetail() {
   };
 
   if (isLoading) {
-    return <div>Loading client details...</div>;
+    return <div className="container mx-auto py-6">Loading client details...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div className="container mx-auto py-6 text-red-500">Error: {error}</div>;
   }
 
   if (!client) {
-    return <div>Client not found</div>;
+    return <div className="container mx-auto py-6">Client not found</div>;
   }
 
   return (

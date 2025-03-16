@@ -8,18 +8,28 @@ import { ContractsList } from "./ContractsList";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
-export const ClientContractsTab = ({ clientName }: { clientName: string }) => {
-  const { id: clientId } = useParams<{ id: string }>();
+interface ClientContractsTabProps {
+  clientName: string;
+}
+
+export const ClientContractsTab = ({ clientName }: ClientContractsTabProps) => {
+  const { clientId } = useParams<{ clientId: string }>();
   const { toast } = useToast();
   const [contracts, setContracts] = useState<SeoContract[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchContracts = async () => {
-    if (!clientId) return;
+    if (!clientId) {
+      console.error("Client ID is missing in ClientContractsTab");
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     try {
+      console.log("Fetching contracts for client ID:", clientId);
       const contractsData = await getClientContracts(clientId);
+      console.log("Contracts data received:", contractsData);
       setContracts(contractsData);
     } catch (error) {
       console.error("Error fetching client contracts:", error);

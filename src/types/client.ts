@@ -98,11 +98,11 @@ export interface SeoLocalReport {
   date: string;
   businessName: string;
   location?: string;
-  address: string;
+  address: string; // This will actually just use location data from DB
   phone: string | null;
   website: string | null;
   googleBusinessUrl?: string | null;
-  googleMapsRanking?: number;
+  googleMapsRanking?: number; // Maps to google_maps_ranking in DB
   googleReviewsCount?: number;
   keywordRankings?: any;
   localListings?: any;

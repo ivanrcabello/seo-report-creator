@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { SeoLocalReport } from '@/types/client';
@@ -33,9 +32,8 @@ export async function generateLocalSeoAnalysis(clientId: string, businessName: s
     googleReviewsCount: googleReviewsCount,
     keywordRankings: keywordRankings,
     recommendations: recommendations,
-    // Add required properties that were missing
     date: new Date().toISOString(),
-    address: "",
+    address: location, // Using location as address since they're conceptually the same for local SEO
     phone: null,
     website: null
   };
@@ -172,12 +170,12 @@ export async function getLocalSeoReports(clientId: string): Promise<SeoLocalRepo
       date: report.date,
       businessName: report.business_name,
       location: report.location || "",
-      address: report.address || "",
+      address: report.location || "", // Using location as address since they're the same for local SEO
       phone: report.phone,
       website: report.website,
       googleBusinessUrl: report.google_business_url,
       googleMapsRanking: report.google_maps_ranking,
-      googleReviewsCount: report.google_reviews_count,
+      googleReviewsCount: report.google_reviews_count || 0, // Default to 0 if not present
       keywordRankings: report.keyword_rankings,
       localListings: report.local_listings,
       recommendations: report.recommendations,
@@ -222,12 +220,12 @@ export async function getLocalSeoReport(reportId: string): Promise<SeoLocalRepor
       date: data.date,
       businessName: data.business_name,
       location: data.location || "",
-      address: data.address || "",
+      address: data.location || "", // Using location as address since they're conceptually the same for local SEO
       phone: data.phone,
       website: data.website,
       googleBusinessUrl: data.google_business_url,
       googleMapsRanking: data.google_maps_ranking,
-      googleReviewsCount: data.google_reviews_count,
+      googleReviewsCount: data.google_reviews_count || 0, // Default to 0 if not present
       keywordRankings: data.keyword_rankings,
       localListings: data.local_listings,
       recommendations: data.recommendations,

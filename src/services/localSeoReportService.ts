@@ -26,12 +26,12 @@ export async function getSeoLocalReports(clientId: string): Promise<SeoLocalRepo
       date: report.date,
       businessName: report.business_name,
       location: report.location,
-      address: report.location, // Using location as address since address doesn't exist in DB
-      phone: null, // These fields don't exist in DB, set defaults
-      website: null,
-      googleBusinessUrl: null,
+      address: report.location, // Using location as address
+      phone: report.phone || null,
+      website: report.website || null,
+      googleBusinessUrl: report.google_business_url || null,
       googleMapsRanking: report.google_maps_ranking || 0,
-      googleReviewsCount: 0, // Field doesn't exist in DB
+      googleReviewsCount: report.google_reviews_count || 0,
       keywordRankings: Array.isArray(report.keyword_rankings) ? report.keyword_rankings : 
                       (typeof report.keyword_rankings === 'string' ? JSON.parse(report.keyword_rankings) : []),
       localListings: Array.isArray(report.local_listings) ? report.local_listings : 
@@ -72,11 +72,11 @@ export async function getSeoLocalReportById(reportId: string): Promise<SeoLocalR
       businessName: data.business_name,
       location: data.location,
       address: data.location, // Use location as address
-      phone: null, // These fields don't exist in DB
-      website: null,
-      googleBusinessUrl: null,
+      phone: data.phone || null,
+      website: data.website || null,
+      googleBusinessUrl: data.google_business_url || null,
       googleMapsRanking: data.google_maps_ranking || 0,
-      googleReviewsCount: 0, // Field doesn't exist in DB
+      googleReviewsCount: data.google_reviews_count || 0,
       keywordRankings: Array.isArray(data.keyword_rankings) ? data.keyword_rankings : 
                       (typeof data.keyword_rankings === 'string' ? JSON.parse(data.keyword_rankings) : []),
       localListings: Array.isArray(data.local_listings) ? data.local_listings : 

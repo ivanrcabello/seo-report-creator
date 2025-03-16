@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { MetricsCard } from "./MetricsCard";
-import { MapPin, Store, Award, Search, RefreshCcw, Globe, Phone, Star, PlusCircle, Save, X, Plus } from "lucide-react";
+import { MapPin, Store, Award, Search, RefreshCcw, Globe, Phone, Star, Save } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SeoLocalReport } from "@/types/client";

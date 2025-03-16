@@ -1,51 +1,69 @@
 
-import { AIReport } from "@/services/aiReportService";
+import { ClientReport } from "@/types/client";
 import { Button } from "@/components/ui/button";
-import {
-  FileText,
-  RefreshCcw,
-  Edit,
-  Download,
-  ArrowRight,
-  Save
+import { 
+  FileText, 
+  RefreshCcw, 
+  Edit, 
+  Download, 
+  Save, 
+  Sparkles,
+  Gem
 } from "lucide-react";
 
 interface ReportHeaderProps {
-  report: AIReport | null;
+  report: ClientReport | null;
   isLoading: boolean;
-  isGeneratingOpenAI: boolean;
+  isGeneratingAI: boolean;
   isSaving: boolean;
   currentReportExists: boolean;
-  onRegenerate: () => void;
+  onRegenerate: () => Promise<void>;
   onEdit: () => void;
-  onDownloadPdf: () => void;
-  onGenerateAdvancedReport: () => void;
-  onSaveReport: () => void;
+  onDownloadPdf: () => Promise<void>;
+  onGenerateAdvancedReport: () => Promise<void>;
+  onSaveReport: () => Promise<void>;
+  generatorType?: 'openai' | 'gemini';
 }
 
 export const ReportHeader = ({
   report,
   isLoading,
-  isGeneratingOpenAI,
+  isGeneratingAI,
   isSaving,
   currentReportExists,
   onRegenerate,
   onEdit,
   onDownloadPdf,
   onGenerateAdvancedReport,
-  onSaveReport
+  onSaveReport,
+  generatorType = 'openai'
 }: ReportHeaderProps) => {
   return (
-    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6 shadow-sm">
-      <h2 className="text-2xl font-bold text-indigo-900 mb-3">Análisis Inteligente SEO</h2>
-      <p className="text-gray-700 mb-4">
-        Genera un informe SEO profesional con recomendaciones personalizadas basadas en el análisis de esta página web. Podrás editarlo y descargarlo en PDF para enviar a tus clientes.
-      </p>
-      <div className="flex flex-wrap gap-3">
-        {!report && (
-          <Button 
-            onClick={onRegenerate} 
-            disabled={isLoading} 
+    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-blue-600" />
+          <h2 className="text-xl font-semibold">
+            {generatorType === 'gemini' ? 'Informe Generado con Gemini AI' : 'Informe SEO Inteligente'}
+          </h2>
+        </div>
+        <div className="flex items-center">
+          {generatorType === 'gemini' ? (
+            <Gem className="h-5 w-5 text-purple-600 mr-2" />
+          ) : (
+            <Sparkles className="h-5 w-5 text-amber-500 mr-2" />
+          )}
+          <span className="text-sm text-gray-500">
+            {generatorType === 'gemini' ? 'Potenciado por Google Gemini' : 'Potenciado por IA'}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {!report ? (
+          <Button
+            onClick={onRegenerate}
+            disabled={isLoading}
             className="gap-2"
           >
             {isLoading ? (
@@ -56,79 +74,73 @@ export const ReportHeader = ({
             ) : (
               <>
                 <FileText className="h-4 w-4" />
-                Generar Informe SEO
+                Generar Informe
               </>
             )}
           </Button>
-        )}
-        
-        {report && (
+        ) : (
           <>
-            <Button 
-              variant="outline" 
-              onClick={onRegenerate} 
-              disabled={isLoading} 
+            <Button
+              variant="outline"
+              onClick={onRegenerate}
+              disabled={isLoading}
               className="gap-2"
             >
               <RefreshCcw className="h-4 w-4" />
               Regenerar
             </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={onEdit} 
+
+            <Button
+              variant="outline"
+              onClick={onEdit}
               className="gap-2"
             >
               <Edit className="h-4 w-4" />
-              Editar Informe
+              Editar
             </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={onDownloadPdf} 
+
+            <Button
+              variant="outline"
+              onClick={onDownloadPdf}
               className="gap-2"
             >
               <Download className="h-4 w-4" />
               Descargar PDF
             </Button>
 
-            <Button 
-              variant="outline" 
-              onClick={onGenerateAdvancedReport} 
-              disabled={isGeneratingOpenAI} 
-              className="gap-2"
-            >
-              {isGeneratingOpenAI ? (
-                <>
-                  <RefreshCcw className="h-4 w-4 animate-spin" />
-                  Generando...
-                </>
-              ) : (
-                <>
-                  <ArrowRight className="h-4 w-4" />
-                  Informe Avanzado con IA
-                </>
-              )}
-            </Button>
-
             {currentReportExists && (
-              <Button 
-                variant="default" 
-                onClick={onSaveReport} 
-                disabled={isSaving}
+              <Button
+                variant="outline"
+                onClick={onGenerateAdvancedReport}
+                disabled={isGeneratingAI}
                 className="gap-2"
               >
-                {isSaving ? (
+                {isGeneratingAI ? (
                   <>
                     <RefreshCcw className="h-4 w-4 animate-spin" />
-                    Guardando...
+                    Generando...
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4" />
-                    Guardar en Informe
+                    {generatorType === 'gemini' ? (
+                      <Gem className="h-4 w-4" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    Generar Avanzado
                   </>
                 )}
+              </Button>
+            )}
+
+            {currentReportExists && (
+              <Button
+                onClick={onSaveReport}
+                disabled={isSaving}
+                className="gap-2 ml-auto"
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? "Guardando..." : "Guardar Cambios"}
               </Button>
             )}
           </>

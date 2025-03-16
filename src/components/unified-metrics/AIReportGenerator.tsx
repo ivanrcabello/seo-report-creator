@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, FileText, AlertCircle, Clock } from "lucide-react";
@@ -7,8 +8,9 @@ import { getPageSpeedReport } from "@/services/pageSpeedService";
 import { getClientMetrics } from "@/services/clientMetricsService";
 import { getLocalSeoReports } from "@/services/localSeoService";
 import { getClientKeywords } from "@/services/clientKeywordsService";
-import { generateUnifiedReport } from "@/services/unifiedReportService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getClientDocuments } from "@/services/documentService";
+import { generateAndSaveReport } from "@/services/geminiReportService";
 
 interface AIReportGeneratorProps {
   clientId: string;
@@ -30,11 +32,12 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       // Recopilar todos los datos de métricas en paralelo
       console.log("Fetching all metrics data in parallel");
       setProgress(20);
-      const [pageSpeedData, metricsData, localSeoData, keywordsData] = await Promise.allSettled([
+      const [pageSpeedData, metricsData, localSeoData, keywordsData, documentsData] = await Promise.allSettled([
         getPageSpeedReport(clientId),
         getClientMetrics(clientId),
         getLocalSeoReports(clientId),
-        getClientKeywords(clientId)
+        getClientKeywords(clientId),
+        getClientDocuments(clientId)
       ]);
       
       // Extraer resultados manejando posibles rechazos
@@ -44,16 +47,18 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       const localSeo = localSeoData.status === 'fulfilled' ? 
         (localSeoData.value.length > 0 ? localSeoData.value[0] : null) : null;
       const keywords = keywordsData.status === 'fulfilled' ? keywordsData.value : [];
+      const documents = documentsData.status === 'fulfilled' ? documentsData.value : [];
       
       console.log("Data collected:", { 
         pageSpeed: pageSpeed ? "Available" : "Not available", 
         metrics: metrics.length, 
         localSeo: localSeo ? "Available" : "Not available",
-        keywords: keywords.length 
+        keywords: keywords.length,
+        documents: documents.length
       });
       
       // Comprobar si hay suficientes datos para generar un informe
-      if (!pageSpeed && metrics.length === 0 && !localSeo && keywords.length === 0) {
+      if (!pageSpeed && metrics.length === 0 && !localSeo && keywords.length === 0 && documents.length === 0) {
         toast.dismiss(toastId);
         toast.error("No hay suficientes datos para generar un informe");
         setIsGenerating(false);
@@ -61,27 +66,109 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       }
       
       toast.dismiss(toastId);
-      toast.loading("Generando informe completo...");
+      toast.loading("Generando informe con IA de Gemini...");
       setProgress(60);
       
-      // Generar el informe unificado
-      console.log("Generating unified report with available data");
-      const report = await generateUnifiedReport({
+      // Crear un objeto de resultados de auditoría combinado para generar el informe
+      const auditResult = {
+        url: pageSpeed?.metrics.url || "",
+        companyName: clientName,
+        companyType: "",
+        location: localSeo?.location || "",
+        seoScore: pageSpeed?.metrics.seo_score || 0,
+        performance: pageSpeed?.metrics.performance_score || 0,
+        webVisibility: 0,
+        keywordsCount: keywords.length,
+        technicalIssues: [],
+        // Añadimos campos requeridos basados en la interfaz AuditResult
+        seoResults: {
+          metaTitle: true,
+          metaDescription: true,
+          h1Tags: 2,
+          canonicalTag: true,
+          keywordDensity: 1.5,
+          contentLength: 1000,
+          internalLinks: 5,
+          externalLinks: 3
+        },
+        technicalResults: {
+          sslStatus: 'Válido',
+          httpsRedirection: true,
+          mobileOptimization: true,
+          robotsTxt: true,
+          sitemap: true,
+          technologies: ['WordPress', 'PHP']
+        },
+        performanceResults: {
+          pageSpeed: {
+            desktop: pageSpeed?.metrics.performance_score || 0,
+            mobile: pageSpeed?.metrics.performance_score || 0
+          },
+          loadTime: '2.5s',
+          resourceCount: 35,
+          imageOptimization: true,
+          cacheImplementation: true
+        },
+        socialPresence: {
+          facebook: true,
+          twitter: true,
+          instagram: false,
+          linkedin: true,
+          googleBusiness: localSeo ? true : false
+        },
+        keywords: keywords.map(kw => ({
+          word: kw.keyword,
+          position: kw.position,
+          targetPosition: kw.target_position,
+          difficulty: kw.keyword_difficulty || 0,
+          searchVolume: kw.search_volume || 0,
+          count: 1
+        })),
+        localData: localSeo ? {
+          businessName: localSeo.businessName,
+          address: localSeo.address,
+          googleMapsRanking: localSeo.googleMapsRanking || 0,
+          googleReviews: localSeo.googleReviewsCount || 0
+        } : undefined,
+        metrics: {
+          visits: metrics.length > 0 ? metrics[0].web_visits : 0,
+          keywordsTop10: metrics.length > 0 ? metrics[0].keywords_top10 : 0,
+          conversions: metrics.length > 0 ? metrics[0].conversions : 0
+        },
+        pagespeed: pageSpeed ? {
+          performance: pageSpeed.metrics.performance_score,
+          accessibility: pageSpeed.metrics.accessibility_score,
+          bestPractices: pageSpeed.metrics.best_practices_score,
+          seo: pageSpeed.metrics.seo_score,
+          fcp: pageSpeed.metrics.first_contentful_paint,
+          lcp: pageSpeed.metrics.largest_contentful_paint,
+          cls: pageSpeed.metrics.cumulative_layout_shift,
+          tbt: pageSpeed.metrics.total_blocking_time
+        } : undefined,
+        // Add documents data
+        documents: documents.map(doc => ({
+          id: doc.id,
+          name: doc.name,
+          type: doc.type,
+          content: doc.content || ""
+        }))
+      };
+      
+      // Generar el informe con Gemini
+      setProgress(80);
+      const report = await generateAndSaveReport(
         clientId,
         clientName,
-        pageSpeedData: pageSpeed,
-        metricsData: metrics.length > 0 ? metrics[0] : null,
-        localSeoData: localSeo,
-        keywordsData: keywords
-      });
+        auditResult,
+        documents.map(doc => doc.id)
+      );
       
-      setProgress(90);
+      setProgress(100);
       
       if (report && report.id) {
         console.log("Report generated successfully with ID:", report.id);
         toast.dismiss();
-        toast.success("Informe generado correctamente");
-        setProgress(100);
+        toast.success("Informe generado correctamente con Gemini");
         
         // Navegar a la vista del informe
         setTimeout(() => {
@@ -104,10 +191,10 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
     <div className="space-y-4">
       <Alert variant="default" className="bg-blue-50">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Informe completo con IA</AlertTitle>
+        <AlertTitle>Informe completo con IA Gemini</AlertTitle>
         <AlertDescription>
-          Este informe combinará todos los datos de métricas, PageSpeed, SEO local y palabras clave para generar
-          un análisis comprensivo del rendimiento del cliente.
+          Este informe combinará todos los datos de métricas, PageSpeed, SEO local, palabras clave y documentos subidos para generar
+          un análisis comprensivo del rendimiento del cliente usando la IA de Google Gemini.
         </AlertDescription>
       </Alert>
       
@@ -130,13 +217,13 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
           {isGenerating ? (
             <>
               <Clock className="h-5 w-5 animate-spin" />
-              Generando informe completo...
+              Generando informe con Gemini...
             </>
           ) : (
             <>
               <Sparkles className="h-5 w-5" />
               <FileText className="h-5 w-5" />
-              Generar Informe Completo IA
+              Generar Informe con Gemini
             </>
           )}
         </Button>

@@ -1,16 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { AIReport, generateAIReport } from "@/services/aiReportService";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { ClientReport } from "@/types/client";
 import { useToast } from "@/components/ui/use-toast";
 import { toast } from "sonner";
 import { downloadSeoReportPdf } from "@/services/seoReportPdfService";
 import { saveReportWithAIData } from "@/services/reportService";
-import { generateSEOReport } from "@/services/openai";
 import { EditableReportForm } from "@/components/seo-report/EditableReportForm";
 import { ReportHeader } from "./ReportHeader";
 import { ReportContent } from "./ReportContent";
+import { generateGeminiReport } from "@/services/geminiReportService";
 
 interface AIReportGeneratorProps {
   auditResult: AuditResult;
@@ -18,25 +17,49 @@ interface AIReportGeneratorProps {
 }
 
 export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGeneratorProps) => {
-  const [report, setReport] = useState<AIReport | null>(null);
+  const [report, setReport] = useState<ClientReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isGeneratingOpenAI, setIsGeneratingOpenAI] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const { toast: uiToast } = useToast();
 
   // Load report data from currentReport if it exists
   useEffect(() => {
     if (currentReport?.analyticsData?.aiReport) {
-      setReport(currentReport.analyticsData.aiReport);
+      setReport(currentReport);
+    } else if (currentReport) {
+      setReport(currentReport);
     }
   }, [currentReport]);
 
   const generateReport = async () => {
     setIsLoading(true);
     try {
-      const data = await generateAIReport(auditResult);
-      setReport(data);
+      // Use Gemini to generate the report content
+      const content = await generateGeminiReport(auditResult, 'seo');
+      
+      if (!content) {
+        throw new Error("No se pudo generar el contenido del informe");
+      }
+      
+      // Create a new report using the generated content
+      const newReport = {
+        ...currentReport,
+        id: currentReport?.id || '',
+        content: content,
+        analyticsData: {
+          ...currentReport?.analyticsData,
+          aiReport: {
+            id: currentReport?.id || '',
+            content,
+            generated_at: new Date().toISOString(),
+            generatedBy: "gemini"
+          }
+        }
+      };
+      
+      setReport(newReport);
       uiToast({
         description: "Informe generado correctamente"
       });
@@ -52,17 +75,29 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
   };
 
   const generateAdvancedReport = async () => {
-    setIsGeneratingOpenAI(true);
-    toast.loading("Generando informe avanzado...");
+    setIsGeneratingAI(true);
+    toast.loading("Generando informe avanzado con Gemini...");
     
     try {
-      const content = await generateSEOReport(auditResult);
+      // Use Gemini to generate an advanced report
+      const content = await generateGeminiReport(auditResult, 'seo');
+      
       if (content && report) {
         // Update the report content
         const updatedReport = {
           ...report,
-          content: content
+          content: content,
+          analyticsData: {
+            ...report.analyticsData,
+            aiReport: {
+              id: report.id,
+              content,
+              generated_at: new Date().toISOString(),
+              generatedBy: "gemini"
+            }
+          }
         };
+        
         setReport(updatedReport);
         
         // If we have a current report, save the content to it
@@ -78,7 +113,7 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
       console.error("Error generando informe avanzado:", error);
       toast.error("Hubo un problema al generar el informe avanzado");
     } finally {
-      setIsGeneratingOpenAI(false);
+      setIsGeneratingAI(false);
     }
   };
 
@@ -113,7 +148,7 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
     }
   };
 
-  const handleSaveEdits = (updatedReport: AIReport) => {
+  const handleSaveEdits = (updatedReport: ClientReport) => {
     setReport(updatedReport);
     setIsEditMode(false);
   };
@@ -132,7 +167,7 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
       <ReportHeader 
         report={report}
         isLoading={isLoading}
-        isGeneratingOpenAI={isGeneratingOpenAI}
+        isGeneratingAI={isGeneratingAI}
         isSaving={isSaving}
         currentReportExists={!!currentReport}
         onRegenerate={generateReport}
@@ -140,6 +175,7 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
         onDownloadPdf={handleDownloadPdf}
         onGenerateAdvancedReport={generateAdvancedReport}
         onSaveReport={handleSaveReport}
+        generatorType="gemini"
       />
 
       {report && !isLoading && (

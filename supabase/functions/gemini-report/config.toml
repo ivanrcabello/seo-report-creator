@@ -1,0 +1,6 @@
+
+project_id = "gwscyovvgivbtqtmbdth"
+[parameters]
+allowed_environments = ["dev", "staging", "prod"]
+[config]
+GEMINI_API_KEY = "AIzaSyDtqQWnGPrKlzE2G8q_zc4HOdjrlNWhqAk"

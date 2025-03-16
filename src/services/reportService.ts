@@ -1,190 +1,168 @@
 
-import { ClientReport } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
+import { ClientReport } from "@/types/client";
+import { AIReport } from "@/services/aiReportService";
+import { toast } from "sonner";
 
-// Function to convert data from Supabase to app format
-const mapReportFromDB = (report: any): ClientReport => ({
-  id: report.id,
-  clientId: report.client_id,
-  title: report.title,
-  date: report.date,
-  type: report.type,
-  url: report.url,
-  notes: report.notes,
-  documentIds: report.document_ids,
-  shareToken: report.share_token,
-  sharedAt: report.shared_at,
-  includeInProposal: report.include_in_proposal,
-  // Add the formatted content and additional data
-  content: report.content,
-  // Add analytics data (including AI reports)
-  analyticsData: report.analytics_data,
-  searchConsoleData: report.search_console_data,
-  auditResult: report.audit_result
-});
-
-// Function to convert app data to Supabase format
-const mapReportToDB = (report: Partial<ClientReport>) => ({
-  client_id: report.clientId,
-  title: report.title,
-  date: report.date,
-  type: report.type,
-  url: report.url,
-  notes: report.notes,
-  document_ids: report.documentIds,
-  share_token: report.shareToken,
-  shared_at: report.sharedAt,
-  include_in_proposal: report.includeInProposal,
-  // Include content field for persistence
-  content: report.content,
-  // Include analytics data
-  analytics_data: report.analyticsData,
-  search_console_data: report.searchConsoleData,
-  audit_result: report.auditResult
-});
-
-// Report CRUD operations
+/**
+ * Get a list of reports for a specific client
+ * @param clientId Client ID to fetch reports for
+ * @returns Array of client reports
+ */
 export const getClientReports = async (clientId: string): Promise<ClientReport[]> => {
-  const { data, error } = await supabase
-    .from('client_reports')
-    .select('*')
-    .eq('client_id', clientId);
-  
-  if (error) {
-    console.error("Error fetching client reports:", error);
-    return [];
-  }
-  
-  return (data || []).map(mapReportFromDB);
-};
-
-export const getAllReports = async (): Promise<ClientReport[]> => {
-  const { data, error } = await supabase
-    .from('client_reports')
-    .select('*');
-  
-  if (error) {
-    console.error("Error fetching all reports:", error);
-    return [];
-  }
-  
-  return (data || []).map(mapReportFromDB);
-};
-
-export const getReport = async (id: string): Promise<ClientReport | undefined> => {
-  // If the ID is invalid (like "new"), return undefined immediately
-  if (!id || id === "new") {
-    console.log("Invalid report ID:", id);
-    return undefined;
-  }
-
   try {
     const { data, error } = await supabase
       .from('client_reports')
       .select('*')
-      .eq('id', id)
-      .maybeSingle();
+      .eq('client_id', clientId)
+      .order('date', { ascending: false });
     
     if (error) {
-      console.error("Error fetching report:", error);
-      return undefined;
+      throw error;
     }
     
-    return data ? mapReportFromDB(data) : undefined;
+    return data.map((report) => ({
+      id: report.id,
+      clientId: report.client_id,
+      title: report.title,
+      date: report.date,
+      type: report.type,
+      content: report.content,
+      analyticsData: report.analytics_data,
+      url: report.url,
+      documentIds: report.document_ids || [],
+      shareToken: report.share_token,
+      sharedAt: report.shared_at,
+      includeInProposal: report.include_in_proposal,
+      notes: report.notes
+    }));
   } catch (error) {
-    console.error("Error in getReport:", error);
-    return undefined;
-  }
-};
-
-export const addReport = async (report: Omit<ClientReport, "id">): Promise<ClientReport> => {
-  const { data, error } = await supabase
-    .from('client_reports')
-    .insert([mapReportToDB(report)])
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Error adding report:", error);
+    console.error("Error fetching client reports:", error);
     throw error;
   }
-  
-  // Update client's lastReport date
-  await supabase
-    .from('clients')
-    .update({ last_report: report.date })
-    .eq('id', report.clientId);
-  
-  return mapReportFromDB(data);
 };
 
-export const updateReport = async (report: ClientReport): Promise<ClientReport> => {
-  const { data, error } = await supabase
-    .from('client_reports')
-    .update(mapReportToDB(report))
-    .eq('id', report.id)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Error updating report:", error);
+/**
+ * Get a specific report by ID
+ * @param reportId Report ID to fetch
+ * @returns Client report or null if not found
+ */
+export const getReport = async (reportId: string): Promise<ClientReport | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('client_reports')
+      .select('*')
+      .eq('id', reportId)
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (!data) {
+      return null;
+    }
+    
+    return {
+      id: data.id,
+      clientId: data.client_id,
+      title: data.title,
+      date: data.date,
+      type: data.type,
+      content: data.content,
+      analyticsData: data.analytics_data,
+      url: data.url,
+      documentIds: data.document_ids || [],
+      shareToken: data.share_token,
+      sharedAt: data.shared_at,
+      includeInProposal: data.include_in_proposal,
+      notes: data.notes
+    };
+  } catch (error) {
+    console.error("Error fetching report:", error);
     throw error;
   }
-  
-  return mapReportFromDB(data);
 };
 
-export const deleteReport = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('client_reports')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
+/**
+ * Delete a report by ID
+ * @param reportId Report ID to delete
+ * @returns True if deletion was successful
+ */
+export const deleteReport = async (reportId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('client_reports')
+      .delete()
+      .eq('id', reportId);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
     console.error("Error deleting report:", error);
     throw error;
   }
 };
 
-// Save report with AI data
-export const saveReportWithAIData = async (report: ClientReport, aiReport: any): Promise<ClientReport> => {
-  // Make sure we have an analytics_data object
-  const analyticsData = report.analyticsData || {};
-  
-  // Add or update the aiReport property
-  analyticsData.aiReport = aiReport;
-  
-  // Update the report content with the aiReport content if available
-  const updatedReport = {
-    ...report,
-    analyticsData,
-    content: aiReport.content || report.content
-  };
-  
-  // Save to database
-  return await updateReport(updatedReport);
-};
-
-// Share report function
-export const shareReport = async (report: ClientReport): Promise<ClientReport> => {
-  const shareToken = report.shareToken || uuidv4();
-  const sharedAt = new Date().toISOString();
-  
-  const { data, error } = await supabase
-    .from('client_reports')
-    .update({ 
-      share_token: shareToken,
-      shared_at: sharedAt
-    })
-    .eq('id', report.id)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Error sharing report:", error);
+/**
+ * Update the report with AI generated data
+ * @param report Report to update
+ * @param aiReport AI generated report data
+ * @returns Updated report
+ */
+export const saveReportWithAIData = async (
+  report: ClientReport, 
+  aiReport: any
+): Promise<ClientReport> => {
+  try {
+    const updatedReport = {
+      ...report,
+      content: aiReport.content || aiReport.content,
+      analyticsData: {
+        ...report.analyticsData,
+        aiReport: aiReport.analyticsData?.aiReport || {
+          id: aiReport.id,
+          content: aiReport.content,
+          generated_at: new Date().toISOString(),
+          generatedBy: aiReport.analyticsData?.generatedBy || 'gemini'
+        }
+      }
+    };
+    
+    const { data, error } = await supabase
+      .from('client_reports')
+      .update({
+        content: updatedReport.content,
+        analytics_data: updatedReport.analyticsData
+      })
+      .eq('id', report.id)
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      clientId: data.client_id,
+      title: data.title,
+      date: data.date,
+      type: data.type,
+      content: data.content,
+      analyticsData: data.analytics_data,
+      url: data.url,
+      documentIds: data.document_ids || [],
+      shareToken: data.share_token,
+      sharedAt: data.shared_at,
+      includeInProposal: data.include_in_proposal,
+      notes: data.notes
+    };
+  } catch (error) {
+    console.error("Error saving report with AI data:", error);
     throw error;
   }
-  
-  return mapReportFromDB(data);
 };

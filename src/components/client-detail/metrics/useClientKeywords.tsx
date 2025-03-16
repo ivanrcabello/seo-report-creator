@@ -16,6 +16,13 @@ export const useClientKeywords = (clientId: string) => {
 
   const fetchKeywords = async () => {
     try {
+      if (!clientId) {
+        console.log("No client ID provided, skipping keyword fetch");
+        setKeywords([]);
+        setIsLoading(false);
+        return;
+      }
+      
       setIsLoading(true);
       setError(null);
       console.log("Fetching keywords for client ID:", clientId);
@@ -115,6 +122,10 @@ export const useClientKeywords = (clientId: string) => {
     if (clientId) {
       console.log("Client ID changed, fetching keywords for:", clientId);
       fetchKeywords();
+    } else {
+      console.log("No client ID available for keywords");
+      setKeywords([]);
+      setIsLoading(false);
     }
   }, [clientId]);
 

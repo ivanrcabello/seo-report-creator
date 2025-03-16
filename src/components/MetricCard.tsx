@@ -1,26 +1,34 @@
+
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 interface MetricCardProps {
   title: string;
   value: string | number;
   description?: string;
-  color: string;
-  icon: React.ReactNode;
+  color?: string;
+  icon: ReactNode;
   className?: string;
   onClick?: () => void;
+  target?: number;
+  trend?: ReactNode;
+  footer?: ReactNode;
 }
 
 export const MetricCard = ({ 
   title, 
   value, 
   description, 
-  color, 
+  color = "bg-blue-50", 
   icon, 
   className,
-  onClick 
+  onClick,
+  target,
+  trend,
+  footer
 }: MetricCardProps) => {
   return (
     <Card 
@@ -42,9 +50,24 @@ export const MetricCard = ({
               </TooltipContent>
             </Tooltip>
           )}
+          {trend && (
+            <div className="ml-auto">
+              {trend}
+            </div>
+          )}
         </div>
         <h3 className="text-lg font-semibold text-gray-700">{title}</h3>
-        <p className="text-3xl font-bold mt-2">{value}</p>
+        <div className="flex items-end justify-between">
+          <p className="text-3xl font-bold mt-2">{value}</p>
+          {target && (
+            <p className="text-sm text-gray-500">Meta: {target}</p>
+          )}
+        </div>
+        {footer && (
+          <div className="mt-4">
+            {footer}
+          </div>
+        )}
       </div>
       <div className={cn(
         "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity",

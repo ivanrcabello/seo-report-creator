@@ -10,7 +10,7 @@ import { ClientProfileTab } from "@/components/client-detail/ClientProfileTab";
 import { ClientMetricsTab } from "@/components/client-detail/ClientMetricsTab";
 import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
-import { ClientDocumentsView } from "@/components/client-documents/ClientDocumentsView";
+import { ClientDocumentsView } from "@/components/client-documents"; // Fixed import
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
 import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
@@ -21,6 +21,7 @@ export default function ClientDetail() {
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
     if (!clientId) {
@@ -79,7 +80,7 @@ export default function ClientDetail() {
         </div>
       </div>
       
-      <Tabs defaultValue="profile" className="w-full">
+      <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="metrics">Métricas</TabsTrigger>
@@ -92,11 +93,11 @@ export default function ClientDetail() {
         </TabsList>
         
         <TabsContent value="profile">
-          <ClientProfileTab clientId={clientId} client={client} onSave={handleUpdateClient} />
+          <ClientProfileTab client={client} onSave={handleUpdateClient} />
         </TabsContent>
         
         <TabsContent value="metrics">
-          <ClientMetricsTab clientId={clientId} />
+          <ClientMetricsTab clientId={clientId} clientName={client.name} />
         </TabsContent>
         
         <TabsContent value="invoices">
@@ -119,11 +120,17 @@ export default function ClientDetail() {
         </TabsContent>
         
         <TabsContent value="localseo">
-          <LocalSeoTab clientId={clientId} />
+          <LocalSeoTab 
+            isGeneratingReport={false}
+            localSeoReports={[]}
+            currentLocalSeoReport={null}
+            setCurrentLocalSeoReport={() => {}}
+            setActiveTab={setActiveTab}
+          />
         </TabsContent>
         
         <TabsContent value="report">
-          <PdfUploadTab clientId={clientId} />
+          <PdfUploadTab clientName={client.name} onAnalysisComplete={() => {}} />
         </TabsContent>
       </Tabs>
     </div>

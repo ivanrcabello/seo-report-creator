@@ -7,9 +7,10 @@ import { es } from "date-fns/locale";
 
 interface ClientProfileTabProps {
   client: Client;
+  onSave: (updatedClient: Client) => void;
 }
 
-export const ClientProfileTab: React.FC<ClientProfileTabProps> = ({ client }) => {
+export const ClientProfileTab: React.FC<ClientProfileTabProps> = ({ client, onSave }) => {
   return (
     <Card>
       <CardHeader>

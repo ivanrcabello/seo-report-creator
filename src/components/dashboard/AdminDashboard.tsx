@@ -8,7 +8,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-// Import our newly created component files
+// Import our component files
 import { OverviewTab } from './tabs/OverviewTab';
 import { ClientsTab } from './tabs/ClientsTab';
 import { InvoicesTab } from './tabs/InvoicesTab';

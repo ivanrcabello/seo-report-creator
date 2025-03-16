@@ -6,7 +6,7 @@ import { LocalSeoReportView } from "@/components/LocalSeoReportView";
 import { SeoLocalReport } from "@/types/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Map, FileText, Clock } from "lucide-react";
+import { Map, FileText } from "lucide-react";
 
 interface LocalSeoTabProps {
   isGeneratingReport: boolean;

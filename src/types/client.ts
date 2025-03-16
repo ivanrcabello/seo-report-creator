@@ -102,6 +102,7 @@ export interface SeoLocalReport {
   googleBusinessUrl?: string | null;
   googleMapsRanking?: number;
   googleReviewsCount?: number;
+  googleReviewsAverage?: number;
   keywordRankings?: any;
   localListings?: any;
   shareToken?: string;

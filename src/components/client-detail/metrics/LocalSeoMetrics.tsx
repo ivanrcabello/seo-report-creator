@@ -117,15 +117,19 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       if (settings) {
         setTargetLocations(settings.target_locations || []);
         
+        const reviewsAvg = typeof settings.google_reviews_average === 'number' ? 
+          settings.google_reviews_average : 
+          (parseFloat(settings.google_reviews_average as unknown as string) || 0);
+        
         form.reset({
           businessName: settings.business_name || clientName,
           address: settings.address || "",
           phone: settings.phone || "",
           website: settings.website || "",
           googleBusinessUrl: settings.google_business_url || "",
-          googleMapsRanking: settings.listings_count || 0, // Changed from google_maps_ranking
+          googleMapsRanking: settings.listings_count || 0,
           googleReviewsCount: settings.google_reviews_count || 0,
-          googleReviewsAverage: settings.google_reviews_average || 0,
+          googleReviewsAverage: reviewsAvg,
           listingsCount: settings.listings_count || 0,
         });
       } else {
@@ -202,6 +206,10 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       console.log("Saving Local SEO settings with data:", data);
       console.log("Target locations:", targetLocations);
       
+      const reviewsAvg = typeof data.googleReviewsAverage === 'number' ? 
+        data.googleReviewsAverage : 
+        (parseFloat(data.googleReviewsAverage as unknown as string) || 0);
+      
       const settingsToSave = {
         id: localSeoSettings?.id,
         clientId: clientId,
@@ -212,7 +220,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
         googleBusinessUrl: data.googleBusinessUrl,
         targetLocations: targetLocations,
         googleReviewsCount: data.googleReviewsCount,
-        googleReviewsAverage: data.googleReviewsAverage,
+        googleReviewsAverage: reviewsAvg,
         listingsCount: data.listingsCount,
       };
       
@@ -225,7 +233,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
         const metricsResult = await saveLocalSeoMetrics(clientId, {
           googleMapsRanking: data.googleMapsRanking,
           googleReviewsCount: data.googleReviewsCount,
-          googleReviewsAverage: data.googleReviewsAverage,
+          googleReviewsAverage: reviewsAvg,
           listingsCount: data.listingsCount,
         });
         console.log("Metrics history saved:", metricsResult);
@@ -265,7 +273,9 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
   const googleBusinessUrl = form.watch("googleBusinessUrl");
   const googleMapsRanking = form.watch("googleMapsRanking") || 0;
   const googleReviewsCount = form.watch("googleReviewsCount") || 0;
-  const googleReviewsAverage = form.watch("googleReviewsAverage") || 0;
+  const googleReviewsAverage = typeof form.watch("googleReviewsAverage") === 'number' ? 
+    form.watch("googleReviewsAverage") : 
+    (parseFloat(form.watch("googleReviewsAverage") as unknown as string) || 0);
   const listingsCount = form.watch("listingsCount") || 0;
   
   return (
@@ -381,7 +391,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
                     <div className="text-center">
                       <div className="flex items-center justify-center">
                         <span className="text-2xl font-bold text-amber-500 mr-1">
-                          {googleReviewsAverage?.toFixed(1) || "0.0"}
+                          {(typeof googleReviewsAverage === 'number' ? googleReviewsAverage.toFixed(1) : '0.0') || "0.0"}
                         </span>
                         <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
                       </div>

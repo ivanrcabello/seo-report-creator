@@ -170,12 +170,13 @@ export async function getLocalSeoReports(clientId: string): Promise<SeoLocalRepo
       date: report.date,
       businessName: report.business_name,
       location: report.location || "",
-      address: report.location || "", // Using location as address since they're the same for local SEO
+      address: report.location || "", // Using location as address
       phone: report.phone,
       website: report.website,
       googleBusinessUrl: report.google_business_url,
-      googleMapsRanking: report.google_maps_ranking,
-      googleReviewsCount: report.google_reviews_count || 0, // Default to 0 if not present
+      googleMapsRanking: report.google_maps_ranking || 0,
+      googleReviewsCount: report.google_reviews_count || 0,
+      googleReviewsAverage: typeof report.google_reviews_average === 'number' ? report.google_reviews_average : 0,
       keywordRankings: report.keyword_rankings,
       localListings: report.local_listings,
       recommendations: report.recommendations,
@@ -220,12 +221,13 @@ export async function getLocalSeoReport(reportId: string): Promise<SeoLocalRepor
       date: data.date,
       businessName: data.business_name,
       location: data.location || "",
-      address: data.location || "", // Using location as address since they're conceptually the same for local SEO
+      address: data.location || "", // Using location as address
       phone: data.phone,
       website: data.website,
       googleBusinessUrl: data.google_business_url,
-      googleMapsRanking: data.google_maps_ranking,
-      googleReviewsCount: data.google_reviews_count || 0, // Default to 0 if not present
+      googleMapsRanking: data.google_maps_ranking || 0,
+      googleReviewsCount: data.google_reviews_count || 0,
+      googleReviewsAverage: typeof data.google_reviews_average === 'number' ? data.google_reviews_average : 0,
       keywordRankings: data.keyword_rankings,
       localListings: data.local_listings,
       recommendations: data.recommendations,
@@ -312,7 +314,6 @@ export async function saveLocalSeoSettings({
   website,
   googleBusinessUrl,
   targetLocations,
-  googleMapsRanking,
   googleReviewsCount,
   googleReviewsAverage,
   listingsCount,
@@ -325,7 +326,6 @@ export async function saveLocalSeoSettings({
   website?: string | null;
   googleBusinessUrl?: string | null;
   targetLocations?: string[];
-  googleMapsRanking?: number;
   googleReviewsCount?: number;
   googleReviewsAverage?: number;
   listingsCount?: number;
@@ -340,6 +340,11 @@ export async function saveLocalSeoSettings({
     console.log('Saving local SEO settings for client:', clientId);
     console.log('Settings data:', { id, clientId, businessName, address });
     
+    // Convert googleReviewsAverage to a valid number
+    const normalizedReviewsAvg = typeof googleReviewsAverage === 'number' ? 
+      googleReviewsAverage : 
+      (parseFloat(googleReviewsAverage as unknown as string) || 0);
+    
     // Only include fields that exist in the database table
     const dataToSave = {
       client_id: clientId,
@@ -349,9 +354,8 @@ export async function saveLocalSeoSettings({
       website: website || null,
       google_business_url: googleBusinessUrl || null,
       target_locations: targetLocations || [],
-      google_maps_ranking: googleMapsRanking || 0,
       google_reviews_count: googleReviewsCount || 0,
-      google_reviews_average: googleReviewsAverage || 0,
+      google_reviews_average: normalizedReviewsAvg,
       listings_count: listingsCount || 0,
     };
     

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -29,7 +28,7 @@ interface ContractFormProps {
   clientId?: string;
 }
 
-export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
+export const ContractFormComponent = ({ clientId: propClientId }: ContractFormProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -38,7 +37,6 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
   const [saving, setSaving] = useState(false);
   const [sections, setSections] = useState<ContractSection[]>([]);
 
-  // Use either the prop clientId or the one from URL params
   const clientId = propClientId || useParams<{ clientId: string }>().clientId;
 
   const form = useForm<ContractFormValues>({
@@ -70,11 +68,9 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch clients for dropdown
         const clientsData = await getClients();
         setClients(clientsData);
 
-        // Fetch company settings for professional info
         const settings = await getCompanySettings();
 
         if (settings) {
@@ -84,12 +80,10 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
           form.setValue("professionalInfo.taxId", settings.taxId);
         }
 
-        // If editing existing contract
         if (id) {
           const contractData = await getContract(id);
           
           if (contractData) {
-            // Set form values from contract data
             form.setValue("title", contractData.title);
             form.setValue("clientId", contractData.clientId);
             form.setValue("startDate", new Date(contractData.startDate));
@@ -100,10 +94,9 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
             form.setValue("monthlyFee", contractData.monthlyFee);
             form.setValue("status", contractData.status as any);
             
-            // Set client info - ensure name is always a string (required field)
             if (contractData.content.clientInfo) {
               const clientInfo = {
-                name: contractData.content.clientInfo.name || "",  // Name is required
+                name: contractData.content.clientInfo.name || "",
                 company: contractData.content.clientInfo.company || "",
                 address: contractData.content.clientInfo.address || "",
                 taxId: contractData.content.clientInfo.taxId || "",
@@ -111,22 +104,19 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
               form.setValue("clientInfo", clientInfo);
             }
             
-            // Set professional info - ensure all required fields have values
             if (contractData.content.professionalInfo) {
               const professionalInfo = {
-                name: contractData.content.professionalInfo.name || "",  // Required
-                company: contractData.content.professionalInfo.company || "", // Required
-                address: contractData.content.professionalInfo.address || "", // Required
-                taxId: contractData.content.professionalInfo.taxId || "",  // Required
+                name: contractData.content.professionalInfo.name || "",
+                company: contractData.content.professionalInfo.company || "",
+                address: contractData.content.professionalInfo.address || "",
+                taxId: contractData.content.professionalInfo.taxId || "",
               };
               form.setValue("professionalInfo", professionalInfo);
             }
             
-            // Set sections
             setSections(contractData.content.sections || []);
           }
         } else if (clientId) {
-          // If creating a new contract for a specific client
           const clientData = await getClient(clientId);
           
           if (clientData) {
@@ -135,10 +125,8 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
             form.setValue("clientInfo.company", clientData.company || "");
           }
           
-          // Set default sections for new contract
           setSections(createDefaultContractSections());
         } else {
-          // New contract without specified client
           setSections(createDefaultContractSections());
         }
       } catch (error) {
@@ -160,7 +148,6 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
     try {
       setSaving(true);
 
-      // Validate sections before submitting
       if (sections.some(section => !section.title || !section.content)) {
         toast({
           title: "Error",
@@ -198,11 +185,10 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
       };
 
       if (id) {
-        // Update existing contract
         await updateContract({
           ...contractData,
           id,
-          createdAt: "", // These will be ignored by the update function
+          createdAt: "",
           updatedAt: "",
         });
         
@@ -211,7 +197,6 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
           description: "El contrato ha sido actualizado correctamente",
         });
       } else {
-        // Create new contract
         const newContract = await createContract(contractData);
         
         toast({
@@ -220,7 +205,6 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
         });
       }
       
-      // Navigate back to contracts list
       navigate(clientId ? `/clients/${clientId}` : "/contracts");
     } catch (error) {
       console.error("Error saving contract:", error);
@@ -301,3 +285,5 @@ export const ContractForm = ({ clientId: propClientId }: ContractFormProps) => {
     </Form>
   );
 };
+
+export const ContractForm = ContractFormComponent;

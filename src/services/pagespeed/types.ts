@@ -22,6 +22,7 @@ export interface PageSpeedAudit {
   displayValue?: string;
   category: 'performance' | 'accessibility' | 'best-practices' | 'seo';
   importance: 'high' | 'medium' | 'low';
+  details?: any;
 }
 
 export interface PageSpeedReport {

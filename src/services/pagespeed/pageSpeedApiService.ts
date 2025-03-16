@@ -91,7 +91,7 @@ const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
       }
       
       // Determinamos la categoría del audit
-      let category = 'other';
+      let category: 'performance' | 'accessibility' | 'best-practices' | 'seo' = 'performance';
       if (audit.group === 'metrics') {
         category = 'performance';
       } else if (audit.group === 'seo') {
@@ -102,22 +102,30 @@ const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
         category = 'accessibility';
       }
       
+      // Determinar importancia basada en la puntuación
+      let importance: 'high' | 'medium' | 'low' = 'medium';
+      if (score < 0.5) {
+        importance = 'high';
+      } else if (score >= 0.9) {
+        importance = 'low';
+      }
+      
       return {
         id,
         title: audit.title || id,
         description: audit.description || '',
         score,
+        scoreDisplayMode: audit.scoreDisplayMode || 'numeric',
         displayValue: audit.displayValue || '',
-        details: audit.details || null,
-        category
+        category,
+        importance,
+        details: audit.details || null
       };
     });
     
     // Devolver el informe completo
     return {
       id: `pagespeed-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      url: url,
       metrics: {
         url: url,
         performance_score: Number(performanceScore),
@@ -141,13 +149,11 @@ const processPageSpeedResponse = (data: any, url: string): PageSpeedReport => {
 
 // Función para generar datos de prueba para desarrollo
 const generateMockData = (url: string): PageSpeedReport => {
-  const timestamp = new Date().toISOString();
-  
   console.log("Generating mock PageSpeed data for:", url);
   
   // Generar puntuaciones aleatorias para los audits
   const audits: PageSpeedAudit[] = [];
-  const categories = ['performance', 'seo', 'best-practices', 'accessibility'];
+  const categories: Array<'performance' | 'seo' | 'best-practices' | 'accessibility'> = ['performance', 'seo', 'best-practices', 'accessibility'];
   
   // Generar algunos audits aleatorios
   for (let i = 1; i <= 20; i++) {
@@ -159,9 +165,10 @@ const generateMockData = (url: string): PageSpeedReport => {
       title: `Audit de prueba ${i}`,
       description: `Esta es una descripción de prueba para el audit ${i}`,
       score,
+      scoreDisplayMode: 'numeric',
       displayValue: score >= 0.9 ? 'Excelente' : score >= 0.5 ? 'Necesita mejoras' : 'Deficiente',
-      details: null,
-      category
+      category,
+      importance: score < 0.5 ? 'high' : score >= 0.9 ? 'low' : 'medium'
     });
   }
   
@@ -173,8 +180,6 @@ const generateMockData = (url: string): PageSpeedReport => {
   
   return {
     id: `mock-pagespeed-${Date.now()}`,
-    timestamp,
-    url,
     metrics: {
       url,
       performance_score: Number(performance_score.toFixed(2)),

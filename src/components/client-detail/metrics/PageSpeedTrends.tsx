@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   PageSpeedReport, 
   getPageSpeedHistory 
-} from "@/services/pageSpeedService";
+} from "@/services/pagespeed";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -82,7 +82,7 @@ export const PageSpeedTrends = ({ clientId }: PageSpeedTrendsProps) => {
                 className="flex items-center gap-1 ml-2"
               >
                 {getTrend(current.metrics.performance_score, previous?.metrics.performance_score).icon}
-                {previous ? `${current.metrics.performance_score - previous.metrics.performance_score}` : "–"}
+                {previous ? `${(current.metrics.performance_score - previous.metrics.performance_score).toFixed(2)}` : "–"}
               </Badge>
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
@@ -90,9 +90,9 @@ export const PageSpeedTrends = ({ clientId }: PageSpeedTrendsProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold mb-1">{current.metrics.performance_score}</div>
+            <div className="text-2xl font-bold mb-1">{current.metrics.performance_score.toFixed(2)}</div>
             <Progress 
-              value={current.metrics.performance_score} 
+              value={current.metrics.performance_score * 100} 
               className="h-2" 
             />
           </CardContent>
@@ -108,7 +108,7 @@ export const PageSpeedTrends = ({ clientId }: PageSpeedTrendsProps) => {
                 className="flex items-center gap-1 ml-2"
               >
                 {getTrend(current.metrics.accessibility_score, previous?.metrics.accessibility_score).icon}
-                {previous ? `${current.metrics.accessibility_score - previous.metrics.accessibility_score}` : "–"}
+                {previous ? `${(current.metrics.accessibility_score - previous.metrics.accessibility_score).toFixed(2)}` : "–"}
               </Badge>
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
@@ -116,9 +116,9 @@ export const PageSpeedTrends = ({ clientId }: PageSpeedTrendsProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold mb-1">{current.metrics.accessibility_score}</div>
+            <div className="text-2xl font-bold mb-1">{current.metrics.accessibility_score.toFixed(2)}</div>
             <Progress 
-              value={current.metrics.accessibility_score} 
+              value={current.metrics.accessibility_score * 100} 
               className="h-2" 
             />
           </CardContent>
@@ -134,7 +134,7 @@ export const PageSpeedTrends = ({ clientId }: PageSpeedTrendsProps) => {
                 className="flex items-center gap-1 ml-2"
               >
                 {getTrend(current.metrics.best_practices_score, previous?.metrics.best_practices_score).icon}
-                {previous ? `${current.metrics.best_practices_score - previous.metrics.best_practices_score}` : "–"}
+                {previous ? `${(current.metrics.best_practices_score - previous.metrics.best_practices_score).toFixed(2)}` : "–"}
               </Badge>
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
@@ -142,9 +142,9 @@ export const PageSpeedTrends = ({ clientId }: PageSpeedTrendsProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold mb-1">{current.metrics.best_practices_score}</div>
+            <div className="text-2xl font-bold mb-1">{current.metrics.best_practices_score.toFixed(2)}</div>
             <Progress 
-              value={current.metrics.best_practices_score} 
+              value={current.metrics.best_practices_score * 100} 
               className="h-2" 
             />
           </CardContent>
@@ -160,7 +160,7 @@ export const PageSpeedTrends = ({ clientId }: PageSpeedTrendsProps) => {
                 className="flex items-center gap-1 ml-2"
               >
                 {getTrend(current.metrics.seo_score, previous?.metrics.seo_score).icon}
-                {previous ? `${current.metrics.seo_score - previous.metrics.seo_score}` : "–"}
+                {previous ? `${(current.metrics.seo_score - previous.metrics.seo_score).toFixed(2)}` : "–"}
               </Badge>
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
@@ -168,9 +168,9 @@ export const PageSpeedTrends = ({ clientId }: PageSpeedTrendsProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold mb-1">{current.metrics.seo_score}</div>
+            <div className="text-2xl font-bold mb-1">{current.metrics.seo_score.toFixed(2)}</div>
             <Progress 
-              value={current.metrics.seo_score} 
+              value={current.metrics.seo_score * 100} 
               className="h-2" 
             />
           </CardContent>

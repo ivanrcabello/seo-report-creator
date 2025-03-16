@@ -16,18 +16,21 @@ export const generateGeminiReport = async (
   try {
     console.log("Generating report with Gemini API");
     console.log("Template type:", templateType);
-    console.log("Audit data:", JSON.stringify(auditData, null, 2));
     
-    // Validate essential data
+    // Validar datos esenciales
     if (!auditData || !auditData.companyName) {
       throw new Error("Datos de auditoría incompletos. Se requiere al menos el nombre de la empresa.");
     }
     
-    // Call the Supabase Edge Function for Gemini
+    // Eliminar propiedades circulares o no serializables
+    const sanitizedAuditData = JSON.parse(JSON.stringify(auditData));
+    console.log("Audit data sanitized successfully");
+    
+    // Llamar a la función Edge de Supabase para Gemini
     console.log("Calling Supabase Function: gemini-report");
     const { data, error } = await supabase.functions.invoke('gemini-report', {
       body: {
-        auditData,
+        auditData: sanitizedAuditData,
         templateType
       }
     });

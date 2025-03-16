@@ -2,18 +2,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3"
 
+// Obtener la clave API de Gemini de las variables de entorno
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 if (!GEMINI_API_KEY) {
   console.error('GEMINI_API_KEY env var not found')
 }
 
+// Cabeceras CORS para permitir solicitudes desde cualquier origen
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Manejar solicitudes de preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -21,7 +23,7 @@ serve(async (req) => {
   try {
     console.log("Gemini Report function called")
     
-    // Parse request body
+    // Parsear el cuerpo de la solicitud
     let body;
     try {
       body = await req.json()
@@ -46,8 +48,9 @@ serve(async (req) => {
     
     console.log("Template type:", templateType || 'seo')
     console.log("Audit data received, company name:", auditData.companyName || 'Not provided')
+    console.log("Audit data size:", JSON.stringify(auditData).length, "bytes")
 
-    // Check for API key again to make debugging easier
+    // Verificar la clave API de nuevo para facilitar la depuración
     if (!GEMINI_API_KEY) {
       console.error("GEMINI_API_KEY is not configured in the environment")
       return new Response(
@@ -56,16 +59,21 @@ serve(async (req) => {
       )
     }
 
-    // Initialize the Gemini API
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+    // Inicializar la API de Gemini
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    // Create a template for the report based on audit data
-    const prompt = createSeoReportPrompt(auditData, templateType)
-    console.log("Prompt created, sending to Gemini API")
-    console.log("Prompt length:", prompt.length)
+    // Crear una plantilla para el informe basado en los datos de auditoría
+    const prompt = createSeoReportPrompt(auditData, templateType);
+    console.log("Prompt created, sending to Gemini API");
+    console.log("Prompt length:", prompt.length);
 
-    // Generate response with Gemini
+    // Si el prompt es demasiado largo, podríamos tener problemas
+    if (prompt.length > 100000) {
+      console.warn("Warning: Prompt is very large, may exceed API limits");
+    }
+
+    // Generar respuesta con Gemini
     try {
       const result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -75,15 +83,33 @@ serve(async (req) => {
           topP: 0.95,
           maxOutputTokens: 8000,
         },
-      })
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
+      });
 
-      const response = result.response
-      const generatedText = response.text()
-      console.log("Gemini response received successfully")
-      console.log("Response length:", generatedText.length)
-      console.log("First 200 chars:", generatedText.substring(0, 200))
+      const response = result.response;
+      const generatedText = response.text();
+      console.log("Gemini response received successfully");
+      console.log("Response length:", generatedText.length);
+      console.log("First 200 chars:", generatedText.substring(0, 200));
 
-      // Return the generated content
+      // Devolver el contenido generado
       return new Response(
         JSON.stringify({ 
           content: generatedText,
@@ -91,10 +117,10 @@ serve(async (req) => {
           prompt: "SEO Report generation"
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      );
     } catch (error) {
-      console.error('Error calling Gemini API:', error)
-      // Add more details about the error for debugging
+      console.error('Error calling Gemini API:', error);
+      // Agregar más detalles sobre el error para la depuración
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error && error.stack ? error.stack : 'No stack available';
       console.error('Error details:', errorMessage);
@@ -106,11 +132,11 @@ serve(async (req) => {
           details: errorStack
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      );
     }
   } catch (error) {
-    console.error('Unhandled error in gemini-report function:', error)
-    // Add more details about the error for debugging
+    console.error('Unhandled error in gemini-report function:', error);
+    // Agregar más detalles sobre el error para la depuración
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error && error.stack ? error.stack : 'No stack available';
     console.error('Error details:', errorMessage);
@@ -122,26 +148,26 @@ serve(async (req) => {
         details: errorStack
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+    );
   }
-})
+});
 
-// Create a prompt for the SEO report
+// Crear un prompt para el informe SEO
 function createSeoReportPrompt(auditData, templateType = 'seo') {
-  console.log("Creating prompt with template type:", templateType)
+  console.log("Creating prompt with template type:", templateType);
   
-  // Safety check for null or undefined auditData
+  // Verificación de seguridad para auditData nulo o indefinido
   if (!auditData) {
-    console.error("auditData is null or undefined")
-    return "Please provide audit data for the SEO report."
+    console.error("auditData is null or undefined");
+    return "Please provide audit data for the SEO report.";
   }
   
-  // Safely extract data with fallbacks to prevent errors
-  const url = auditData.url || 'No URL provided'
-  const companyName = auditData.companyName || 'the company'
-  const seoScore = auditData.seoScore || 0
-  const performanceScore = auditData.performance || 0
-  const keywordsCount = auditData.keywordsCount || 0
+  // Extraer datos de forma segura con valores predeterminados para evitar errores
+  const url = auditData.url || 'No URL provided';
+  const companyName = auditData.companyName || 'the company';
+  const seoScore = auditData.seoScore || 0;
+  const performanceScore = auditData.performance || 0;
+  const keywordsCount = auditData.keywordsCount || 0;
   
   let basePrompt = `Genera un informe SEO detallado para ${companyName} sobre el sitio web ${url}. 
 El informe debe estar en formato markdown y en español.
@@ -153,9 +179,9 @@ Datos del análisis:
 - Rendimiento: ${performanceScore}/100
 - Palabras clave rastreadas: ${keywordsCount}
 
-`
+`;
 
-  // Add specific sections based on the template type
+  // Agregar secciones específicas según el tipo de plantilla
   if (templateType === 'seo') {
     if (auditData.seoResults) {
       basePrompt += `
@@ -168,12 +194,12 @@ Sección SEO On-Page:
 - Longitud del contenido: ${auditData.seoResults.contentLength || 'No disponible'} palabras
 - Enlaces internos: ${auditData.seoResults.internalLinks || 'No disponible'}
 - Enlaces externos: ${auditData.seoResults.externalLinks || 'No disponible'}
-`
+`;
     } else {
       basePrompt += `
 Sección SEO On-Page:
 - No hay datos disponibles de SEO On-Page
-`
+`;
     }
 
     if (auditData.technicalResults) {
@@ -185,12 +211,12 @@ Sección SEO Técnico:
 - Robots.txt: ${auditData.technicalResults.robotsTxt ? 'Correcto' : 'Falta o incorrecto'}
 - Sitemap: ${auditData.technicalResults.sitemap ? 'Encontrado' : 'No encontrado'}
 - Tecnologías detectadas: ${Array.isArray(auditData.technicalResults.technologies) ? auditData.technicalResults.technologies.join(', ') : 'No disponible'}
-`
+`;
     } else {
       basePrompt += `
 Sección SEO Técnico:
 - No hay datos disponibles de SEO Técnico
-`
+`;
     }
 
     if (auditData.performanceResults) {
@@ -202,12 +228,12 @@ Sección Rendimiento:
 - Recursos totales: ${auditData.performanceResults.resourceCount || 'N/A'}
 - Optimización de imágenes: ${auditData.performanceResults.imageOptimization ? 'Correcta' : 'Necesita mejoras'}
 - Implementación de caché: ${auditData.performanceResults.cacheImplementation ? 'Correcta' : 'Necesita mejoras'}
-`
+`;
     } else {
       basePrompt += `
 Sección Rendimiento:
 - No hay datos disponibles de Rendimiento
-`
+`;
     }
   } else if (templateType === 'local') {
     if (auditData.localData) {
@@ -217,16 +243,16 @@ Sección SEO Local:
 - Dirección: ${auditData.localData.address || 'No disponible'}
 - Posición en Google Maps: ${auditData.localData.googleMapsRanking || 'No disponible'}
 - Reseñas en Google: ${auditData.localData.googleReviews || 0}
-`
+`;
     } else {
       basePrompt += `
 Sección SEO Local:
 - No hay datos disponibles de SEO Local
-`
+`;
     }
   }
   
-  // Core web vitals if available
+  // Core web vitals si están disponibles
   if (auditData.pagespeed) {
     basePrompt += `
 Core Web Vitals:
@@ -236,20 +262,20 @@ Core Web Vitals:
 - Puntuación SEO: ${auditData.pagespeed.seo || 'N/A'}/100
 - Puntuación Accesibilidad: ${auditData.pagespeed.accessibility || 'N/A'}/100
 - Puntuación Mejores Prácticas: ${auditData.pagespeed.bestPractices || 'N/A'}/100
-`
+`;
   }
   
-  // Add a section about the documents if available
+  // Agregar una sección sobre los documentos si están disponibles
   if (auditData.documents && auditData.documents.length > 0) {
     basePrompt += `
 Documentos analizados:
 ${auditData.documents.map((doc, index) => `${index + 1}. ${doc.name || 'Documento sin nombre'}`).join('\n')}
 
 Basado en estos documentos, incluye recomendaciones específicas en el informe.
-`
+`;
   }
   
-  // Instructions for the report format
+  // Instrucciones para el formato del informe
   basePrompt += `
 Estructura el informe con las siguientes secciones:
 
@@ -260,8 +286,8 @@ Estructura el informe con las siguientes secciones:
 5. **Plan de Acción**: Pasos concretos para mejorar el SEO del sitio.
 
 El informe debe ser profesional, informativo y práctico. Usa markdown para formatear el informe con encabezados, listas y énfasis donde sea apropiado.
-`
+`;
 
-  console.log("Prompt created successfully")
-  return basePrompt
+  console.log("Prompt created successfully");
+  return basePrompt;
 }

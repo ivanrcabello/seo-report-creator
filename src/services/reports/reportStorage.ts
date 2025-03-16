@@ -42,7 +42,8 @@ export const saveGeminiReport = async (
       reportType = 'performance';
     }
     
-    // Define the status explicitly with the correct type
+    // Define the status with the correct type
+    // Este es el cambio clave para solucionar el error TS2322
     const reportStatus: 'draft' | 'published' | 'shared' = 'draft';
     
     const reportData = {
@@ -60,7 +61,7 @@ export const saveGeminiReport = async (
       status: reportStatus
     };
     
-    console.log("Inserting report into database", reportData);
+    console.log("Inserting report into database");
     
     // Save to database
     const { data, error } = await supabase

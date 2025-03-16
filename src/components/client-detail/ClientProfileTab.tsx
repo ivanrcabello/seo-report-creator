@@ -4,8 +4,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Client } from "@/types/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { User, Mail, Phone, Building, Calendar, FileText, Award, AlertCircle } from "lucide-react";
+import { User, Mail, Phone, Building, Calendar, FileText, Award, AlertCircle, BarChart2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface ClientProfileTabProps {
   client: Client;
@@ -154,6 +156,19 @@ export const ClientProfileTab: React.FC<ClientProfileTabProps> = ({ client, onSa
                 </Badge>
               </div>
             </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2 text-seo-blue hover:bg-blue-50"
+              asChild
+            >
+              <Link to="?tab=metrics">
+                <BarChart2 className="h-4 w-4" />
+                Ver métricas detalladas
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

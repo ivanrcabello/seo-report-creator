@@ -6,6 +6,8 @@ import { MetricsForm } from "./metrics/MetricsForm";
 import { LoadingState } from "./metrics/LoadingState";
 import { ErrorAlert } from "./metrics/ErrorAlert";
 import { useClientMetrics } from "./metrics/useClientMetrics";
+import { TrendingUp, BarChart2, MousePointer, Share2, Award } from "lucide-react";
+import { MetricsSummary } from "./metrics/MetricsSummary";
 
 interface ClientMetricsTabProps {
   clientId: string;
@@ -20,7 +22,8 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     isSaving, 
     error, 
     handleSaveMetrics, 
-    handleInputChange 
+    handleInputChange,
+    metrics,
   } = useClientMetrics(clientId);
   
   useEffect(() => {
@@ -38,7 +41,14 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     <div className="space-y-8">
       {error && <ErrorAlert error={error} />}
       
-      <MetricsCard title="Métricas de Rendimiento">
+      {currentMetric && (
+        <MetricsSummary currentMetric={currentMetric} />
+      )}
+      
+      <MetricsCard 
+        title="Métricas de Rendimiento" 
+        icon={<TrendingUp className="h-5 w-5 text-seo-blue" />}
+      >
         <MetricsForm
           currentMetric={currentMetric}
           isSaving={isSaving}
@@ -48,6 +58,17 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
           isAdmin={isAdmin}
         />
       </MetricsCard>
+      
+      {metrics && metrics.length > 0 && (
+        <MetricsCard 
+          title="Histórico de Métricas" 
+          icon={<BarChart2 className="h-5 w-5 text-seo-purple" />}
+        >
+          <div className="text-center text-sm text-gray-500 italic">
+            Próximamente: Gráfica de tendencias históricas de las métricas
+          </div>
+        </MetricsCard>
+      )}
     </div>
   );
 };

@@ -5,7 +5,13 @@ import { MapPin, Store, Award, Search, RefreshCcw, Globe, Phone, Star, PlusCircl
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SeoLocalReport } from "@/types/client";
-import { getLocalSeoReports, getLocalSeoSettings, saveLocalSeoSettings } from "@/services/localSeoService";
+import { 
+  getLocalSeoReports, 
+  getLocalSeoSettings, 
+  saveLocalSeoSettings, 
+  getLocalSeoMetricsHistory,
+  saveLocalSeoMetrics
+} from "@/services/localSeoService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +47,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
   const [localSeoSettings, setLocalSeoSettings] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [isSaving, setIsSaving] = useState(false);
+  const [metricHistory, setMetricHistory] = useState<any[]>([]);
   
   // Setup form
   const form = useForm<LocalSeoMetricsFormValues>({
@@ -56,6 +63,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
   useEffect(() => {
     loadReports();
     loadSettings();
+    loadMetricsHistory();
   }, [clientId]);
   
   useEffect(() => {
@@ -95,10 +103,19 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
     }
   };
   
+  const loadMetricsHistory = async () => {
+    try {
+      const history = await getLocalSeoMetricsHistory(clientId);
+      setMetricHistory(history);
+    } catch (error) {
+      console.error("Error loading local SEO metrics history:", error);
+    }
+  };
+  
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([loadReports(), loadSettings()]);
+      await Promise.all([loadReports(), loadSettings(), loadMetricsHistory()]);
       toast.success("Datos de SEO Local actualizados");
     } catch (error) {
       console.error("Error refreshing local SEO data:", error);
@@ -131,16 +148,13 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
       // Save to settings
       await saveLocalSeoSettings(settingsToSave);
       
-      // Also record historical metrics in local_seo_metrics table
-      const { error } = await supabase.from('local_seo_metrics').insert({
-        client_id: clientId,
-        google_maps_ranking: data.googleMapsRanking,
-        google_reviews_count: data.googleReviewsCount,
-        google_reviews_average: data.googleReviewsAverage,
-        listings_count: data.listingsCount,
+      // Also save to historical metrics
+      await saveLocalSeoMetrics(clientId, {
+        googleMapsRanking: data.googleMapsRanking,
+        googleReviewsCount: data.googleReviewsCount,
+        googleReviewsAverage: data.googleReviewsAverage,
+        listingsCount: data.listingsCount,
       });
-      
-      if (error) throw error;
       
       toast.success("Métricas SEO local guardadas correctamente");
       refreshData();
@@ -224,6 +238,9 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
             <TabsTrigger value="metrics">Actualizar Métricas</TabsTrigger>
             {currentReport?.keywordRankings && currentReport.keywordRankings.length > 0 && (
               <TabsTrigger value="keywords">Palabras Clave</TabsTrigger>
+            )}
+            {metricHistory.length > 0 && (
+              <TabsTrigger value="history">Historial</TabsTrigger>
             )}
           </TabsList>
           
@@ -311,7 +328,7 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
                     <div className="text-center">
                       <div className="flex items-center justify-center">
                         <span className="text-2xl font-bold text-amber-500 mr-1">
-                          {googleReviewsAverage.toFixed(1) || "0.0"}
+                          {googleReviewsAverage?.toFixed(1) || "0.0"}
                         </span>
                         <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
                       </div>
@@ -498,6 +515,65 @@ export const LocalSeoMetrics = ({ clientId, clientName }: LocalSeoMetricsProps) 
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="history">
+            {metricHistory.length > 0 ? (
+              <div className="bg-white rounded-lg p-4 border">
+                <h3 className="text-md font-medium mb-4 flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  Historial de Métricas
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Fecha
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Pos. Maps
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Reseñas
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Puntuación
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Directorios
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {metricHistory.map((metric: any, index: number) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(metric.date).toLocaleDateString('es-ES')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            #{metric.google_maps_ranking || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {metric.google_reviews_count || 0}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {metric.google_reviews_average?.toFixed(1) || '0.0'} <Star className="inline h-3 w-3 text-amber-500 fill-amber-500" />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {metric.listings_count || 0}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                <p className="text-gray-600">No hay datos históricos disponibles aún.</p>
               </div>
             )}
           </TabsContent>

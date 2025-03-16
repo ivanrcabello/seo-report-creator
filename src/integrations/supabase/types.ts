@@ -140,8 +140,13 @@ export type Database = {
           client_id: string
           created_at: string
           google_business_url: string | null
+          google_reviews_average: number | null
+          google_reviews_count: number | null
           id: string
+          last_metrics_update: string | null
+          listings_count: number | null
           phone: string | null
+          rank_tracking_enabled: boolean | null
           target_locations: string[] | null
           updated_at: string
           website: string | null
@@ -152,8 +157,13 @@ export type Database = {
           client_id: string
           created_at?: string
           google_business_url?: string | null
+          google_reviews_average?: number | null
+          google_reviews_count?: number | null
           id?: string
+          last_metrics_update?: string | null
+          listings_count?: number | null
           phone?: string | null
+          rank_tracking_enabled?: boolean | null
           target_locations?: string[] | null
           updated_at?: string
           website?: string | null
@@ -164,8 +174,13 @@ export type Database = {
           client_id?: string
           created_at?: string
           google_business_url?: string | null
+          google_reviews_average?: number | null
+          google_reviews_count?: number | null
           id?: string
+          last_metrics_update?: string | null
+          listings_count?: number | null
           phone?: string | null
+          rank_tracking_enabled?: boolean | null
           target_locations?: string[] | null
           updated_at?: string
           website?: string | null
@@ -546,6 +561,50 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      local_seo_metrics: {
+        Row: {
+          client_id: string
+          created_at: string
+          date: string
+          google_maps_ranking: number | null
+          google_reviews_average: number | null
+          google_reviews_count: number | null
+          id: string
+          listings_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          date?: string
+          google_maps_ranking?: number | null
+          google_reviews_average?: number | null
+          google_reviews_count?: number | null
+          id?: string
+          listings_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          date?: string
+          google_maps_ranking?: number | null
+          google_reviews_average?: number | null
+          google_reviews_count?: number | null
+          id?: string
+          listings_count?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "local_seo_metrics_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]

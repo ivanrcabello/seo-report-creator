@@ -325,3 +325,38 @@ export async function getLocalSeoMetricsHistory(clientId: string) {
     return [];
   }
 }
+
+/**
+ * Save local SEO metrics to the history table
+ */
+export async function saveLocalSeoMetrics(
+  clientId: string,
+  metrics: {
+    googleMapsRanking?: number;
+    googleReviewsCount?: number;
+    googleReviewsAverage?: number;
+    listingsCount?: number;
+  }
+) {
+  try {
+    const { error } = await supabase
+      .from('local_seo_metrics')
+      .insert({
+        client_id: clientId,
+        google_maps_ranking: metrics.googleMapsRanking || 0,
+        google_reviews_count: metrics.googleReviewsCount || 0,
+        google_reviews_average: metrics.googleReviewsAverage || 0,
+        listings_count: metrics.listingsCount || 0,
+      });
+      
+    if (error) {
+      console.error('Error saving local SEO metrics history:', error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in saveLocalSeoMetrics:', error);
+    return false;
+  }
+}

@@ -40,13 +40,9 @@ export const getReportByShareToken = async (shareToken: string): Promise<ClientR
       .from('client_reports')
       .select('*')
       .eq('share_token', shareToken)
-      .single();
+      .maybeSingle();
     
     if (error) {
-      if (error.code === 'PGRST116') {
-        // Record not found
-        return null;
-      }
       throw error;
     }
 

@@ -30,9 +30,10 @@ export const AllReports = () => {
       console.log("Informes cargados:", allReports);
       setReports(allReports);
       
-      // Extract unique report types
-      const types = Array.from(new Set(allReports.map(report => report.type)));
-      setReportTypes(types.filter(Boolean) as string[]);
+      // Extract unique report types and filter out any empty or null values
+      const types = Array.from(new Set(allReports.map(report => report.type)))
+        .filter(Boolean) as string[];
+      setReportTypes(types);
     } catch (err) {
       console.error("Error loading reports:", err);
       setError("No se pudieron cargar los informes. Por favor, inténtalo de nuevo más tarde.");
@@ -93,9 +94,9 @@ export const AllReports = () => {
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los tipos</SelectItem>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
                   {reportTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                    <SelectItem key={type} value={type}>{type || "Sin tipo"}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -164,7 +165,7 @@ export const AllReports = () => {
                     <TableCell className="font-medium">{report.title}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {report.type}
+                        {report.type || "Sin tipo"}
                       </Badge>
                     </TableCell>
                     <TableCell>{report.clientId}</TableCell>

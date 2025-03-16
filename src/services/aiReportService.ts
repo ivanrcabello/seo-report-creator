@@ -50,14 +50,14 @@ export interface AIReport {
   content?: string;
 }
 
-export const generateAIReport = async (auditData: AuditResult): Promise<AIReport> => {
+export const generateAIReport = async (auditResult: AuditResult): Promise<AIReport> => {
   // Generate a temporary ID for the report
   const tempId = 'report-' + Math.random().toString(36).substring(2, 9);
   
   // Generate sample report based on provided data
   const report: AIReport = {
     id: tempId,
-    introduction: `Este informe presenta un análisis completo de la presencia online de ${auditData.companyName || "su empresa"} en ${auditData.location || "su ubicación"}. El objetivo es mejorar su visibilidad en los motores de búsqueda, aumentar el tráfico orgánico y local, y captar nuevos clientes a través de estrategias SEO adaptadas a su sector (${auditData.companyType || "industria"}).`,
+    introduction: `Este informe presenta un análisis completo de la presencia online de ${auditResult.companyName || "su empresa"} en ${auditResult.location || "su ubicación"}. El objetivo es mejorar su visibilidad en los motores de búsqueda, aumentar el tráfico orgánico y local, y captar nuevos clientes a través de estrategias SEO adaptadas a su sector (${auditResult.companyType || "industria"}).`,
     
     authorityScore: 37,
     authorityScoreComment: "Puntuación media-baja. Hay margen de mejora significativo en la autoridad del dominio.",
@@ -73,14 +73,14 @@ export const generateAIReport = async (auditData: AuditResult): Promise<AIReport
     
     priorityKeywords: [
       {
-        keyword: auditData.keywords ? auditData.keywords[0]?.word || "keyword 1" : "keyword 1",
+        keyword: auditResult.keywords ? auditResult.keywords[0]?.word || "keyword 1" : "keyword 1",
         position: 18,
         volume: 2900,
         difficulty: 44,
         recommendation: "Optimizar la meta descripción y crear contenido especializado sobre este tema."
       },
       {
-        keyword: auditData.keywords ? auditData.keywords[1]?.word || "keyword 2" : "keyword 2",
+        keyword: auditResult.keywords ? auditResult.keywords[1]?.word || "keyword 2" : "keyword 2",
         position: 24,
         volume: 1800,
         difficulty: 39,
@@ -191,7 +191,7 @@ export const generateAIReport = async (auditData: AuditResult): Promise<AIReport
   };
   
   // Generate the formatted content for display
-  report.content = generateFormattedContent(report, auditData);
+  report.content = await generateFormattedContent(report, auditResult);
   
   // Simulate processing time
   return new Promise((resolve) => {
@@ -202,7 +202,19 @@ export const generateAIReport = async (auditData: AuditResult): Promise<AIReport
 };
 
 // Helper function to generate formatted markdown content for the report
-function generateFormattedContent(report: AIReport, auditData: AuditResult): string {
+async function generateFormattedContent(report: AIReport, auditResult: AuditResult): Promise<string> {
+  // Try to get enhanced content using OpenAI
+  try {
+    const enhancedContent = await getOpenAIReport(auditResult);
+    if (enhancedContent) {
+      return enhancedContent;
+    }
+  } catch (error) {
+    console.error("Error generating OpenAI report:", error);
+    // Continue with fallback report generation if OpenAI fails
+  }
+
+  // Fallback to basic report generation
   let content = '';
   
   // Introduction section
@@ -210,17 +222,17 @@ function generateFormattedContent(report: AIReport, auditData: AuditResult): str
   
   // Analysis section
   content += `## Análisis de la Situación Actual\n\n`;
-  content += `La web analizada (${auditData.url || 'No especificada'}) presenta los siguientes indicadores:\n\n`;
+  content += `La web analizada (${auditResult.url || 'No especificada'}) presenta los siguientes indicadores:\n\n`;
   content += `- **Authority Score**: ${report.authorityScore}/100 - ${report.authorityScoreComment}\n`;
   content += `- **Tráfico Orgánico**: ${report.organicTraffic} visitas/mes - ${report.organicTrafficComment}\n`;
   content += `- **Palabras Clave Posicionadas**: ${report.keywordsPositioned} - ${report.keywordsComment}\n`;
   content += `- **Backlinks**: ${report.backlinksCount} - ${report.backlinksComment}\n\n`;
   
-  // Technical issues section if available
-  if (auditData.seoIssues && auditData.seoIssues.length > 0) {
+  // Technical issues section if available in the audit data
+  if (auditResult.issues && auditResult.issues.length > 0) {
     content += `### Problemas Técnicos Detectados\n\n`;
-    auditData.seoIssues.forEach(issue => {
-      content += `- **${issue.type}**: ${issue.description}\n`;
+    auditResult.issues.forEach(issue => {
+      content += `- **${issue.type || 'Problema'}**: ${issue.description || issue.message || 'Sin descripción'}\n`;
     });
     content += `\n`;
   }
@@ -307,4 +319,29 @@ function generateFormattedContent(report: AIReport, auditData: AuditResult): str
   content += `- Teléfono: ${report.contactPhone || '+34 612 345 678'}\n`;
   
   return content;
+}
+
+// Function to generate a report using OpenAI
+async function getOpenAIReport(auditResult: AuditResult): Promise<string | null> {
+  try {
+    const response = await fetch('/api/openai-report', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        auditResult
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.content;
+  } catch (error) {
+    console.error('Error calling OpenAI API:', error);
+    return null;
+  }
 }

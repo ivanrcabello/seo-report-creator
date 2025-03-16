@@ -9,6 +9,10 @@ import { getClient } from '@/services/clientService';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getInitials } from '@/lib/utils';
+import { addFooters, addIntroductionSection, addAnalysisSection, addPriorityKeywordsSection, 
+         addCompetitorsSection, addStrategySection, addPackagesSection, addConclusionSection, 
+         addContactSection } from './seoReportPdfSections';
+import { AIReport } from '@/services/aiReportService';
 
 /**
  * Generates a PDF from a SEO report
@@ -58,12 +62,46 @@ export const generateSeoReportPdf = async (report: ClientReport): Promise<Blob> 
     doc.setLineWidth(0.5);
     doc.line(20, 70, 190, 70);
     
-    // Add report content - using formatted markdown-like content
-    if (report.content) {
-      // Split the content by sections
-      const sections = report.content.split('## ').filter(Boolean);
+    let yPosition = 80;
+    
+    // If we have auditResult data, include visual indicators
+    if (report.auditResult) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text("Indicadores de Rendimiento", 20, yPosition);
+      yPosition += 10;
       
-      let yPosition = 80;
+      // SEO score box
+      if (report.auditResult.seoScore) {
+        doc.setFillColor(240, 245, 255);
+        doc.roundedRect(20, yPosition, 80, 25, 3, 3, 'F');
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(41, 98, 255);
+        doc.text("Puntuación SEO", 25, yPosition + 8);
+        doc.setFontSize(16);
+        doc.text(`${report.auditResult.seoScore}%`, 25, yPosition + 20);
+      }
+      
+      // Performance score box
+      if (report.auditResult.performance) {
+        doc.setFillColor(240, 245, 255);
+        doc.roundedRect(110, yPosition, 80, 25, 3, 3, 'F');
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(41, 98, 255);
+        doc.text("Rendimiento", 115, yPosition + 8);
+        doc.setFontSize(16);
+        doc.text(`${report.auditResult.performance}%`, 115, yPosition + 20);
+      }
+      
+      yPosition += 35;
+    }
+    
+    // If we have content in markdown format, create a structured PDF
+    if (report.content) {
+      // We need to parse the markdown sections
+      const sections = report.content.split('## ').filter(Boolean);
       
       // Process each section
       for (const section of sections) {
@@ -111,22 +149,58 @@ export const generateSeoReportPdf = async (report: ClientReport): Promise<Blob> 
           yPosition = 20;
         }
       }
-    } else {
+    } 
+    // If we have AI Report specific data, use that
+    else if (report.analyticsData && report.analyticsData.aiReport) {
+      const aiReport = report.analyticsData.aiReport as AIReport;
+      
+      // Add introduction
+      yPosition = addIntroductionSection(doc, aiReport, yPosition);
+      
+      // Add analysis
+      yPosition = addAnalysisSection(doc, aiReport, yPosition);
+      
+      // Add priority keywords
+      yPosition = addPriorityKeywordsSection(doc, aiReport, yPosition);
+      
+      // Add competitors
+      yPosition = addCompetitorsSection(doc, aiReport, yPosition);
+      
+      // Add strategy
+      yPosition = addStrategySection(doc, aiReport, yPosition);
+      
+      // Add packages
+      yPosition = addPackagesSection(doc, aiReport, yPosition);
+      
+      // Add conclusion
+      yPosition = addConclusionSection(doc, aiReport, yPosition);
+      
+      // Add contact
+      yPosition = addContactSection(doc, aiReport, yPosition);
+    } 
+    // No content case
+    else {
       // If no content, add a message
       doc.setFont("helvetica", "italic");
       doc.setFontSize(12);
       doc.text("Este informe no contiene contenido detallado.", 105, 100, { align: "center" });
+      
+      // Add notes if available
+      if (report.notes) {
+        doc.addPage();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text("Notas", 20, 20);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        const splitNotes = doc.splitTextToSize(report.notes, 170);
+        doc.text(splitNotes, 20, 30);
+      }
     }
     
-    // Add footer with page numbers
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(150, 150, 150);
-      doc.text(`Página ${i} de ${pageCount}`, 105, 285, { align: "center" });
-    }
+    // Add footers with page numbers
+    addFooters(doc);
     
     // Return the PDF as a blob
     return doc.output('blob');

@@ -46,13 +46,15 @@ export interface AIReport {
   conclusion?: string;
   contactEmail?: string;
   contactPhone?: string;
+  // Add formatted content field for report display
+  content?: string;
 }
 
 export const generateAIReport = async (auditData: AuditResult): Promise<AIReport> => {
   // Generate a temporary ID for the report
   const tempId = 'report-' + Math.random().toString(36).substring(2, 9);
   
-  // Generar un informe de ejemplo basado en los datos proporcionados
+  // Generate sample report based on provided data
   const report: AIReport = {
     id: tempId,
     introduction: `Este informe presenta un análisis completo de la presencia online de ${auditData.companyName || "su empresa"} en ${auditData.location || "su ubicación"}. El objetivo es mejorar su visibilidad en los motores de búsqueda, aumentar el tráfico orgánico y local, y captar nuevos clientes a través de estrategias SEO adaptadas a su sector (${auditData.companyType || "industria"}).`,
@@ -188,10 +190,121 @@ export const generateAIReport = async (auditData: AuditResult): Promise<AIReport
     contactPhone: "+34 612 345 678"
   };
   
-  // Simulamos un tiempo de procesamiento
+  // Generate the formatted content for display
+  report.content = generateFormattedContent(report, auditData);
+  
+  // Simulate processing time
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(report);
     }, 1500);
   });
 };
+
+// Helper function to generate formatted markdown content for the report
+function generateFormattedContent(report: AIReport, auditData: AuditResult): string {
+  let content = '';
+  
+  // Introduction section
+  content += `## Introducción\n\n${report.introduction || ''}\n\n`;
+  
+  // Analysis section
+  content += `## Análisis de la Situación Actual\n\n`;
+  content += `La web analizada (${auditData.url || 'No especificada'}) presenta los siguientes indicadores:\n\n`;
+  content += `- **Authority Score**: ${report.authorityScore}/100 - ${report.authorityScoreComment}\n`;
+  content += `- **Tráfico Orgánico**: ${report.organicTraffic} visitas/mes - ${report.organicTrafficComment}\n`;
+  content += `- **Palabras Clave Posicionadas**: ${report.keywordsPositioned} - ${report.keywordsComment}\n`;
+  content += `- **Backlinks**: ${report.backlinksCount} - ${report.backlinksComment}\n\n`;
+  
+  // Technical issues section if available
+  if (auditData.seoIssues && auditData.seoIssues.length > 0) {
+    content += `### Problemas Técnicos Detectados\n\n`;
+    auditData.seoIssues.forEach(issue => {
+      content += `- **${issue.type}**: ${issue.description}\n`;
+    });
+    content += `\n`;
+  }
+  
+  // Keywords section
+  if (report.priorityKeywords && report.priorityKeywords.length > 0) {
+    content += `## Palabras Clave Prioritarias\n\n`;
+    content += `Las siguientes palabras clave representan oportunidades de posicionamiento para su negocio:\n\n`;
+    report.priorityKeywords.forEach(keyword => {
+      content += `### ${keyword.keyword}\n`;
+      content += `- **Posición actual**: ${keyword.position || 'No posicionada'}\n`;
+      content += `- **Volumen de búsqueda**: ${keyword.volume || 'N/A'} búsquedas/mes\n`;
+      content += `- **Dificultad**: ${keyword.difficulty || 'N/A'}/100\n`;
+      content += `- **Recomendación**: ${keyword.recommendation || 'N/A'}\n\n`;
+    });
+  }
+  
+  // Competitors section
+  if (report.competitors && report.competitors.length > 0) {
+    content += `## Análisis de Competidores\n\n`;
+    report.competitors.forEach(competitor => {
+      content += `### ${competitor.name}\n`;
+      content += `- **Score de tráfico**: ${competitor.trafficScore || 'N/A'}/100\n`;
+      content += `- **Palabras clave**: ${competitor.keywordsCount || 'N/A'}\n`;
+      content += `- **Backlinks**: ${competitor.backlinksCount || 'N/A'}\n`;
+      content += `- **Análisis**: ${competitor.analysis || 'N/A'}\n\n`;
+    });
+  }
+  
+  // Strategy section
+  content += `## Estrategia Propuesta\n\n`;
+  
+  if (report.strategy?.technicalOptimization) {
+    content += `### Optimización Técnica\n\n`;
+    report.strategy.technicalOptimization.forEach(item => {
+      content += `- ${item}\n`;
+    });
+    content += `\n`;
+  }
+  
+  if (report.strategy?.localSeo) {
+    content += `### SEO Local\n\n`;
+    report.strategy.localSeo.forEach(item => {
+      content += `- ${item}\n`;
+    });
+    content += `\n`;
+  }
+  
+  if (report.strategy?.contentCreation) {
+    content += `### Estrategia de Contenidos\n\n`;
+    report.strategy.contentCreation.forEach(item => {
+      content += `- ${item}\n`;
+    });
+    content += `\n`;
+  }
+  
+  if (report.strategy?.linkBuilding) {
+    content += `### Estrategia de Linkbuilding\n\n`;
+    report.strategy.linkBuilding.forEach(item => {
+      content += `- ${item}\n`;
+    });
+    content += `\n`;
+  }
+  
+  // Packages section
+  if (report.packages && report.packages.length > 0) {
+    content += `## Planes Recomendados\n\n`;
+    report.packages.forEach(pkg => {
+      content += `### ${pkg.name} - ${pkg.price}€/mes\n\n`;
+      pkg.features.forEach(feature => {
+        content += `- ${feature}\n`;
+      });
+      content += `\n`;
+    });
+  }
+  
+  // Conclusion section
+  content += `## Conclusión\n\n${report.conclusion || ''}\n\n`;
+  
+  // Contact info
+  content += `## Contacto\n\n`;
+  content += `Para más información, no dude en contactar con nosotros:\n\n`;
+  content += `- Email: ${report.contactEmail || 'info@agenciaseo.com'}\n`;
+  content += `- Teléfono: ${report.contactPhone || '+34 612 345 678'}\n`;
+  
+  return content;
+}

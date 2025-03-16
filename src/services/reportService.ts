@@ -3,7 +3,7 @@ import { ClientReport } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
-// Función para convertir datos de Supabase al formato de la aplicación
+// Function to convert data from Supabase to app format
 const mapReportFromDB = (report: any): ClientReport => ({
   id: report.id,
   clientId: report.client_id,
@@ -15,10 +15,16 @@ const mapReportFromDB = (report: any): ClientReport => ({
   documentIds: report.document_ids,
   shareToken: report.share_token,
   sharedAt: report.shared_at,
-  includeInProposal: report.include_in_proposal
+  includeInProposal: report.include_in_proposal,
+  // Add the formatted content and additional data
+  content: report.content,
+  // Add analytics data (including AI reports)
+  analyticsData: report.analytics_data,
+  searchConsoleData: report.search_console_data,
+  auditResult: report.audit_result
 });
 
-// Función para convertir datos de la aplicación al formato de Supabase
+// Function to convert app data to Supabase format
 const mapReportToDB = (report: Partial<ClientReport>) => ({
   client_id: report.clientId,
   title: report.title,
@@ -29,7 +35,13 @@ const mapReportToDB = (report: Partial<ClientReport>) => ({
   document_ids: report.documentIds,
   share_token: report.shareToken,
   shared_at: report.sharedAt,
-  include_in_proposal: report.includeInProposal
+  include_in_proposal: report.includeInProposal,
+  // Include content field for persistence
+  content: report.content,
+  // Include analytics data
+  analytics_data: report.analyticsData,
+  search_console_data: report.searchConsoleData,
+  audit_result: report.auditResult
 });
 
 // Report CRUD operations
@@ -61,7 +73,7 @@ export const getAllReports = async (): Promise<ClientReport[]> => {
 };
 
 export const getReport = async (id: string): Promise<ClientReport | undefined> => {
-  // Si el ID no es válido (como "new"), devolvemos undefined inmediatamente
+  // If the ID is invalid (like "new"), return undefined immediately
   if (!id || id === "new") {
     console.log("Invalid report ID:", id);
     return undefined;
@@ -133,6 +145,25 @@ export const deleteReport = async (id: string): Promise<void> => {
     console.error("Error deleting report:", error);
     throw error;
   }
+};
+
+// Save report with AI data
+export const saveReportWithAIData = async (report: ClientReport, aiReport: any): Promise<ClientReport> => {
+  // Make sure we have an analytics_data object
+  const analyticsData = report.analyticsData || {};
+  
+  // Add or update the aiReport property
+  analyticsData.aiReport = aiReport;
+  
+  // Update the report content with the aiReport content if available
+  const updatedReport = {
+    ...report,
+    analyticsData,
+    content: aiReport.content || report.content
+  };
+  
+  // Save to database
+  return await updateReport(updatedReport);
 };
 
 // Share report function

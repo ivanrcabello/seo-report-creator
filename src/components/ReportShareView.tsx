@@ -9,8 +9,13 @@ import {
   User, 
   Calendar, 
   Link,
-  Globe
+  Globe,
+  BarChart
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { downloadSeoReportPdf } from "@/services/seoReportPdfService";
+import { toast } from "sonner";
 
 interface ReportShareViewProps {
   report: ClientReport;
@@ -21,15 +26,37 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
   const formattedDate = report.date 
     ? format(new Date(report.date), "d 'de' MMMM, yyyy", { locale: es }) 
     : "";
+    
+  const handleDownloadPdf = async () => {
+    try {
+      toast.loading("Generando PDF...");
+      await downloadSeoReportPdf(report.id);
+      toast.success("PDF descargado correctamente");
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error("Error al descargar el PDF");
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="bg-gradient-to-r from-seo-blue to-seo-purple text-white p-8 rounded-t-lg">
-        <h1 className="text-3xl font-bold text-center mb-2">
-          {report.title || "Informe SEO"}
-        </h1>
-        <p className="text-center text-white/80 mt-2">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">
+            {report.title || "Informe SEO"}
+          </h1>
+          <Button 
+            onClick={handleDownloadPdf} 
+            variant="secondary" 
+            size="sm"
+            className="gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Descargar PDF
+          </Button>
+        </div>
+        <p className="text-white/80 mt-2">
           Informe generado el {formattedDate || "N/A"}
         </p>
       </div>
@@ -66,8 +93,10 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
               </div>
               {report.type && (
                 <div className="flex items-center gap-2 mb-1">
-                  <FileText className="h-5 w-5 text-seo-purple" />
-                  <span>Tipo: {report.type}</span>
+                  <BarChart className="h-5 w-5 text-seo-purple" />
+                  <span>
+                    Tipo: <Badge variant="outline">{report.type}</Badge>
+                  </span>
                 </div>
               )}
               {report.url && (

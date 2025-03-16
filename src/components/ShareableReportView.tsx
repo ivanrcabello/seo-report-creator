@@ -3,7 +3,8 @@ import { ClientReport } from "@/types/client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
+import { CheckCircle, AlertCircle, XCircle, LineChart, Zap, Search, Link2 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ShareableReportViewProps {
   report: ClientReport;
@@ -56,6 +57,36 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
             )}
           </div>
           
+          {/* Summary Metrics */}
+          {report.auditResult && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              <MetricCard 
+                title="Páginas Indexadas" 
+                value={report.auditResult.pagesIndexed || "N/A"} 
+                icon={<Search className="h-4 w-4 text-blue-500" />}
+                trend={report.auditResult.pagesTrend}
+              />
+              <MetricCard 
+                title="Velocidad de carga" 
+                value={report.auditResult.pageSpeed ? `${report.auditResult.pageSpeed}s` : "N/A"} 
+                icon={<Zap className="h-4 w-4 text-amber-500" />}
+                trend={report.auditResult.speedTrend}
+              />
+              <MetricCard 
+                title="Palabras clave" 
+                value={report.auditResult.keywordsCount || "N/A"} 
+                icon={<Search className="h-4 w-4 text-green-500" />}
+                trend={report.auditResult.keywordsTrend}
+              />
+              <MetricCard 
+                title="Backlinks" 
+                value={report.auditResult.backlinksCount || "N/A"} 
+                icon={<Link2 className="h-4 w-4 text-purple-500" />}
+                trend={report.auditResult.backlinksTrend}
+              />
+            </div>
+          )}
+          
           {/* Technical Indicators */}
           {report.auditResult?.technicalResults && (
             <div className="mt-6">
@@ -89,14 +120,20 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
 
       {/* Report content - rendered as markdown */}
       {report.content ? (
-        <div className="prose prose-blue max-w-none prose-headings:text-seo-blue prose-a:text-seo-purple">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {report.content}
-          </ReactMarkdown>
-        </div>
+        <ScrollArea className="h-full">
+          <div className="prose prose-blue max-w-none prose-headings:text-seo-blue prose-a:text-seo-purple">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {report.content}
+            </ReactMarkdown>
+          </div>
+        </ScrollArea>
       ) : (
         <div className="text-center py-8 text-gray-500">
-          Este informe no contiene contenido formateado.
+          <div className="flex flex-col items-center space-y-4">
+            <LineChart className="h-12 w-12 text-gray-300" />
+            <p className="text-lg font-medium">Este informe no contiene contenido formateado.</p>
+            <p className="text-sm text-gray-400">El contenido del informe puede no haberse generado correctamente o estar pendiente de completar.</p>
+          </div>
         </div>
       )}
     </div>
@@ -115,6 +152,36 @@ const TechnicalIndicator = ({ name, status }: { name: string, status: boolean | 
         <AlertCircle className="h-5 w-5 text-amber-500" />
       )}
       <span className="text-sm font-medium">{name}</span>
+    </div>
+  );
+};
+
+// Helper component for metric cards
+const MetricCard = ({ 
+  title, 
+  value, 
+  icon,
+  trend 
+}: { 
+  title: string, 
+  value: string | number, 
+  icon: React.ReactNode,
+  trend?: number 
+}) => {
+  return (
+    <div className="bg-white p-3 rounded-lg border shadow-sm">
+      <div className="flex justify-between items-start mb-1">
+        <span className="text-xs text-gray-500">{title}</span>
+        {icon}
+      </div>
+      <div className="flex items-end gap-2">
+        <span className="text-xl font-bold">{value}</span>
+        {trend !== undefined && (
+          <span className={`text-xs font-medium ${trend > 0 ? 'text-green-500' : trend < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+            {trend > 0 ? `+${trend}%` : trend < 0 ? `${trend}%` : 'Sin cambios'}
+          </span>
+        )}
+      </div>
     </div>
   );
 };

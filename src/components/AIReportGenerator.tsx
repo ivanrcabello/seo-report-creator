@@ -18,6 +18,7 @@ import {
   CheckCircle,
   Phone,
   Mail,
+  Save,
 } from "lucide-react";
 import { ReportSection } from "@/components/seo-report/ReportSection";
 import { Accordion } from "@/components/ui/accordion";
@@ -25,16 +26,27 @@ import { StrategySection } from "@/components/seo-report/StrategySection";
 import { EditableReportForm } from "@/components/seo-report/EditableReportForm";
 import { downloadSeoReportPdf } from "@/services/seoReportPdfService";
 import { useToast } from "@/components/ui/use-toast";
+import { saveReportWithAIData } from "@/services/reportService";
+import { ClientReport } from "@/types/client";
 
 interface AIReportGeneratorProps {
   auditResult: AuditResult;
+  currentReport?: ClientReport;
 }
 
-export const AIReportGenerator = ({ auditResult }: AIReportGeneratorProps) => {
+export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGeneratorProps) => {
   const [report, setReport] = useState<AIReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const { toast } = useToast();
+
+  // Load report data from currentReport if it exists
+  useEffect(() => {
+    if (currentReport?.analyticsData?.aiReport) {
+      setReport(currentReport.analyticsData.aiReport);
+    }
+  }, [currentReport]);
 
   const generateReport = async () => {
     setIsLoading(true);
@@ -50,6 +62,28 @@ export const AIReportGenerator = ({ auditResult }: AIReportGeneratorProps) => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveReport = async () => {
+    if (!report || !currentReport) return;
+    
+    setIsSaving(true);
+    try {
+      await saveReportWithAIData(currentReport, report);
+      toast({
+        title: "Informe guardado",
+        description: "El informe se ha guardado correctamente.",
+      });
+    } catch (error) {
+      console.error("Error saving report:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el informe. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -149,6 +183,27 @@ export const AIReportGenerator = ({ auditResult }: AIReportGeneratorProps) => {
                 <Download className="h-4 w-4" />
                 Descargar PDF
               </Button>
+
+              {currentReport && (
+                <Button 
+                  variant="default" 
+                  onClick={handleSaveReport} 
+                  disabled={isSaving}
+                  className="gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <RefreshCcw className="h-4 w-4 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Guardar en Informe
+                    </>
+                  )}
+                </Button>
+              )}
             </>
           )}
         </div>

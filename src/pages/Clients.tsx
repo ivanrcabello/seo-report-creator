@@ -87,8 +87,17 @@ const Clients = () => {
   const handleClientSubmit = async (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
     try {
       if (isEditMode && currentClient) {
-        // Update existing client
-        const updatedClient = await updateClient(currentClient.id, clientData);
+        // Update existing client - combine the current client data with the updated fields
+        const updatedClientData = {
+          ...currentClient,
+          name: clientData.name,
+          email: clientData.email,
+          phone: clientData.phone,
+          company: clientData.company
+        };
+        
+        // Call updateClient with the complete client object
+        const updatedClient = await updateClient(updatedClientData);
         setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
         toast({
           title: "Cliente actualizado",

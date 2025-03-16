@@ -55,11 +55,37 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
     
     console.log("PageSpeed report retrieved:", data);
     
-    // Transform the data to match the PageSpeedReport interface
-    const audits = Array.isArray(data.audits) 
-      ? data.audits as PageSpeedAudit[] 
-      : [];
+    // Parse and transform the audits JSON data
+    let parsedAudits: PageSpeedAudit[] = [];
     
+    if (data.audits) {
+      try {
+        // If it's already a string, parse it
+        const auditsData = typeof data.audits === 'string' 
+          ? JSON.parse(data.audits) 
+          : data.audits;
+        
+        // Ensure it's an array
+        if (Array.isArray(auditsData)) {
+          // Map each audit object to ensure it conforms to PageSpeedAudit structure
+          parsedAudits = auditsData.map(audit => ({
+            id: audit.id || '',
+            title: audit.title || '',
+            description: audit.description || '',
+            score: Number(audit.score) || 0,
+            scoreDisplayMode: audit.scoreDisplayMode || 'numeric',
+            displayValue: audit.displayValue || undefined,
+            category: audit.category || 'performance',
+            importance: audit.importance || 'medium'
+          }));
+        }
+      } catch (parseError) {
+        console.error("Error parsing audits data:", parseError);
+        parsedAudits = [];
+      }
+    }
+    
+    // Transform the data to match the PageSpeedReport interface
     const report: PageSpeedReport = {
       id: data.id,
       created_at: data.created_at,
@@ -76,7 +102,7 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
         total_blocking_time: data.total_blocking_time || 0,
         cumulative_layout_shift: data.cumulative_layout_shift || 0
       },
-      audits: audits
+      audits: parsedAudits
     };
     
     return report;

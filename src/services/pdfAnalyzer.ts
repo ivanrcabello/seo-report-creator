@@ -81,6 +81,19 @@ export interface AuditResult {
     cls: number;
     tbt: number;
   };
+  // Añadimos los campos faltantes que causaban errores
+  scores?: {
+    performance?: number;
+    seo?: number;
+    accessibility?: number;
+    bestPractices?: number;
+  };
+  metaData?: {
+    totalIssues?: number;
+    criticalIssues?: number;
+    warningIssues?: number;
+    infoIssues?: number;
+  };
 }
 
 // Mock function to analyze PDFs (this would be replaced by real implementation)

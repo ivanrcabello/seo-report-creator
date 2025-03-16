@@ -14,6 +14,7 @@ export interface ClientReport {
   analyticsData: any;
   searchConsoleData?: any;
   auditResult?: any;
+  status?: 'draft' | 'published' | 'shared';
 }
 
 export interface Client {

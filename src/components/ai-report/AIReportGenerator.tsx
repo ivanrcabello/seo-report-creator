@@ -7,6 +7,8 @@ import { ClientReport } from "@/types/client";
 import { saveReportWithAIData } from "@/services/reportService";
 import { Cog, Save, FileText } from "lucide-react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface AIReportGeneratorProps {
   auditResult: AuditResult;
@@ -32,14 +34,17 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
       // Simulamos una generación de IA para este ejemplo
       // En un entorno real, esto sería una llamada a una API de IA como OpenAI
       setTimeout(() => {
+        const performanceScore = auditResult.scores?.performance || auditResult.performance || "baja";
+        const totalIssues = auditResult.metaData?.totalIssues || "varios";
+        
         const demoReport = `# Informe de Análisis SEO generado por IA
 
 ## Resumen ejecutivo
 Basado en el análisis realizado, el sitio web presenta varias oportunidades de mejora en términos de SEO y rendimiento.
 
 ## Hallazgos principales
-- La puntuación de rendimiento es ${auditResult.scores?.performance || "baja"} y necesita mejoras
-- Se encontraron ${auditResult.metaData?.totalIssues || "varios"} problemas técnicos que afectan el posicionamiento
+- La puntuación de rendimiento es ${performanceScore} y necesita mejoras
+- Se encontraron ${totalIssues} problemas técnicos que afectan el posicionamiento
 - Las palabras clave principales no están bien optimizadas en el contenido
 
 ## Recomendaciones

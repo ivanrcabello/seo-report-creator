@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Client, SeoLocalReport } from "@/types/client";
@@ -12,10 +11,10 @@ import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
+import { AIReportGenerator } from "@/components/unified-metrics/AIReportGenerator";
 import { toast } from "sonner";
 
 export default function ClientDetail() {
-  // Check how the route is defined in App.tsx - it uses :id as parameter
   const { id } = useParams<{ id: string }>();
   const clientId = id || "";
   
@@ -104,6 +103,10 @@ export default function ClientDetail() {
         
         <TabsContent value="metrics">
           <ClientMetricsTab clientId={clientId} clientName={client.name} />
+          
+          <div className="mt-8 border-t pt-6">
+            <AIReportGenerator clientId={clientId} clientName={client.name} />
+          </div>
         </TabsContent>
         
         <TabsContent value="invoices">

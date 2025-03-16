@@ -8,6 +8,7 @@ import { ClientKeyword } from "@/services/clientKeywordsService";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import { generateSEOReport } from "@/services/openai";
+import { AuditResult } from "@/services/pdfAnalyzer";
 
 interface UnifiedReportData {
   clientId: string;
@@ -23,42 +24,44 @@ export const generateUnifiedReport = async (data: UnifiedReportData): Promise<Cl
     console.log("Generating unified report with data:", data);
     
     // Create a combined audit result object for the AI
-    const auditResult = {
-      clientName: data.clientName,
-      metrics: {
-        webVisits: data.metricsData?.web_visits || 0,
-        keywordsTop10: data.metricsData?.keywords_top10 || 0,
-        conversions: data.metricsData?.conversions || 0,
-        conversionGoal: data.metricsData?.conversion_goal || 0,
-      },
-      pagespeed: data.pageSpeedData ? {
-        scores: {
-          performance: data.pageSpeedData.metrics.performance_score,
-          accessibility: data.pageSpeedData.metrics.accessibility_score,
-          bestPractices: data.pageSpeedData.metrics.best_practices_score,
-          seo: data.pageSpeedData.metrics.seo_score,
-        },
-        metrics: {
-          firstContentfulPaint: data.pageSpeedData.metrics.first_contentful_paint,
-          speedIndex: data.pageSpeedData.metrics.speed_index,
-          largestContentfulPaint: data.pageSpeedData.metrics.largest_contentful_paint,
-          timeToInteractive: data.pageSpeedData.metrics.time_to_interactive,
-          totalBlockingTime: data.pageSpeedData.metrics.total_blocking_time,
-          cumulativeLayoutShift: data.pageSpeedData.metrics.cumulative_layout_shift,
-        },
-        url: data.pageSpeedData.metrics.url,
-      } : null,
-      localSeo: data.localSeoData ? {
-        businessName: data.localSeoData.businessName,
-        location: data.localSeoData.location,
-        googleMapsRanking: data.localSeoData.googleMapsRanking,
-        keywordRankings: data.localSeoData.keywordRankings,
-      } : null,
+    const auditResult: AuditResult = {
+      url: data.pageSpeedData?.metrics.url || "",
+      companyName: data.clientName,
+      companyType: "",
+      location: data.localSeoData?.location || "",
+      seoScore: data.pageSpeedData?.metrics.seo_score || 0,
+      performance: data.pageSpeedData?.metrics.performance_score || 0,
+      webVisibility: 0,
+      keywordsCount: data.keywordsData.length,
+      technicalIssues: [],
       keywords: data.keywordsData.map(kw => ({
-        keyword: kw.keyword,
+        word: kw.keyword,
         position: kw.position,
         targetPosition: kw.target_position,
+        difficulty: 0,
+        searchVolume: 0
       })),
+      localData: data.localSeoData ? {
+        businessName: data.localSeoData.businessName,
+        address: data.localSeoData.address,
+        googleMapsRanking: data.localSeoData.googleMapsRanking || 0,
+        googleReviews: data.localSeoData.googleReviewsCount || 0
+      } : undefined,
+      metrics: {
+        visits: data.metricsData?.web_visits || 0,
+        keywordsTop10: data.metricsData?.keywords_top10 || 0,
+        conversions: data.metricsData?.conversions || 0
+      },
+      pagespeed: data.pageSpeedData ? {
+        performance: data.pageSpeedData.metrics.performance_score,
+        accessibility: data.pageSpeedData.metrics.accessibility_score,
+        bestPractices: data.pageSpeedData.metrics.best_practices_score,
+        seo: data.pageSpeedData.metrics.seo_score,
+        fcp: data.pageSpeedData.metrics.first_contentful_paint,
+        lcp: data.pageSpeedData.metrics.largest_contentful_paint,
+        cls: data.pageSpeedData.metrics.cumulative_layout_shift,
+        tbt: data.pageSpeedData.metrics.total_blocking_time
+      } : undefined
     };
     
     // Generate AI content
@@ -97,7 +100,8 @@ export const generateUnifiedReport = async (data: UnifiedReportData): Promise<Cl
         date: reportData.date,
         type: reportData.type,
         content: reportData.content,
-        analytics_data: reportData.analyticsData
+        analytics_data: reportData.analyticsData,
+        document_ids: []
       }])
       .select()
       .single();
@@ -116,12 +120,12 @@ export const generateUnifiedReport = async (data: UnifiedReportData): Promise<Cl
       type: savedReport.type,
       content: savedReport.content,
       analyticsData: savedReport.analytics_data,
-      documentIds: null,
-      shareToken: null,
-      sharedAt: null,
-      includeInProposal: false,
-      notes: null,
-      url: null,
+      documentIds: savedReport.document_ids || [],
+      shareToken: savedReport.share_token,
+      sharedAt: savedReport.shared_at,
+      includeInProposal: savedReport.include_in_proposal || false,
+      notes: savedReport.notes,
+      url: savedReport.url
     };
     
     return result;

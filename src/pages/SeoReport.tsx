@@ -1,9 +1,8 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { useToast } from "@/components/ui/use-toast";
-import { AIReportGenerator } from "@/components/ai-report/AIReportGenerator";
+import { AIReportGenerator } from "@/components/unified-metrics/AIReportGenerator";
 import { ReportHeader } from "@/components/seo-report/ReportHeader";
 import { ScoreCards } from "@/components/seo-report/ScoreCards";
 import { MetricCards } from "@/components/seo-report/MetricCards";
@@ -42,8 +41,8 @@ const SeoReport = () => {
             setReport(reportData);
             
             // If the report has audit results, use those
-            if (reportData.auditResult) {
-              setAuditResult(reportData.auditResult);
+            if (reportData.analyticsData?.auditResult) {
+              setAuditResult(reportData.analyticsData.auditResult);
             }
           }
         } catch (error) {
@@ -116,7 +115,7 @@ const SeoReport = () => {
     );
   }
 
-  if (!auditResult) {
+  if (!auditResult && !report?.content) {
     return <NoDataCard />;
   }
 
@@ -172,11 +171,10 @@ const SeoReport = () => {
             </div>
           ) : (
             <>
-              <ScoreCards auditResult={auditResult} />
-              <MetricCards auditResult={auditResult} />
-              <SeoDetailsCard auditResult={auditResult} />
-              <Recommendations auditResult={auditResult} />
-              <AIReportGenerator auditResult={auditResult} currentReport={report} />
+              <ScoreCards auditResult={auditResult!} />
+              <MetricCards auditResult={auditResult!} />
+              <SeoDetailsCard auditResult={auditResult!} />
+              <Recommendations auditResult={auditResult!} />
             </>
           )}
 

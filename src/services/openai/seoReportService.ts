@@ -9,16 +9,16 @@ import { callOpenAI } from "./config";
  */
 export async function generateSEOReport(auditResult: AuditResult): Promise<string | null> {
   try {
-    // Skip API call if no URL is provided
-    if (!auditResult.url) {
-      console.warn("No URL provided for SEO report generation");
+    // Skip API call if no URL is provided (need at least some data)
+    if (!auditResult) {
+      console.warn("No audit data provided for SEO report generation");
       return null;
     }
 
     const prompt = `
 Genera un informe SEO profesional y detallado para la siguiente página web:
 
-URL: ${auditResult.url}
+URL: ${auditResult.url || 'No disponible'}
 Nombre de la empresa: ${auditResult.companyName || 'No especificado'}
 Tipo de negocio: ${auditResult.companyType || 'No especificado'}
 Ubicación: ${auditResult.location || 'No especificada'}
@@ -26,7 +26,7 @@ Ubicación: ${auditResult.location || 'No especificada'}
 Información técnica:
 - Puntuación SEO: ${auditResult.seoScore || 'No disponible'}
 - Puntuación de rendimiento: ${auditResult.performance || 'No disponible'}
-- Palabras clave: ${auditResult.keywords ? auditResult.keywords.map(k => k.word).join(', ') : 'No disponibles'}
+- Palabras clave: ${auditResult.keywords?.length ? auditResult.keywords.map(k => k.word).join(', ') : 'No disponibles'}
 
 Crea un informe detallado en formato markdown que incluya:
 

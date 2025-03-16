@@ -44,6 +44,7 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       if (!pageSpeed && metrics.length === 0 && !localSeo && keywords.length === 0) {
         toast.dismiss(toastId);
         toast.error("No hay suficientes datos para generar un informe");
+        setIsGenerating(false);
         return;
       }
       

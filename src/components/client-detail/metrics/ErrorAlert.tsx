@@ -8,7 +8,8 @@ export interface ErrorAlertProps {
 }
 
 export const ErrorAlert = ({ error, message }: ErrorAlertProps) => {
-  const errorMessage = message || error?.message || "Se produjo un error al cargar los datos";
+  // Asegurarnos de que tengamos una cadena de error válida
+  const errorMessage = message || (error?.message ? error.message : "Se produjo un error al cargar los datos");
   
   return (
     <Alert variant="destructive">

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -20,6 +21,8 @@ import InvoiceDetail from './pages/InvoiceDetail';
 import CompanySettings from './pages/CompanySettings';
 import TemplateSettings from './pages/TemplateSettings';
 import Contracts from './pages/Contracts';
+import ContractForm from './pages/ContractForm';
+import ContractDetail from './pages/ContractDetail';
 
 // Crear una instancia de QueryClient
 const queryClient = new QueryClient();
@@ -73,6 +76,8 @@ function AppRoutes() {
         <Route path="/settings" element={<CompanySettings />} />
         <Route path="/settings/templates" element={<TemplateSettings />} />
         <Route path="/contracts" element={<Contracts />} />
+        <Route path="/contracts/new" element={<ContractForm />} />
+        <Route path="/contracts/:id" element={<ContractDetail />} />
         <Route path="/" element={<Dashboard />} />
       </Routes>
     </ProtectedRoute>

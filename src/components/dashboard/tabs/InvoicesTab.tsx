@@ -17,9 +17,14 @@ export const InvoicesTab = ({ invoiceStats }: InvoicesTabProps) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Facturación</h2>
-        <Button asChild>
-          <Link to="/invoices/new">Nueva Factura</Link>
-        </Button>
+        <div className="space-x-2">
+          <Button asChild variant="outline">
+            <Link to="/invoices">Ver todas</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/invoices/new">Nueva Factura</Link>
+          </Button>
+        </div>
       </div>
       
       <Card>

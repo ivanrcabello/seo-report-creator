@@ -2,123 +2,94 @@
 import { Link } from 'react-router-dom';
 import { ClientSummary } from "@/types/client";
 import { Button } from "@/components/ui/button";
-import { Building, Calendar, Mail, MoreVertical } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { format, isValid, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { 
+  ChevronRight,
+  Users,
+  UserPlus
+} from "lucide-react";
 
 interface ClientsTabProps {
   clientSummaries: ClientSummary[];
 }
 
 export const ClientsTab = ({ clientSummaries }: ClientsTabProps) => {
+  // Mostrar solo los 5 clientes más recientes
+  const recentClients = [...clientSummaries]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Gestión de Clientes</h2>
-        <Button asChild>
-          <Link to="/clients/new">Añadir Cliente</Link>
-        </Button>
-      </div>
-      
-      {clientSummaries.length === 0 ? (
-        <div className="text-center py-20 bg-gray-50 rounded-lg border border-gray-200">
-          <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 mb-2">No hay clientes registrados</h3>
-          <p className="text-gray-500 mb-6 max-w-md mx-auto">
-            Añade tu primer cliente para empezar a gestionar tus proyectos SEO
-          </p>
+        <h2 className="text-2xl font-bold">Clientes</h2>
+        <div className="space-x-2">
+          <Button asChild variant="outline">
+            <Link to="/clients">Ver todos</Link>
+          </Button>
           <Button asChild>
-            <Link to="/clients/new">Añadir Cliente</Link>
+            <Link to="/clients/new" className="flex items-center gap-1">
+              <UserPlus className="h-4 w-4" />
+              Nuevo Cliente
+            </Link>
           </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {clientSummaries.map((client) => (
-            <ClientCard key={client.id} client={client} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const ClientCard = ({ client }: { client: ClientSummary }) => {
-  // Dar formato a la fecha de forma segura
-  const formatCreatedAt = () => {
-    try {
-      if (!client.createdAt) return "Fecha desconocida";
+      </div>
       
-      const date = typeof client.createdAt === 'string' ? parseISO(client.createdAt) : client.createdAt;
-        
-      if (isValid(date)) {
-        return format(date, 'dd/MM/yyyy', { locale: es });
-      }
-      return "Fecha desconocida";
-    } catch (error) {
-      console.error("Error formatting date:", error, client.createdAt);
-      return "Fecha desconocida";
-    }
-  };
-  
-  const createdAtDate = formatCreatedAt();
-  
-  return (
-    <Card className="overflow-hidden transition-all hover:shadow-md">
-      <CardHeader className="p-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium truncate">{client.name}</CardTitle>
-          <Badge variant={client.isActive ? "default" : "secondary"}>
-            {client.isActive ? "Activo" : "Inactivo"}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="text-sm text-muted-foreground space-y-2">
-          <div className="flex items-center gap-2">
-            <Mail className="h-4 w-4 opacity-70" />
-            <a href={`mailto:${client.email}`} className="hover:underline truncate max-w-[200px]">
-              {client.email}
-            </a>
-          </div>
-          {client.company && (
-            <div className="flex items-center gap-2">
-              <Building className="h-4 w-4 opacity-70" />
-              <span className="truncate max-w-[200px]">{client.company}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 opacity-70" />
-            <span>Cliente desde {createdAtDate}</span>
-          </div>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="absolute top-2 right-2 h-8 w-8 p-0"
-            >
-              <MoreVertical className="h-4 w-4 text-gray-500" />
-              <span className="sr-only">Opciones</span>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl">Clientes Recientes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Empresa</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentClients.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                    No hay clientes registrados. ¡Crea tu primer cliente!
+                  </TableCell>
+                </TableRow>
+              ) : (
+                recentClients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell className="font-medium">{client.name}</TableCell>
+                    <TableCell>{client.email}</TableCell>
+                    <TableCell>{client.company || "—"}</TableCell>
+                    <TableCell>
+                      {format(new Date(client.createdAt), "d MMM yyyy", { locale: es })}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild variant="ghost" size="sm">
+                        <Link to={`/clients/${client.id}`}>
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+          
+          {recentClients.length > 0 && (
+            <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+              <Link to="/clients">Ver todos los clientes</Link>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link to={`/clients/${client.id}`}>
-                Ver detalles
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to={`/clients/edit/${client.id}`}>
-                Editar
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };

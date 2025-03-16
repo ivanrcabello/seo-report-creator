@@ -17,9 +17,14 @@ export const ContractsTab = ({ contractStats }: ContractsTabProps) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Contratos</h2>
-        <Button asChild>
-          <Link to="/contracts/new">Nuevo Contrato</Link>
-        </Button>
+        <div className="space-x-2">
+          <Button asChild variant="outline">
+            <Link to="/contracts">Ver todos</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/contracts/new">Nuevo Contrato</Link>
+          </Button>
+        </div>
       </div>
       
       <Card>

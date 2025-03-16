@@ -11,7 +11,7 @@ import { KeywordsSection } from "./metrics/KeywordsSection";
 import { LocalSeoMetrics } from "./metrics/LocalSeoMetrics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { AIReportGenerator } from "@/components/unified-metrics/AIReportGenerator";
 
 interface ClientMetricsTabProps {
@@ -32,6 +32,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
         const metricsData = await getClientMetrics(clientId);
         setMetrics(metricsData);
       } catch (err) {
+        console.error("Error fetching metrics:", err);
         setError(err);
       } finally {
         setLoading(false);
@@ -42,20 +43,43 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   }, [clientId]);
 
   if (loading) return <LoadingState />;
+  
+  // Si hay un error, mostramos el componente de error
   if (error) return <ErrorAlert error={error} />;
+
+  // Si no hay métricas, mostramos un mensaje informativo 
+  // pero seguimos mostrando el formulario para que puedan crear métricas
+  const noMetricsWarning = !metrics || (Array.isArray(metrics) && metrics.length === 0) ? (
+    <Card className="mb-6">
+      <CardContent className="pt-6">
+        <p className="text-amber-600">
+          No hay datos de métricas disponibles para este cliente. 
+          Por favor, utiliza el formulario a continuación para añadir la primera métrica.
+        </p>
+      </CardContent>
+    </Card>
+  ) : null;
+
+  const currentMetric = metrics && Array.isArray(metrics) && metrics.length > 0 ? metrics[0] : null;
 
   return (
     <div className="space-y-6">
+      {noMetricsWarning}
+      
       <MetricsForm 
-        currentMetric={metrics && metrics.length > 0 ? metrics[0] : null}
+        currentMetric={currentMetric}
         isSaving={false}
         handleInputChange={() => {}}
         handleSaveMetrics={async () => {}}
       />
-      <MetricsSummary 
-        currentMetric={metrics && metrics.length > 0 ? metrics[0] : null} 
-        clientId={clientId} 
-      />
+      
+      {currentMetric && (
+        <MetricsSummary 
+          currentMetric={currentMetric} 
+          clientId={clientId} 
+        />
+      )}
+      
       <PageSpeedSection clientId={clientId} clientName={clientName} />
       <KeywordsSection clientId={clientId} />
       <LocalSeoMetrics clientId={clientId} clientName={clientName} />

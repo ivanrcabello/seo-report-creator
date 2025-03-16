@@ -1,64 +1,61 @@
-
-import React, { useEffect, useState } from "react";
-import { ClientProposals } from "./ClientProposals";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClientReports } from "./ClientReports";
-import { ClientInvoices } from "./ClientInvoices";
-import { ClientReport, Invoice, Proposal } from "@/types/client";
-import { getClientReports } from "@/services/reportService";
-import { getClientInvoices } from "@/services/invoiceService";
-import { getClientProposals } from "@/services/proposalService";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Proposal, Invoice } from "@/types/client";
+import { getInvoicesByProposalId } from "@/services/invoiceService";
+import { ClientInvoices } from "@/components/ClientInvoices";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface ClientProposalsListProps {
+  proposals: Proposal[];
   clientId: string;
 }
 
-export const ClientProposalsList: React.FC<ClientProposalsListProps> = ({ clientId }) => {
-  const [reports, setReports] = useState<ClientReport[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
+export const ClientProposalsList = ({ proposals, clientId }: ClientProposalsListProps) => {
+  const [linkedInvoices, setLinkedInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const reportsData = await getClientReports(clientId);
-        const invoicesData = await getClientInvoices(clientId);
-        setReports(reportsData || []);
-        setInvoices(invoicesData || []);
-      } catch (error) {
-        console.error("Error fetching client data:", error);
-      } finally {
-        setLoading(false);
-      }
+    const loadInvoices = async () => {
+      const invoices = await Promise.all(
+        proposals.map(async (proposal) => {
+          const proposalInvoices = await getInvoicesByProposalId(proposal.id);
+          return proposalInvoices;
+        })
+      );
+      // Flatten the array of arrays into a single array
+      const allInvoices = invoices.flat();
+      setLinkedInvoices(allInvoices);
     };
 
-    if (clientId) {
-      fetchData();
+    if (proposals && proposals.length > 0) {
+      loadInvoices();
+    } else {
+      setLinkedInvoices([]);
     }
-  }, [clientId]);
-
+  }, [proposals]);
+  
+  // Replace the ClientInvoices component call
   return (
-    <Tabs defaultValue="proposals" className="w-full">
-      <TabsList className="mb-4">
-        <TabsTrigger value="reports">Informes</TabsTrigger>
-        <TabsTrigger value="proposals">Propuestas</TabsTrigger>
-        <TabsTrigger value="invoices">Facturas</TabsTrigger>
-      </TabsList>
-      <TabsContent value="reports">
-        <ClientReports 
-          reports={reports}
-          onAddReport={() => {/* Add report functionality can be added here */}}
-        />
-      </TabsContent>
-      <TabsContent value="proposals">
-        <ClientProposals clientId={clientId} />
-      </TabsContent>
-      <TabsContent value="invoices">
-        <ClientInvoices 
-          invoices={invoices}
-        />
-      </TabsContent>
-    </Tabs>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Facturas de la Propuesta</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {proposals.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500 mb-4">Este cliente no tiene propuestas</p>
+            <Button asChild variant="outline" className="gap-1">
+              <Link to={`/proposals/new?clientId=${clientId}`}>
+                <Plus className="h-4 w-4" />
+                Crear Primera Propuesta
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <ClientInvoices invoices={linkedInvoices} clientId={clientId} />
+        )}
+      </CardContent>
+    </Card>
   );
 };

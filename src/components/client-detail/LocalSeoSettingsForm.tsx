@@ -80,7 +80,7 @@ export const LocalSeoSettingsForm: React.FC<LocalSeoSettingsFormProps> = ({
         setSettings(prev => ({
           ...prev,
           clientId,
-          businessName: clientName
+          businessName: clientName || prev.businessName
         }));
       }
     } catch (error) {

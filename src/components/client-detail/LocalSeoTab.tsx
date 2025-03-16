@@ -23,8 +23,11 @@ export const LocalSeoTab: React.FC<LocalSeoTabProps> = ({
   const { clientId } = useParams<{ clientId: string }>();
   const client = clientId || '';
   
-  // Use client name from current report if available
-  const clientName = currentLocalSeoReport?.name || '';
+  // Use client's business name from current report if available
+  const clientName = currentLocalSeoReport?.businessName || '';
+  
+  console.log("LocalSeoTab - clientId:", clientId);
+  console.log("LocalSeoTab - currentLocalSeoReport:", currentLocalSeoReport);
   
   return (
     <div className="space-y-6">

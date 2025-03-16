@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { SeoLocalReport } from '@/types/client';
@@ -281,10 +280,6 @@ export async function saveLocalSeoSettings(settings: {
   website?: string | null;
   googleBusinessUrl?: string | null;
   targetLocations?: string[];
-  googleMapsRanking?: number;
-  googleReviewsCount?: number;
-  googleReviewsAverage?: number;
-  listingsCount?: number;
 }) {
   try {
     // Validate clientId
@@ -294,7 +289,9 @@ export async function saveLocalSeoSettings(settings: {
     }
     
     console.log('Saving local SEO settings for client:', settings.clientId);
+    console.log('Settings data:', settings);
     
+    // Only include fields that exist in the database table
     const dataToSave = {
       client_id: settings.clientId,
       business_name: settings.businessName,
@@ -303,10 +300,6 @@ export async function saveLocalSeoSettings(settings: {
       website: settings.website || null,
       google_business_url: settings.googleBusinessUrl || null,
       target_locations: settings.targetLocations || [],
-      google_maps_ranking: settings.googleMapsRanking || 0,
-      google_reviews_count: settings.googleReviewsCount || 0,
-      google_reviews_average: settings.googleReviewsAverage || 0,
-      listings_count: settings.listingsCount || 0,
     };
     
     let result;
@@ -321,7 +314,10 @@ export async function saveLocalSeoSettings(settings: {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating local SEO settings:', error);
+        throw error;
+      }
       result = data;
     } else {
       // Insert new record
@@ -332,10 +328,14 @@ export async function saveLocalSeoSettings(settings: {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error inserting local SEO settings:', error);
+        throw error;
+      }
       result = data;
     }
     
+    console.log('Settings saved successfully:', result);
     return result;
   } catch (error) {
     console.error('Error in saveLocalSeoSettings:', error);
@@ -412,3 +412,5 @@ export async function saveLocalSeoMetrics(
     return false;
   }
 }
+
+export { generateLocalSeoAnalysis, createLocalSeoReport, updateLocalSeoReport } from './localSeoService';

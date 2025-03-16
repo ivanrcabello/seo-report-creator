@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { getPageSpeedReport, PageSpeedReport, analyzeWebsite } from "@/services/pageSpeedService";
+import { getPageSpeedReport, PageSpeedReport, analyzeWebsite, savePageSpeedReport } from "@/services/pageSpeedService";
 import { generatePageSpeedReport } from "@/services/pageSpeedReportService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -105,18 +105,6 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
       toast.error("Error al generar el informe. Por favor, inténtalo de nuevo.");
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  // Helper function to save the PageSpeed report
-  const savePageSpeedReport = async (clientId: string, report: PageSpeedReport): Promise<boolean> => {
-    try {
-      // Import here to avoid circular dependencies
-      const { savePageSpeedReport } = await import('@/services/pageSpeedService');
-      return await savePageSpeedReport(clientId, report);
-    } catch (error) {
-      console.error("Error saving PageSpeed report:", error);
-      return false;
     }
   };
 

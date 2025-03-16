@@ -125,9 +125,13 @@ export const addClientKeywords = async (
       position_type: kw.position_type
     }));
     
+    // Use upsert to update existing keywords and insert new ones
     const { error } = await supabase
       .from('client_keywords')
-      .insert(keywordsData);
+      .upsert(keywordsData, {
+        onConflict: 'client_id,keyword',
+        ignoreDuplicates: false
+      });
     
     if (error) {
       console.error("Error adding client keywords:", error);

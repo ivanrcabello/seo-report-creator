@@ -3,24 +3,53 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ClientsList } from "@/components/ClientsList";
 import { ClientForm } from "@/components/ClientForm";
-import { getClients, addClient } from "@/services/clientService";
+import { getClients, addClient, getClient, updateClient } from "@/services/clientService";
 import { Client } from "@/types/client";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Clients = () => {
   const { toast } = useToast();
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentClient, setCurrentClient] = useState<Client | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   const params = useParams();
   const navigate = useNavigate();
 
-  // Check if we're on the "new" route
+  // Check if we're on the "new" or "edit" route
   useEffect(() => {
-    if (params.id === "new") {
-      setShowAddForm(true);
-    }
-  }, [params.id]);
+    const initializeComponent = async () => {
+      if (params.id === "new") {
+        setShowForm(true);
+        setIsEditMode(false);
+        setCurrentClient(null);
+      } else if (params.id && window.location.pathname.includes("/clients/edit/")) {
+        // We're editing a client
+        setIsLoading(true);
+        setIsEditMode(true);
+        setShowForm(true);
+        
+        try {
+          const client = await getClient(params.id);
+          setCurrentClient(client);
+        } catch (error) {
+          console.error("Error fetching client for edit:", error);
+          toast({
+            title: "Error",
+            description: "No se pudo cargar los datos del cliente",
+            variant: "destructive",
+          });
+          navigate("/clients");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeComponent();
+  }, [params.id, navigate, toast]);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -44,37 +73,46 @@ const Clients = () => {
   }, [toast]);
 
   const handleAddClient = () => {
-    setShowAddForm(true);
+    setShowForm(true);
+    setIsEditMode(false);
+    setCurrentClient(null);
   };
 
-  const handleCancelAddClient = () => {
-    setShowAddForm(false);
-    // If we're on the "new" route, navigate back to clients list
-    if (params.id === "new") {
-      navigate("/clients");
-    }
+  const handleCancelForm = () => {
+    setShowForm(false);
+    // Navigate back to clients list
+    navigate("/clients");
   };
 
   const handleClientSubmit = async (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
     try {
-      const newClient = await addClient(clientData);
-      setClients([...clients, newClient]);
-      setShowAddForm(false);
-      
-      // If we were on the "new" route, navigate to main clients list
-      if (params.id === "new") {
-        navigate("/clients");
+      if (isEditMode && currentClient) {
+        // Update existing client
+        const updatedClient = await updateClient(currentClient.id, clientData);
+        setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
+        toast({
+          title: "Cliente actualizado",
+          description: `${updatedClient.name} ha sido actualizado correctamente.`,
+        });
+      } else {
+        // Create new client
+        const newClient = await addClient(clientData);
+        setClients([...clients, newClient]);
+        toast({
+          title: "Cliente creado",
+          description: `${newClient.name} ha sido añadido correctamente.`,
+        });
       }
       
-      toast({
-        title: "Cliente creado",
-        description: `${newClient.name} ha sido añadido correctamente.`,
-      });
+      setShowForm(false);
+      navigate("/clients");
     } catch (error) {
-      console.error("Error al crear cliente:", error);
+      console.error("Error saving client:", error);
       toast({
         title: "Error",
-        description: "No se pudo crear el cliente. Inténtalo de nuevo.",
+        description: isEditMode 
+          ? "No se pudo actualizar el cliente. Inténtalo de nuevo."
+          : "No se pudo crear el cliente. Inténtalo de nuevo.",
         variant: "destructive",
       });
     }
@@ -84,11 +122,12 @@ const Clients = () => {
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-8">Gestión de Clientes</h1>
       
-      {showAddForm ? (
+      {showForm ? (
         <div className="mb-8">
           <ClientForm 
+            client={currentClient || undefined}
             onSubmit={handleClientSubmit}
-            onCancel={handleCancelAddClient}
+            onCancel={handleCancelForm}
           />
         </div>
       ) : (

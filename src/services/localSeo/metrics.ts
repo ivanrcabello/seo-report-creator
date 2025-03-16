@@ -47,18 +47,23 @@ export async function saveLocalSeoMetrics(clientId: string, metrics: {
       throw new Error('Client ID is required');
     }
 
-    console.log('Saving local SEO metrics for client:', clientId);
+    console.log('Saving local SEO metrics for client:', clientId, 'Data:', metrics);
+    
+    // Ensure values are properly normalized to numbers or null
+    const normalizedData = {
+      client_id: clientId,
+      google_maps_ranking: metrics.googleMapsRanking != null ? Number(metrics.googleMapsRanking) : null,
+      google_reviews_count: metrics.googleReviewsCount != null ? Number(metrics.googleReviewsCount) : null,
+      google_reviews_average: metrics.googleReviewsAverage != null ? Number(metrics.googleReviewsAverage) : null,
+      listings_count: metrics.listingsCount != null ? Number(metrics.listingsCount) : null,
+      date: new Date().toISOString()
+    };
+    
+    console.log('Normalized data being sent to Supabase:', normalizedData);
     
     const { data, error } = await supabase
       .from('local_seo_metrics')
-      .insert({
-        client_id: clientId,
-        google_maps_ranking: metrics.googleMapsRanking,
-        google_reviews_count: metrics.googleReviewsCount,
-        google_reviews_average: metrics.googleReviewsAverage,
-        listings_count: metrics.listingsCount,
-        date: new Date().toISOString()
-      })
+      .insert(normalizedData)
       .select()
       .single();
     
@@ -67,7 +72,7 @@ export async function saveLocalSeoMetrics(clientId: string, metrics: {
       throw error;
     }
     
-    console.log('Local SEO metrics saved:', data);
+    console.log('Local SEO metrics saved successfully:', data);
     return data;
   } catch (error) {
     console.error('Error in saveLocalSeoMetrics:', error);

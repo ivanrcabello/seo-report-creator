@@ -1,5 +1,5 @@
 
-import { Star, Calendar, Search } from "lucide-react";
+import { Star } from "lucide-react";
 import { useLocalSeoData } from "./useLocalSeoData";
 
 interface LocalSeoHistoryProps {
@@ -20,7 +20,7 @@ export const LocalSeoHistory = ({ clientId }: LocalSeoHistoryProps) => {
   return (
     <div className="bg-white rounded-lg p-4 border">
       <h3 className="text-md font-medium mb-4 flex items-center gap-2">
-        <Search className="h-4 w-4" />
+        <Star className="h-4 w-4" />
         Historial de Métricas
       </h3>
       <div className="overflow-x-auto">

@@ -1,29 +1,36 @@
 
-import { useState, useEffect } from "react";
-import { Store, MapPin, Phone, Globe, Star, Award } from "lucide-react";
+import { MapPin, Store, Star, Globe, Phone, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useLocalSeoData } from "./useLocalSeoData";
 
 interface LocalSeoOverviewProps {
   clientId: string;
-  clientName: string;
+  businessName: string;
+  address: string;
+  phone?: string;
+  website?: string;
+  googleBusinessUrl?: string;
+  googleMapsRanking?: number;
+  googleReviewsCount?: number;
+  googleReviewsAverage?: number;
+  listingsCount?: number;
+  targetLocations?: string[];
+  recommendations?: string[];
 }
 
-export const LocalSeoOverview = ({ clientId, clientName }: LocalSeoOverviewProps) => {
-  const { localSeoSettings, targetLocations, currentReport } = useLocalSeoData(clientId);
-
-  const businessName = localSeoSettings?.business_name || clientName;
-  const address = localSeoSettings?.address || "Sin ubicación configurada";
-  const phone = localSeoSettings?.phone;
-  const website = localSeoSettings?.website;
-  const googleBusinessUrl = localSeoSettings?.google_business_url;
-  const googleMapsRanking = localSeoSettings?.google_maps_ranking || 0;
-  const googleReviewsCount = localSeoSettings?.google_reviews_count || 0;
-  const googleReviewsAverage = typeof localSeoSettings?.google_reviews_average === 'number' ? 
-    localSeoSettings.google_reviews_average : 
-    (parseFloat(localSeoSettings?.google_reviews_average as unknown as string) || 0);
-  const listingsCount = localSeoSettings?.listings_count || 0;
-
+export const LocalSeoOverview = ({
+  clientId,
+  businessName,
+  address,
+  phone,
+  website,
+  googleBusinessUrl,
+  googleMapsRanking,
+  googleReviewsCount,
+  googleReviewsAverage,
+  listingsCount,
+  targetLocations,
+  recommendations
+}: LocalSeoOverviewProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -80,7 +87,7 @@ export const LocalSeoOverview = ({ clientId, clientName }: LocalSeoOverviewProps
               Google Maps
             </h3>
             <div className="text-center">
-              <span className="text-2xl font-bold text-seo-blue">
+              <span className="text-2xl font-bold text-blue-600">
                 #{googleMapsRanking || "N/A"}
               </span>
               <p className="text-xs text-gray-600 mt-1">Posición</p>
@@ -108,7 +115,9 @@ export const LocalSeoOverview = ({ clientId, clientName }: LocalSeoOverviewProps
             <div className="text-center">
               <div className="flex items-center justify-center">
                 <span className="text-2xl font-bold text-amber-500 mr-1">
-                  {(typeof googleReviewsAverage === 'number' ? googleReviewsAverage.toFixed(1) : '0.0') || "0.0"}
+                  {(googleReviewsAverage !== undefined && googleReviewsAverage !== null) 
+                    ? Number(googleReviewsAverage).toFixed(1) 
+                    : "0.0"}
                 </span>
                 <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
               </div>
@@ -148,14 +157,14 @@ export const LocalSeoOverview = ({ clientId, clientName }: LocalSeoOverviewProps
         </div>
       )}
       
-      {currentReport?.recommendations && currentReport.recommendations.length > 0 && (
+      {recommendations && recommendations.length > 0 && (
         <div className="bg-white rounded-lg p-4 border">
           <h3 className="text-md font-medium mb-4 flex items-center gap-2">
             <Award className="h-4 w-4" />
             Recomendaciones
           </h3>
           <ul className="list-disc pl-5 space-y-2">
-            {currentReport.recommendations.map((rec: string, index: number) => (
+            {recommendations.map((rec: string, index: number) => (
               <li key={index}>{rec}</li>
             ))}
           </ul>

@@ -35,7 +35,7 @@ export async function getLocalSeoReports(clientId: string): Promise<SeoLocalRepo
       date: report.date,
       businessName: report.business_name,
       location: report.location,
-      address: report.business_name, // Assuming address is the business name if not present
+      address: report.address || report.business_name, // Fallback to business_name if address is missing
       phone: report.phone,
       website: report.website,
       googleBusinessUrl: report.google_business_url,
@@ -111,7 +111,7 @@ export async function saveLocalSeoReport(report: SeoLocalReport): Promise<SeoLoc
       date: data.date,
       businessName: data.business_name,
       location: data.location,
-      address: data.business_name, // Assuming address is business_name if missing
+      address: data.address || data.business_name, // Fallback to business_name if address is missing
       phone: data.phone,
       website: data.website,
       googleBusinessUrl: data.google_business_url,

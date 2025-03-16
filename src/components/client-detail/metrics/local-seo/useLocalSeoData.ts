@@ -5,7 +5,8 @@ import {
   getLocalSeoReports, 
   getLocalSeoSettings, 
   getLocalSeoMetricsHistory,
-  saveLocalSeoSettings
+  saveLocalSeoSettings,
+  saveLocalSeoMetrics
 } from "@/services/localSeo";
 import { SeoLocalReport } from "@/types/client";
 import * as z from "zod";
@@ -144,29 +145,71 @@ export const useLocalSeoData = (clientId: string) => {
       console.log("Saving Local SEO settings with data:", data);
       console.log("Target locations:", targetLocations);
       
+      // Convertir valores a números adecuados
       const reviewsAvg = typeof data.googleReviewsAverage === 'number' ? 
         data.googleReviewsAverage : 
-        (parseFloat(String(data.googleReviewsAverage)) || 0);
+        (parseFloat(String(data.googleReviewsAverage)) || null);
+      
+      const reviewsCount = typeof data.googleReviewsCount === 'number' ?
+        data.googleReviewsCount :
+        (parseInt(String(data.googleReviewsCount)) || null);
+      
+      const listingsCount = typeof data.listingsCount === 'number' ?
+        data.listingsCount :
+        (parseInt(String(data.listingsCount)) || null);
+      
+      const mapsRanking = typeof data.googleMapsRanking === 'number' ?
+        data.googleMapsRanking :
+        (parseInt(String(data.googleMapsRanking)) || null);
       
       const settingsToSave = {
         id: localSeoSettings?.id,
         clientId: clientId,
         businessName: data.businessName,
         address: data.address,
-        phone: data.phone,
-        website: data.website,
-        googleBusinessUrl: data.googleBusinessUrl,
+        phone: data.phone || null,
+        website: data.website || null,
+        googleBusinessUrl: data.googleBusinessUrl || null,
         targetLocations: targetLocations,
-        googleReviewsCount: data.googleReviewsCount,
+        googleReviewsCount: reviewsCount,
         googleReviewsAverage: reviewsAvg,
-        listingsCount: data.listingsCount,
-        googleMapsRanking: data.googleMapsRanking,
+        listingsCount: listingsCount,
+        googleMapsRanking: mapsRanking,
       };
       
       console.log("Final settings data to save:", settingsToSave);
       
+      // Intento guardar configuración
       const savedSettings = await saveLocalSeoSettings(settingsToSave);
       console.log("Settings saved successfully:", savedSettings);
+      
+      // También guardo las métricas por separado para asegurar que se registren
+      if (data.googleMapsRanking !== undefined || 
+          data.googleReviewsCount !== undefined || 
+          data.googleReviewsAverage !== undefined || 
+          data.listingsCount !== undefined) {
+        
+        try {
+          console.log("Also saving metrics directly:", {
+            googleMapsRanking: mapsRanking,
+            googleReviewsCount: reviewsCount,
+            googleReviewsAverage: reviewsAvg,
+            listingsCount: listingsCount
+          });
+          
+          const metricsResult = await saveLocalSeoMetrics(clientId, {
+            googleMapsRanking: mapsRanking,
+            googleReviewsCount: reviewsCount,
+            googleReviewsAverage: reviewsAvg,
+            listingsCount: listingsCount,
+          });
+          
+          console.log("Metrics saved separately:", metricsResult);
+        } catch (metricsError) {
+          console.error("Error saving metrics separately:", metricsError);
+          // Continue regardless of this error
+        }
+      }
       
       toast.success("Configuración de SEO local guardada correctamente");
       await loadData();

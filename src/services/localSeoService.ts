@@ -315,6 +315,82 @@ export async function getLocalSeoMetricsHistory(clientId: string) {
 }
 
 /**
+ * Simple function to save basic local SEO settings
+ */
+export async function saveBasicLocalSeoSettings(clientId: string, data: {
+  businessName: string;
+  address: string;
+  phone?: string;
+  website?: string;
+  googleBusinessUrl?: string;
+}) {
+  try {
+    if (!clientId || typeof clientId !== 'string' || clientId.trim() === '') {
+      console.error('Invalid clientId in saveBasicLocalSeoSettings:', clientId);
+      throw new Error('Client ID is required');
+    }
+    
+    console.log('Saving basic local SEO settings for client:', clientId);
+    console.log('Basic settings data:', data);
+    
+    // First check if a record already exists
+    const { data: existingSettings } = await supabase
+      .from('client_local_seo_settings')
+      .select('id')
+      .eq('client_id', clientId)
+      .maybeSingle();
+    
+    let result;
+    
+    // Format the data for saving
+    const dataToSave = {
+      client_id: clientId,
+      business_name: data.businessName,
+      address: data.address,
+      phone: data.phone || null,
+      website: data.website || null,
+      google_business_url: data.googleBusinessUrl || null
+    };
+    
+    if (existingSettings?.id) {
+      // Update existing record
+      const { data: updatedData, error } = await supabase
+        .from('client_local_seo_settings')
+        .update(dataToSave)
+        .eq('id', existingSettings.id)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error updating basic local SEO settings:', error);
+        throw error;
+      }
+      result = updatedData;
+    } else {
+      // Insert new record
+      const { data: newData, error } = await supabase
+        .from('client_local_seo_settings')
+        .insert(dataToSave)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error inserting basic local SEO settings:', error);
+        throw error;
+      }
+      result = newData;
+    }
+    
+    console.log('Basic settings saved successfully:', result);
+    return result;
+  } catch (error) {
+    console.error('Error in saveBasicLocalSeoSettings:', error);
+    toast.error('Error al guardar la configuración básica de SEO local');
+    throw error;
+  }
+}
+
+/**
  * Save local SEO settings for a client
  */
 export async function saveLocalSeoSettings({

@@ -25,13 +25,13 @@ export async function getLocalSeoReports(clientId: string): Promise<SeoLocalRepo
       title: report.title,
       date: report.date,
       businessName: report.business_name,
-      address: report.address || report.location, // Use location as fallback
+      address: report.location, // Use location as address since there's no address field
       location: report.location,
-      phone: report.phone || null,
-      website: report.website || null,
-      googleBusinessUrl: report.google_business_url || null,
+      phone: null, // These fields don't exist in DB, set them to null
+      website: null,
+      googleBusinessUrl: null,
       googleMapsRanking: report.google_maps_ranking || 0,
-      googleReviewsCount: report.google_reviews_count || 0,
+      googleReviewsCount: 0, // Field doesn't exist in DB
       keywordRankings: Array.isArray(report.keyword_rankings) ? report.keyword_rankings : 
                       (typeof report.keyword_rankings === 'string' ? JSON.parse(report.keyword_rankings) : []),
       localListings: Array.isArray(report.local_listings) ? report.local_listings : 
@@ -115,13 +115,8 @@ export async function createLocalSeoReport(
       client_id: clientId,
       title: `Informe SEO Local - ${clientName}`,
       business_name: analysis.businessName,
-      address: analysis.address,
-      location: analysis.location || "Sin ubicación específica",
-      phone: analysis.phone,
-      website: analysis.website,
-      google_business_url: analysis.googleBusinessUrl || null,
+      location: analysis.address || "Sin ubicación específica", // Map address to location field
       google_maps_ranking: analysis.googleMapsRanking || 0,
-      google_reviews_count: analysis.googleReviewsCount || 0,
       local_listings: analysis.localListings || [],
       keyword_rankings: analysis.keywordRankings || [],
       recommendations: analysis.recommendations || [],

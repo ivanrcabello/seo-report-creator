@@ -27,7 +27,14 @@ import ContractForm from './pages/ContractForm';
 import ContractDetail from './pages/ContractDetail';
 
 // Crear una instancia de QueryClient
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Componente para proteger rutas que requieren autenticación
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {

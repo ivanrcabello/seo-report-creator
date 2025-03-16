@@ -9,6 +9,7 @@ import { mapDbReportToClientReport } from "./reportMappers";
  */
 export const shareReport = async (reportId: string): Promise<ClientReport> => {
   try {
+    console.log("Sharing report with ID:", reportId);
     const { data, error } = await supabase
       .from('client_reports')
       .update({
@@ -21,9 +22,11 @@ export const shareReport = async (reportId: string): Promise<ClientReport> => {
       .single();
 
     if (error) {
+      console.error("Error sharing report:", error);
       throw error;
     }
 
+    console.log("Report shared successfully:", data.id);
     return mapDbReportToClientReport(data);
   } catch (error) {
     console.error("Error sharing report:", error);
@@ -36,6 +39,11 @@ export const shareReport = async (reportId: string): Promise<ClientReport> => {
  */
 export const getReportByShareToken = async (shareToken: string): Promise<ClientReport | null> => {
   try {
+    if (!shareToken || shareToken === 'undefined' || shareToken === 'null') {
+      console.error("Invalid share token provided:", shareToken);
+      return null;
+    }
+    
     console.log("Getting report by share token:", shareToken);
     
     const { data, error } = await supabase

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ClientReport } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
@@ -59,7 +58,7 @@ export const getReport = async (reportId: string): Promise<ClientReport | null> 
     return mapDbReportToClientReport(data);
   } catch (error) {
     console.error("Error getting report:", error);
-    return null;
+    throw error;
   }
 };
 

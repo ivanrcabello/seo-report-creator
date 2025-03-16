@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getReport, deleteReport, shareReport } from "@/services/reportService";
@@ -44,12 +43,14 @@ import {
   Share2,
   FileDown,
   Loader2,
+  RefreshCw
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { ErrorAlert } from "@/components/client-detail/metrics/ErrorAlert";
 
 const ReportDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const { reportId } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
   const [report, setReport] = useState<ClientReport | null>(null);
   const [client, setClient] = useState<Client | null>(null);
@@ -60,6 +61,7 @@ const ReportDetail = () => {
   const [isSharing, setIsSharing] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const copyToClipboard = () => {
     if (sharedUrl) {
@@ -71,13 +73,13 @@ const ReportDetail = () => {
   };
 
   const handleDownloadPdf = async () => {
-    if (!id || !report) return;
+    if (!reportId || !report) return;
     
     try {
       setIsProcessing(true);
       const toastId = toast.loading("Generando PDF del informe...");
       
-      const success = await downloadSeoReportPdf(id);
+      const success = await downloadSeoReportPdf(reportId);
       
       toast.dismiss(toastId);
       if (success) {
@@ -112,9 +114,9 @@ const ReportDetail = () => {
   };
 
   const handleDeleteReport = async () => {
-    if (id) {
+    if (reportId) {
       try {
-        await deleteReport(id);
+        await deleteReport(reportId);
         toast.success("Informe eliminado correctamente");
         navigate("/reports");
       } catch (error) {
@@ -126,64 +128,70 @@ const ReportDetail = () => {
     }
   };
 
-  useEffect(() => {
-    const loadReportData = async () => {
-      setIsLoading(true);
-      setError(null);
+  const loadReportData = async () => {
+    setIsLoading(true);
+    setError(null);
+    setIsRetrying(false);
+    
+    try {
+      if (!reportId) {
+        setError("ID de informe no proporcionado");
+        setIsLoading(false);
+        return;
+      }
       
-      try {
-        if (!id) {
-          setError("ID de informe no válido");
-          setIsLoading(false);
-          return;
-        }
+      console.log("Loading report with ID:", reportId);
+      const reportData = await getReport(reportId);
+      
+      if (reportData) {
+        console.log("Report loaded successfully:", reportData.id, reportData.title);
+        setReport(reportData);
         
-        // Check if ID is "new" which is not valid for viewing
-        if (id === "new") {
-          setError("ID de informe no válido");
-          setIsLoading(false);
-          return;
-        }
-
-        console.log("Loading report with ID:", id);
-        const reportData = await getReport(id);
-        
-        if (reportData) {
-          console.log("Report loaded successfully:", reportData.id, reportData.title);
-          setReport(reportData);
-          
-          // Only try to get client if we have a valid client ID
-          if (reportData.clientId) {
+        // Solo intentamos obtener el cliente si tenemos un ID de cliente válido
+        if (reportData.clientId) {
+          try {
             const clientData = await getClient(reportData.clientId);
             if (clientData) {
               setClient(clientData);
             } else {
               console.warn("Client not found for ID:", reportData.clientId);
-              setError("No se encontró el cliente asociado");
             }
-          } else {
-            console.error("Report has no client ID:", reportData);
-            setError("El informe no tiene un cliente asociado");
+          } catch (clientError) {
+            console.error("Error fetching client:", clientError);
+            // No establecemos un error fatal aquí, ya que el informe aún se puede ver
           }
-          
-          if (reportData.shareToken) {
+        }
+        
+        // Si el informe tiene un token de compartición, obtenemos la URL
+        if (reportData.shareToken) {
+          try {
             const shareUrl = await getSharedReportUrl(reportData.id);
             setSharedUrl(shareUrl);
+          } catch (shareError) {
+            console.error("Error getting share URL:", shareError);
+            // No establecemos un error fatal aquí
           }
-        } else {
-          console.error("Report not found with ID:", id);
-          setError("No se encontró el informe");
         }
-      } catch (error) {
-        console.error("Error loading report:", error);
-        setError("Error al cargar el informe");
-      } finally {
-        setIsLoading(false);
+      } else {
+        console.error("Report not found with ID:", reportId);
+        setError("No se encontró el informe solicitado");
       }
-    };
-    
+    } catch (error) {
+      console.error("Error loading report:", error);
+      setError("Error al cargar el informe");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     loadReportData();
-  }, [id, navigate]);
+  }, [reportId]);
+
+  const handleRetry = () => {
+    setIsRetrying(true);
+    loadReportData();
+  };
 
   if (isLoading) {
     return (
@@ -196,7 +204,7 @@ const ReportDetail = () => {
     );
   }
 
-  if (error || !report || !client) {
+  if (error) {
     return (
       <div className="container mx-auto py-8">
         <Card className="max-w-lg mx-auto">
@@ -207,8 +215,49 @@ const ReportDetail = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="mb-4">{error || "El informe que estás buscando no existe o no está disponible."}</p>
-            <Button onClick={() => navigate("/reports")} variant="outline">
+            <p className="mb-4">{error}</p>
+            <div className="flex flex-col gap-4 mt-6">
+              <Button 
+                onClick={handleRetry} 
+                variant="outline" 
+                disabled={isRetrying}
+                className="w-full"
+              >
+                {isRetrying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Reintentando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reintentar
+                  </>
+                )}
+              </Button>
+              <Button onClick={() => navigate("/reports")} className="w-full">
+                Volver a Informes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!report) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card className="max-w-lg mx-auto">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Informe no encontrado
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="mb-4">El informe que estás buscando no existe o no está disponible.</p>
+            <Button onClick={() => navigate("/reports")} className="mt-2">
               Volver a Informes
             </Button>
           </CardContent>

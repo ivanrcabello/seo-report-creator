@@ -67,7 +67,11 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
         
         // Save the report
         await savePageSpeedReport(clientId, report);
+        toast.success("Informe guardado correctamente");
       }
+    } catch (error) {
+      console.error("Error in handleAnalyze:", error);
+      toast.error("Ha ocurrido un error al analizar la web");
     } finally {
       setIsAnalyzing(false);
     }

@@ -48,8 +48,8 @@ export const analyzeWebsite = async (url: string): Promise<PageSpeedReport | nul
 
     console.log("Analyzing website:", url);
     
-    // Use a different API key
-    const apiKey = "AIzaSyBm8pyY98FUy9D3U3tTZn7WwHdJKM0Ggr4"; // Using a different demo key for PageSpeed Insights
+    // Use the provided API key
+    const apiKey = "AIzaSyBKdlbD2EWHWcHKKHj0S_xL_wVYnCWraHM"; // Updated API key
     const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${apiKey}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo`;
     
     toast.info("Analizando la web, esto puede tardar unos segundos...");
@@ -219,6 +219,9 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
   try {
     console.log("Saving PageSpeed report to Supabase for client:", clientId);
     
+    // Convert audits to JSON-compatible format before saving
+    const auditData = JSON.stringify(report.audits);
+    
     const { data, error } = await supabase
       .from('client_pagespeed')
       .insert({
@@ -235,7 +238,7 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
         total_blocking_time: report.metrics.total_blocking_time,
         cumulative_layout_shift: report.metrics.cumulative_layout_shift,
         screenshot: report.screenshot,
-        audits: report.audits
+        audits: auditData
       })
       .select()
       .single();
@@ -283,6 +286,19 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
       return null;
     }
     
+    // Parse audits from JSON string back to object array
+    let parsedAudits: PageSpeedAudit[] = [];
+    if (data.audits) {
+      try {
+        // If it's already a string, parse it; otherwise stringify and parse it
+        const auditStr = typeof data.audits === 'string' ? data.audits : JSON.stringify(data.audits);
+        parsedAudits = JSON.parse(auditStr);
+      } catch (e) {
+        console.error("Error parsing audits:", e);
+        parsedAudits = [];
+      }
+    }
+    
     // Convert Supabase data to PageSpeedReport format
     const report: PageSpeedReport = {
       metrics: {
@@ -299,7 +315,7 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
         last_analyzed: data.created_at,
         url: data.url
       },
-      audits: data.audits || [],
+      audits: parsedAudits,
       screenshot: data.screenshot
     };
     
@@ -331,24 +347,41 @@ export const getPageSpeedHistory = async (clientId: string): Promise<PageSpeedRe
     }
     
     // Convert Supabase data to PageSpeedReport format
-    return data.map(item => ({
-      metrics: {
-        performance_score: item.performance_score,
-        accessibility_score: item.accessibility_score,
-        best_practices_score: item.best_practices_score,
-        seo_score: item.seo_score,
-        first_contentful_paint: item.first_contentful_paint,
-        speed_index: item.speed_index,
-        largest_contentful_paint: item.largest_contentful_paint,
-        time_to_interactive: item.time_to_interactive,
-        total_blocking_time: item.total_blocking_time,
-        cumulative_layout_shift: item.cumulative_layout_shift,
-        last_analyzed: item.created_at,
-        url: item.url
-      },
-      audits: item.audits || [],
-      screenshot: item.screenshot
-    }));
+    const reports: PageSpeedReport[] = data.map(item => {
+      // Parse audits from JSON
+      let parsedAudits: PageSpeedAudit[] = [];
+      if (item.audits) {
+        try {
+          // If it's already a string, parse it; otherwise stringify and parse it
+          const auditStr = typeof item.audits === 'string' ? item.audits : JSON.stringify(item.audits);
+          parsedAudits = JSON.parse(auditStr);
+        } catch (e) {
+          console.error("Error parsing audits:", e);
+          parsedAudits = [];
+        }
+      }
+      
+      return {
+        metrics: {
+          performance_score: item.performance_score,
+          accessibility_score: item.accessibility_score,
+          best_practices_score: item.best_practices_score,
+          seo_score: item.seo_score,
+          first_contentful_paint: item.first_contentful_paint,
+          speed_index: item.speed_index,
+          largest_contentful_paint: item.largest_contentful_paint,
+          time_to_interactive: item.time_to_interactive,
+          total_blocking_time: item.total_blocking_time,
+          cumulative_layout_shift: item.cumulative_layout_shift,
+          last_analyzed: item.created_at,
+          url: item.url
+        },
+        audits: parsedAudits,
+        screenshot: item.screenshot
+      };
+    });
+    
+    return reports;
   } catch (error) {
     console.error("Error getting PageSpeed history:", error);
     return [];

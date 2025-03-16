@@ -509,9 +509,15 @@ export type Database = {
           best_practices_score: number
           client_id: string
           created_at: string | null
+          cumulative_layout_shift: number | null
+          first_contentful_paint: number | null
           id: string
+          largest_contentful_paint: number | null
           performance_score: number
           seo_score: number
+          speed_index: number | null
+          time_to_interactive: number | null
+          total_blocking_time: number | null
           updated_at: string | null
           url: string
         }
@@ -520,9 +526,15 @@ export type Database = {
           best_practices_score: number
           client_id: string
           created_at?: string | null
+          cumulative_layout_shift?: number | null
+          first_contentful_paint?: number | null
           id?: string
+          largest_contentful_paint?: number | null
           performance_score: number
           seo_score: number
+          speed_index?: number | null
+          time_to_interactive?: number | null
+          total_blocking_time?: number | null
           updated_at?: string | null
           url: string
         }
@@ -531,9 +543,15 @@ export type Database = {
           best_practices_score?: number
           client_id?: string
           created_at?: string | null
+          cumulative_layout_shift?: number | null
+          first_contentful_paint?: number | null
           id?: string
+          largest_contentful_paint?: number | null
           performance_score?: number
           seo_score?: number
+          speed_index?: number | null
+          time_to_interactive?: number | null
+          total_blocking_time?: number | null
           updated_at?: string | null
           url?: string
         }

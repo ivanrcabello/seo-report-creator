@@ -4,6 +4,56 @@ import { PageSpeedReport, PageSpeedAudit } from "./types";
 import { savePageSpeedMetrics } from "../pageSpeedMetricsService";
 import { toast } from "sonner";
 
+// Save a PageSpeed report for a client
+export const savePageSpeedReport = async (clientId: string, report: PageSpeedReport): Promise<boolean> => {
+  try {
+    console.log("Saving PageSpeed report for client:", clientId);
+    
+    // Make sure all numeric fields have the correct type
+    // Scores are stored as decimals (0-1) in the database
+    const reportData = {
+      client_id: clientId,
+      url: report.metrics.url,
+      performance_score: parseFloat(report.metrics.performance_score.toString()),
+      accessibility_score: parseFloat(report.metrics.accessibility_score.toString()),
+      best_practices_score: parseFloat(report.metrics.best_practices_score.toString()),
+      seo_score: parseFloat(report.metrics.seo_score.toString()),
+      first_contentful_paint: report.metrics.first_contentful_paint,
+      speed_index: report.metrics.speed_index,
+      largest_contentful_paint: report.metrics.largest_contentful_paint,
+      time_to_interactive: report.metrics.time_to_interactive,
+      total_blocking_time: report.metrics.total_blocking_time,
+      cumulative_layout_shift: report.metrics.cumulative_layout_shift,
+      audits: JSON.stringify(report.audits)
+    };
+    
+    // First save to client_pagespeed table
+    const { data, error } = await supabase
+      .from('client_pagespeed')
+      .insert([reportData])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error saving PageSpeed report:", error);
+      toast.error("Error al guardar el informe de PageSpeed");
+      return false;
+    }
+    
+    console.log("PageSpeed report saved:", data);
+    
+    // Then save metrics to the metrics tracking table
+    await savePageSpeedMetrics(clientId, report);
+    
+    toast.success("Informe de PageSpeed guardado correctamente");
+    return true;
+  } catch (error) {
+    console.error("Exception saving PageSpeed report:", error);
+    toast.error("Error al guardar el informe de PageSpeed");
+    return false;
+  }
+};
+
 // Get the most recent PageSpeed report for a client
 export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedReport | null> => {
   try {
@@ -15,14 +65,19 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
       .eq('client_id', clientId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error("Error fetching PageSpeed report:", error);
       return null;
     }
     
-    console.log("PageSpeed report retrieved:", data);
+    if (!data) {
+      console.log("No PageSpeed report found for client:", clientId);
+      return null;
+    }
+    
+    console.log("PageSpeed report retrieved");
     
     // Parse and transform the audits JSON data
     let parsedAudits: PageSpeedAudit[] = [];
@@ -78,53 +133,6 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
   } catch (error) {
     console.error("Exception fetching PageSpeed report:", error);
     return null;
-  }
-};
-
-// Save a PageSpeed report for a client
-export const savePageSpeedReport = async (clientId: string, report: PageSpeedReport): Promise<boolean> => {
-  try {
-    console.log("Saving PageSpeed report for client:", clientId);
-    
-    // Make sure all numeric fields have the correct type
-    // Scores are stored as decimals (0-1) in the database
-    const reportData = {
-      client_id: clientId,
-      url: report.metrics.url,
-      performance_score: parseFloat(report.metrics.performance_score.toString()),
-      accessibility_score: parseFloat(report.metrics.accessibility_score.toString()),
-      best_practices_score: parseFloat(report.metrics.best_practices_score.toString()),
-      seo_score: parseFloat(report.metrics.seo_score.toString()),
-      first_contentful_paint: Math.round(report.metrics.first_contentful_paint),
-      speed_index: Math.round(report.metrics.speed_index),
-      largest_contentful_paint: Math.round(report.metrics.largest_contentful_paint),
-      time_to_interactive: Math.round(report.metrics.time_to_interactive),
-      total_blocking_time: Math.round(report.metrics.total_blocking_time),
-      cumulative_layout_shift: parseFloat(report.metrics.cumulative_layout_shift.toString()),
-      audits: JSON.stringify(report.audits)
-    };
-    
-    // First save to client_pagespeed table
-    const { data, error } = await supabase
-      .from('client_pagespeed')
-      .insert([reportData])
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error saving PageSpeed report:", error);
-      return false;
-    }
-    
-    console.log("PageSpeed report saved:", data);
-    
-    // Then save metrics to the metrics tracking table
-    await savePageSpeedMetrics(clientId, report);
-    
-    return true;
-  } catch (error) {
-    console.error("Exception saving PageSpeed report:", error);
-    return false;
   }
 };
 

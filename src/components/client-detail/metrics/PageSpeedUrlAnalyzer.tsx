@@ -3,10 +3,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { analyzeWebsite, savePageSpeedReport } from "@/services/pagespeed";
 import { PageSpeedReport } from "@/services/pagespeed";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PageSpeedUrlAnalyzerProps {
   clientId: string;
@@ -24,6 +25,7 @@ export const PageSpeedUrlAnalyzer = ({
   setError 
 }: PageSpeedUrlAnalyzerProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [tipVisible, setTipVisible] = useState(true);
 
   const handleAnalyzeUrl = async () => {
     if (!url.trim()) {
@@ -34,6 +36,7 @@ export const PageSpeedUrlAnalyzer = ({
     try {
       setIsLoading(true);
       setError(null);
+      setTipVisible(false);
       
       let formattedUrl = url;
       if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
@@ -44,7 +47,7 @@ export const PageSpeedUrlAnalyzer = ({
       const report = await analyzeWebsite(formattedUrl);
       
       if (report) {
-        console.log("PageSpeed analysis completed:", report);
+        console.log("PageSpeed analysis completed");
         setPageSpeedReport(report);
         
         try {
@@ -72,34 +75,63 @@ export const PageSpeedUrlAnalyzer = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleAnalyzeUrl();
+    }
+  };
+
   return (
-    <div className="flex flex-col md:flex-row gap-4">
-      <div className="flex-1">
-        <Label htmlFor="pageSpeedUrl">URL del sitio web</Label>
-        <div className="flex mt-1">
-          <Input
-            id="pageSpeedUrl"
-            placeholder="https://www.ejemplo.com"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="flex-1 rounded-r-none"
-          />
-          <Button
-            onClick={handleAnalyzeUrl}
-            disabled={isLoading || !url.trim()}
-            className="rounded-l-none"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Analizando...
-              </>
-            ) : (
-              'Analizar'
-            )}
-          </Button>
+    <div className="space-y-3">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <Label htmlFor="pageSpeedUrl">URL del sitio web</Label>
+          <div className="flex mt-1">
+            <Input
+              id="pageSpeedUrl"
+              placeholder="https://www.ejemplo.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="flex-1 rounded-r-none"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={handleAnalyzeUrl}
+              disabled={isLoading || !url.trim()}
+              className="rounded-l-none"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Analizando...
+                </>
+              ) : (
+                'Analizar'
+              )}
+            </Button>
+          </div>
         </div>
       </div>
+      
+      {tipVisible && !isLoading && (
+        <Alert className="bg-blue-50 border-blue-100">
+          <AlertDescription className="text-sm text-blue-700 flex items-center gap-1">
+            <span>
+              Este análisis evalúa el rendimiento web usando Google PageSpeed Insights.
+            </span>
+            <a 
+              href="https://pagespeed.web.dev/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-700 hover:text-blue-900 inline-flex items-center ml-2"
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              <span className="underline">Más información</span>
+            </a>
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };

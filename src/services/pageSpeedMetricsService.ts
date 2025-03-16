@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PageSpeedReport } from "@/services/pagespeed";
@@ -10,6 +11,12 @@ export interface PageSpeedMetric {
   accessibility_score: number;
   best_practices_score: number;
   seo_score: number;
+  first_contentful_paint: number;
+  speed_index: number;
+  largest_contentful_paint: number;
+  time_to_interactive: number;
+  total_blocking_time: number;
+  cumulative_layout_shift: number;
   created_at: string;
   updated_at: string;
 }
@@ -36,7 +43,13 @@ export const savePageSpeedMetrics = async (
       performance_score: parseFloat(metrics.performance_score.toString()),
       accessibility_score: parseFloat(metrics.accessibility_score.toString()),
       best_practices_score: parseFloat(metrics.best_practices_score.toString()),
-      seo_score: parseFloat(metrics.seo_score.toString())
+      seo_score: parseFloat(metrics.seo_score.toString()),
+      first_contentful_paint: metrics.first_contentful_paint,
+      speed_index: metrics.speed_index,
+      largest_contentful_paint: metrics.largest_contentful_paint,
+      time_to_interactive: metrics.time_to_interactive,
+      total_blocking_time: metrics.total_blocking_time,
+      cumulative_layout_shift: metrics.cumulative_layout_shift
     };
     
     console.log("Saving PageSpeed metrics:", metricsData);

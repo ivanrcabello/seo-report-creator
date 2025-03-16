@@ -1,6 +1,9 @@
 
 import { DocumentType, TemplateSection, DocumentTemplate } from "@/types/templates";
-import { Json } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+
+// Define a Json type based on the Supabase Database types
+type Json = Database['public']['Tables']['document_templates']['Row']['sections'];
 
 // Types for database mapping
 export type TemplateDbRow = {

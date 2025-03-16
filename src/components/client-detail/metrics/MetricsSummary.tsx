@@ -5,14 +5,16 @@ import { CircleCheck, CircleDashed, ArrowUp, ArrowDown } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useClientKeywords } from "./useClientKeywords";
+import { useParams } from "react-router-dom";
 
 interface MetricsSummaryProps {
   currentMetric: ClientMetric;
 }
 
 export const MetricsSummary = ({ currentMetric }: MetricsSummaryProps) => {
-  // Use full clientId from currentMetric
-  const { keywords } = useClientKeywords(currentMetric.client_id);
+  // Use the client ID from the URL params instead of trying to get it from the metric
+  const { id: clientId } = useParams<{ id: string }>();
+  const { keywords } = useClientKeywords(clientId || "");
 
   const formatPercentage = (value: number, goal: number) => {
     const percentage = (value / goal) * 100;

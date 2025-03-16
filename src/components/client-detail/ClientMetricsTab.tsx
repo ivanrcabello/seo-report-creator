@@ -6,10 +6,11 @@ import { MetricsForm } from "./metrics/MetricsForm";
 import { LoadingState } from "./metrics/LoadingState";
 import { ErrorAlert } from "./metrics/ErrorAlert";
 import { useClientMetrics } from "./metrics/useClientMetrics";
-import { TrendingUp, BarChart2, MousePointer, Share2, Award, Search } from "lucide-react";
+import { TrendingUp, BarChart2, MousePointer, Share2, Award, Search, Gauge } from "lucide-react";
 import { MetricsSummary } from "./metrics/MetricsSummary";
 import { KeywordsSection } from "./metrics/KeywordsSection";
 import { PageSpeedSection } from "./metrics/PageSpeedSection";
+import { PageSpeedTrends } from "./metrics/PageSpeedTrends";
 
 interface ClientMetricsTabProps {
   clientId: string;
@@ -44,7 +45,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
       {error && <ErrorAlert error={error} />}
       
       {currentMetric && (
-        <MetricsSummary currentMetric={currentMetric} />
+        <MetricsSummary currentMetric={currentMetric} clientId={clientId} />
       )}
       
       <MetricsCard 
@@ -59,6 +60,13 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
           userRole={userRole}
           isAdmin={isAdmin}
         />
+      </MetricsCard>
+      
+      <MetricsCard 
+        title="Rendimiento Web (PageSpeed)" 
+        icon={<Gauge className="h-5 w-5 text-seo-blue" />}
+      >
+        <PageSpeedTrends clientId={clientId} />
       </MetricsCard>
       
       <PageSpeedSection clientId={clientId} clientName={clientName} />

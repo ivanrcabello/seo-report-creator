@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, FileText, AlertCircle, Clock } from "lucide-react";
@@ -29,7 +28,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
     const toastId = toast.loading("Preparando datos para generar informe...");
     
     try {
-      // Recopilar todos los datos de métricas en paralelo
       console.log("Fetching all metrics data in parallel");
       setProgress(20);
       const [pageSpeedData, metricsData, localSeoData, keywordsData, documentsData] = await Promise.allSettled([
@@ -40,7 +38,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         getClientDocuments(clientId)
       ]);
       
-      // Extraer resultados manejando posibles rechazos
       setProgress(40);
       const pageSpeed = pageSpeedData.status === 'fulfilled' ? pageSpeedData.value : null;
       const metrics = metricsData.status === 'fulfilled' ? metricsData.value : [];
@@ -57,7 +54,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         documents: documents.length
       });
       
-      // Comprobar si hay suficientes datos para generar un informe
       if (!pageSpeed && metrics.length === 0 && !localSeo && keywords.length === 0 && documents.length === 0) {
         toast.dismiss(toastId);
         toast.error("No hay suficientes datos para generar un informe");
@@ -69,7 +65,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       toast.loading("Generando informe con IA de Gemini...");
       setProgress(60);
       
-      // Crear un objeto de resultados de auditoría combinado para generar el informe
       const auditResult = {
         url: pageSpeed?.metrics.url || "",
         companyName: clientName,
@@ -80,7 +75,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         webVisibility: 0,
         keywordsCount: keywords.length,
         technicalIssues: [],
-        // Añadimos campos requeridos basados en la interfaz AuditResult
         seoResults: {
           metaTitle: true,
           metaDescription: true,
@@ -92,7 +86,7 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
           externalLinks: 3
         },
         technicalResults: {
-          sslStatus: 'Válido',
+          sslStatus: 'Válido' as "Válido" | "Inválido" | "No implementado",
           httpsRedirection: true,
           mobileOptimization: true,
           robotsTxt: true,
@@ -145,7 +139,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
           cls: pageSpeed.metrics.cumulative_layout_shift,
           tbt: pageSpeed.metrics.total_blocking_time
         } : undefined,
-        // Add documents data
         documents: documents.map(doc => ({
           id: doc.id,
           name: doc.name,
@@ -154,7 +147,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         }))
       };
       
-      // Generar el informe con Gemini
       setProgress(80);
       const report = await generateAndSaveReport(
         clientId,
@@ -170,7 +162,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         toast.dismiss();
         toast.success("Informe generado correctamente con Gemini");
         
-        // Navegar a la vista del informe
         setTimeout(() => {
           console.log("Navigating to report view:", `/reports/${report.id}`);
           navigate(`/reports/${report.id}`);

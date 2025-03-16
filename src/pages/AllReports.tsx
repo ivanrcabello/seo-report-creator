@@ -54,10 +54,10 @@ const AllReports = () => {
         setReports(reportsData);
         setClients(clientsData);
         
-        // Extraer tipos únicos de informes
+        // Extraer tipos únicos de informes y asegurar que son string[]
         const types = Array.from(
           new Set(reportsData.map(report => report.type))
-        ).filter(Boolean); // Eliminar valores vacíos o nulos
+        ).filter(Boolean) as string[]; // Cast to string[] to fix type issue
         
         setAvailableTypes(types);
       } catch (error) {

@@ -1,221 +1,175 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.36.0'
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3"
+
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
+if (!GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY env var not found')
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Initialize Gemini API with the provided key
-const API_KEY = Deno.env.get('GEMINI_API_KEY') || "AIzaSyDtqQWnGPrKlzE2G8q_zc4HOdjrlNWhqAk";
-const genAI = new GoogleGenerativeAI(API_KEY);
+}
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { auditData, templateType } = await req.json();
+    const { auditData, templateType } = await req.json()
     
     if (!auditData) {
       return new Response(
-        JSON.stringify({ error: "No audit data provided" }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+        JSON.stringify({ error: 'Audit data is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
     }
 
-    console.log("Received request for Gemini report generation");
-    console.log("Template type:", templateType);
-    console.log("Data sample:", JSON.stringify(auditData).substring(0, 200) + "...");
+    // Initialize the Gemini API
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
-    // Access the generative model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    // Create a template for the report based on SEO audit data
+    const prompt = createSeoReportPrompt(auditData, templateType)
 
-    // Construct a detailed prompt based on the audit data
-    const prompt = constructPrompt(auditData, templateType);
-    
-    console.log("Sending prompt to Gemini API...");
-    
-    // Generate content
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    console.log("Received response from Gemini API");
-    
-    return new Response(
-      JSON.stringify({ content: text }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-  } catch (error) {
-    console.error("Error processing request:", error);
-    
+    // Generate response with Gemini
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.2,
+        topK: 32,
+        topP: 0.95,
+        maxOutputTokens: 8000,
+      },
+    })
+
+    const response = result.response
+    const generatedText = response.text()
+
+    // Return the generated content
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Unknown error occurred",
-        details: String(error)
+        content: generatedText,
+        model: "gemini-pro",
+        prompt: "SEO Report generation"
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Error generating report with Gemini:', error)
+    return new Response(
+      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    )
   }
-});
+})
 
-// Helper function to construct a detailed prompt for Gemini
-function constructPrompt(auditData: any, templateType = 'seo'): string {
-  // Base context for SEO report generation
-  let context = `
-  Eres un consultor SEO experto que genera informes profesionales en español.
-  Necesito que crees un informe completo basado en los datos que te proporciono.
-  `;
+// Create a prompt for the SEO report
+function createSeoReportPrompt(auditData, templateType = 'seo') {
+  const { url, companyName, seoResults, technicalResults, performanceResults, 
+          keywords, localData, metrics, pagespeed } = auditData
 
-  // Core instructions based on template type
-  let instructions = '';
-  
-  switch(templateType) {
-    case 'seo':
-      instructions = `
-      El informe debe tener las siguientes secciones:
-      
-      1. Resumen ejecutivo - Una síntesis de los hallazgos principales y recomendaciones.
-      2. Análisis de situación actual - Métricas clave y estado del sitio web.
-      3. Análisis de palabras clave - Estado y recomendaciones para las palabras clave.
-      4. Análisis técnico - Problemas técnicos detectados y soluciones.
-      5. Estrategia SEO propuesta - Plan de acción detallado.
-      6. Cronograma de implementación - Plazos y prioridades.
-      7. Métricas de seguimiento - KPIs para medir el éxito.
-      
-      Utiliza formato markdown para estructurar el informe.
-      `;
-      break;
-    case 'local':
-      instructions = `
-      El informe debe enfocarse en SEO local con las siguientes secciones:
-      
-      1. Resumen ejecutivo - Una síntesis de los hallazgos principales para SEO local.
-      2. Análisis de presencia local - Google Business Profile y directorios.
-      3. Análisis de competencia local - Competidores en la misma área geográfica.
-      4. Estrategia de SEO local - Acciones específicas para mejorar visibilidad local.
-      5. Plan de gestión de reseñas - Estrategia para aumentar y gestionar reseñas.
-      6. Cronograma y métricas de seguimiento
-      
-      Utiliza formato markdown para estructurar el informe.
-      `;
-      break;
-    default:
-      instructions = `
-      El informe debe tener las siguientes secciones:
-      
-      1. Resumen ejecutivo
-      2. Análisis de situación actual
-      3. Hallazgos principales
-      4. Recomendaciones estratégicas
-      5. Plan de acción
-      6. Conclusiones
-      
-      Utiliza formato markdown para estructurar el informe.
-      `;
-  }
+  let basePrompt = `Genera un informe SEO detallado para ${companyName} sobre el sitio web ${url}. 
+El informe debe estar en formato markdown y en español.
 
-  // Build the data summary section
-  let dataSummary = "Basado en los siguientes datos:\n\n";
-  
-  // Client info
-  if (auditData.clientName) {
-    dataSummary += `**Cliente:** ${auditData.clientName}\n`;
-  }
-  
-  // Website info
-  if (auditData.url) {
-    dataSummary += `**Sitio web:** ${auditData.url}\n`;
-  }
-  
-  // Technical metrics
-  if (auditData.pagespeed) {
-    dataSummary += `
-    **Métricas técnicas:**
-    - Rendimiento: ${auditData.pagespeed.performance}/100
-    - Accesibilidad: ${auditData.pagespeed.accessibility}/100
-    - Mejores prácticas: ${auditData.pagespeed.bestPractices}/100
-    - SEO técnico: ${auditData.pagespeed.seo}/100
-    - LCP: ${auditData.pagespeed.lcp}ms
-    - FCP: ${auditData.pagespeed.fcp}ms
-    - CLS: ${auditData.pagespeed.cls}
-    `;
-  }
-  
-  // Keywords
-  if (auditData.keywords && auditData.keywords.length > 0) {
-    dataSummary += `\n**Palabras clave (top 5):**\n`;
-    const topKeywords = auditData.keywords.slice(0, 5);
-    topKeywords.forEach((kw: any) => {
-      dataSummary += `- "${kw.word}" - Posición: ${kw.position || 'No posicionada'}\n`;
-    });
-    dataSummary += `Total de palabras clave: ${auditData.keywords.length}\n`;
-  }
-  
-  // Local SEO data
-  if (auditData.localData) {
-    dataSummary += `
-    **Datos SEO Local:**
-    - Nombre del negocio: ${auditData.localData.businessName}
-    - Dirección: ${auditData.localData.address}
-    - Ranking en Google Maps: ${auditData.localData.googleMapsRanking}
-    - Reseñas en Google: ${auditData.localData.googleReviews}
-    `;
-  }
-  
-  // Traffic metrics
-  if (auditData.metrics) {
-    dataSummary += `
-    **Métricas de tráfico:**
-    - Visitas: ${auditData.metrics.visits || 0}/mes
-    - Palabras clave en Top 10: ${auditData.metrics.keywordsTop10 || 0}
-    - Conversiones: ${auditData.metrics.conversions || 0}
-    `;
-  }
-  
-  // Technical issues
-  if (auditData.technicalIssues && auditData.technicalIssues.length > 0) {
-    dataSummary += `\n**Problemas técnicos detectados:**\n`;
-    auditData.technicalIssues.forEach((issue: any) => {
-      dataSummary += `- ${issue.type}: ${issue.description}\n`;
-    });
-  }
-  
-  // Document information if available
-  if (auditData.documents && auditData.documents.length > 0) {
-    dataSummary += `\n**Documentos analizados:**\n`;
-    auditData.documents.forEach((doc: any) => {
-      dataSummary += `- ${doc.name} (${doc.type})\n`;
-      if (doc.content) {
-        dataSummary += `  Contenido: ${doc.content.substring(0, 100)}...\n`;
-      }
-    });
-  }
+Datos del análisis:
+- URL: ${url}
+- Empresa: ${companyName}
+- Puntuación SEO: ${auditData.seoScore}/100
+- Rendimiento: ${auditData.performance}/100
+- Palabras clave rastreadas: ${auditData.keywordsCount}
 
-  // Final output formatting guidance
-  const outputGuidance = `
-  IMPORTANTE:
-  - El informe debe ser altamente profesional y detallado.
-  - Debe estar completamente en español.
-  - Debe incluir análisis específicos basados en los datos proporcionados.
-  - Debe ofrecer recomendaciones concretas y accionables.
-  - Utiliza formato markdown con encabezados (#, ##, ###), listas, y énfasis.
-  - Incluye un cronograma realista de implementación en semanas.
-  - Añade métricas específicas de seguimiento para evaluar el éxito.
-  `;
+`
+
+  // Add specific sections based on the template type
+  if (templateType === 'seo') {
+    basePrompt += `
+Sección SEO On-Page:
+${seoResults ? `
+- Meta título: ${seoResults.metaTitle ? 'Correcto' : 'Falta o incorrecto'}
+- Meta descripción: ${seoResults.metaDescription ? 'Correcta' : 'Falta o incorrecta'}
+- Etiquetas H1: ${seoResults.h1Tags} encontradas
+- Etiqueta canónica: ${seoResults.canonicalTag ? 'Implementada' : 'No implementada'}
+- Densidad de palabras clave: ${seoResults.keywordDensity}%
+- Longitud del contenido: ${seoResults.contentLength} palabras
+- Enlaces internos: ${seoResults.internalLinks}
+- Enlaces externos: ${seoResults.externalLinks}
+` : '- No hay datos disponibles de SEO On-Page'}
+
+Sección SEO Técnico:
+${technicalResults ? `
+- Estado SSL: ${technicalResults.sslStatus}
+- Redirección HTTPS: ${technicalResults.httpsRedirection ? 'Implementada' : 'No implementada'}
+- Optimización móvil: ${technicalResults.mobileOptimization ? 'Correcta' : 'Necesita mejoras'}
+- Robots.txt: ${technicalResults.robotsTxt ? 'Correcto' : 'Falta o incorrecto'}
+- Sitemap: ${technicalResults.sitemap ? 'Encontrado' : 'No encontrado'}
+- Tecnologías detectadas: ${technicalResults.technologies.join(', ')}
+` : '- No hay datos disponibles de SEO Técnico'}
+
+Sección Rendimiento:
+${performanceResults ? `
+- Puntuación de velocidad (desktop): ${performanceResults.pageSpeed?.desktop || 'N/A'}/100
+- Puntuación de velocidad (mobile): ${performanceResults.pageSpeed?.mobile || 'N/A'}/100
+- Tiempo de carga: ${performanceResults.loadTime || 'N/A'}
+- Recursos totales: ${performanceResults.resourceCount || 'N/A'}
+- Optimización de imágenes: ${performanceResults.imageOptimization ? 'Correcta' : 'Necesita mejoras'}
+- Implementación de caché: ${performanceResults.cacheImplementation ? 'Correcta' : 'Necesita mejoras'}
+` : '- No hay datos disponibles de Rendimiento'}
+
+${keywords && keywords.length > 0 ? `Palabras clave principales:
+${keywords.slice(0, 10).map(kw => `- "${kw.word}": Posición actual ${kw.position || 'No posicionada'} (Objetivo: ${kw.targetPosition || 'Top 10'})`).join('\n')}
+` : '- No hay datos disponibles de palabras clave'}
+
+${metrics ? `Métricas actuales:
+- Visitas mensuales: ${metrics.visits || 'N/A'}
+- Keywords en top 10: ${metrics.keywordsTop10 || 'N/A'}
+- Conversiones: ${metrics.conversions || 'N/A'}
+` : ''}
+`
+  } else if (templateType === 'local') {
+    basePrompt += `
+Sección SEO Local:
+${localData ? `
+- Nombre del negocio: ${localData.businessName}
+- Dirección: ${localData.address}
+- Posición en Google Maps: ${localData.googleMapsRanking || 'No disponible'}
+- Reseñas en Google: ${localData.googleReviews || 0}
+` : '- No hay datos disponibles de SEO Local'}
+
+${keywords && keywords.length > 0 ? `Palabras clave locales principales:
+${keywords.slice(0, 10).map(kw => `- "${kw.word}": Posición actual ${kw.position || 'No posicionada'} (Objetivo: ${kw.targetPosition || 'Top 10'})`).join('\n')}
+` : '- No hay datos disponibles de palabras clave locales'}
+`
+  }
   
-  // Combine all parts to create the final prompt
-  return `${context}\n\n${instructions}\n\n${dataSummary}\n\n${outputGuidance}`;
+  // Core web vitals if available
+  if (pagespeed) {
+    basePrompt += `
+Core Web Vitals:
+- LCP (Largest Contentful Paint): ${pagespeed.lcp || 'N/A'}ms
+- FID/TBT (First Input Delay / Total Blocking Time): ${pagespeed.tbt || 'N/A'}ms
+- CLS (Cumulative Layout Shift): ${pagespeed.cls || 'N/A'}
+- Puntuación SEO: ${pagespeed.seo || 'N/A'}/100
+- Puntuación Accesibilidad: ${pagespeed.accessibility || 'N/A'}/100
+- Puntuación Mejores Prácticas: ${pagespeed.bestPractices || 'N/A'}/100
+`
+  }
+  
+  // Instructions for the report format
+  basePrompt += `
+Estructura el informe con las siguientes secciones:
+
+1. **Resumen Ejecutivo**: Breve resumen del análisis y hallazgos principales.
+2. **Análisis de Situación Actual**: Detalles sobre el rendimiento actual del sitio web.
+3. **Hallazgos Principales**: Los problemas más importantes encontrados.
+4. **Recomendaciones Prioritarias**: Lista de acciones recomendadas en orden de prioridad.
+5. **Plan de Acción**: Pasos concretos para mejorar el SEO del sitio.
+
+El informe debe ser profesional, informativo y práctico. Usa markdown para formatear el informe con encabezados, listas y énfasis donde sea apropiado.
+`
+
+  return basePrompt
 }

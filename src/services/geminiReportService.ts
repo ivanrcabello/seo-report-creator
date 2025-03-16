@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { ClientReport } from "@/types/client";
@@ -63,33 +62,27 @@ export const saveGeminiReport = async (
   documentIds: string[] = []
 ): Promise<ClientReport | null> => {
   try {
+    // Create a serializable version of auditData for storage
+    const serializableAuditData = JSON.parse(JSON.stringify(auditData));
+    
     const reportData = {
-      id: uuidv4(),
-      clientId,
+      client_id: clientId,
       title: `Informe SEO - ${clientName} - ${new Date().toLocaleDateString('es-ES')}`,
       date: new Date().toISOString(),
       type: "seo",
       content: reportContent,
-      analyticsData: {
-        auditResult: auditData,
+      analytics_data: {
+        auditResult: serializableAuditData,
         generatedAt: new Date().toISOString(),
         generatedBy: "gemini"
       },
-      documentIds: documentIds
+      document_ids: documentIds
     };
     
     // Save to database
     const { data, error } = await supabase
       .from('client_reports')
-      .insert([{
-        client_id: reportData.clientId,
-        title: reportData.title,
-        date: reportData.date,
-        type: reportData.type,
-        content: reportData.content,
-        analytics_data: reportData.analyticsData,
-        document_ids: reportData.documentIds
-      }])
+      .insert(reportData)
       .select()
       .single();
     

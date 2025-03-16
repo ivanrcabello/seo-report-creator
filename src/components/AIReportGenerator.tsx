@@ -118,7 +118,27 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
     
     setIsSaving(true);
     try {
-      await saveReportWithAIData(currentReport, report);
+      // Convert AIReport to a format compatible with ClientReport
+      const reportData = {
+        id: currentReport.id,
+        clientId: currentReport.clientId,
+        title: currentReport.title,
+        date: currentReport.date,
+        type: currentReport.type,
+        content: report.content || "",
+        analyticsData: {
+          ...currentReport.analyticsData,
+          aiReport: report
+        },
+        documentIds: currentReport.documentIds,
+        url: currentReport.url,
+        notes: currentReport.notes,
+        shareToken: currentReport.shareToken,
+        sharedAt: currentReport.sharedAt,
+        includeInProposal: currentReport.includeInProposal
+      };
+      
+      await saveReportWithAIData(reportData, report);
       toast({
         title: "Informe guardado",
         description: "El informe se ha guardado correctamente.",
@@ -166,8 +186,8 @@ export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGenera
   if (isEditMode && report) {
     return (
       <EditableReportForm 
-        initialReport={report} 
-        onSave={handleSaveEdits} 
+        initialReport={report as unknown as ClientReport} 
+        onSave={(updatedReport) => handleSaveEdits(updatedReport as unknown as AIReport)} 
       />
     );
   }

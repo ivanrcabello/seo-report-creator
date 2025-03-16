@@ -1,7 +1,8 @@
-import { PageSpeedReport } from "@/services/pagespeed";
+import { supabase } from "@/integrations/supabase/client";
 import { ClientReport } from "@/types/client";
 import { addReport } from "@/services/reportService";
 import { v4 as uuidv4 } from "uuid";
+import { format } from "date-fns";
 
 // Function to generate a professional report with visual indicators
 export const generatePageSpeedReport = async (

@@ -1,8 +1,8 @@
-
-import { Proposal, ClientReport } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
-import { mapProposalFromDB } from "./proposalMappers";
-import { getReport, shareReport } from "../reportService";
+import { ClientReport } from "@/types/client";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { shareReport } from "../reportService";
 
 // Función para incluir un informe en una propuesta
 export const includeReportInProposal = async (proposalId: string, reportId: string): Promise<Proposal | undefined> => {

@@ -1,6 +1,10 @@
-
 import { useState, useEffect } from "react";
-import { getPageSpeedReport, PageSpeedReport, analyzeWebsite, savePageSpeedReport } from "@/services/pageSpeedService";
+import { 
+  getPageSpeedReport, 
+  PageSpeedReport, 
+  analyzeWebsite, 
+  savePageSpeedReport 
+} from "@/services/pagespeed";
 import { generatePageSpeedReport } from "@/services/pageSpeedReportService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +33,6 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
   const [loadingReport, setLoadingReport] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch the most recent PageSpeed report on component mount
   useEffect(() => {
     const fetchLatestReport = async () => {
       try {
@@ -64,21 +67,18 @@ export const PageSpeedSection = ({ clientId, clientName }: PageSpeedSectionProps
       setIsLoading(true);
       setError(null);
       
-      // Add https:// if missing
       let formattedUrl = url;
       if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
         formattedUrl = 'https://' + formattedUrl;
         setUrl(formattedUrl);
       }
       
-      // Analyze the URL
       const report = await analyzeWebsite(formattedUrl);
       
       if (report) {
         console.log("PageSpeed analysis completed:", report);
         setPageSpeedReport(report);
         
-        // Save the report for this client
         try {
           const saved = await savePageSpeedReport(clientId, report);
           if (saved) {

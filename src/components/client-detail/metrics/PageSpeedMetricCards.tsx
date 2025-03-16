@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { MetricCard } from "@/components/MetricCard";
-import { getPageSpeedReport, PageSpeedReport, PageSpeedMetrics } from "@/services/pageSpeedService";
+import { getPageSpeedReport, PageSpeedReport, PageSpeedMetrics } from "@/services/pagespeed";
 import { LineChart, Gauge, Zap, MousePointer } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";

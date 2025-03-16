@@ -1,5 +1,4 @@
-
-import { PageSpeedReport } from "@/services/pageSpeedService";
+import { PageSpeedReport } from "@/services/pagespeed";
 import { ClientReport } from "@/types/client";
 import { addReport } from "@/services/reportService";
 import { v4 as uuidv4 } from "uuid";

@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PageSpeedReport } from "@/services/pageSpeedService";
+import { PageSpeedReport } from "@/services/pagespeed";
 
 export interface PageSpeedMetric {
   id: string;

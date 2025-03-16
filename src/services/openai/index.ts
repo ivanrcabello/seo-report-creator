@@ -5,4 +5,4 @@ export { generateProposalContent } from './proposalService';
 export { generateAIContent } from './contentService';
 
 // Export common types if needed
-export { OpenAIResponse } from './config';
+export type { OpenAIResponse } from './config';

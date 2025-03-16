@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { useToast } from "@/components/ui/use-toast";
-import { AIReportGenerator } from "@/components/AIReportGenerator";
+import { AIReportGenerator } from "@/components/ai-report/AIReportGenerator";
 import { ReportHeader } from "@/components/seo-report/ReportHeader";
 import { ScoreCards } from "@/components/seo-report/ScoreCards";
 import { MetricCards } from "@/components/seo-report/MetricCards";
@@ -12,7 +12,7 @@ import { Recommendations } from "@/components/seo-report/Recommendations";
 import { NoDataCard } from "@/components/seo-report/NoDataCard";
 import { getReport } from "@/services/reportService";
 import { ClientReport } from "@/types/client";
-import { generateSEOReport } from "@/services/openai/seoReportService";
+import { generateSEOReport } from "@/services/openai";
 import { toast } from "sonner";
 import "../styles/print.css";
 

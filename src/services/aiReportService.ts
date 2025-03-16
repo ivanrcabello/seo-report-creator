@@ -229,10 +229,10 @@ async function generateFormattedContent(report: AIReport, auditResult: AuditResu
   content += `- **Backlinks**: ${report.backlinksCount} - ${report.backlinksComment}\n\n`;
   
   // Technical issues section if available in the audit data
-  if (auditResult.issues && auditResult.issues.length > 0) {
+  if (auditResult.technicalIssues && auditResult.technicalIssues.length > 0) {
     content += `### Problemas Técnicos Detectados\n\n`;
-    auditResult.issues.forEach(issue => {
-      content += `- **${issue.type || 'Problema'}**: ${issue.description || issue.message || 'Sin descripción'}\n`;
+    auditResult.technicalIssues.forEach(issue => {
+      content += `- **${issue.type || 'Problema'}**: ${issue.description || 'Sin descripción'}\n`;
     });
     content += `\n`;
   }

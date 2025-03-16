@@ -1,266 +1,218 @@
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { SeoLocalReport } from '@/types/client';
+import { toast } from 'sonner';
 
 /**
- * Fetch all local SEO reports for a client
+ * AI-generated local SEO analysis mock
+ */
+export async function generateLocalSeoAnalysis(clientId: string, businessName: string, location: string) {
+  const reportId = uuidv4();
+  const googleMapsRanking = Math.floor(Math.random() * 20) + 1; // Random ranking between 1 and 20
+  const googleReviewsCount = Math.floor(Math.random() * 100); // Random number of reviews
+  const keywordRankings = [
+    { keyword: `best ${businessName} in ${location}`, position: Math.floor(Math.random() * 15) },
+    { keyword: `${businessName} services ${location}`, position: Math.floor(Math.random() * 10) },
+    { keyword: `top ${businessName} ${location}`, position: Math.floor(Math.random() * 5) }
+  ];
+  const recommendations = [
+    "Optimize Google My Business profile with relevant keywords",
+    "Encourage customers to leave reviews on Google",
+    "Build local citations on relevant directories",
+    "Improve website's local keyword targeting"
+  ];
+
+  const report: SeoLocalReport = {
+    id: reportId,
+    clientId: clientId,
+    title: `Local SEO Analysis for ${businessName} in ${location}`,
+    businessName: businessName,
+    location: location,
+    googleMapsRanking: googleMapsRanking,
+    googleReviewsCount: googleReviewsCount,
+    keywordRankings: keywordRankings,
+    recommendations: recommendations
+  };
+
+  return report;
+}
+
+/**
+ * Create a new local SEO report
+ */
+export async function createLocalSeoReport(reportData: {
+  clientId: string;
+  title: string;
+  businessName: string;
+  location: string;
+  recommendations?: string[];
+  phone?: string;
+  website?: string;
+  googleBusinessUrl?: string;
+  keywordRankings?: any[];
+  localListings?: any[];
+  googleMapsRanking?: number;
+  googleReviewsCount?: number;
+}) {
+  try {
+    const { clientId, title, businessName, location, recommendations, phone, website, googleBusinessUrl, keywordRankings, localListings, googleMapsRanking, googleReviewsCount } = reportData;
+
+    const { data, error } = await supabase
+      .from('local_seo_reports')
+      .insert([
+        {
+          client_id: clientId,
+          title: title,
+          business_name: businessName,
+          location: location,
+          recommendations: recommendations,
+          phone: phone,
+          website: website,
+          google_business_url: googleBusinessUrl,
+          keyword_rankings: keywordRankings,
+          local_listings: localListings,
+          google_maps_ranking: googleMapsRanking,
+          google_reviews_count: googleReviewsCount
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error("Error creating local SEO report:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error in createLocalSeoReport:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update a local SEO report
+ */
+export async function updateLocalSeoReport(reportId: string, reportData: {
+  title?: string;
+  businessName?: string;
+  location?: string;
+  recommendations?: string[];
+  phone?: string;
+  website?: string;
+  googleBusinessUrl?: string;
+  keywordRankings?: any[];
+  localListings?: any[];
+  googleMapsRanking?: number;
+  googleReviewsCount?: number;
+}) {
+  try {
+    const { title, businessName, location, recommendations, phone, website, googleBusinessUrl, keywordRankings, localListings, googleMapsRanking, googleReviewsCount } = reportData;
+
+    const { data, error } = await supabase
+      .from('local_seo_reports')
+      .update({
+        title: title,
+        business_name: businessName,
+        location: location,
+        recommendations: recommendations,
+        phone: phone,
+        website: website,
+        google_business_url: googleBusinessUrl,
+        keyword_rankings: keywordRankings,
+        local_listings: localListings,
+        google_maps_ranking: googleMapsRanking,
+        google_reviews_count: googleReviewsCount
+      })
+      .eq('id', reportId)
+      .select();
+
+    if (error) {
+      console.error("Error updating local SEO report:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error in updateLocalSeoReport:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get all local SEO reports for a client
  */
 export async function getLocalSeoReports(clientId: string): Promise<SeoLocalReport[]> {
   try {
-    // Validate clientId before querying
-    if (!clientId || clientId.trim() === '') {
-      console.error('Invalid clientId provided to getLocalSeoReports');
-      return [];
-    }
-    
+    console.log("Getting local SEO reports for client:", clientId);
+
     const { data, error } = await supabase
-      .from('seo_local_reports')
+      .from('local_seo_reports')
       .select('*')
-      .eq('client_id', clientId)
-      .order('date', { ascending: false });
-    
+      .eq('client_id', clientId);
+
     if (error) {
-      console.error('Error fetching local SEO reports:', error);
-      return [];
+      console.error("Error fetching local SEO reports:", error);
+      throw error;
     }
-    
-    return data.map((report): SeoLocalReport => ({
-      id: report.id,
-      clientId: report.client_id,
-      title: report.title,
-      date: report.date,
-      businessName: report.business_name,
-      address: report.location, // Use location as address since it's the old field
-      location: report.location,
-      phone: report.phone,
-      website: report.website,
-      googleBusinessUrl: report.google_business_url,
-      googleMapsRanking: report.google_maps_ranking || 0,
-      googleReviewsCount: 0, // Field doesn't exist in DB
-      keywordRankings: Array.isArray(report.keyword_rankings) ? report.keyword_rankings : 
-                      (typeof report.keyword_rankings === 'string' ? JSON.parse(report.keyword_rankings) : []),
-      localListings: Array.isArray(report.local_listings) ? report.local_listings : 
-                    (typeof report.local_listings === 'string' ? JSON.parse(report.local_listings) : []),
-      recommendations: report.recommendations || [],
-      shareToken: report.share_token || null,
-      sharedAt: report.shared_at || null
-    }));
+
+    console.log("Local SEO reports retrieved:", data);
+    return data || [];
   } catch (error) {
-    console.error('Error in getLocalSeoReports:', error);
+    console.error("Error in getLocalSeoReports:", error);
     return [];
   }
 }
 
 /**
- * Generate a local SEO analysis from selected documents
+ * Get a specific local SEO report by ID
  */
-export async function generateLocalSeoAnalysis(
-  documentIds: string[],
-  clientId: string,
-  clientName: string
-) {
+export async function getLocalSeoReport(reportId: string): Promise<SeoLocalReport | null> {
   try {
-    // Validate clientId
-    if (!clientId || clientId.trim() === '') {
-      throw new Error('Invalid clientId provided to generateLocalSeoAnalysis');
-    }
-    
-    // Notify the user that we're starting the AI analysis
-    console.log('Generating local SEO analysis...');
-    
-    // Retrieve document content to analyze
-    const { data: documents, error } = await supabase
-      .from('client_documents')
-      .select('*')
-      .in('id', documentIds);
-    
-    if (error) {
-      console.error('Error fetching documents:', error);
-      throw new Error('Failed to fetch documents for analysis');
-    }
-    
-    // Get business settings if available
-    const { data: settings } = await supabase
-      .from('client_local_seo_settings')
-      .select('*')
-      .eq('client_id', clientId)
-      .single();
-    
-    // Basic simulated analysis result
-    // In a real-world scenario, this would be processed by an AI model
-    const analysisResult = {
-      businessName: settings?.business_name || clientName,
-      address: settings?.address || 
-               (documents[0]?.content?.match(/(?:Address|Dirección):\s*([^\n]+)/i)?.[1] || "No address found"),
-      location: settings?.address || "No location found",
-      phone: settings?.phone || 
-             (documents[0]?.content?.match(/(?:Phone|Teléfono):\s*([^\n]+)/i)?.[1] || null),
-      website: settings?.website || 
-              (documents[0]?.content?.match(/(?:Website|Web|Sitio):\s*([^\n]+)/i)?.[1] || null),
-      googleBusinessUrl: settings?.google_business_url || null,
-      googleMapsRanking: Math.floor(Math.random() * 20) + 1,
-      googleReviewsCount: Math.floor(Math.random() * 50),
-      localListings: [
-        { name: "Google My Business", listed: Math.random() > 0.3, url: "https://business.google.com" },
-        { name: "Yelp", listed: Math.random() > 0.5, url: "https://yelp.com" },
-        { name: "Facebook", listed: Math.random() > 0.4, url: "https://facebook.com" },
-        { name: "TripAdvisor", listed: Math.random() > 0.6, url: "https://tripadvisor.com" }
-      ],
-      recommendations: [
-        "Optimizar la ficha de Google My Business con más fotos y descripción completa",
-        "Solicitar reseñas a clientes satisfechos regularmente",
-        "Crear publicaciones semanales en Google My Business",
-        "Responder a todas las reseñas positivas y negativas"
-      ]
-    };
-    
-    return analysisResult;
-  } catch (error) {
-    console.error('Error in generateLocalSeoAnalysis:', error);
-    throw error;
-  }
-}
-
-/**
- * Create a new local SEO report in the database
- */
-export async function createLocalSeoReport(
-  analysis: any,
-  clientId: string,
-  clientName: string
-): Promise<SeoLocalReport> {
-  try {
-    // Validate clientId
-    if (!clientId || clientId.trim() === '') {
-      throw new Error('Invalid clientId provided to createLocalSeoReport');
-    }
-    
-    const reportId = uuidv4();
-    const reportData = {
-      id: reportId,
-      client_id: clientId,
-      title: `Informe SEO Local - ${clientName}`,
-      business_name: analysis.businessName,
-      location: analysis.address || "Sin ubicación específica", // Map address to location field
-      phone: analysis.phone,
-      website: analysis.website,
-      google_business_url: analysis.googleBusinessUrl,
-      google_maps_ranking: analysis.googleMapsRanking || 0,
-      local_listings: analysis.localListings || [],
-      keyword_rankings: analysis.keywordRankings || [],
-      recommendations: analysis.recommendations || [],
-      date: new Date().toISOString()
-    };
+    console.log("Getting local SEO report with ID:", reportId);
 
     const { data, error } = await supabase
-      .from('seo_local_reports')
-      .insert(reportData)
-      .select()
+      .from('local_seo_reports')
+      .select('*')
+      .eq('id', reportId)
       .single();
 
     if (error) {
-      console.error('Error creating local SEO report:', error);
-      throw new Error('Failed to create local SEO report');
+      console.error("Error fetching local SEO report:", error);
+      throw error;
     }
 
-    // Map DB structure to application model
-    return {
-      id: data.id,
-      clientId: data.client_id,
-      title: data.title,
-      date: data.date,
-      businessName: data.business_name,
-      address: data.location, // Use location as address
-      location: data.location,
-      phone: data.phone,
-      website: data.website,
-      googleBusinessUrl: data.google_business_url,
-      googleMapsRanking: data.google_maps_ranking || 0,
-      googleReviewsCount: 0, // Field doesn't exist in DB
-      keywordRankings: Array.isArray(data.keyword_rankings) ? data.keyword_rankings : 
-                      (typeof data.keyword_rankings === 'string' ? JSON.parse(data.keyword_rankings) : []),
-      localListings: Array.isArray(data.local_listings) ? data.local_listings : 
-                    (typeof data.local_listings === 'string' ? JSON.parse(data.local_listings) : []),
-      recommendations: data.recommendations || [],
-      shareToken: data.share_token,
-      sharedAt: data.shared_at
-    };
+    console.log("Local SEO report retrieved:", data);
+    return data || null;
   } catch (error) {
-    console.error('Error in createLocalSeoReport:', error);
-    throw error;
+    console.error("Error in getLocalSeoReport:", error);
+    return null;
   }
 }
 
 /**
- * Update a local SEO report in the database
- */
-export async function updateLocalSeoReport(
-  reportId: string,
-  updates: Partial<SeoLocalReport>
-): Promise<boolean> {
-  try {
-    // Validate reportId
-    if (!reportId || reportId.trim() === '') {
-      console.error('Invalid reportId provided to updateLocalSeoReport');
-      return false;
-    }
-    
-    // Convert application model to DB structure
-    const reportData: Record<string, any> = {};
-    
-    if (updates.title) reportData.title = updates.title;
-    if (updates.businessName) reportData.business_name = updates.businessName;
-    if (updates.address) reportData.location = updates.address; // Map address to location
-    if (updates.location) reportData.location = updates.location;
-    if (updates.phone !== undefined) reportData.phone = updates.phone;
-    if (updates.website !== undefined) reportData.website = updates.website;
-    if (updates.googleBusinessUrl !== undefined) reportData.google_business_url = updates.googleBusinessUrl;
-    if (updates.googleMapsRanking) reportData.google_maps_ranking = updates.googleMapsRanking;
-    if (updates.keywordRankings) reportData.keyword_rankings = updates.keywordRankings;
-    if (updates.localListings) reportData.local_listings = updates.localListings;
-    if (updates.recommendations) reportData.recommendations = updates.recommendations;
-    
-    const { error } = await supabase
-      .from('seo_local_reports')
-      .update(reportData)
-      .eq('id', reportId);
-
-    if (error) {
-      console.error('Error updating local SEO report:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error in updateLocalSeoReport:', error);
-    return false;
-  }
-}
-
-/**
- * Get client local SEO settings
+ * Get local SEO settings for a client
  */
 export async function getLocalSeoSettings(clientId: string) {
   try {
-    // Validate clientId before querying
-    if (!clientId || clientId.trim() === '') {
-      console.error('Invalid clientId provided to getLocalSeoSettings');
+    if (!clientId || typeof clientId !== 'string' || clientId.trim() === '') {
+      console.error('Invalid clientId in getLocalSeoSettings:', clientId);
       return null;
     }
-    
-    console.log('Fetching local SEO settings for client:', clientId);
+
+    console.log('Getting local SEO settings for client:', clientId);
     
     const { data, error } = await supabase
       .from('client_local_seo_settings')
       .select('*')
       .eq('client_id', clientId)
-      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error when no row is found
-      
+      .maybeSingle();
+    
     if (error) {
       console.error('Error fetching local SEO settings:', error);
       throw error;
     }
     
+    console.log('Local SEO settings retrieved:', data);
     return data;
   } catch (error) {
     console.error('Error in getLocalSeoSettings:', error);
@@ -269,9 +221,51 @@ export async function getLocalSeoSettings(clientId: string) {
 }
 
 /**
- * Save client local SEO settings
+ * Get local SEO metrics history for a client
  */
-export async function saveLocalSeoSettings(settings: {
+export async function getLocalSeoMetricsHistory(clientId: string) {
+  try {
+    if (!clientId || typeof clientId !== 'string' || clientId.trim() === '') {
+      console.error('Invalid clientId in getLocalSeoMetricsHistory:', clientId);
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('local_seo_metrics')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('date', { ascending: false })
+      .limit(10);
+    
+    if (error) {
+      console.error('Error fetching local SEO metrics history:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error in getLocalSeoMetricsHistory:', error);
+    return [];
+  }
+}
+
+/**
+ * Save local SEO settings for a client
+ */
+export async function saveLocalSeoSettings({
+  id,
+  clientId,
+  businessName,
+  address,
+  phone,
+  website,
+  googleBusinessUrl,
+  targetLocations,
+  googleMapsRanking,
+  googleReviewsCount,
+  googleReviewsAverage,
+  listingsCount,
+}: {
   id?: string;
   clientId: string;
   businessName: string;
@@ -280,37 +274,46 @@ export async function saveLocalSeoSettings(settings: {
   website?: string | null;
   googleBusinessUrl?: string | null;
   targetLocations?: string[];
+  googleMapsRanking?: number;
+  googleReviewsCount?: number;
+  googleReviewsAverage?: number;
+  listingsCount?: number;
 }) {
   try {
     // Validate clientId
-    if (!settings.clientId || settings.clientId.trim() === '') {
-      console.error('Invalid clientId provided to saveLocalSeoSettings');
+    if (!clientId || typeof clientId !== 'string' || clientId.trim() === '') {
+      console.error('Invalid clientId in saveLocalSeoSettings:', clientId);
       throw new Error('Client ID is required');
     }
     
-    console.log('Saving local SEO settings for client:', settings.clientId);
-    console.log('Settings data:', settings);
+    console.log('Saving local SEO settings for client:', clientId);
+    console.log('Settings data:', { id, clientId, businessName, address });
     
     // Only include fields that exist in the database table
     const dataToSave = {
-      client_id: settings.clientId,
-      business_name: settings.businessName,
-      address: settings.address,
-      phone: settings.phone || null,
-      website: settings.website || null,
-      google_business_url: settings.googleBusinessUrl || null,
-      target_locations: settings.targetLocations || [],
+      client_id: clientId,
+      business_name: businessName,
+      address: address,
+      phone: phone || null,
+      website: website || null,
+      google_business_url: googleBusinessUrl || null,
+      target_locations: targetLocations || [],
+      google_maps_ranking: googleMapsRanking || 0,
+      google_reviews_count: googleReviewsCount || 0,
+      google_reviews_average: googleReviewsAverage || 0,
+      listings_count: listingsCount || 0,
     };
     
     let result;
     
-    if (settings.id) {
+    if (id && id.trim() !== '') {
       // Update existing record
-      console.log('Updating existing settings with ID:', settings.id);
+      console.log('Updating existing record with ID:', id);
       const { data, error } = await supabase
         .from('client_local_seo_settings')
         .update(dataToSave)
-        .eq('id', settings.id)
+        .eq('id', id)
+        .eq('client_id', clientId)
         .select()
         .single();
         
@@ -321,7 +324,7 @@ export async function saveLocalSeoSettings(settings: {
       result = data;
     } else {
       // Insert new record
-      console.log('Inserting new settings for client:', settings.clientId);
+      console.log('Inserting new record for client:', clientId);
       const { data, error } = await supabase
         .from('client_local_seo_settings')
         .insert(dataToSave)
@@ -344,73 +347,43 @@ export async function saveLocalSeoSettings(settings: {
 }
 
 /**
- * Get historical local SEO metrics
+ * Save local SEO metrics for a client
  */
-export async function getLocalSeoMetricsHistory(clientId: string) {
+export async function saveLocalSeoMetrics(clientId: string, metrics: {
+  googleMapsRanking?: number;
+  googleReviewsCount?: number;
+  googleReviewsAverage?: number;
+  listingsCount?: number;
+}) {
   try {
-    // Validate clientId
-    if (!clientId || clientId.trim() === '') {
-      console.error('Invalid clientId provided to getLocalSeoMetricsHistory');
-      return [];
+    if (!clientId || typeof clientId !== 'string' || clientId.trim() === '') {
+      console.error('Invalid clientId in saveLocalSeoMetrics:', clientId);
+      throw new Error('Client ID is required');
     }
-    
+
+    const dataToSave = {
+      client_id: clientId,
+      google_maps_ranking: metrics.googleMapsRanking || 0,
+      google_reviews_count: metrics.googleReviewsCount || 0,
+      google_reviews_average: metrics.googleReviewsAverage || 0,
+      listings_count: metrics.listingsCount || 0,
+      date: new Date().toISOString(),
+    };
+
     const { data, error } = await supabase
       .from('local_seo_metrics')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('date', { ascending: false });
-      
+      .insert(dataToSave)
+      .select()
+      .single();
+    
     if (error) {
-      console.error('Error fetching local SEO metrics history:', error);
+      console.error('Error saving local SEO metrics:', error);
       throw error;
     }
     
     return data;
   } catch (error) {
-    console.error('Error in getLocalSeoMetricsHistory:', error);
-    return [];
-  }
-}
-
-/**
- * Save local SEO metrics to the history table
- */
-export async function saveLocalSeoMetrics(
-  clientId: string,
-  metrics: {
-    googleMapsRanking?: number;
-    googleReviewsCount?: number;
-    googleReviewsAverage?: number;
-    listingsCount?: number;
-  }
-) {
-  try {
-    // Validate clientId
-    if (!clientId || clientId.trim() === '') {
-      console.error('Invalid clientId provided to saveLocalSeoMetrics');
-      return false;
-    }
-    
-    const { error } = await supabase
-      .from('local_seo_metrics')
-      .insert({
-        client_id: clientId,
-        google_maps_ranking: metrics.googleMapsRanking || 0,
-        google_reviews_count: metrics.googleReviewsCount || 0,
-        google_reviews_average: metrics.googleReviewsAverage || 0,
-        listings_count: metrics.listingsCount || 0,
-      });
-      
-    if (error) {
-      console.error('Error saving local SEO metrics history:', error);
-      throw error;
-    }
-    
-    return true;
-  } catch (error) {
     console.error('Error in saveLocalSeoMetrics:', error);
-    return false;
+    throw error;
   }
 }
-
-export { generateLocalSeoAnalysis, createLocalSeoReport, updateLocalSeoReport } from './localSeoService';

@@ -25,6 +25,7 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeMetricsTab, setActiveMetricsTab] = useState<string>("general");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -114,24 +115,43 @@ export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps
     <div className="space-y-6">
       {noMetricsWarning}
       
-      <MetricsForm 
-        currentMetric={metrics}
-        isSaving={isSaving}
-        handleInputChange={handleInputChange}
-        handleSaveMetrics={handleSaveMetrics}
-      />
+      <Tabs defaultValue={activeMetricsTab} value={activeMetricsTab} onValueChange={setActiveMetricsTab} className="w-full">
+        <TabsList>
+          <TabsTrigger value="general">Métricas Generales</TabsTrigger>
+          <TabsTrigger value="pagespeed">Rendimiento Web</TabsTrigger>
+          <TabsTrigger value="keywords">Palabras Clave</TabsTrigger>
+          <TabsTrigger value="local-seo">SEO Local</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="general">
+          <MetricsForm 
+            currentMetric={metrics}
+            isSaving={isSaving}
+            handleInputChange={handleInputChange}
+            handleSaveMetrics={handleSaveMetrics}
+          />
+          
+          {metrics && (
+            <MetricsSummary 
+              currentMetric={metrics} 
+              clientId={clientId} 
+            />
+          )}
+        </TabsContent>
+        
+        <TabsContent value="pagespeed">
+          <PageSpeedSection clientId={clientId} clientName={clientName} />
+        </TabsContent>
+        
+        <TabsContent value="keywords">
+          <KeywordsSection clientId={clientId} />
+        </TabsContent>
+        
+        <TabsContent value="local-seo">
+          <LocalSeoMetrics clientId={clientId} clientName={clientName} />
+        </TabsContent>
+      </Tabs>
       
-      {metrics && (
-        <MetricsSummary 
-          currentMetric={metrics} 
-          clientId={clientId} 
-        />
-      )}
-      
-      <PageSpeedSection clientId={clientId} clientName={clientName} />
-      <KeywordsSection clientId={clientId} />
-      <LocalSeoMetrics clientId={clientId} clientName={clientName} />
-
       <div className="mt-8 border-t pt-6">
         <AIReportGenerator clientId={clientId} clientName={clientName} />
       </div>

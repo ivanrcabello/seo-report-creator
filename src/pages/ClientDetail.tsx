@@ -12,7 +12,6 @@ import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 import { ClientProposalsList } from "@/components/ClientProposalsList";
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
 import { PdfUploadTab } from "@/components/client-detail/PdfUploadTab";
-import { LocalSeoTab } from "@/components/client-detail/LocalSeoTab";
 import { toast } from "sonner";
 import { getLocalSeoReports } from "@/services/localSeoService";
 
@@ -26,10 +25,9 @@ export default function ClientDetail() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
   
-  // Local SEO states
+  // Local SEO states - kept for future references but not used in the main tabs anymore
   const [localSeoReports, setLocalSeoReports] = useState<SeoLocalReport[]>([]);
   const [currentLocalSeoReport, setCurrentLocalSeoReport] = useState<SeoLocalReport | null>(null);
-  const [isGeneratingLocalSeoReport, setIsGeneratingLocalSeoReport] = useState(false);
   
   console.log("ClientDetail component loaded with id from useParams:", clientId);
   console.log("Using clientId:", id);
@@ -116,7 +114,6 @@ export default function ClientDetail() {
           <TabsTrigger value="proposals">Propuestas</TabsTrigger>
           <TabsTrigger value="contract">Contrato</TabsTrigger>
           <TabsTrigger value="report">Informe</TabsTrigger>
-          <TabsTrigger value="local-seo">SEO Local</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
@@ -144,16 +141,6 @@ export default function ClientDetail() {
         
         <TabsContent value="report">
           <PdfUploadTab clientName={client.name} onAnalysisComplete={() => {}} />
-        </TabsContent>
-        
-        <TabsContent value="local-seo">
-          <LocalSeoTab 
-            isGeneratingReport={isGeneratingLocalSeoReport} 
-            localSeoReports={localSeoReports}
-            currentLocalSeoReport={currentLocalSeoReport}
-            setCurrentLocalSeoReport={setCurrentLocalSeoReport}
-            setActiveTab={setActiveTab}
-          />
         </TabsContent>
       </Tabs>
     </div>

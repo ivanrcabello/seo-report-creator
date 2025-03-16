@@ -56,6 +56,10 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
     console.log("PageSpeed report retrieved:", data);
     
     // Transform the data to match the PageSpeedReport interface
+    const audits = Array.isArray(data.audits) 
+      ? data.audits as PageSpeedAudit[] 
+      : [];
+    
     const report: PageSpeedReport = {
       id: data.id,
       created_at: data.created_at,
@@ -72,7 +76,7 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
         total_blocking_time: data.total_blocking_time || 0,
         cumulative_layout_shift: data.cumulative_layout_shift || 0
       },
-      audits: data.audits as PageSpeedAudit[] || []
+      audits: audits
     };
     
     return report;
@@ -100,7 +104,7 @@ export const savePageSpeedReport = async (clientId: string, report: PageSpeedRep
       time_to_interactive: report.metrics.time_to_interactive,
       total_blocking_time: report.metrics.total_blocking_time,
       cumulative_layout_shift: report.metrics.cumulative_layout_shift,
-      audits: report.audits
+      audits: JSON.stringify(report.audits)
     };
     
     // First save to client_pagespeed table

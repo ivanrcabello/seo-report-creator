@@ -109,10 +109,10 @@ Fecha: **${analysisDate}**
 
 | Categoría | Puntuación | Evaluación |
 |-----------|------------|------------|
-| Rendimiento | ${metrics.performance_score}/100 | ${getScoreIndicator(metrics.performance_score)} |
-| Accesibilidad | ${metrics.accessibility_score}/100 | ${getScoreIndicator(metrics.accessibility_score)} |
-| Mejores Prácticas | ${metrics.best_practices_score}/100 | ${getScoreIndicator(metrics.best_practices_score)} |
-| SEO | ${metrics.seo_score}/100 | ${getScoreIndicator(metrics.seo_score)} |
+| Rendimiento | ${metrics.performance_score * 100}/100 | ${getScoreIndicator(metrics.performance_score * 100)} |
+| Accesibilidad | ${metrics.accessibility_score * 100}/100 | ${getScoreIndicator(metrics.accessibility_score * 100)} |
+| Mejores Prácticas | ${metrics.best_practices_score * 100}/100 | ${getScoreIndicator(metrics.best_practices_score * 100)} |
+| SEO | ${metrics.seo_score * 100}/100 | ${getScoreIndicator(metrics.seo_score * 100)} |
 
 ## Métricas Principales de Core Web Vitals
 

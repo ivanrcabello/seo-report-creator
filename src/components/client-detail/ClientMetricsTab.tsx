@@ -1,19 +1,16 @@
-
-import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { MetricsCard } from "./metrics/MetricsCard";
+import { useState, useEffect } from "react";
+import { getClientMetrics } from "@/services/clientMetricsService";
+import { getPageSpeedReport } from "@/services/pageSpeedService";
 import { MetricsForm } from "./metrics/MetricsForm";
+import { MetricsSummary } from "./metrics/MetricsSummary";
 import { LoadingState } from "./metrics/LoadingState";
 import { ErrorAlert } from "./metrics/ErrorAlert";
-import { useClientMetrics } from "./metrics/useClientMetrics";
-import { TrendingUp, BarChart2, MousePointer, Share2, Award, Search, Gauge, FileText, MapPin } from "lucide-react";
-import { MetricsSummary } from "./metrics/MetricsSummary";
-import { KeywordsSection } from "./metrics/KeywordsSection";
 import { PageSpeedSection } from "./metrics/PageSpeedSection";
-import { PageSpeedTrends } from "./metrics/PageSpeedTrends";
-import { ClientDocuments } from "@/components/client-documents";
+import { KeywordsSection } from "./metrics/KeywordsSection";
 import { LocalSeoMetrics } from "./metrics/LocalSeoMetrics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card } from "@/components/ui/card";
 import { AIReportGenerator } from "@/components/unified-metrics/AIReportGenerator";
 
 interface ClientMetricsTabProps {
@@ -22,104 +19,41 @@ interface ClientMetricsTabProps {
 }
 
 export const ClientMetricsTab = ({ clientId, clientName }: ClientMetricsTabProps) => {
-  const { isAdmin, userRole } = useAuth();
-  const { 
-    currentMetric, 
-    isLoading, 
-    isSaving, 
-    error, 
-    handleSaveMetrics, 
-    handleInputChange,
-    metrics,
-  } = useClientMetrics(clientId);
-  
-  useEffect(() => {
-    console.log("ClientMetricsTab - Current user role:", userRole);
-    console.log("ClientMetricsTab - Is admin:", isAdmin);
-    console.log("ClientMetricsTab - Client ID:", clientId);
-    console.log("ClientMetricsTab - Client Name:", clientName);
-  }, [userRole, isAdmin, clientId, clientName]);
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { user } = useAuth();
 
-  if (isLoading) {
-    return <LoadingState />;
-  }
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        setLoading(true);
+        const metricsData = await getClientMetrics(clientId);
+        setMetrics(metricsData);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetrics();
+  }, [clientId]);
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorAlert message={error.message} />;
 
   return (
-    <div className="space-y-8">
-      {error && <ErrorAlert error={error} />}
-      
-      {currentMetric && (
-        <MetricsSummary currentMetric={currentMetric} clientId={clientId} />
-      )}
-      
-      <Tabs defaultValue="performance" className="w-full">
-        <TabsList className="grid grid-cols-4 mb-6">
-          <TabsTrigger value="performance">Métricas</TabsTrigger>
-          <TabsTrigger value="pagespeed">PageSpeed</TabsTrigger>
-          <TabsTrigger value="seolocal">SEO Local</TabsTrigger>
-          <TabsTrigger value="documents">Documentos</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="performance" className="space-y-6">
-          <MetricsCard 
-            title="Métricas de Rendimiento" 
-            icon={<TrendingUp className="h-5 w-5 text-seo-blue" />}
-          >
-            <MetricsForm
-              currentMetric={currentMetric}
-              isSaving={isSaving}
-              handleInputChange={handleInputChange}
-              handleSaveMetrics={handleSaveMetrics}
-              userRole={userRole}
-              isAdmin={isAdmin}
-            />
-          </MetricsCard>
-          
-          <KeywordsSection clientId={clientId} />
-          
-          {metrics && metrics.length > 0 && (
-            <MetricsCard 
-              title="Histórico de Métricas" 
-              icon={<BarChart2 className="h-5 w-5 text-seo-purple" />}
-            >
-              <div className="text-center text-sm text-gray-500 italic">
-                Próximamente: Gráfica de tendencias históricas de las métricas
-              </div>
-            </MetricsCard>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="pagespeed" className="space-y-6">
-          <MetricsCard 
-            title="Rendimiento Web (PageSpeed)" 
-            icon={<Gauge className="h-5 w-5 text-seo-blue" />}
-          >
-            <PageSpeedTrends clientId={clientId} />
-          </MetricsCard>
-          
-          <PageSpeedSection clientId={clientId} clientName={clientName} />
-        </TabsContent>
-        
-        <TabsContent value="seolocal" className="space-y-6">
-          <LocalSeoMetrics clientId={clientId} clientName={clientName} />
-        </TabsContent>
-        
-        <TabsContent value="documents" className="space-y-6">
-          <MetricsCard 
-            title="Documentos del Cliente" 
-            icon={<FileText className="h-5 w-5 text-seo-blue" />}
-          >
-            <ClientDocuments clientId={clientId} onGenerateReport={() => {}} />
-          </MetricsCard>
-        </TabsContent>
-      </Tabs>
-      
-      <MetricsCard 
-        title="Generar Informe Completo con IA" 
-        icon={<Award className="h-5 w-5 text-seo-green" />}
-      >
+    <div className="space-y-6">
+      <MetricsForm clientId={clientId} />
+      <MetricsSummary metrics={metrics} />
+      <PageSpeedSection clientId={clientId} />
+      <KeywordsSection clientId={clientId} />
+      <LocalSeoMetrics clientId={clientId} />
+
+      <div className="mt-8 border-t pt-6">
         <AIReportGenerator clientId={clientId} clientName={clientName} />
-      </MetricsCard>
+      </div>
     </div>
   );
 };

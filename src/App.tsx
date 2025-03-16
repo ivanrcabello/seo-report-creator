@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -8,11 +7,13 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
 import ClientDetail from './pages/ClientDetail';
+import ClientForm from './pages/ClientForm';
 import AllReports from './pages/AllReports';
 import ReportDetail from './pages/ReportDetail';
 import Packages from './pages/Packages';
 import Proposals from './pages/Proposals';
 import Invoices from './pages/Invoices';
+import InvoiceForm from './pages/InvoiceForm';
 import CompanySettings from './pages/CompanySettings';
 import TemplateSettings from './pages/TemplateSettings';
 import Contracts from './pages/Contracts';
@@ -54,13 +55,18 @@ function AppRoutes() {
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/clients" element={<Clients />} />
-        {/* Change the route parameter name from :id to :clientId to match the useParams in ClientDetail */}
+        <Route path="/clients/new" element={<ClientForm />} />
+        <Route path="/clients/edit/:clientId" element={<ClientForm />} />
         <Route path="/clients/:clientId" element={<ClientDetail />} />
         <Route path="/reports" element={<AllReports />} />
-        <Route path="/report/:reportId" element={<ReportDetail />} />
+        <Route path="/reports/:reportId" element={<ReportDetail />} />
         <Route path="/packages" element={<Packages />} />
         <Route path="/proposals" element={<Proposals />} />
+        <Route path="/proposals/new" element={<ProposalForm />} />
+        <Route path="/proposals/:proposalId" element={<ProposalDetail />} />
         <Route path="/invoices" element={<Invoices />} />
+        <Route path="/invoices/new" element={<InvoiceForm />} />
+        <Route path="/invoices/:id" element={<InvoiceDetail />} />
         <Route path="/settings" element={<CompanySettings />} />
         <Route path="/settings/templates" element={<TemplateSettings />} />
         <Route path="/contracts" element={<Contracts />} />

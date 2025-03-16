@@ -17,7 +17,9 @@ import {
   Plus, 
   Search, 
   Target,
-  Loader2
+  Loader2,
+  FileUp,
+  ExternalLink
 } from "lucide-react";
 import { 
   Dialog, 
@@ -40,6 +42,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MetricsCard } from "./MetricsCard";
+import { KeywordCSVImport } from "./KeywordCSVImport";
+import { toast } from "sonner";
 
 interface KeywordsSectionProps {
   clientId: string;
@@ -53,7 +57,8 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
     error, 
     addKeyword, 
     updateKeyword, 
-    deleteKeyword 
+    deleteKeyword,
+    importCSV
   } = useClientKeywords(clientId);
 
   const [newKeyword, setNewKeyword] = useState({
@@ -67,6 +72,7 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   const handleAddSubmit = () => {
     addKeyword(
@@ -95,6 +101,16 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
       deleteKeyword(keywordToDelete);
       setKeywordToDelete(null);
       setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleImportCSV = async (file: File) => {
+    try {
+      return await importCSV(file);
+    } catch (error) {
+      console.error("Error importing CSV:", error);
+      toast.error("Error al importar el archivo CSV");
+      return false;
     }
   };
 
@@ -139,99 +155,111 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium">Total: {keywords.length} palabras clave</h3>
           
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Añadir Palabra Clave
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Añadir Nueva Palabra Clave</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="keyword">Palabra Clave</Label>
-                  <Input 
-                    id="keyword"
-                    placeholder="Ej: servicios seo madrid" 
-                    value={newKeyword.keyword}
-                    onChange={(e) => setNewKeyword(prev => ({ ...prev, keyword: e.target.value }))}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="position">
-                    Posición Actual: {newKeyword.position || "Sin posición"}
-                  </Label>
-                  <div className="flex items-center gap-4">
-                    <Slider
-                      id="position"
-                      value={[newKeyword.position]}
-                      min={0}
-                      max={100}
-                      step={1}
-                      onValueChange={(values) => 
-                        setNewKeyword(prev => ({ ...prev, position: values[0] }))
-                      }
-                      className="flex-1"
-                    />
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={() => setIsImportDialogOpen(true)}
+            >
+              <FileUp className="h-4 w-4" />
+              Importar CSV
+            </Button>
+            
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Añadir Palabra Clave
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Añadir Nueva Palabra Clave</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="keyword">Palabra Clave</Label>
                     <Input 
-                      type="number" 
-                      className="w-20"
-                      value={newKeyword.position}
-                      onChange={(e) => 
-                        setNewKeyword(prev => ({ 
-                          ...prev, 
-                          position: e.target.value === '' ? 0 : Number(e.target.value) 
-                        }))
-                      }
+                      id="keyword"
+                      placeholder="Ej: servicios seo madrid" 
+                      value={newKeyword.keyword}
+                      onChange={(e) => setNewKeyword(prev => ({ ...prev, keyword: e.target.value }))}
                     />
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="targetPosition">
-                    Posición Objetivo: {newKeyword.targetPosition}
-                  </Label>
-                  <div className="flex items-center gap-4">
-                    <Slider
-                      id="targetPosition"
-                      value={[newKeyword.targetPosition]}
-                      min={1}
-                      max={50}
-                      step={1}
-                      onValueChange={(values) => 
-                        setNewKeyword(prev => ({ ...prev, targetPosition: values[0] }))
-                      }
-                      className="flex-1"
-                    />
-                    <Input 
-                      type="number" 
-                      className="w-20"
-                      value={newKeyword.targetPosition}
-                      onChange={(e) => 
-                        setNewKeyword(prev => ({ 
-                          ...prev, 
-                          targetPosition: Number(e.target.value) || 10 
-                        }))
-                      }
-                    />
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="position">
+                      Posición Actual: {newKeyword.position || "Sin posición"}
+                    </Label>
+                    <div className="flex items-center gap-4">
+                      <Slider
+                        id="position"
+                        value={[newKeyword.position]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onValueChange={(values) => 
+                          setNewKeyword(prev => ({ ...prev, position: values[0] }))
+                        }
+                        className="flex-1"
+                      />
+                      <Input 
+                        type="number" 
+                        className="w-20"
+                        value={newKeyword.position}
+                        onChange={(e) => 
+                          setNewKeyword(prev => ({ 
+                            ...prev, 
+                            position: e.target.value === '' ? 0 : Number(e.target.value) 
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="targetPosition">
+                      Posición Objetivo: {newKeyword.targetPosition}
+                    </Label>
+                    <div className="flex items-center gap-4">
+                      <Slider
+                        id="targetPosition"
+                        value={[newKeyword.targetPosition]}
+                        min={1}
+                        max={50}
+                        step={1}
+                        onValueChange={(values) => 
+                          setNewKeyword(prev => ({ ...prev, targetPosition: values[0] }))
+                        }
+                        className="flex-1"
+                      />
+                      <Input 
+                        type="number" 
+                        className="w-20"
+                        value={newKeyword.targetPosition}
+                        onChange={(e) => 
+                          setNewKeyword(prev => ({ 
+                            ...prev, 
+                            targetPosition: Number(e.target.value) || 10 
+                          }))
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleAddSubmit} disabled={!newKeyword.keyword.trim()}>
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                  Añadir
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleAddSubmit} disabled={!newKeyword.keyword.trim()}>
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                    Añadir
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         
         {keywords.length === 0 ? (
@@ -255,7 +283,38 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
               <TableBody>
                 {keywords.map((keyword) => (
                   <TableRow key={keyword.id}>
-                    <TableCell className="font-medium">{keyword.keyword}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center">
+                        <span className="truncate max-w-xs">{keyword.keyword}</span>
+                        {keyword.url && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <a 
+                                href={keyword.url.startsWith('http') ? keyword.url : `https://${keyword.url}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="ml-1 text-gray-400 hover:text-blue-500"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Abrir URL: {keyword.url}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                      {keyword.search_volume && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Volumen: {keyword.search_volume.toLocaleString()} 
+                          {keyword.keyword_difficulty !== undefined && (
+                            <span className="ml-2">
+                              Dificultad: {keyword.keyword_difficulty}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
                         <span className={getPositionStatusColor(keyword.position, keyword.target_position)}>
@@ -454,6 +513,14 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        
+        {/* CSV Import Dialog */}
+        <KeywordCSVImport
+          isOpen={isImportDialogOpen}
+          onClose={() => setIsImportDialogOpen(false)}
+          onImport={handleImportCSV}
+          isImporting={isSaving}
+        />
       </div>
     </MetricsCard>
   );

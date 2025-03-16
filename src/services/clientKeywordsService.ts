@@ -11,6 +11,20 @@ export interface ClientKeyword {
   target_position: number;
   date_added: string;
   last_updated: string;
+  search_volume?: number;
+  keyword_difficulty?: number;
+  cpc?: number;
+  url?: string;
+  traffic?: number;
+  traffic_percentage?: number;
+  traffic_cost?: number;
+  competition?: number;
+  backlinks_count?: number;
+  trends?: string;
+  timestamp?: string;
+  serp_features?: string;
+  keyword_intent?: string;
+  position_type?: string;
 }
 
 // Get all keywords for a client
@@ -40,21 +54,25 @@ export const addClientKeyword = async (
   clientId: string, 
   keyword: string, 
   position?: number | null,
-  targetPosition?: number
+  targetPosition?: number,
+  additionalData?: Partial<ClientKeyword>
 ): Promise<ClientKeyword | null> => {
   try {
     console.log(`Adding keyword "${keyword}" to client ${clientId}`);
     console.log("Position:", position, "Type:", typeof position);
     console.log("Target position:", targetPosition);
     
+    const keywordData = {
+      client_id: clientId,
+      keyword: keyword,
+      position: position,
+      target_position: targetPosition || 10,
+      ...additionalData
+    };
+    
     const { data, error } = await supabase
       .from('client_keywords')
-      .insert([{
-        client_id: clientId,
-        keyword: keyword,
-        position: position,
-        target_position: targetPosition || 10
-      }])
+      .insert([keywordData])
       .select()
       .single();
     
@@ -75,6 +93,55 @@ export const addClientKeyword = async (
     console.error("Exception adding client keyword:", error);
     toast.error("Error al añadir la palabra clave");
     return null;
+  }
+};
+
+// Add multiple keywords at once
+export const addClientKeywords = async (
+  clientId: string,
+  keywords: Partial<ClientKeyword>[]
+): Promise<boolean> => {
+  try {
+    console.log(`Adding ${keywords.length} keywords to client ${clientId}`);
+    
+    const keywordsData = keywords.map(kw => ({
+      client_id: clientId,
+      keyword: kw.keyword || '',
+      position: kw.position || null,
+      target_position: kw.target_position || 10,
+      search_volume: kw.search_volume,
+      keyword_difficulty: kw.keyword_difficulty,
+      cpc: kw.cpc,
+      url: kw.url,
+      traffic: kw.traffic,
+      traffic_percentage: kw.traffic_percentage,
+      traffic_cost: kw.traffic_cost,
+      competition: kw.competition,
+      backlinks_count: kw.backlinks_count,
+      trends: kw.trends,
+      timestamp: kw.timestamp,
+      serp_features: kw.serp_features,
+      keyword_intent: kw.keyword_intent,
+      position_type: kw.position_type
+    }));
+    
+    const { error } = await supabase
+      .from('client_keywords')
+      .insert(keywordsData);
+    
+    if (error) {
+      console.error("Error adding client keywords:", error);
+      toast.error("Error al importar las palabras clave");
+      return false;
+    }
+    
+    console.log("Keywords added successfully");
+    toast.success(`${keywords.length} palabras clave importadas correctamente`);
+    return true;
+  } catch (error) {
+    console.error("Exception adding client keywords:", error);
+    toast.error("Error al importar las palabras clave");
+    return false;
   }
 };
 

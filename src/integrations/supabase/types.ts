@@ -52,34 +52,76 @@ export type Database = {
       }
       client_keywords: {
         Row: {
+          backlinks_count: number | null
           client_id: string
+          competition: number | null
+          cpc: number | null
           date_added: string | null
           id: string
           keyword: string
+          keyword_difficulty: number | null
+          keyword_intent: string | null
           last_updated: string | null
           position: number | null
+          position_type: string | null
           previous_position: number | null
+          search_volume: number | null
+          serp_features: string | null
           target_position: number | null
+          timestamp: string | null
+          traffic: number | null
+          traffic_cost: number | null
+          traffic_percentage: number | null
+          trends: string | null
+          url: string | null
         }
         Insert: {
+          backlinks_count?: number | null
           client_id: string
+          competition?: number | null
+          cpc?: number | null
           date_added?: string | null
           id?: string
           keyword: string
+          keyword_difficulty?: number | null
+          keyword_intent?: string | null
           last_updated?: string | null
           position?: number | null
+          position_type?: string | null
           previous_position?: number | null
+          search_volume?: number | null
+          serp_features?: string | null
           target_position?: number | null
+          timestamp?: string | null
+          traffic?: number | null
+          traffic_cost?: number | null
+          traffic_percentage?: number | null
+          trends?: string | null
+          url?: string | null
         }
         Update: {
+          backlinks_count?: number | null
           client_id?: string
+          competition?: number | null
+          cpc?: number | null
           date_added?: string | null
           id?: string
           keyword?: string
+          keyword_difficulty?: number | null
+          keyword_intent?: string | null
           last_updated?: string | null
           position?: number | null
+          position_type?: string | null
           previous_position?: number | null
+          search_volume?: number | null
+          serp_features?: string | null
           target_position?: number | null
+          timestamp?: string | null
+          traffic?: number | null
+          traffic_cost?: number | null
+          traffic_percentage?: number | null
+          trends?: string | null
+          url?: string | null
         }
         Relationships: [
           {
@@ -750,14 +792,28 @@ export type Database = {
           client_id_param: string
         }
         Returns: {
+          backlinks_count: number | null
           client_id: string
+          competition: number | null
+          cpc: number | null
           date_added: string | null
           id: string
           keyword: string
+          keyword_difficulty: number | null
+          keyword_intent: string | null
           last_updated: string | null
           position: number | null
+          position_type: string | null
           previous_position: number | null
+          search_volume: number | null
+          serp_features: string | null
           target_position: number | null
+          timestamp: string | null
+          traffic: number | null
+          traffic_cost: number | null
+          traffic_percentage: number | null
+          trends: string | null
+          url: string | null
         }[]
       }
       get_client_metrics: {

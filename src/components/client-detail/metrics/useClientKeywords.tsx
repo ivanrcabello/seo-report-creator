@@ -5,8 +5,10 @@ import {
   getClientKeywords, 
   addClientKeyword, 
   updateClientKeyword, 
-  deleteClientKeyword 
+  deleteClientKeyword,
+  addClientKeywords
 } from "@/services/clientKeywordsService";
+import Papa from 'papaparse';
 
 export const useClientKeywords = (clientId: string) => {
   const [keywords, setKeywords] = useState<ClientKeyword[]>([]);
@@ -146,6 +148,83 @@ export const useClientKeywords = (clientId: string) => {
     }
   };
 
+  const handleImportCSV = async (file: File): Promise<boolean> => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      
+      return new Promise((resolve, reject) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: async (results) => {
+            try {
+              console.log("CSV parsing results:", results);
+              
+              if (results.errors.length > 0) {
+                console.error("CSV parsing errors:", results.errors);
+                throw new Error("Error al analizar el archivo CSV");
+              }
+              
+              const mappedKeywords = results.data.map((row: any) => {
+                return {
+                  keyword: row.Keyword || row.keyword || '',
+                  position: row.Position !== undefined ? parseInt(row.Position) || null : null,
+                  target_position: row['Target Position'] !== undefined ? parseInt(row['Target Position']) || 10 : 10,
+                  search_volume: row['Search Volume'] ? parseInt(row['Search Volume']) : undefined,
+                  keyword_difficulty: row['Keyword Difficulty'] ? parseInt(row['Keyword Difficulty']) : undefined,
+                  cpc: row['CPC'] ? parseFloat(row['CPC']) : undefined,
+                  url: row['URL'] || undefined,
+                  traffic: row['Traffic'] ? parseInt(row['Traffic']) : undefined,
+                  traffic_percentage: row['Traffic %'] ? parseFloat(row['Traffic %']) : undefined,
+                  traffic_cost: row['Traffic Cost'] ? parseFloat(row['Traffic Cost']) : undefined,
+                  competition: row['Competition'] ? parseInt(row['Competition']) : undefined,
+                  trends: row['Trends'] || undefined,
+                  serp_features: row['SERP Features'] || undefined,
+                  keyword_intent: row['Keyword Intent'] || undefined,
+                  position_type: row['Position Type'] || undefined
+                };
+              });
+              
+              console.log("Mapped keywords from CSV:", mappedKeywords);
+              
+              if (mappedKeywords.length === 0) {
+                throw new Error("No se encontraron palabras clave en el archivo CSV");
+              }
+              
+              const success = await addClientKeywords(clientId, mappedKeywords);
+              if (success) {
+                await fetchKeywords(); // Refresh the list
+                resolve(true);
+              } else {
+                reject(new Error("Error al importar las palabras clave"));
+              }
+            } catch (error) {
+              console.error("Error processing CSV data:", error);
+              reject(error);
+            }
+          },
+          error: (error) => {
+            console.error("CSV parsing error:", error);
+            reject(new Error("Error al analizar el archivo CSV"));
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Error importing CSV:", error);
+      
+      let errorMessage = "No se pudo importar el archivo CSV";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   useEffect(() => {
     if (clientId) {
       console.log("Client ID changed, fetching keywords for:", clientId);
@@ -165,6 +244,7 @@ export const useClientKeywords = (clientId: string) => {
     fetchKeywords,
     addKeyword: handleAddKeyword,
     updateKeyword: handleUpdateKeyword,
-    deleteKeyword: handleDeleteKeyword
+    deleteKeyword: handleDeleteKeyword,
+    importCSV: handleImportCSV
   };
 };

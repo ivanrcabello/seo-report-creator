@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3"
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 if (!GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY env var not found')
+  console.error('GEMINI_API_KEY env var not found')
 }
 
 const corsHeaders = {
@@ -47,11 +47,20 @@ serve(async (req) => {
     console.log("Template type:", templateType || 'seo')
     console.log("Audit data received, company name:", auditData.companyName || 'Not provided')
 
+    // Check for API key again to make debugging easier
+    if (!GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY is not configured in the environment")
+      return new Response(
+        JSON.stringify({ error: 'API key for Gemini is not configured' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
+    }
+
     // Initialize the Gemini API
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
-    // Create a template for the report based on SEO audit data
+    // Create a template for the report based on audit data
     const prompt = createSeoReportPrompt(auditData, templateType)
     console.log("Prompt created, sending to Gemini API")
 
@@ -70,6 +79,7 @@ serve(async (req) => {
       const response = result.response
       const generatedText = response.text()
       console.log("Gemini response received successfully")
+      console.log("Response length:", generatedText.length)
 
       // Return the generated content
       return new Response(

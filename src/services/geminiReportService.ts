@@ -26,6 +26,7 @@ export const generateGeminiReport = async (
     }
     
     // Call the Supabase Edge Function for Gemini
+    console.log("Calling Supabase Function: gemini-report");
     const { data, error } = await supabase.functions.invoke('gemini-report', {
       body: {
         auditData,
@@ -49,6 +50,7 @@ export const generateGeminiReport = async (
     }
     
     console.log("Report generated successfully");
+    console.log("Content length:", data.content.length);
     return data.content;
   } catch (error) {
     console.error("Error in generateGeminiReport:", error);
@@ -90,7 +92,7 @@ export const saveGeminiReport = async (
       client_id: clientId,
       title: `Informe SEO - ${clientName} - ${new Date().toLocaleDateString('es-ES')}`,
       date: new Date().toISOString(),
-      type: "seo",
+      type: "seo" as const,
       content: reportContent,
       analytics_data: {
         auditResult: serializableAuditData,
@@ -188,6 +190,7 @@ export const generateAndSaveReport = async (
     }
     
     console.log("Report content generated, saving to database");
+    console.log("Content preview:", reportContent.substring(0, 100) + "...");
     
     // Save the report
     const savedReport = await saveGeminiReport(

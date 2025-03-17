@@ -56,7 +56,7 @@ export const createInvoiceFromProposal = async (proposalId: string): Promise<Inv
       taxRate: taxRate,
       taxAmount: taxAmount,
       totalAmount: totalAmount,
-      status: "pending",
+      status: "pending" as const, // Explicitly typed as "pending"
       issueDate: now,
       dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(),
       notes: "Generado desde propuesta",

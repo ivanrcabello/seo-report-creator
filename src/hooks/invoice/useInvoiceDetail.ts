@@ -1,5 +1,5 @@
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useInvoiceData } from "./useInvoiceData";
 import { useInvoiceActions } from "./useInvoiceActions";
 import { useInvoiceFormatters } from "./useInvoiceFormatters";
@@ -7,6 +7,7 @@ import { useInvoiceState } from "./useInvoiceState";
 
 export const useInvoiceDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { isPdfGenerating, setIsPdfGenerating, invoice: stateInvoice, setInvoice } = useInvoiceState();
   const { invoice: dataInvoice, client, company, packName, loading, error } = useInvoiceData(id);
   const { formatCurrency, formatDate } = useInvoiceFormatters();
@@ -31,6 +32,7 @@ export const useInvoiceDetail = () => {
     isPdfGenerating,
     ...actions,
     formatCurrency,
-    formatDate
+    formatDate,
+    navigate
   };
 };

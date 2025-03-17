@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -12,7 +11,7 @@ import {
   markInvoiceAsPaid
 } from '@/services/invoiceService';
 
-export const useInvoiceActions = (id?: string, setInvoice?: (invoice: Invoice | null) => void) => {
+export const useInvoiceActions = (id?: string, setInvoice?: React.Dispatch<React.SetStateAction<Invoice | null>>) => {
   const navigate = useNavigate();
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [isPdfDownloading, setIsPdfDownloading] = useState(false);
@@ -49,12 +48,12 @@ export const useInvoiceActions = (id?: string, setInvoice?: (invoice: Invoice | 
         // Update the local invoice state if we have a setter
         if (setInvoice) {
           const now = new Date().toISOString();
-          setInvoice(prevInvoice => {
+          setInvoice((prevInvoice) => {
             if (!prevInvoice) return null;
             
             return {
               ...prevInvoice,
-              status: 'paid',
+              status: 'paid' as const,
               paymentDate: now,
               updatedAt: now
             };
@@ -165,6 +164,7 @@ export const useInvoiceActions = (id?: string, setInvoice?: (invoice: Invoice | 
     handleDownloadPdf,
     handleSendEmail,
     handleShareInvoice,
-    handleGeneratePdf
+    handleGeneratePdf,
+    navigate
   };
 };

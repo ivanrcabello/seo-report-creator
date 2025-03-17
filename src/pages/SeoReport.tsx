@@ -12,6 +12,7 @@ import { NoDataCard } from "@/components/seo-report/NoDataCard";
 import { getReport, deleteReport } from "@/services/reportService";
 import { ClientReport } from "@/types/client";
 import { generateGeminiReport } from "@/services/geminiReportService";
+import { downloadSeoReportPdf } from "@/services/pdf/seoReportPdfService";
 import { toast } from "sonner";
 import "../styles/print.css";
 import { Button } from "@/components/ui/button";
@@ -106,22 +107,24 @@ const SeoReport = () => {
     });
   };
 
-  const handleDownload = () => {
-    uiToast({
-      title: "Descargando informe",
-      description: "El informe se descargará en formato PDF",
-    });
-    alert("Esta funcionalidad requiere una implementación completa de generación de PDF");
+  const handleDownload = async () => {
+    try {
+      if (!id) return;
+      await downloadSeoReportPdf(id);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error("Error al descargar el PDF");
+    }
   };
 
   const handleGeminiGeneration = async () => {
-    if (!auditResult) return;
+    if (!auditResult || !report) return;
     
     setIsGeneratingAI(true);
-    toast.loading("Generando informe con Gemini...");
+    toast.loading("Generando informe con IA...");
     
     try {
-      const content = await generateGeminiReport();
+      const content = await generateGeminiReport(auditResult);
       if (content && report) {
         const updatedReport = {
           ...report,
@@ -130,11 +133,11 @@ const SeoReport = () => {
         setReport(updatedReport);
         toast.success("Informe generado con éxito");
       } else {
-        toast.error("No se pudo generar el informe con Gemini");
+        toast.error("No se pudo generar el informe con IA");
       }
     } catch (error) {
-      console.error("Error generando informe con Gemini:", error);
-      toast.error("Error al generar el informe con Gemini");
+      console.error("Error generando informe con IA:", error);
+      toast.error("Error al generar el informe con IA");
     } finally {
       setIsGeneratingAI(false);
     }
@@ -294,7 +297,7 @@ const SeoReport = () => {
             ) : (
               <>
                 <Gem className="h-5 w-5 text-white" />
-                <span>Generar con Gemini AI</span>
+                <span>Generar con IA</span>
               </>
             )}
           </Button>

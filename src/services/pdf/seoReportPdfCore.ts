@@ -7,7 +7,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CompanySettings } from '@/types/settings';
 import { getDefaultTemplate } from '@/services/templateService';
-import { DocumentTemplate } from '@/types/templates';
 
 // Función auxiliar para reemplazar variables en el HTML
 const replaceTemplateVariables = (html: string, data: any) => {
@@ -37,9 +36,6 @@ export const generateSeoReportPdf = async (
     
     // Obtener la plantilla por defecto para informes SEO
     const template = await getDefaultTemplate('seo-report');
-    if (!template) {
-      throw new Error("No se encontró una plantilla para informes SEO");
-    }
     
     // Crear un nuevo documento PDF
     const doc = new jsPDF({
@@ -47,12 +43,6 @@ export const generateSeoReportPdf = async (
       unit: 'mm',
       format: 'a4',
     });
-    
-    // Aplicar estilos CSS personalizados si existen
-    if (template.css) {
-      // Aquí iría la lógica para convertir CSS a estilos de jsPDF
-      // Por ahora usamos estilos básicos predefinidos
-    }
     
     // Variables para reemplazar en la plantilla
     const templateData = {
@@ -65,55 +55,151 @@ export const generateSeoReportPdf = async (
       totalPages: 1 // Se actualizará después
     };
     
-    // Añadir portada si existe
-    if (template.coverPageHtml) {
-      const coverHtml = replaceTemplateVariables(template.coverPageHtml, templateData);
-      // Aquí iría la lógica para convertir HTML a contenido PDF
-      // Por ahora usamos un formato básico
-      doc.setFontSize(24);
-      doc.text(report.title || "Informe SEO", 20, 40);
+    // Añadir portada
+    doc.setFontSize(24);
+    doc.text(report.title || "Informe SEO", 20, 40);
+    doc.setFontSize(14);
+    doc.text(`Cliente: ${client.name}`, 20, 60);
+    doc.text(templateData.reportDate, 20, 70);
+    
+    // Añadir contenido del informe
+    doc.addPage();
+    
+    // Si hay contenido en el informe, añadirlo
+    if (report.content) {
+      doc.setFontSize(12);
+      
+      // Definir márgenes y área de contenido
+      const margin = 20;
+      const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
+      
+      // Dividir el contenido por secciones (títulos H2)
+      const sections = report.content.split(/^#{2}\s+(.*)$/gm);
+      
+      let yPos = 30;
+      let currentPage = 2;
+      
+      // Añadir título principal
+      doc.setFontSize(18);
+      doc.text("Contenido del informe", margin, yPos);
+      yPos += 10;
+      
+      // Procesar el contenido
+      doc.setFontSize(10);
+      const contentLines = report.content
+        .replace(/^#{2,3}\s+(.*)$/gm, '--TITLE--$1')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .split('\n');
+      
+      for (const line of contentLines) {
+        if (line.trim() === '') {
+          yPos += 5;
+          continue;
+        }
+        
+        if (line.startsWith('--TITLE--')) {
+          // Si es un título, aumentar espacio antes y usar fuente más grande
+          yPos += 10;
+          doc.setFontSize(14);
+          doc.setTextColor(0, 51, 102); // Azul oscuro para títulos
+          const title = line.replace('--TITLE--', '');
+          doc.text(title, margin, yPos);
+          yPos += 8;
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0); // Volver a color negro
+        } else if (line.startsWith('- ')) {
+          // Si es un elemento de lista
+          const bulletText = line.substring(2);
+          doc.text('• ' + bulletText, margin + 5, yPos);
+          yPos += 6;
+        } else {
+          // Texto normal
+          const textLines = doc.splitTextToSize(line, pageWidth);
+          for (const textLine of textLines) {
+            doc.text(textLine, margin, yPos);
+            yPos += 6;
+            
+            // Si llegamos al final de la página, añadir una nueva
+            if (yPos > doc.internal.pageSize.getHeight() - 20) {
+              doc.addPage();
+              currentPage++;
+              yPos = 30;
+            }
+          }
+        }
+      }
+      
+      // Actualizar número total de páginas
+      templateData.totalPages = currentPage;
+    } else if (report.analyticsData?.auditResult) {
+      // Si hay datos de auditoría pero no contenido formateado
+      const auditResult = report.analyticsData.auditResult;
+      
       doc.setFontSize(14);
-      doc.text(`Cliente: ${client.name}`, 20, 60);
-      doc.text(templateData.reportDate, 20, 70);
+      doc.text("Resultados de la auditoría SEO", 20, 30);
+      
+      // Añadir puntuaciones
+      if (auditResult.scores) {
+        doc.setFontSize(12);
+        doc.text("Puntuaciones", 20, 50);
+        
+        const scoresData = [
+          ['Métrica', 'Puntuación'],
+          ...Object.entries(auditResult.scores).map(([key, value]) => [
+            key.charAt(0).toUpperCase() + key.slice(1), 
+            typeof value === 'number' ? value.toString() : 'N/A'
+          ])
+        ];
+        
+        autoTable(doc, {
+          startY: 55,
+          head: [scoresData[0]],
+          body: scoresData.slice(1),
+          theme: 'grid',
+          styles: {
+            fontSize: 10
+          }
+        });
+      }
+      
+      // Añadir problemas técnicos si existen
+      if (auditResult.technicalIssues && auditResult.technicalIssues.length > 0) {
+        const lastTableY = (doc as any).lastAutoTable.finalY + 15;
+        
+        doc.setFontSize(12);
+        doc.text("Problemas técnicos detectados", 20, lastTableY);
+        
+        const issuesData = [
+          ['Tipo', 'Descripción', 'Impacto'],
+          ...auditResult.technicalIssues.map(issue => [
+            issue.type || 'No especificado',
+            issue.description || 'No especificado',
+            issue.impact || 'Medio'
+          ])
+        ];
+        
+        autoTable(doc, {
+          startY: lastTableY + 5,
+          head: [issuesData[0]],
+          body: issuesData.slice(1),
+          theme: 'grid',
+          styles: {
+            fontSize: 10
+          }
+        });
+      }
     }
     
-    // Añadir secciones del informe
-    template.sections
-      ?.filter(section => section.isEnabled)
-      .sort((a, b) => a.order - b.order)
-      .forEach(section => {
-        doc.addPage();
-        const content = replaceTemplateVariables(section.content, templateData);
-        // Aquí iría la lógica para convertir HTML a contenido PDF
-        // Por ahora usamos un formato básico
-        doc.setFontSize(16);
-        doc.text(section.name, 20, 20);
-        doc.setFontSize(12);
-        // Simulamos el contenido HTML como texto plano
-        doc.text(content.replace(/<[^>]*>/g, ''), 20, 40);
-      });
-    
-    // Actualizar número total de páginas
-    templateData.totalPages = doc.getNumberOfPages();
-    
-    // Añadir encabezado y pie de página a todas las páginas
-    for (let i = 1; i <= templateData.totalPages; i++) {
+    // Añadir numeración de páginas en cada página
+    for (let i = 1; i <= doc.getNumberOfPages(); i++) {
       doc.setPage(i);
-      templateData.currentPage = i;
-      
-      if (template.headerHtml && i > 1) { // No añadimos encabezado en la portada
-        const headerHtml = replaceTemplateVariables(template.headerHtml, templateData);
-        // Aquí iría la lógica para convertir HTML a contenido PDF
-        doc.setFontSize(10);
-        doc.text(templateData.companyName, 20, 10);
-      }
-      
-      if (template.footerHtml) {
-        const footerHtml = replaceTemplateVariables(template.footerHtml, templateData);
-        // Aquí iría la lógica para convertir HTML a contenido PDF
-        doc.setFontSize(8);
-        doc.text(`Página ${i} de ${templateData.totalPages}`, 20, doc.internal.pageSize.height - 10);
-      }
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(
+        `Página ${i} de ${doc.getNumberOfPages()}`,
+        doc.internal.pageSize.getWidth() - 40,
+        doc.internal.pageSize.getHeight() - 10
+      );
     }
     
     // Devolver el PDF como blob

@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { ClientReport } from "@/types/client";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoreCards } from "@/components/seo-report/ScoreCards";
 import { MetricCards } from "@/components/seo-report/MetricCards";
@@ -27,6 +26,8 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
     );
   }
 
+  console.log("Report content in ShareableReportView:", report.content ? report.content.substring(0, 100) + "..." : "No content");
+
   // If the report has content, show it formatted
   if (report.content) {
     return (
@@ -42,8 +43,8 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
               <div 
                 dangerouslySetInnerHTML={{ 
                   __html: report.content
-                    .replace(/^#{2} (.*?)$/gm, '<h2 class="text-2xl font-bold text-seo-blue mt-6 mb-4">$1</h2>')
-                    .replace(/^#{3} (.*?)$/gm, '<h3 class="text-xl font-semibold text-seo-purple mt-5 mb-3">$1</h3>')
+                    .replace(/^#{2} (.*?)$/gm, '<h2 class="text-2xl font-bold text-blue-600 mt-6 mb-4">$1</h2>')
+                    .replace(/^#{3} (.*?)$/gm, '<h3 class="text-xl font-semibold text-purple-600 mt-5 mb-3">$1</h3>')
                     .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
                     .replace(/\n\n/g, '</p><p class="my-3">')
                     .replace(/\n- (.*?)(?=\n|$)/g, '</p><ul class="list-disc pl-6 my-4"><li>$1</li></ul><p>')

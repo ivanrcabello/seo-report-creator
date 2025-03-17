@@ -8,6 +8,7 @@ export * from './reportStorage';
 export * from './openAIReportGeneration';
 export * from './openAIReportService';
 
+// We only re-export specific methods from reportStorage to avoid naming conflicts
 // We don't need to export reportGeneration directly as it causes a conflict with generateGeminiReport
 // We'll export Gemini-related functionality through a dedicated path for backward compatibility
 export * from '../geminiReportService';

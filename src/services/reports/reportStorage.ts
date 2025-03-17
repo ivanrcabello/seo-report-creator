@@ -4,16 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 type ReportStatus = "draft" | "published" | "archived";
 
-const saveReport = async (reportData: any, clientId: string, reportName: string): Promise<{ success: boolean; error?: string; reportId?: string }> => {
+const saveReport = async (reportContent: string, clientId: string, reportName: string): Promise<{ success: boolean; error?: string; reportId?: string }> => {
   try {
     console.log("Starting report saving process");
-    console.log("Report data length:", reportData.length);
+    console.log("Report content length:", reportContent.length);
     console.log("Client ID:", clientId);
     console.log("Report name:", reportName);
     
-    if (!reportData || !clientId || !reportName) {
+    if (!reportContent || !clientId || !reportName) {
       console.error("Missing data for report saving:", { 
-        hasReportData: !!reportData, 
+        hasReportContent: !!reportContent, 
         hasClientId: !!clientId,
         hasReportName: !!reportName 
       });
@@ -29,7 +29,7 @@ const saveReport = async (reportData: any, clientId: string, reportName: string)
       .from('client_reports')
       .insert({
         client_id: clientId,
-        content: reportData,
+        content: reportContent,
         title: reportName,
         type: 'seo', // Default to SEO report type
         status: reportStatus,
@@ -57,5 +57,5 @@ const saveReport = async (reportData: any, clientId: string, reportName: string)
   }
 };
 
-// Export as both saveReport and saveGeminiReport for backward compatibility
-export { saveReport, saveReport as saveGeminiReport };
+// Export as saveReport (no longer as both saveReport and saveGeminiReport to avoid conflicts)
+export { saveReport };

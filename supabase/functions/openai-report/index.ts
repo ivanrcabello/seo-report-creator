@@ -47,7 +47,7 @@ serve(async (req) => {
     // Prepare the user prompt with audit data
     const combinedPrompt = customPrompt 
       ? `${customPrompt}\n\nAudit data: ${JSON.stringify(auditResult)}` 
-      : `Generate a detailed SEO report for ${auditResult.companyName} based on this audit data: ${JSON.stringify(auditResult)}`;
+      : `Genera un informe SEO detallado en español para ${auditResult.companyName} basado en estos datos de auditoría: ${JSON.stringify(auditResult)}`;
 
     console.log("Calling OpenAI API");
     
@@ -86,22 +86,22 @@ serve(async (req) => {
 
 // Helper function to get the appropriate system prompt based on template type
 function getSystemPrompt(templateType: string): string {
-  const basePrompt = "You are an expert SEO consultant preparing detailed reports for clients. ";
+  const basePrompt = "Eres un consultor SEO experto que prepara informes detallados para clientes. IMPORTANTE: Escribe todo el informe en español. ";
   
   switch (templateType) {
     case 'seo':
-      return basePrompt + "Create a comprehensive SEO report with executive summary, findings, recommendations, and implementation strategy. Focus on technical SEO issues, content quality, backlinks, keywords, and competitor analysis.";
+      return basePrompt + "Crea un informe SEO completo con resumen ejecutivo, hallazgos, recomendaciones y estrategia de implementación. Enfócate en problemas técnicos de SEO, calidad de contenido, backlinks, palabras clave y análisis de competencia.";
     
     case 'local':
-      return basePrompt + "Create a local SEO report focused on Google Business Profile optimization, local citations, review management, and local link building. Include specific recommendations for local search visibility.";
+      return basePrompt + "Crea un informe de SEO local centrado en la optimización de Google Business Profile, citas locales, gestión de reseñas y creación de enlaces locales. Incluye recomendaciones específicas para mejorar la visibilidad en búsquedas locales.";
     
     case 'technical':
-      return basePrompt + "Create a technical SEO audit focusing on site speed, mobile usability, crawlability, indexability, and technical issues. Include detailed explanations and prioritized fixes.";
+      return basePrompt + "Crea una auditoría técnica de SEO centrada en velocidad del sitio, usabilidad móvil, capacidad de rastreo, indexabilidad y problemas técnicos. Incluye explicaciones detalladas y correcciones priorizadas.";
     
     case 'performance':
-      return basePrompt + "Create a website performance report focusing on Core Web Vitals, page speed, user experience metrics, and performance optimization. Include specific recommendations for improvement.";
+      return basePrompt + "Crea un informe de rendimiento del sitio web centrado en Core Web Vitals, velocidad de página, métricas de experiencia de usuario y optimización del rendimiento. Incluye recomendaciones específicas para mejorar.";
     
     default:
-      return basePrompt + "Create a comprehensive SEO report with executive summary, findings, and actionable recommendations.";
+      return basePrompt + "Crea un informe SEO completo con resumen ejecutivo, hallazgos y recomendaciones accionables. Asegúrate de que todo el contenido esté en español.";
   }
 }

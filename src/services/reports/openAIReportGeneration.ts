@@ -39,13 +39,18 @@ export const generateOpenAIReport = async (
     const sanitizedAuditData = JSON.parse(JSON.stringify(auditData));
     console.log("Audit data sanitized successfully");
     
+    // Ensure custom prompt is in Spanish if provided
+    const finalCustomPrompt = customPrompt 
+      ? `${customPrompt} (Por favor, genera el informe en español)`
+      : undefined;
+    
     // Call Supabase Edge Function for OpenAI
     console.log("Calling Supabase Function: openai-report");
     const { data, error } = await supabase.functions.invoke('openai-report', {
       body: {
         auditResult: sanitizedAuditData,
         templateType,
-        customPrompt,
+        customPrompt: finalCustomPrompt,
         apiKey: apiKeys.openaiApiKey
       }
     });

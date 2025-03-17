@@ -39,7 +39,7 @@ Crea una propuesta detallada en formato markdown que incluya:
 La propuesta debe ser persuasiva, profesional, destacar el valor del servicio y estar en español.
 `;
 
-    const systemPrompt = "Eres un experto en marketing digital y ventas especializado en la creación de propuestas comerciales persuasivas. Tus propuestas son profesionales, orientadas a resultados y destacan el valor del servicio ofrecido.";
+    const systemPrompt = "Eres un experto en marketing digital y ventas especializado en la creación de propuestas comerciales persuasivas. Tus propuestas son profesionales, orientadas a resultados y destacan el valor del servicio ofrecido. Escribe siempre en español.";
     
     return await callOpenAI(prompt, systemPrompt);
   } catch (error) {

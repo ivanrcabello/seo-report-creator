@@ -46,7 +46,7 @@ Crea un informe detallado en formato markdown que incluya:
 El informe debe estar en español, ser muy profesional, incluir detalles técnicos pero ser comprensible para un cliente, y tener un formato markdown con secciones claras usando ## y ### para los títulos.
 `;
 
-    const systemPrompt = "Eres un consultor SEO experto especializado en la creación de informes profesionales para clientes. Tus informes son detallados, claros, técnicamente precisos y orientados a la acción.";
+    const systemPrompt = "Eres un consultor SEO experto especializado en la creación de informes profesionales para clientes. Tus informes son detallados, claros, técnicamente precisos y orientados a la acción. Todos tus informes deben estar escritos exclusivamente en español.";
     
     return await callOpenAI(prompt, systemPrompt);
   } catch (error) {

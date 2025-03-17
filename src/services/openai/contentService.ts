@@ -9,9 +9,14 @@ import { callOpenAI } from "./config";
  */
 export async function generateAIContent(prompt: string, systemPrompt: string = ""): Promise<string | null> {
   try {
-    const defaultSystemPrompt = "Eres un asistente profesional especializado en marketing digital y SEO. Proporcionas respuestas detalladas, técnicamente precisas y orientadas a la acción.";
+    const defaultSystemPrompt = "Eres un asistente profesional especializado en marketing digital y SEO. Proporcionas respuestas detalladas, técnicamente precisas y orientadas a la acción. Debes escribir siempre en español.";
     
-    return await callOpenAI(prompt, systemPrompt || defaultSystemPrompt, "gpt-4o", 0.7, 2000);
+    // Ensure prompt requests Spanish output if not already specified
+    const enhancedPrompt = prompt.includes("español") 
+      ? prompt 
+      : `${prompt} (Por favor, responde en español)`;
+    
+    return await callOpenAI(enhancedPrompt, systemPrompt || defaultSystemPrompt, "gpt-4o", 0.7, 2000);
   } catch (error) {
     console.error("Error generando contenido con OpenAI:", error);
     return null;

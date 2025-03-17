@@ -1,133 +1,81 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../cors.ts";
-import { OpenAI } from "https://deno.land/x/openai@v4.20.1/mod.ts";
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
 
-// Get the model to use from environment variables or use default
-const MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { OpenAI } from "https://esm.sh/openai@4.13.0";
+import { corsHeaders } from "../cors.ts";
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
   try {
-    console.log("OpenAI report generation function called");
-    
-    const { auditResult, templateType, customPrompt, apiKey } = await req.json();
-    
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // Parse request body
+    const requestBody = await req.json();
+    const { auditResult, templateType, customPrompt, apiKey } = requestBody;
+
+    // Validate request
     if (!auditResult) {
-      console.error("Missing audit result data");
+      console.error("No audit data provided");
       return new Response(
-        JSON.stringify({ error: "Missing audit result data" }),
+        JSON.stringify({ error: "No audit data provided" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
     if (!apiKey) {
-      console.error("Missing OpenAI API key");
+      console.error("No API key provided");
       return new Response(
-        JSON.stringify({ error: "Missing OpenAI API key" }),
+        JSON.stringify({ error: "No API key provided" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
-    // Set up OpenAI client with the provided API key
-    const openai = new OpenAI({
-      apiKey: apiKey
-    });
-    
-    console.log("Generating OpenAI report with model:", MODEL);
-    console.log("Template type:", templateType);
+    console.log("Processing request for template type:", templateType);
     console.log("Company name:", auditResult.companyName);
-    console.log("Has custom prompt:", !!customPrompt);
+
+    // Initialize OpenAI with the provided API key
+    const openai = new OpenAI({ apiKey });
     
-    // Create base system prompt based on template type
-    let systemPrompt = "";
+    // Get the correct system prompt based on template type
+    const systemPrompt = getSystemPrompt(templateType);
     
-    switch (templateType) {
-      case "seo":
-        systemPrompt = `Eres un consultor SEO experto que está generando un informe detallado para un cliente. 
-        Utiliza el análisis proporcionado para crear un informe completo de SEO para la empresa "${auditResult.companyName}".
-        El informe debe estar bien estructurado, profesional y utilizar los datos proporcionados para ofrecer información valiosa y recomendaciones prácticas.`;
-        break;
-      case "local":
-        systemPrompt = `Eres un consultor de SEO Local experto que está generando un informe detallado para un negocio local. 
-        Utiliza el análisis proporcionado para crear un informe completo de SEO Local para "${auditResult.companyName}".
-        Enfócate en presencia en Google Maps, reseñas de Google Business, optimización de la ficha de Google Business, 
-        y estrategias para mejorar la visibilidad local en los resultados de búsqueda.`;
-        break;
-      case "technical":
-        systemPrompt = `Eres un consultor de SEO Técnico experto que está generando un informe detallado para un cliente. 
-        Utiliza el análisis proporcionado para crear un informe completo de SEO Técnico para la empresa "${auditResult.companyName}".
-        Enfócate en problemas técnicos del sitio web, velocidad de carga, seguridad, estructura, errores de rastreo, 
-        redirecciones, implementación de schema markup, y otras optimizaciones técnicas.`;
-        break;
-      case "performance":
-        systemPrompt = `Eres un consultor de Rendimiento Web experto que está generando un informe detallado para un cliente. 
-        Utiliza el análisis proporcionado para crear un informe completo de rendimiento web para la empresa "${auditResult.companyName}".
-        Enfócate en métricas de Core Web Vitals, velocidad de carga, optimización de imágenes, minificación de recursos, 
-        y otras estrategias para mejorar el rendimiento del sitio web.`;
-        break;
-      default:
-        systemPrompt = `Eres un consultor SEO experto que está generando un informe detallado para un cliente. 
-        Utiliza el análisis proporcionado para crear un informe completo para la empresa "${auditResult.companyName}".`;
-    }
+    // Prepare the user prompt with audit data
+    const combinedPrompt = customPrompt 
+      ? `${customPrompt}\n\nAudit data: ${JSON.stringify(auditResult)}` 
+      : `Generate a detailed SEO report for ${auditResult.companyName} based on this audit data: ${JSON.stringify(auditResult)}`;
+
+    console.log("Calling OpenAI API");
     
-    // Append custom prompt if provided
-    if (customPrompt && customPrompt.trim().length > 0) {
-      systemPrompt += `\n\nInstrucciones adicionales: ${customPrompt}`;
-    }
-    
-    // Add report structure guidelines
-    systemPrompt += `\n\nEstructura tu informe con los siguientes apartados:
-      1. Resumen Ejecutivo
-      2. Análisis de la Situación Actual
-      3. Puntos Fuertes y Oportunidades
-      4. Problemas Detectados
-      5. Recomendaciones Específicas
-      6. Plan de Acción Propuesto
-      
-    Utiliza formato Markdown para estructurar el informe con encabezados, listas y énfasis. No incluyas ningún código HTML.`;
-    
-    console.log("System prompt prepared. Calling OpenAI API...");
-    
-    // Call OpenAI API to generate report
-    const completion = await openai.chat.completions.create({
-      model: MODEL,
+    // Call OpenAI API
+    const response = await openai.chat.completions.create({
+      model: Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: `Genera un informe profesional basado en estos datos de análisis: ${JSON.stringify(auditResult)}`,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: combinedPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 4000
     });
+
+    // Extract and return content
+    const generatedContent = response.choices[0].message.content;
     
-    const content = completion.choices[0]?.message?.content || "";
-    
-    console.log("OpenAI response received successfully");
-    console.log("Content length:", content.length);
-    console.log("Content preview:", content.substring(0, 100) + "...");
+    console.log("Report generated successfully, length:", generatedContent.length);
     
     return new Response(
-      JSON.stringify({ content }),
+      JSON.stringify({ content: generatedContent }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in OpenAI report generation:", error);
+    console.error("Error processing request:", error);
     
     return new Response(
-      JSON.stringify({ 
-        error: `Error generating report: ${error.message || "Unknown error"}`,
-        details: error.toString()
-      }),
+      JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500 
@@ -135,3 +83,25 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to get the appropriate system prompt based on template type
+function getSystemPrompt(templateType: string): string {
+  const basePrompt = "You are an expert SEO consultant preparing detailed reports for clients. ";
+  
+  switch (templateType) {
+    case 'seo':
+      return basePrompt + "Create a comprehensive SEO report with executive summary, findings, recommendations, and implementation strategy. Focus on technical SEO issues, content quality, backlinks, keywords, and competitor analysis.";
+    
+    case 'local':
+      return basePrompt + "Create a local SEO report focused on Google Business Profile optimization, local citations, review management, and local link building. Include specific recommendations for local search visibility.";
+    
+    case 'technical':
+      return basePrompt + "Create a technical SEO audit focusing on site speed, mobile usability, crawlability, indexability, and technical issues. Include detailed explanations and prioritized fixes.";
+    
+    case 'performance':
+      return basePrompt + "Create a website performance report focusing on Core Web Vitals, page speed, user experience metrics, and performance optimization. Include specific recommendations for improvement.";
+    
+    default:
+      return basePrompt + "Create a comprehensive SEO report with executive summary, findings, and actionable recommendations.";
+  }
+}

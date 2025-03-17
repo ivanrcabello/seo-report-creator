@@ -1,17 +1,17 @@
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { getApiKeys, updateApiKeys, ApiKeys } from "@/services/settingsService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { ReloadIcon, SaveIcon } from "lucide-react";
 import { toast } from "sonner";
-import { Key, Save, RefreshCcw, EyeOff, Eye } from "lucide-react";
-import { getApiKeys, updateApiKeys } from "@/services/settingsService";
 
-// Schema de validación para las claves API
+// Esquema de validación con Zod
 const apiKeysSchema = z.object({
   openaiApiKey: z.string().min(1, "La clave API de OpenAI es requerida"),
 });
@@ -19,9 +19,10 @@ const apiKeysSchema = z.object({
 type FormValues = z.infer<typeof apiKeysSchema>;
 
 const ApiKeysSettingsForm = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
+  // Configuración del formulario con React Hook Form y Zod
   const form = useForm<FormValues>({
     resolver: zodResolver(apiKeysSchema),
     defaultValues: {
@@ -29,14 +30,15 @@ const ApiKeysSettingsForm = () => {
     },
   });
 
-  // Cargar las claves API actuales
   useEffect(() => {
     const loadApiKeys = async () => {
       setIsLoading(true);
       try {
-        const keys = await getApiKeys();
-        if (keys && keys.openaiApiKey) {
-          form.setValue("openaiApiKey", keys.openaiApiKey);
+        const apiKeys = await getApiKeys();
+        if (apiKeys) {
+          form.reset({
+            openaiApiKey: apiKeys.openaiApiKey || "",
+          });
         }
       } catch (error) {
         console.error("Error loading API keys:", error);
@@ -49,29 +51,34 @@ const ApiKeysSettingsForm = () => {
     loadApiKeys();
   }, [form]);
 
-  // Envío del formulario
-  const onSubmit = async (data: FormValues) => {
-    setIsLoading(true);
+  const onSubmit = async (values: FormValues) => {
+    setIsSaving(true);
     try {
-      await updateApiKeys(data);
-      toast.success("Claves API guardadas correctamente");
+      const apiKeys: ApiKeys = {
+        openaiApiKey: values.openaiApiKey,
+      };
+
+      const result = await updateApiKeys(apiKeys);
+      
+      if (result) {
+        toast.success("Claves API actualizadas correctamente");
+      } else {
+        throw new Error("No se pudieron actualizar las claves API");
+      }
     } catch (error) {
       console.error("Error saving API keys:", error);
       toast.error("Error al guardar las claves API");
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Key className="h-5 w-5 text-blue-600" />
-          Configuración de Claves API
-        </CardTitle>
+        <CardTitle>Claves API</CardTitle>
         <CardDescription>
-          Configura las claves API necesarias para conectar con servicios externos
+          Configura las claves de API necesarias para el funcionamiento de la aplicación.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -83,57 +90,34 @@ const ApiKeysSettingsForm = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Clave API de OpenAI</FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input
-                        placeholder="sk-..."
-                        {...field}
-                        type={showApiKey ? "text" : "password"}
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-2 top-1/2 -translate-y-1/2"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                    >
-                      {showApiKey ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                  <FormDescription>
-                    Esta clave se utiliza para generar informes con OpenAI. Consíguela en{" "}
-                    <a
-                      href="https://platform.openai.com/api-keys"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      platform.openai.com/api-keys
-                    </a>
-                  </FormDescription>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="sk-..."
+                      {...field}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button type="submit" className="gap-2" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Guardar Claves API
-                </>
-              )}
-            </Button>
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isLoading || isSaving}>
+                {isSaving ? (
+                  <>
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <SaveIcon className="mr-2 h-4 w-4" />
+                    Guardar
+                  </>
+                )}
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>

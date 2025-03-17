@@ -46,7 +46,7 @@ export const ContractDetail = ({ contract, client }: ContractDetailProps) => {
   const handleSignContract = async () => {
     setIsLoading(true);
     try {
-      await signContract(contract.id);
+      await signContract(contract.id, 'professional');
       toast.success("Contrato firmado correctamente");
       // Refresh page to see updates
       navigate(0);

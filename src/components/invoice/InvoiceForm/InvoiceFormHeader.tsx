@@ -2,7 +2,8 @@
 import { FileSpreadsheet, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardTitle, CardDescription } from "@/components/ui/card";
-import { Invoice, Client } from "@/types/client";
+import { Invoice } from "@/types/invoice";
+import { Client } from "@/types/client";
 
 interface InvoiceFormHeaderProps {
   isNewInvoice: boolean;

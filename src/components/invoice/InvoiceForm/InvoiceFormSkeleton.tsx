@@ -2,7 +2,7 @@
 import { FileSpreadsheet, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { Invoice } from "@/types/client";
+import { Invoice } from "@/types/invoice";
 import { useNavigate } from "react-router-dom";
 
 interface InvoiceFormSkeletonProps {

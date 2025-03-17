@@ -1,5 +1,5 @@
 
-import { Invoice } from "@/types/invoice";
+import { Invoice } from "@/types/invoiceTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapInvoiceFromDB } from "./invoice/invoiceMappers";

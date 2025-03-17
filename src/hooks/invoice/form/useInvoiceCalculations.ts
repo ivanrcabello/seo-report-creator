@@ -1,6 +1,6 @@
 
 import { UseFormReturn } from "react-hook-form";
-import { InvoiceFormValues } from "@/components/invoice/InvoiceForm/invoiceSchema";
+import { InvoiceFormValues } from "@/types/invoiceTypes";
 
 export const useInvoiceCalculations = (form: UseFormReturn<InvoiceFormValues>) => {
   const baseAmount = form.watch("baseAmount");

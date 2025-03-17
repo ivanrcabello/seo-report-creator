@@ -2,9 +2,10 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
+import { InvoiceFormValues } from "@/types/invoiceTypes";
 
 interface InvoiceStatusProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<InvoiceFormValues>;
 }
 
 export const InvoiceStatus = ({ form }: InvoiceStatusProps) => {

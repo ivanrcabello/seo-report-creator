@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -11,9 +10,8 @@ import { AmountFields } from "../AmountFields";
 import { AmountSummary } from "../AmountSummary";
 import { NotesField } from "../NotesField";
 import { UseFormReturn } from "react-hook-form";
-import { Invoice } from "@/types/invoice";
+import { Invoice, InvoiceFormValues } from "@/types/invoiceTypes";
 import { Client } from "@/types/client";
-import { InvoiceFormValues } from "./invoiceSchema";
 
 interface FormContentProps {
   form: UseFormReturn<InvoiceFormValues>;

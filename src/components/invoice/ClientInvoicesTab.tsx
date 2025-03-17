@@ -48,6 +48,17 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
     navigate(`/invoices/new?clientId=${clientId}`);
   };
 
+  // Custom back navigation for client view
+  const handleViewAllInvoices = () => {
+    if (!isAdmin && user?.id) {
+      // If client, navigate to their dashboard with invoices tab selected
+      navigate(`/clients/${user.id}?tab=invoices`);
+    } else {
+      // If admin, use the standard path
+      navigate(`/clients/${clientId}?tab=invoices`);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -63,6 +74,7 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
       clientName={clientName}
       clientId={clientId} 
       onAddInvoice={isAdmin ? handleAddInvoice : undefined}
+      onViewAll={handleViewAllInvoices}
     />
   );
 };

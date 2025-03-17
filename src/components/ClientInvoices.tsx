@@ -21,7 +21,8 @@ import {
   Euro,
   Check,
   Clock,
-  XCircle
+  XCircle,
+  ArrowLeft
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -29,11 +30,12 @@ import { es } from "date-fns/locale";
 interface ClientInvoicesProps {
   invoices: Invoice[];
   clientName?: string;
-  clientId: string; // Make clientId required
+  clientId: string;
   onAddInvoice?: () => void;
+  onViewAll?: () => void;
 }
 
-export const ClientInvoices = ({ invoices, clientName, clientId, onAddInvoice }: ClientInvoicesProps) => {
+export const ClientInvoices = ({ invoices, clientName, clientId, onAddInvoice, onViewAll }: ClientInvoicesProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(amount);
   };
@@ -76,10 +78,18 @@ export const ClientInvoices = ({ invoices, clientName, clientId, onAddInvoice }:
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-xl font-semibold flex items-center gap-2">
-          <FileSpreadsheet className="h-5 w-5 text-blue-600" />
-          {clientName ? `Facturas de ${clientName}` : 'Facturas'}
-        </CardTitle>
+        <div className="flex items-center gap-4">
+          {onViewAll && (
+            <Button variant="outline" size="sm" onClick={onViewAll} className="gap-1">
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
+          )}
+          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+            {clientName ? `Facturas de ${clientName}` : 'Facturas'}
+          </CardTitle>
+        </div>
         {onAddInvoice && (
           <Button onClick={onAddInvoice} className="gap-1">
             <Plus className="h-4 w-4" />

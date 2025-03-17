@@ -26,12 +26,20 @@ export const generateOpenAIReport = async (
     const sanitizedAuditData = JSON.parse(JSON.stringify(auditData));
     console.log("Audit data sanitized successfully");
     
+    // Add custom prompt if provided
+    const customPrompt = sanitizedAuditData.customPrompt;
+    if (customPrompt) {
+      console.log("Using custom prompt:", customPrompt);
+      delete sanitizedAuditData.customPrompt; // Remove it from the data to avoid confusing the API
+    }
+    
     // Call Supabase Edge Function for OpenAI
     console.log("Calling Supabase Function: openai-report");
     const { data, error } = await supabase.functions.invoke('openai-report', {
       body: {
         auditResult: sanitizedAuditData,
-        templateType
+        templateType,
+        customPrompt
       }
     });
     

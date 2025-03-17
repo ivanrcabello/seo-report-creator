@@ -1,180 +1,148 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { OpenAI } from "https://deno.land/x/openai@v4.16.1/mod.ts";
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+import { OpenAI } from "https://deno.land/x/openai@v4.15.3/mod.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  if (!openAIApiKey) {
-    console.error('OPENAI_API_KEY env var not found');
-    return new Response(
-      JSON.stringify({ error: 'OpenAI API key is not configured' }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
+  // Handle CORS preflight request
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: corsHeaders,
+      status: 204,
+    });
   }
 
   try {
-    let body;
-    try {
-      body = await req.json();
-      console.log("Request body parsed successfully");
-    } catch (e) {
-      console.error("Error parsing request body:", e);
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiApiKey) {
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request body' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    const { auditResult, templateType = 'seo' } = body;
-
-    if (!auditResult) {
-      console.error("Missing audit result in request");
-      return new Response(
-        JSON.stringify({ error: 'Audit result is required' }),
-        { 
-          status: 400, 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json' 
-          } 
+        JSON.stringify({
+          error: "OpenAI API key is not configured in the environment",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
         }
       );
     }
 
-    console.log("Datos de auditoría recibidos:", JSON.stringify(auditResult).slice(0, 200) + "...");
-    console.log("Template type:", templateType);
-    console.log("Company name:", auditResult.companyName);
-
-    // Preparar el prompt según el tipo de informe
-    let systemPrompt = "";
+    // Parse request body
+    const { auditResult, templateType, customPrompt } = await req.json();
     
-    if (templateType === 'seo') {
-      systemPrompt = `Eres un consultor SEO experto especializado en crear informes profesionales para clientes. 
-Genera un informe SEO detallado en español basado en los datos proporcionados.
-El informe debe tener un formato profesional y estar estructurado en estas secciones:
+    console.log("Processing OpenAI report request");
+    console.log("Template type:", templateType);
+    console.log("Custom prompt provided:", !!customPrompt);
 
-1. Introducción personalizada para ${auditResult.companyName || 'el cliente'}
-2. Análisis de la situación actual con métricas
-3. Análisis de palabras clave
-4. SEO técnico
-5. Recomendaciones prioritarias
-6. Estrategia de contenidos
-7. Plan de acción y timeline
-8. Conclusiones
-
-Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y profesional.`;
-    } else if (templateType === 'local') {
-      systemPrompt = `Eres un consultor de SEO Local experto especializado en crear informes profesionales para clientes.
-Genera un informe de SEO Local detallado en español basado en los datos proporcionados para ${auditResult.companyName || 'el cliente'}.
-El informe debe tener un formato profesional y estar estructurado en estas secciones:
-
-1. Introducción personalizada
-2. Análisis de Google My Business
-3. Análisis de reseñas y reputación
-4. Análisis de directorios locales
-5. Análisis de competidores locales
-6. Recomendaciones prioritarias
-7. Plan de acción y timeline
-8. Conclusiones
-
-Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y profesional.`;
-    } else if (templateType === 'technical') {
-      systemPrompt = `Eres un consultor SEO técnico experto especializado en crear informes profesionales para clientes.
-Genera un informe de SEO técnico detallado en español basado en los datos proporcionados para ${auditResult.companyName || 'el cliente'}.
-El informe debe tener un formato profesional y estar estructurado en estas secciones:
-
-1. Introducción personalizada
-2. Análisis de rendimiento técnico
-3. Análisis de errores y problemas críticos
-4. Análisis de arquitectura web
-5. Análisis de seguridad
-6. Recomendaciones prioritarias
-7. Plan de acción y timeline
-8. Conclusiones
-
-Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y profesional.`;
-    } else if (templateType === 'performance') {
-      systemPrompt = `Eres un consultor de rendimiento web experto especializado en crear informes profesionales para clientes.
-Genera un informe de rendimiento web detallado en español basado en los datos proporcionados para ${auditResult.companyName || 'el cliente'}.
-El informe debe tener un formato profesional y estar estructurado en estas secciones:
-
-1. Introducción personalizada
-2. Análisis de Core Web Vitals
-3. Análisis de velocidad de carga
-4. Análisis de elementos que bloquean el renderizado
-5. Optimización de recursos
-6. Recomendaciones prioritarias
-7. Plan de acción y timeline
-8. Conclusiones
-
-Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y profesional.`;
+    if (!auditResult || !auditResult.companyName) {
+      throw new Error("Invalid request body: auditResult or companyName missing");
     }
 
-    console.log("Enviando solicitud a OpenAI API usando la biblioteca oficial");
-    
-    // Inicializamos el cliente de OpenAI
+    // Initialize OpenAI client
     const openai = new OpenAI({
-      apiKey: openAIApiKey,
+      apiKey: openaiApiKey,
     });
+    
+    // Create a base system prompt based on template type
+    let systemPrompt = `You are an expert SEO consultant. Your task is to create a comprehensive SEO report for ${auditResult.companyName}. `;
+    
+    switch (templateType) {
+      case 'seo':
+        systemPrompt += "Focus on general SEO aspects including content quality, keyword optimization, and meta data.";
+        break;
+      case 'local':
+        systemPrompt += "Focus specifically on local SEO factors including Google Business Profile, local citations, and local keywords.";
+        break;
+      case 'technical':
+        systemPrompt += "Focus on technical SEO aspects including site speed, mobile-friendliness, crawlability, and indexation issues.";
+        break;
+      case 'performance':
+        systemPrompt += "Focus on website performance including Core Web Vitals, page speed, and user experience metrics.";
+        break;
+      default:
+        systemPrompt += "Provide a general SEO analysis covering all key aspects of search engine optimization.";
+    }
+    
+    // Add detailed instructions for report formatting
+    systemPrompt += `
+    Structure your report as follows:
+    1. Executive Summary - Provide a brief overview of key findings
+    2. Current Performance Analysis - Analyze the current state based on provided metrics
+    3. Strengths and Weaknesses - Identify what's working well and what needs improvement
+    4. Recommendations - Provide specific, actionable recommendations
+    5. Conclusion - Summarize the main points and expected outcomes from implementing recommendations
+    
+    Format your report with markdown. Use headers, bullet points, and bold text for readability.
+    If you're given keyword data, analyze the performance and provide insights on how to improve rankings.
+    Be specific and data-driven in your analysis and recommendations.
+    `;
+    
+    // Add custom prompt if provided
+    if (customPrompt) {
+      systemPrompt += `\n\nAdditional instructions: ${customPrompt}`;
+    }
 
-    // Realizamos la llamada utilizando la biblioteca oficial
-    const chatCompletion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',  // Modelo más rápido y económico
+    console.log("Starting OpenAI chat completion");
+    
+    // Select model from config.toml
+    const model = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
+    console.log(`Using OpenAI model: ${model}`);
+    
+    // Generate the report using OpenAI
+    const completion = await openai.chat.completions.create({
+      model: model,
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: "system", content: systemPrompt },
         { 
-          role: 'user', 
-          content: `Genera un informe profesional y detallado basado en estos datos de auditoría para ${auditResult.companyName || 'el cliente'}: ${JSON.stringify(auditResult, null, 2)}` 
+          role: "user", 
+          content: `Create a detailed SEO report for ${auditResult.companyName} based on this data: ${JSON.stringify(auditResult, null, 2)}` 
         }
       ],
       temperature: 0.7,
-      max_tokens: 4000,  // Permitimos más tokens para un informe más detallado
+      max_tokens: 4000,
     });
 
-    const content = chatCompletion.choices[0].message.content;
-    console.log("Contenido generado exitosamente, longitud:", content?.length);
-    console.log("Primeros 100 caracteres:", content?.substring(0, 100));
+    console.log("OpenAI response received");
+    
+    if (!completion.choices || completion.choices.length === 0 || !completion.choices[0].message) {
+      throw new Error("No content received from OpenAI");
+    }
+    
+    const content = completion.choices[0].message.content;
+    
+    if (!content) {
+      throw new Error("Empty content received from OpenAI");
+    }
+    
+    console.log("Report generated successfully");
+    console.log("Content length:", content.length);
+    console.log("Content preview:", content.substring(0, 100) + "...");
 
     return new Response(
-      JSON.stringify({ content }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+      JSON.stringify({
+        content: content,
+        model: model,
+        usage: completion.usage
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
       }
     );
   } catch (error) {
-    console.error('Error en la función openai-report:', error);
+    console.error("Error processing request:", error);
+    
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Error desconocido',
-        details: error instanceof Error && error.stack ? error.stack : 'No stack available' 
+      JSON.stringify({
+        error: error.message || "An unknown error occurred",
+        stack: error.stack || "No stack trace available"
       }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
       }
     );
   }

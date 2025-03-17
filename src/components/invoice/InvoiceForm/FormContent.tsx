@@ -13,9 +13,10 @@ import { NotesField } from "../NotesField";
 import { UseFormReturn } from "react-hook-form";
 import { Invoice } from "@/types/invoice";
 import { Client } from "@/types/client";
+import { InvoiceFormValues } from "./invoiceSchema";
 
 interface FormContentProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<InvoiceFormValues>;
   invoice: Invoice | null;
   client: Client | null;
   isNewInvoice: boolean;
@@ -27,7 +28,7 @@ interface FormContentProps {
   taxAmount: number;
   totalAmount: number;
   handleClientChange: (clientId: string) => void;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: InvoiceFormValues) => Promise<void>;
 }
 
 export const FormContent = ({

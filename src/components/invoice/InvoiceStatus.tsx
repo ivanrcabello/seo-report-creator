@@ -25,6 +25,7 @@ export const InvoiceStatus = ({ form }: InvoiceStatusProps) => {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
+              <SelectItem value="draft">Borrador</SelectItem>
               <SelectItem value="pending">Pendiente</SelectItem>
               <SelectItem value="paid">Pagada</SelectItem>
               <SelectItem value="cancelled">Cancelada</SelectItem>

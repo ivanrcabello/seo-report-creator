@@ -3,6 +3,7 @@ import { Invoice } from "@/types/invoice";
 import { supabase } from "@/integrations/supabase/client";
 import { mapInvoiceFromDB, mapInvoiceToDB } from "../invoiceMappers";
 import { generateInvoiceNumber } from "../invoiceNumberGenerator";
+import { v4 as uuidv4 } from 'uuid';
 
 // Create a new invoice
 export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | "updatedAt">): Promise<Invoice | undefined> => {
@@ -18,6 +19,7 @@ export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | 
     // Create a new invoice object with processed data
     const newInvoiceData = {
       ...invoice,
+      id: uuidv4(), // Generate a UUID for the invoice
       invoiceNumber,
       createdAt: now,
       updatedAt: now

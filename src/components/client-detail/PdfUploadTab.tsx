@@ -1,5 +1,5 @@
 
-import { ClientDocuments } from "../client-documents/ClientDocumentsView";
+import { ClientDocuments } from "@/components/client-documents";
 
 interface PdfUploadTabProps {
   clientId: string;

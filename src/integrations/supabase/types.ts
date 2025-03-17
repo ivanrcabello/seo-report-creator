@@ -866,6 +866,8 @@ export type Database = {
           monthly_fee: number
           pdf_url: string | null
           phase1_fee: number | null
+          share_token: string | null
+          shared_at: string | null
           signed_at: string | null
           signed_by_client: boolean | null
           signed_by_professional: boolean | null
@@ -883,6 +885,8 @@ export type Database = {
           monthly_fee: number
           pdf_url?: string | null
           phase1_fee?: number | null
+          share_token?: string | null
+          shared_at?: string | null
           signed_at?: string | null
           signed_by_client?: boolean | null
           signed_by_professional?: boolean | null
@@ -900,6 +904,8 @@ export type Database = {
           monthly_fee?: number
           pdf_url?: string | null
           phase1_fee?: number | null
+          share_token?: string | null
+          shared_at?: string | null
           signed_at?: string | null
           signed_by_client?: boolean | null
           signed_by_professional?: boolean | null

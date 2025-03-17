@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePickerWithButton } from "@/components/ui/date-picker";
+import { Button } from "@/components/ui/button"; // Fixed: Added Button import
 
 interface GeneralInfoTabProps {
   form: UseFormReturn<ContractFormValues>;
@@ -198,53 +199,3 @@ export const GeneralInfoTab = ({ form, clients, clientId }: GeneralInfoTabProps)
     </div>
   );
 };
-
-// Add the DatePickerWithButton component to improve the UX as shown in the reference image
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-
-export function DatePickerWithButton({
-  className,
-  mode = "single",
-  selected,
-  onSelect,
-  initialFocus = false,
-}: {
-  className?: string;
-  mode?: "single" | "range" | "multiple";
-  selected?: Date | Date[] | { from: Date; to: Date };
-  onSelect?: (date: Date | Date[] | { from: Date; to: Date }) => void;
-  initialFocus?: boolean;
-}) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={"outline"}
-          className={cn(
-            "w-full justify-start text-left font-normal",
-            !selected && "text-muted-foreground",
-            className
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {selected && mode === "single"
-            ? format(selected as Date, "d MMMM yyyy")
-            : <span>Selecciona una fecha</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={selected as Date}
-          onSelect={onSelect as (date: Date) => void}
-          initialFocus={initialFocus}
-          className="pointer-events-auto"
-        />
-      </PopoverContent>
-    </Popover>
-  );
-}

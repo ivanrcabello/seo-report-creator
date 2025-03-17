@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, FileText, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ClientProposalsProps {
   clientId: string;
@@ -18,12 +19,17 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({ clientId }) =>
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [sharingInProgress, setSharingInProgress] = useState<string | null>(null);
+  const { isAdmin, user } = useAuth();
 
   useEffect(() => {
     const fetchProposals = async () => {
       setLoading(true);
       try {
-        const data = await getClientProposals(clientId);
+        // Only request the client's proposals
+        // For admins and viewing a specific client page, we use the clientId from props
+        // For clients looking at their own data, we ensure they only see their own
+        const effectiveClientId = !isAdmin && user?.id ? user.id : clientId;
+        const data = await getClientProposals(effectiveClientId);
         setProposals(data);
       } catch (error) {
         console.error("Error fetching client proposals:", error);
@@ -35,7 +41,7 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({ clientId }) =>
     if (clientId) {
       fetchProposals();
     }
-  }, [clientId]);
+  }, [clientId, isAdmin, user]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
@@ -70,12 +76,14 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({ clientId }) =>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">Propuestas</CardTitle>
-          <Link to={`/proposals/new/${clientId}`}>
-            <Button size="sm" variant="outline" className="flex items-center gap-1">
-              <PlusCircle className="h-4 w-4" />
-              Nueva Propuesta
-            </Button>
-          </Link>
+          {isAdmin && (
+            <Link to={`/proposals/new/${clientId}`}>
+              <Button size="sm" variant="outline" className="flex items-center gap-1">
+                <PlusCircle className="h-4 w-4" />
+                Nueva Propuesta
+              </Button>
+            </Link>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -85,7 +93,9 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({ clientId }) =>
           <div className="py-6 text-center text-gray-500">
             <FileText className="mx-auto h-10 w-10 text-gray-400 mb-2" />
             <p>No hay propuestas para este cliente.</p>
-            <p className="mt-1 text-sm">Crea una nueva propuesta para comenzar.</p>
+            {isAdmin && (
+              <p className="mt-1 text-sm">Crea una nueva propuesta para comenzar.</p>
+            )}
           </div>
         ) : (
           <div className="space-y-4">

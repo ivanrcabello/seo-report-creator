@@ -11,6 +11,7 @@ import { FileText, Plus, Calendar, Pencil, FileSpreadsheet, Download } from "luc
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ClientContractsTabProps {
   clientId: string;
@@ -21,13 +22,18 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
   const [contracts, setContracts] = useState<SeoContract[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { isAdmin, user } = useAuth();
 
   useEffect(() => {
     const fetchContracts = async () => {
       setIsLoading(true);
       try {
         console.log("Fetching contracts for client ID:", clientId);
-        const contractsData = await getClientContracts(clientId);
+        
+        // For non-admin users, ensure they only see their own contracts
+        const effectiveClientId = !isAdmin && user?.id ? user.id : clientId;
+        const contractsData = await getClientContracts(effectiveClientId);
+        
         console.log("Contracts data received:", contractsData);
         setContracts(contractsData || []);
       } catch (error) {
@@ -44,7 +50,7 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
       console.error("No clientId provided to ClientContractsTab");
       setIsLoading(false);
     }
-  }, [clientId]);
+  }, [clientId, isAdmin, user]);
 
   const handleCreateContract = () => {
     if (!clientId) {
@@ -116,19 +122,23 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
           <FileText className="h-5 w-5 text-blue-600" />
           {clientName ? `Contratos de ${clientName}` : "Contratos"}
         </CardTitle>
-        <Button onClick={handleCreateContract} className="gap-1">
-          <Plus className="h-4 w-4" />
-          Nuevo Contrato
-        </Button>
+        {isAdmin && (
+          <Button onClick={handleCreateContract} className="gap-1">
+            <Plus className="h-4 w-4" />
+            Nuevo Contrato
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {contracts.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-gray-500 mb-4">No hay contratos disponibles</p>
-            <Button onClick={handleCreateContract} variant="outline" className="gap-1">
-              <Plus className="h-4 w-4" />
-              Crear Primer Contrato
-            </Button>
+            {isAdmin && (
+              <Button onClick={handleCreateContract} variant="outline" className="gap-1">
+                <Plus className="h-4 w-4" />
+                Crear Primer Contrato
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
@@ -162,15 +172,17 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
                     <FileText className="h-3.5 w-3.5" />
                     Ver
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => handleEditContract(contract.id)}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                    Editar
-                  </Button>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => handleEditContract(contract.id)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Editar
+                    </Button>
+                  )}
                   {contract.pdfUrl && (
                     <a href={contract.pdfUrl} target="_blank" rel="noopener noreferrer">
                       <Button variant="outline" size="sm" className="gap-1">

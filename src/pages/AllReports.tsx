@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ClientReport } from "@/types/client";
-import { getAllReports } from "@/services/reportService";
+import { getAllReports, getFilteredReports } from "@/services/reportService";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const AllReports = () => {
   const [reports, setReports] = useState<ClientReport[]>([]);
@@ -21,12 +22,15 @@ export const AllReports = () => {
   const [reportTypes, setReportTypes] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const { user, isAdmin } = useAuth();
   
   const loadReports = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const allReports = await getAllReports();
+      
+      // Use the filtered reports function to get appropriate reports based on user role
+      const allReports = await getFilteredReports(user?.id, isAdmin);
       console.log("Informes cargados:", allReports);
       setReports(allReports);
       
@@ -45,7 +49,7 @@ export const AllReports = () => {
   
   useEffect(() => {
     loadReports();
-  }, []);
+  }, [user, isAdmin]);
   
   // Filter reports based on search and type
   const filteredReports = reports.filter(report => {
@@ -63,7 +67,7 @@ export const AllReports = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <FileText className="h-8 w-8 text-blue-600" />
-          Todos los Informes
+          {isAdmin ? "Todos los Informes" : "Mis Informes"}
         </h1>
       </div>
       
@@ -94,7 +98,7 @@ export const AllReports = () => {
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="">Todos los tipos</SelectItem>
                   {reportTypes.map(type => (
                     <SelectItem key={type} value={type}>{type || "Sin tipo"}</SelectItem>
                   ))}
@@ -153,7 +157,7 @@ export const AllReports = () => {
                 <TableRow>
                   <TableHead>Título</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Cliente</TableHead>
+                  {isAdmin && <TableHead>Cliente</TableHead>}
                   <TableHead>Fecha</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acción</TableHead>
@@ -168,7 +172,7 @@ export const AllReports = () => {
                         {report.type || "Sin tipo"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{report.clientId}</TableCell>
+                    {isAdmin && <TableCell>{report.clientId}</TableCell>}
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-gray-500" />

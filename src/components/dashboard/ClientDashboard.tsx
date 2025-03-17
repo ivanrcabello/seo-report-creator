@@ -10,6 +10,7 @@ import { SeoPerformanceCharts } from "./SeoPerformanceCharts";
 import { DocumentCenter } from "./DocumentCenter";
 import { UserProfile } from "./UserProfile";
 import { SupportTickets } from "./SupportTickets";
+import { ClientInvoicesWidget } from "./ClientInvoicesWidget";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart2, TrendingUp, MessageSquare, User, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -175,9 +176,18 @@ export function ClientDashboard() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <ProjectTimeline />
-            <SeoPerformanceCharts />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="lg:col-span-2">
+              <ProjectTimeline />
+            </div>
+            <ClientInvoicesWidget />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="lg:col-span-2">
+              <SeoPerformanceCharts />
+            </div>
+            <DocumentCenter />
           </div>
         </TabsContent>
         

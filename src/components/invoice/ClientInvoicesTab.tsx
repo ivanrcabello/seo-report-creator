@@ -6,6 +6,7 @@ import { ClientInvoices } from "@/components/ClientInvoices";
 import { getClientInvoices } from "@/services/invoiceService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ClientInvoicesTabProps {
   clientId: string;
@@ -16,6 +17,7 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const { isAdmin, user } = useAuth();
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -24,7 +26,11 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
       setIsLoading(true);
       try {
         console.log("Fetching invoices for client:", clientId);
-        const data = await getClientInvoices(clientId);
+        
+        // For non-admin users, ensure they only see their own invoices
+        const effectiveClientId = !isAdmin && user?.id ? user.id : clientId;
+        const data = await getClientInvoices(effectiveClientId);
+        
         console.log("Invoices data:", data);
         setInvoices(data);
       } catch (error) {
@@ -36,7 +42,7 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
     };
 
     fetchInvoices();
-  }, [clientId]);
+  }, [clientId, isAdmin, user]);
 
   const handleAddInvoice = () => {
     navigate(`/invoices/new?clientId=${clientId}`);
@@ -56,7 +62,7 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
       invoices={invoices} 
       clientName={clientName}
       clientId={clientId} 
-      onAddInvoice={handleAddInvoice}
+      onAddInvoice={isAdmin ? handleAddInvoice : undefined}
     />
   );
 };

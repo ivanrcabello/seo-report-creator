@@ -1,4 +1,3 @@
-
 /**
  * Invoice sharing functionality
  */
@@ -124,7 +123,7 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
       phone: companyData.phone,
       email: companyData.email,
       logoUrl: companyData.logo_url,
-      // Using optional chaining and providing a default empty string
+      // Using nullish coalescing operator to handle undefined bank_account
       bankAccount: companyData.bank_account ?? '',
       createdAt: companyData.created_at,
       updatedAt: companyData.updated_at
@@ -136,4 +135,3 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
     return { invoice: null, client: null, company: null };
   }
 };
-

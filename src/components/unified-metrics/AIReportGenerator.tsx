@@ -10,7 +10,7 @@ import { getLocalSeoReports } from "@/services/localSeoService";
 import { getClientKeywords } from "@/services/clientKeywordsService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getClientDocuments } from "@/services/documentService";
-import { generateAndSaveReport } from "@/services/geminiReportService";
+import { generateAndSaveOpenAIReport } from "@/services/reports/openAIReportService";
 
 interface AIReportGeneratorProps {
   clientId: string;
@@ -78,7 +78,7 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       
       // Aunque no tengamos datos completos, procedemos con lo que tenemos
       toast.dismiss(toastId);
-      toast.loading("Generando informe con IA de Gemini...");
+      toast.loading("Generando informe con IA de OpenAI...");
       setProgress(60);
       
       // Preparamos datos de la auditoría para el informe con valores por defecto sólidos
@@ -186,14 +186,14 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       };
       
       setProgress(80);
-      console.log("Sending audit data to generateAndSaveReport function");
+      console.log("Sending audit data to generateAndSaveOpenAIReport function");
       
       console.log("Audit result data verification:");
       console.log("- URL: ", auditResult.url);
       console.log("- Company name: ", auditResult.companyName);
       console.log("- SEO score: ", auditResult.seoScore);
       
-      const report = await generateAndSaveReport(
+      const report = await generateAndSaveOpenAIReport(
         clientId,
         clientName,
         auditResult,
@@ -205,7 +205,7 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       if (report && report.id) {
         console.log("Report generated successfully with ID:", report.id);
         toast.dismiss();
-        toast.success("Informe generado correctamente con Gemini");
+        toast.success("Informe generado correctamente con OpenAI");
         
         // Small delay to allow the user to see the success message
         setTimeout(() => {
@@ -228,10 +228,10 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
     <div className="space-y-4">
       <Alert variant="default" className="bg-blue-50">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Informe completo con IA Gemini</AlertTitle>
+        <AlertTitle>Informe completo con IA OpenAI</AlertTitle>
         <AlertDescription>
           Este informe combinará todos los datos de métricas, PageSpeed, SEO local, palabras clave y documentos subidos para generar
-          un análisis comprensivo del rendimiento del cliente usando la IA de Google Gemini.
+          un análisis comprensivo del rendimiento del cliente usando la IA de OpenAI.
         </AlertDescription>
       </Alert>
       
@@ -257,13 +257,13 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
           {isGenerating ? (
             <>
               <Clock className="h-5 w-5 animate-spin" />
-              Generando informe con Gemini...
+              Generando informe con OpenAI...
             </>
           ) : (
             <>
               <Sparkles className="h-5 w-5" />
               <FileText className="h-5 w-5" />
-              Generar Informe con Gemini
+              Generar Informe con OpenAI
             </>
           )}
         </Button>

@@ -7,3 +7,5 @@ export * from './reportAI';
 export * from './reportGeneration';
 export * from './reportStorage';
 export * from './geminiReportService';
+export * from './openAIReportGeneration';
+export * from './openAIReportService';

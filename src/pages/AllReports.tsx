@@ -22,8 +22,9 @@ export const AllReports = () => {
       setIsLoading(true);
       setError(null);
       
+      console.log("Loading reports for user:", user?.id, "isAdmin:", isAdmin);
       const allReports = await getFilteredReports(user?.id, isAdmin);
-      console.log("Informes cargados:", allReports);
+      console.log("Reports loaded:", allReports);
       setReports(allReports);
       
       // Filter out null, undefined, or empty string values before creating the set
@@ -35,6 +36,7 @@ export const AllReports = () => {
         )
       ) as string[];
       
+      console.log("Report types extracted:", types);
       setReportTypes(types);
     } catch (err) {
       console.error("Error loading reports:", err);

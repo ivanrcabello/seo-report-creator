@@ -16,11 +16,15 @@ export { saveReportWithAIData, shareReport, getReportByShareToken };
 
 export const getFilteredReports = async (clientId?: string, isAdmin = false): Promise<ClientReport[]> => {
   try {
+    console.log("getFilteredReports called with clientId:", clientId, "isAdmin:", isAdmin);
+    
     if (isAdmin) {
       // Admins can see all reports or filter by clientId if provided
       if (clientId) {
+        console.log("Admin filtering reports for specific client:", clientId);
         return await getClientReports(clientId);
       } else {
+        console.log("Admin getting all reports");
         return await getAllReports();
       }
     } else {
@@ -29,6 +33,7 @@ export const getFilteredReports = async (clientId?: string, isAdmin = false): Pr
         console.error("ClientId is required for non-admin users");
         return [];
       }
+      console.log("Regular user getting own reports:", clientId);
       return await getClientReports(clientId);
     }
   } catch (error) {

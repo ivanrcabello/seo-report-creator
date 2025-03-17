@@ -5,6 +5,8 @@ import { ClientReport } from "@/types/client";
  * Maps database report data to ClientReport format
  */
 export const mapDbReportToClientReport = (data: any): ClientReport => {
+  console.log("Mapping DB report to ClientReport:", data?.id || "unknown id");
+  
   return {
     id: data.id,
     clientId: data.client_id,

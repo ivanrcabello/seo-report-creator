@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { ClientReport } from "@/types/client";
 import { v4 as uuidv4 } from "uuid";
@@ -8,6 +9,7 @@ import { mapDbReportToClientReport } from "./reportMappers";
  */
 export const getClientReports = async (clientId: string): Promise<ClientReport[]> => {
   try {
+    console.log("Fetching reports for client:", clientId);
     const { data, error } = await supabase
       .from('client_reports')
       .select('*')
@@ -15,11 +17,14 @@ export const getClientReports = async (clientId: string): Promise<ClientReport[]
       .order('date', { ascending: false });
     
     if (error) {
+      console.error("Error in getClientReports:", error.message);
       throw error;
     }
 
+    console.log(`Found ${data?.length || 0} reports for client ${clientId}`);
+    
     // Map the database result to ClientReport format
-    return data.map(mapDbReportToClientReport);
+    return data ? data.map(mapDbReportToClientReport) : [];
   } catch (error) {
     console.error("Error getting client reports:", error);
     throw error;

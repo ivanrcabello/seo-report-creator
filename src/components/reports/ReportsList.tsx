@@ -77,6 +77,8 @@ export const ReportsList = ({
     );
   }
 
+  console.log("Displaying filtered reports:", filteredReports);
+  
   return (
     <Table>
       <TableHeader>

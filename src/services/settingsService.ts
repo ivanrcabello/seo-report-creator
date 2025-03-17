@@ -33,10 +33,11 @@ export const getCompanySettings = async (): Promise<CompanySettings | null> => {
         phone: data.phone || undefined,
         email: data.email || undefined,
         logoUrl: data.logo_url || undefined,
-        primaryColor: data.primary_color || undefined,
-        secondaryColor: data.secondary_color || undefined,
-        accentColor: data.accent_color || undefined,
-        bankAccount: data.bank_account || undefined,
+        // Handle fields that might not exist in the database
+        primaryColor: undefined,
+        secondaryColor: undefined,
+        accentColor: undefined,
+        bankAccount: undefined,
         createdAt: data.created_at,
         updatedAt: data.updated_at
       };
@@ -66,10 +67,6 @@ export const updateCompanySettings = async (settings: Partial<CompanySettings>):
       phone: settings.phone,
       email: settings.email,
       logo_url: settings.logoUrl,
-      primary_color: settings.primaryColor,
-      secondary_color: settings.secondaryColor,
-      accent_color: settings.accentColor,
-      bank_account: settings.bankAccount,
       updated_at: new Date().toISOString()
     };
     
@@ -111,10 +108,11 @@ export const updateCompanySettings = async (settings: Partial<CompanySettings>):
         phone: result.phone || undefined,
         email: result.email || undefined,
         logoUrl: result.logo_url || undefined,
-        primaryColor: result.primary_color || undefined,
-        secondaryColor: result.secondary_color || undefined,
-        accentColor: result.accent_color || undefined,
-        bankAccount: result.bank_account || undefined,
+        // Handle fields that might not exist in the database
+        primaryColor: undefined,
+        secondaryColor: undefined,
+        accentColor: undefined,
+        bankAccount: undefined,
         createdAt: result.created_at,
         updatedAt: result.updated_at
       };

@@ -7,7 +7,7 @@ import {
   AccordionTrigger
 } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { KeywordIcon, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { Search, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface KeywordsAccordionProps {
@@ -60,7 +60,7 @@ export const KeywordsAccordion = ({ report, isPrintView = false }: KeywordsAccor
         <AccordionItem value="keywords" className="border-none">
           <AccordionTrigger className="px-4 py-2 hover:bg-gray-50">
             <div className="flex items-center gap-2">
-              <KeywordIcon className="h-5 w-5 text-blue-500" />
+              <Search className="h-5 w-5 text-blue-500" />
               <span className="font-medium">Seguimiento de Palabras Clave ({keywords.length})</span>
             </div>
           </AccordionTrigger>

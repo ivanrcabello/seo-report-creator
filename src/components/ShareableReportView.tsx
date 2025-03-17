@@ -25,11 +25,13 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
 
   console.log("Report content in ShareableReportView:", report.content ? report.content.substring(0, 100) + "..." : "No content");
 
+  // Fix: Change the return type to void by not returning the result
   const handleDownloadPdf = async () => {
     if (report.id) {
-      return downloadSeoReportPdf(report.id);
+      await downloadSeoReportPdf(report.id);
+    } else {
+      throw new Error("No report ID available");
     }
-    return Promise.reject("No report ID available");
   };
 
   if (report.content) {

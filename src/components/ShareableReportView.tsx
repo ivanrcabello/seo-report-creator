@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ClientReport } from "@/types/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 interface ShareableReportViewProps {
   report: ClientReport;
@@ -30,7 +30,6 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
   const [viewTab, setViewTab] = useState("formatted");
   const [keywordsExpanded, setKeywordsExpanded] = useState(false);
 
-  // Extract sections from the report content to create a navigation menu
   const extractSections = () => {
     if (!report.content) return [];
     
@@ -63,7 +62,6 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
 
   console.log("Report content in ShareableReportView:", report.content ? report.content.substring(0, 100) + "..." : "No content");
 
-  // If the report has content, show it formatted
   if (report.content) {
     return (
       <div className="p-4">
@@ -119,7 +117,6 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
                 }} 
               />
 
-              {/* Find and wrap keyword sections in an accordion if they exist */}
               {report.content.includes("Análisis de Palabras Clave") && (
                 <div className="mt-6">
                   <Accordion type="single" collapsible className="w-full">
@@ -163,7 +160,6 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
           </TabsContent>
         </Tabs>
 
-        {/* Print version (hidden on screen, visible in print) */}
         <div className="hidden print:block">
           <div className="prose max-w-none">
             <div 
@@ -180,7 +176,6 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
               }} 
             />
 
-            {/* Show all keywords in print view */}
             {report.analyticsData?.auditResult?.keywords && report.analyticsData.auditResult.keywords.length > 0 && (
               <div className="mt-6 border-t pt-4">
                 <h3 className="font-semibold mb-2">Palabras Clave Analizadas:</h3>
@@ -202,7 +197,6 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
     );
   }
 
-  // If the report has analyticsData with auditResult, show the SEO components
   if (report.analyticsData?.auditResult) {
     const auditResult = report.analyticsData.auditResult;
     return (
@@ -210,7 +204,6 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
         <ScoreCards auditResult={auditResult} />
         <MetricCards auditResult={auditResult} />
         
-        {/* Keywords section with accordion if there are many keywords */}
         {auditResult.keywords && auditResult.keywords.length > 5 && (
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="keywords">
@@ -252,7 +245,6 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
     );
   }
 
-  // Fallback if neither content nor auditResult is available
   return (
     <div className="p-10 text-center border border-dashed border-gray-300 rounded-lg bg-gray-50">
       <AlertCircle className="h-10 w-10 text-amber-500 mx-auto mb-3" />

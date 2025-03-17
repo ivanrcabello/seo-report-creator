@@ -124,7 +124,7 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
       phone: companyData.phone,
       email: companyData.email,
       logoUrl: companyData.logo_url,
-      // Corregido: usar una propiedad que sí existe en el tipo
+      // Safe access to potentially missing property
       bankAccount: companyData.bank_account || '',
       createdAt: companyData.created_at,
       updatedAt: companyData.updated_at

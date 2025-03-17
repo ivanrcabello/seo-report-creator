@@ -6,6 +6,7 @@ import { DocumentList } from "./DocumentList";
 import { NotesSection } from "./NotesSection";
 import { GenerateReportButton } from "./GenerateReportButton";
 import { FileText } from "lucide-react";
+import { ClientDocument } from "@/types/client";
 
 interface ClientDocumentsProps {
   clientId: string;
@@ -18,28 +19,19 @@ export const ClientDocuments: React.FC<ClientDocumentsProps> = ({
   onNoteAdded,
   onGenerateReport,
 }) => {
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [notes, setNotes] = useState<string[]>([]);
   const [newNote, setNewNote] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  const handleDocumentUploaded = (newDoc: any) => {
-    console.log("Document uploaded:", newDoc);
-    setDocuments((prev) => [...prev, newDoc]);
-  };
-
-  const handleDocumentDeleted = (docId: string) => {
-    console.log("Document deleted:", docId);
-    setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
-    setSelectedDocuments((prev) => prev.filter((id) => id !== docId));
-  };
-
-  const handleDocumentSelected = (docId: string, selected: boolean) => {
-    if (selected) {
-      setSelectedDocuments((prev) => [...prev, docId]);
-    } else {
+  const toggleDocumentSelection = (docId: string) => {
+    if (selectedDocuments.includes(docId)) {
       setSelectedDocuments((prev) => prev.filter((id) => id !== docId));
+    } else {
+      setSelectedDocuments((prev) => [...prev, docId]);
     }
   };
 
@@ -72,7 +64,7 @@ export const ClientDocuments: React.FC<ClientDocumentsProps> = ({
   useEffect(() => {
     const loadDocuments = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         // Here you would load the documents from your API
         const response = await fetch(`/api/clients/${clientId}/documents`);
         const data = await response.json();
@@ -80,7 +72,7 @@ export const ClientDocuments: React.FC<ClientDocumentsProps> = ({
       } catch (error) {
         console.error("Error loading documents:", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -99,15 +91,19 @@ export const ClientDocuments: React.FC<ClientDocumentsProps> = ({
         <CardContent className="space-y-6">
           <DocumentUploadSection 
             clientId={clientId} 
-            onDocumentUploaded={handleDocumentUploaded} 
+            isUploading={isUploading}
+            documents={documents}
+            setDocuments={setDocuments}
+            setIsUploading={setIsUploading}
           />
 
           <DocumentList
             documents={documents}
-            loading={loading}
             selectedDocuments={selectedDocuments}
-            onDocumentSelected={handleDocumentSelected}
-            onDocumentDeleted={handleDocumentDeleted}
+            isLoading={isLoading}
+            toggleDocumentSelection={toggleDocumentSelection}
+            setSelectedDocuments={setSelectedDocuments}
+            setDocuments={setDocuments}
           />
         </CardContent>
       </Card>
@@ -130,6 +126,11 @@ export const ClientDocuments: React.FC<ClientDocumentsProps> = ({
       {selectedDocuments.length > 0 && (
         <GenerateReportButton
           selectedDocuments={selectedDocuments}
+          documents={documents}
+          setDocuments={setDocuments}
+          isGenerating={isGenerating}
+          setIsGenerating={setIsGenerating}
+          setSelectedDocuments={setSelectedDocuments}
           onGenerateReport={handleGenerateReport}
         />
       )}

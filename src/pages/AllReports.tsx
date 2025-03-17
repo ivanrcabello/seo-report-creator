@@ -13,7 +13,7 @@ export const AllReports = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [reportTypes, setReportTypes] = useState<string[]>([]);
-  const [selectedType, setSelectedType] = useState<string>("");
+  const [selectedType, setSelectedType] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
   const { user, isAdmin } = useAuth();
   
@@ -51,7 +51,7 @@ export const AllReports = () => {
   
   const filteredReports = reports.filter(report => {
     const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedType === "" || report.type === selectedType;
+    const matchesType = selectedType === "all" || report.type === selectedType;
     return matchesSearch && matchesType;
   });
 

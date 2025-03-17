@@ -33,7 +33,7 @@ export const ReportsList = ({
 }: ReportsListProps) => {
   const filteredReports = reports.filter(report => {
     const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedType === "" || report.type === selectedType;
+    const matchesType = selectedType === "all" || report.type === selectedType;
     return matchesSearch && matchesType;
   });
 
@@ -65,10 +65,10 @@ export const ReportsList = ({
     return (
       <div className="text-center py-8">
         <p className="text-gray-500 mb-2">No se encontraron informes</p>
-        {searchTerm || selectedType ? (
+        {searchTerm || selectedType !== "all" ? (
           <Button variant="outline" onClick={() => {
             setSearchTerm("");
-            setSelectedType("");
+            setSelectedType("all");
           }}>
             Limpiar filtros
           </Button>

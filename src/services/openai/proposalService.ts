@@ -20,8 +20,6 @@ Genera una propuesta comercial profesional para el siguiente cliente:
 
 Cliente: ${clientData.name || 'No especificado'}
 Empresa: ${clientData.company || 'No especificada'}
-Industria: ${clientData.industry || 'No especificada'}
-Ubicación: ${clientData.location || 'No especificada'}
 
 Paquete seleccionado:
 Nombre: ${packData.name || 'No especificado'}

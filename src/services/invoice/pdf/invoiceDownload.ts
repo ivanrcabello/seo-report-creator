@@ -37,16 +37,21 @@ export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> =>
     // If the invoice already has a PDF URL, download that instead of generating new
     if (invoice.pdfUrl) {
       console.log("Invoice already has PDF URL:", invoice.pdfUrl);
-      // Fetch the PDF from the URL
-      const response = await fetch(invoice.pdfUrl);
-      const blob = await response.blob();
-      const fileName = `Factura_${invoice.invoiceNumber}.pdf`;
-      saveAs(blob, fileName);
-      return true;
+      try {
+        // Fetch the PDF from the URL
+        const response = await fetch(invoice.pdfUrl);
+        const blob = await response.blob();
+        const fileName = `Factura_${invoice.invoiceNumber}.pdf`;
+        saveAs(blob, fileName);
+        return true;
+      } catch (fetchError) {
+        console.error("Error fetching existing PDF:", fetchError);
+        // Continue to generate a new PDF
+      }
     }
     
     // Otherwise generate a new PDF
-    console.log("No PDF URL found. Generating PDF first...");
+    console.log("No PDF URL found or fetch failed. Generating PDF first...");
     const success = await generateInvoicePdf(invoiceId);
     
     if (!success) {
@@ -76,13 +81,20 @@ export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> =>
       return false;
     }
     
-    // Fetch and download the PDF
-    const response = await fetch(updatedInvoice.pdfUrl);
-    const blob = await response.blob();
-    const fileName = `Factura_${updatedInvoice.invoiceNumber}.pdf`;
-    saveAs(blob, fileName);
-    
-    return true;
+    try {
+      // Fetch and download the PDF
+      const response = await fetch(updatedInvoice.pdfUrl);
+      const blob = await response.blob();
+      const fileName = `Factura_${updatedInvoice.invoiceNumber}.pdf`;
+      saveAs(blob, fileName);
+      
+      toast.success("PDF descargado correctamente");
+      return true;
+    } catch (downloadError) {
+      console.error("Error downloading PDF:", downloadError);
+      toast.error("Error al descargar el PDF");
+      return false;
+    }
   } catch (error) {
     console.error("Error in downloadInvoicePdf:", error);
     toast.error("Error al descargar el PDF");

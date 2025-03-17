@@ -124,7 +124,7 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
       phone: companyData.phone,
       email: companyData.email,
       logoUrl: companyData.logo_url,
-      // Fix: Use conditional to safely access bankAccount which might not exist in the DB
+      // Corregido: usar una propiedad que sí existe en el tipo
       bankAccount: companyData.bank_account || '',
       createdAt: companyData.created_at,
       updatedAt: companyData.updated_at

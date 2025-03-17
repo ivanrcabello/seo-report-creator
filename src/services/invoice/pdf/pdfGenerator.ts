@@ -3,6 +3,7 @@
  * PDF generator for invoices
  */
 import { jsPDF } from 'jspdf';
+// Importación correcta para jspdf-autotable
 import 'jspdf-autotable';
 import { Invoice } from "@/types/invoiceTypes";
 import { addCompanyInfo, addClientInfo, addInvoiceHeader, addInvoiceItems, addInvoiceFooter } from './pdfSections';

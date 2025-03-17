@@ -1,4 +1,3 @@
-
 /**
  * PDF sections for invoices
  */

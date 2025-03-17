@@ -70,17 +70,14 @@ export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | 
       updatedAt: now
     };
     
-    // Remove clientName if it exists since it's not a column in the table
-    const { clientName, ...invoiceDataWithoutClientName } = newInvoiceData as any;
-    
     // Map the invoice data for DB, which will include the generated UUID
-    const newInvoice = mapInvoiceToDB(invoiceDataWithoutClientName);
+    const dbInvoice = mapInvoiceToDB(newInvoiceData);
     
-    console.log("Mapped invoice data for DB:", newInvoice);
+    console.log("Mapped invoice data for DB:", dbInvoice);
     
     const { data, error } = await supabase
       .from('invoices')
-      .insert([newInvoice])
+      .insert([dbInvoice])
       .select()
       .single();
     
@@ -109,12 +106,9 @@ export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefin
     console.log("Updating invoice with ID:", invoice.id);
     console.log("Invoice data for update:", invoice);
     
-    // Remove clientName if it exists since it's not a column in the table
-    const { clientName, ...invoiceDataWithoutClientName } = invoice as any;
-    
     // Create updated invoice with current timestamp
     const dbInvoice = mapInvoiceToDB({
-      ...invoiceDataWithoutClientName,
+      ...invoice,
       updatedAt: new Date().toISOString()
     });
     
@@ -201,7 +195,7 @@ export const createInvoiceFromProposal = async (
       issueDate: new Date().toISOString()
     };
     
-    return createInvoice(invoiceData as any);
+    return createInvoice(invoiceData);
   } catch (error) {
     console.error("Error creating invoice from proposal:", error);
     return undefined;

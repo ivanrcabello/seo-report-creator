@@ -10,7 +10,7 @@ export const mapInvoiceFromDB = (invoice: any): Invoice => ({
   number: invoice.invoice_number || '',  // Keep for compatibility
   invoiceNumber: invoice.invoice_number,
   clientId: invoice.client_id,
-  clientName: invoice.client_name || 'Unknown Client',
+  clientName: invoice.client_name || undefined, // Keep for UI display but not for DB operations
   date: invoice.issue_date || invoice.created_at, // Keep for compatibility
   issueDate: invoice.issue_date,
   dueDate: invoice.due_date || '',
@@ -40,11 +40,11 @@ export const mapInvoiceToDB = (invoice: Partial<Invoice>) => {
   // For new invoices without an ID, generate one
   const id = invoice.id || uuidv4();
   
+  // Only include fields that exist in the database table
   return {
     id,
     invoice_number: invoice.invoiceNumber || invoice.number, // Handle both property names
     client_id: invoice.clientId,
-    client_name: invoice.clientName || 'Unknown Client',
     issue_date: invoice.issueDate || invoice.date, // Handle both property names
     due_date: invoice.dueDate,
     pack_id: invoice.packId,

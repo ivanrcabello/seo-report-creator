@@ -1,34 +1,7 @@
 
 // OpenAI API configuration
 import OpenAI from "openai";
-
-// Define the OpenAI API key - esto se cargará desde los secretos de Supabase en las Edge Functions
-export const OPENAI_API_KEY = "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";
-
-// OpenAI client instance
-export const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-});
-
-export interface OpenAIResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
+import { getApiKeys } from "@/services/settingsService";
 
 // Common OpenAI API call function
 export async function callOpenAI(
@@ -39,6 +12,17 @@ export async function callOpenAI(
   maxTokens: number = 3000
 ): Promise<string | null> {
   try {
+    // Get API key from the database
+    const apiKeys = await getApiKeys();
+    if (!apiKeys || !apiKeys.openaiApiKey) {
+      throw new Error("No se ha configurado la clave API de OpenAI. Por favor, configúrela en la sección de Configuración > API Keys.");
+    }
+
+    // Create OpenAI instance with the stored API key
+    const openai = new OpenAI({
+      apiKey: apiKeys.openaiApiKey,
+    });
+
     const response = await openai.chat.completions.create({
       model: model,
       messages: [
@@ -64,4 +48,25 @@ export async function callOpenAI(
     console.error("Error calling OpenAI API:", error);
     return null;
   }
+}
+
+// Export interface for OpenAI response
+export interface OpenAIResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    index: number;
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }[];
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }

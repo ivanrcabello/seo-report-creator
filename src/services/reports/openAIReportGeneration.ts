@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { toast } from "sonner";
+import { getApiKeys } from "@/services/settingsService";
 
 /**
  * Generate a report using the OpenAI API
@@ -27,6 +28,13 @@ export const generateOpenAIReport = async (
       throw new Error("Datos de auditoría incompletos. Se requiere al menos el nombre de la empresa.");
     }
     
+    // Get API key from the database
+    const apiKeys = await getApiKeys();
+    if (!apiKeys || !apiKeys.openaiApiKey) {
+      console.error("No OpenAI API key found in settings");
+      throw new Error("No se ha configurado la clave API de OpenAI. Por favor, configúrela en la sección de Configuración > API Keys.");
+    }
+    
     // Remove circular or non-serializable properties
     const sanitizedAuditData = JSON.parse(JSON.stringify(auditData));
     console.log("Audit data sanitized successfully");
@@ -37,7 +45,8 @@ export const generateOpenAIReport = async (
       body: {
         auditResult: sanitizedAuditData,
         templateType,
-        customPrompt
+        customPrompt,
+        apiKey: apiKeys.openaiApiKey
       }
     });
     

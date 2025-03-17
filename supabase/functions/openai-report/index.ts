@@ -3,11 +3,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../cors.ts";
 import { OpenAI } from "https://deno.land/x/openai@v4.20.1/mod.ts";
 
-// Set up OpenAI client with the API key from environment variables
-const openai = new OpenAI({
-  apiKey: Deno.env.get("OPENAI_API_KEY") || "",
-});
-
 // Get the model to use from environment variables or use default
 const MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
 
@@ -20,7 +15,7 @@ serve(async (req) => {
   try {
     console.log("OpenAI report generation function called");
     
-    const { auditResult, templateType, customPrompt } = await req.json();
+    const { auditResult, templateType, customPrompt, apiKey } = await req.json();
     
     if (!auditResult) {
       console.error("Missing audit result data");
@@ -30,6 +25,19 @@ serve(async (req) => {
       );
     }
 
+    if (!apiKey) {
+      console.error("Missing OpenAI API key");
+      return new Response(
+        JSON.stringify({ error: "Missing OpenAI API key" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    // Set up OpenAI client with the provided API key
+    const openai = new OpenAI({
+      apiKey: apiKey
+    });
+    
     console.log("Generating OpenAI report with model:", MODEL);
     console.log("Template type:", templateType);
     console.log("Company name:", auditResult.companyName);

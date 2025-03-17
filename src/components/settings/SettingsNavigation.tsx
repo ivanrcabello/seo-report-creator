@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { 
   Settings, 
   Building,
-  FileText
+  FileText,
+  Key
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -32,6 +33,12 @@ export function SettingsNavigation() {
       label: "Plantillas",
       icon: <FileText className="h-5 w-5 mr-2" />,
       active: location.pathname === "/settings/templates"
+    },
+    {
+      href: "/settings/api",
+      label: "API Keys",
+      icon: <Key className="h-5 w-5 mr-2" />,
+      active: location.pathname === "/settings/api"
     }
   ];
 

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -25,8 +24,8 @@ import TemplateSettings from './pages/TemplateSettings';
 import Contracts from './pages/Contracts';
 import ContractForm from './pages/ContractForm';
 import ContractDetail from './pages/ContractDetail';
+import ApiSettings from './pages/ApiSettings';
 
-// Crear una instancia de QueryClient
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -36,13 +35,11 @@ const queryClient = new QueryClient({
   },
 });
 
-// Componente para proteger rutas que requieren autenticación
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const location = useLocation();
 
   if (!user) {
-    // Redirige al usuario a la página de inicio de sesión y guarda la ubicación actual
     return <Navigate to="/login" replace state={{ path: location.pathname }} />;
   }
 
@@ -89,6 +86,11 @@ function AppRoutes() {
         <Route path="/contracts" element={<Contracts />} />
         <Route path="/contracts/new" element={<ContractForm />} />
         <Route path="/contracts/:id" element={<ContractDetail />} />
+        <Route path="/settings/api" element={
+          <ProtectedRoute>
+            <ApiSettings />
+          </ProtectedRoute>
+        } />
         <Route path="/" element={<Dashboard />} />
       </Routes>
     </ProtectedRoute>

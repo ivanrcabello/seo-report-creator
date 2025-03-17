@@ -103,3 +103,84 @@ export const uploadCompanyLogo = async (file: File): Promise<string | undefined>
   
   return publicUrl.publicUrl;
 };
+
+// Interfaces para API Keys
+export interface ApiKeys {
+  id?: string;
+  openaiApiKey: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Obtener las claves API
+export const getApiKeys = async (): Promise<ApiKeys | undefined> => {
+  const { data, error } = await supabase
+    .from('api_keys')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  
+  if (error) {
+    console.error("Error fetching API keys:", error);
+    return undefined;
+  }
+  
+  return data ? {
+    id: data.id,
+    openaiApiKey: data.openai_api_key,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  } : undefined;
+};
+
+// Actualizar las claves API
+export const updateApiKeys = async (keys: ApiKeys): Promise<ApiKeys | undefined> => {
+  const current = await getApiKeys();
+  
+  if (current) {
+    // Actualizar el registro existente
+    const { data, error } = await supabase
+      .from('api_keys')
+      .update({
+        openai_api_key: keys.openaiApiKey,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', current.id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error updating API keys:", error);
+      return undefined;
+    }
+    
+    return {
+      id: data.id,
+      openaiApiKey: data.openai_api_key,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+  } else {
+    // Crear un nuevo registro
+    const { data, error } = await supabase
+      .from('api_keys')
+      .insert({
+        openai_api_key: keys.openaiApiKey
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error creating API keys:", error);
+      return undefined;
+    }
+    
+    return {
+      id: data.id,
+      openaiApiKey: data.openai_api_key,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+  }
+};

@@ -52,7 +52,7 @@ export const getInvoice = async (id: string): Promise<Invoice | undefined> => {
 };
 
 // Create a new invoice
-export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | "updatedAt" | "invoiceNumber">): Promise<Invoice | undefined> => {
+export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | "updatedAt">): Promise<Invoice | undefined> => {
   try {
     console.log("Creating invoice with data:", invoice);
     

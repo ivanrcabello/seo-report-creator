@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -177,37 +176,34 @@ export const InvoiceForm = () => {
       
       if (isNewInvoice) {
         result = await createInvoice({
-          ...data,
-          clientName: client?.name || 'Unknown Client',
-          date: data.issueDate,
-          number: data.invoiceNumber || '',
+          clientId: data.clientId,
+          packId: data.packId,
+          proposalId: data.proposalId,
+          issueDate: data.issueDate,
+          dueDate: data.dueDate,
           baseAmount: baseAmountValue,
-          subtotal: baseAmountValue,
           taxRate: taxRateValue,
-          tax: taxRateValue,
           taxAmount,
           totalAmount,
-          total: totalAmount,
-          paymentDate: null,
-          paidAt: null
+          status: data.status,
+          notes: data.notes,
+          invoiceNumber: data.invoiceNumber
         });
       } else {
         result = await updateInvoice({
-          ...invoice,
-          ...data,
-          id: invoice?.id,
-          clientName: client?.name || 'Unknown Client',
-          date: data.issueDate,
-          number: data.invoiceNumber || invoice?.invoiceNumber || '',
+          ...invoice!,
+          clientId: data.clientId,
+          packId: data.packId,
+          proposalId: data.proposalId,
+          issueDate: data.issueDate,
+          dueDate: data.dueDate,
           baseAmount: baseAmountValue,
-          subtotal: baseAmountValue,
           taxRate: taxRateValue,
-          tax: taxRateValue,
           taxAmount,
           totalAmount,
-          total: totalAmount,
-          paymentDate: invoice?.paymentDate,
-          paidAt: invoice?.paymentDate
+          status: data.status,
+          notes: data.notes,
+          invoiceNumber: data.invoiceNumber || invoice?.invoiceNumber || ''
         });
       }
       

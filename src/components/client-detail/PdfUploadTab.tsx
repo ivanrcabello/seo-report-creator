@@ -6,11 +6,16 @@ import { UploadCloud } from "lucide-react";
 import { AuditResult } from "@/services/pdfAnalyzer";
 
 interface PdfUploadTabProps {
-  clientName: string;
-  onAnalysisComplete: (result: AuditResult) => void;
+  clientId: string;
+  clientName?: string;
+  onAnalysisComplete?: (result: AuditResult) => void;
 }
 
-export const PdfUploadTab: React.FC<PdfUploadTabProps> = ({ clientName, onAnalysisComplete }) => {
+export const PdfUploadTab: React.FC<PdfUploadTabProps> = ({ 
+  clientId, 
+  clientName, 
+  onAnalysisComplete 
+}) => {
   return (
     <Card>
       <CardHeader>
@@ -19,7 +24,7 @@ export const PdfUploadTab: React.FC<PdfUploadTabProps> = ({ clientName, onAnalys
           Subir informe PDF
         </CardTitle>
         <CardDescription>
-          Sube un PDF de auditoría para analizar y generar automáticamente un informe para {clientName}
+          Sube un PDF de auditoría para analizar y generar automáticamente un informe para {clientName || "este cliente"}
         </CardDescription>
       </CardHeader>
       <CardContent>

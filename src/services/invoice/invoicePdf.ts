@@ -6,4 +6,10 @@
 
 // Re-export all PDF-related functionality
 export { generateInvoicePdf } from './pdf/pdfGenerator';
-export { downloadInvoicePdf, sendInvoiceByEmail } from './pdf/pdfOperations';
+export { 
+  downloadInvoicePdf, 
+  sendInvoiceByEmail,
+  shareInvoice,
+  getInvoiceByShareToken,
+  markInvoiceAsPaid 
+} from './pdf/pdfOperations';

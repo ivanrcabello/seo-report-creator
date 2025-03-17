@@ -1,76 +1,68 @@
-
+/* Styles for print view */
 @media print {
-  /* Ocultar elementos no necesarios para imprimir */
-  .print-hidden,
-  button,
-  .print\:hidden {
-    display: none !important;
-  }
-
-  /* Asegurar fondo blanco y eliminar gradientes */
   body {
-    background: white !important;
-    color: black !important;
     font-size: 12pt;
   }
 
-  /* Eliminar sombras y bordes para una apariencia más limpia */
-  .shadow-lg,
-  .shadow-xl,
-  .shadow-md,
-  .shadow-sm {
-    box-shadow: none !important;
+  .no-print {
+    display: none;
   }
+}
 
-  /* Ajustar espaciado */
-  .container {
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
+/* Styles specifically for printing the shared report view */
+@media print {
+  /* Hide elements not needed in print */
+  button, 
+  .print\:hidden,
+  .tabs-list,
+  nav,
+  footer {
+    display: none !important;
   }
-
-  /* Asegurar que todo el contenido cabe en la página */
-  .card, 
-  .rounded-xl,
-  .p-8 {
-    border-radius: 0 !important;
-    padding: 0.5rem !important;
-    break-inside: avoid !important;
+  
+  /* Reset backgrounds for printing */
+  body {
+    background: white !important;
+    font-size: 12pt;
+    color: black;
   }
-
-  /* Forzar que se impriman los colores de fondo */
-  .bg-gray-50 {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    background-color: #f9fafb !important;
-  }
-
-  /* Ajustar diseños de cuadrícula para imprimir */
-  .grid {
+  
+  /* Ensure all content is visible */
+  .hidden-keywords {
     display: block !important;
   }
   
-  .grid > * {
-    margin-bottom: 1rem !important;
-    width: 100% !important;
-  }
-
-  /* Agregar saltos de página donde sea necesario */
-  h1, h2, h3 {
-    break-after: avoid !important;
+  /* Ensure text is black */
+  * {
+    color: black !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
   }
   
-  .page-break {
-    page-break-before: always !important;
+  /* Ensure background images don't print */
+  div[class*="bg-gradient"] {
+    background: white !important;
+    border: 1px solid #ddd;
+    border-radius: 0;
   }
-
-  /* Estilo para la factura impresa */
-  .invoice-print-container {
-    padding: 2cm !important;
+  
+  /* Ensure headers are visible */
+  h1, h2, h3 {
+    page-break-after: avoid;
+    color: #1a56db !important;
   }
-
-  /* Ocultar botones y elementos de navegación */
-  nav, header, footer, button, .alert-dialog, .button {
-    display: none !important;
+  
+  /* Ensure that content doesn't break awkwardly */
+  p, li, blockquote {
+    page-break-inside: avoid;
+  }
+  
+  /* Ensure tables print well */
+  table {
+    border-collapse: collapse !important;
+  }
+  
+  table td, table th {
+    border: 1px solid #ddd !important;
   }
 }

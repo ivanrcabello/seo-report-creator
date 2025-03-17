@@ -9,11 +9,11 @@ import {
   User, 
   Calendar, 
   Globe,
-  BarChart
+  BarChart,
+  Printer
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { downloadSeoReportPdf } from "@/services/pdf/seoReportPdfService";
 import { toast } from "sonner";
 
 interface ReportShareViewProps {
@@ -26,14 +26,19 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
     ? format(new Date(report.date), "d 'de' MMMM, yyyy", { locale: es }) 
     : "";
     
-  const handleDownloadPdf = async () => {
+  const handlePrintPdf = () => {
     try {
-      toast.loading("Generando PDF...");
-      await downloadSeoReportPdf(report.id);
-      toast.success("PDF descargado correctamente");
+      toast.loading("Preparando impresión...");
+      
+      // Use browser's print functionality
+      setTimeout(() => {
+        window.print();
+        toast.dismiss();
+        toast.success("Documento listo para imprimir o guardar como PDF");
+      }, 500);
     } catch (error) {
-      console.error("Error downloading PDF:", error);
-      toast.error("Error al descargar el PDF");
+      console.error("Error printing:", error);
+      toast.error("Error al preparar el documento para impresión");
     }
   };
 
@@ -43,19 +48,19 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 rounded-t-lg">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 rounded-t-lg print:bg-blue-700 print:from-blue-700 print:to-blue-700">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">
             {report.title || "Informe SEO"}
           </h1>
           <Button 
-            onClick={handleDownloadPdf} 
+            onClick={handlePrintPdf} 
             variant="secondary" 
             size="sm"
-            className="gap-2"
+            className="gap-2 print:hidden"
           >
-            <FileText className="h-4 w-4" />
-            Descargar PDF
+            <Printer className="h-4 w-4" />
+            Imprimir / Guardar PDF
           </Button>
         </div>
         <p className="text-white/80 mt-2">
@@ -65,14 +70,14 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
 
       {/* Recipient Badge */}
       {client && (
-        <div className="flex justify-end -mt-4 mr-4">
-          <div className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
+        <div className="flex justify-end -mt-4 mr-4 print:mt-2 print:mr-0 print:justify-start">
+          <div className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-md print:bg-gray-200 print:text-blue-700 print:shadow-none">
             Para: {client.name || "Cliente"}
           </div>
         </div>
       )}
 
-      <Card className="border-0 shadow-lg mt-6">
+      <Card className="border-0 shadow-lg mt-6 print:shadow-none print:mt-4">
         <CardContent className="p-6">
           {/* Report Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

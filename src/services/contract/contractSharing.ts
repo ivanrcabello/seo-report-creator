@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { SeoContract } from "@/types/client";
-import { getContract } from "./contractCrud";
 import { mapContractFromDB } from "./contractMappers";
 
 // Fetch a shared contract using its token

@@ -154,6 +154,8 @@ export interface SeoContract {
   signedByClient: boolean;
   signedByProfessional: boolean;
   pdfUrl?: string;
+  shareToken?: string;
+  sharedAt?: string;
 }
 
 export interface ContractSection {

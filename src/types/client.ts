@@ -1,3 +1,4 @@
+
 export interface ClientReport {
   id: string;
   clientId: string;
@@ -58,6 +59,7 @@ export interface Proposal {
   createdAt: string;
   updatedAt: string;
   aiContent?: string;
+  additionalNotes?: string;
 }
 
 export interface Invoice {
@@ -80,7 +82,7 @@ export interface Invoice {
   updatedAt: string;
 }
 
-export interface SeoPack {
+export interface Pack {
   id: string;
   name: string;
   description: string;
@@ -89,6 +91,8 @@ export interface SeoPack {
   isActive: boolean;
   createdAt: string;
 }
+
+export type SeoPack = Pack;
 
 export interface SeoLocalReport {
   id: string;

@@ -1,3 +1,4 @@
+
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Proposal } from "@/types/client";
@@ -214,34 +215,57 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
     }
     
     // Descripción con estilo mejorado
+    let lastY = 230;
+    
     doc.setFontSize(14);
     doc.setFont("Poppins", "bold");
     doc.setTextColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
-    doc.text("Descripción", 14, 230);
+    doc.text("Descripción", 14, lastY);
     
     // Rectángulo decorativo para la descripción
     doc.setFillColor(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]);
-    doc.roundedRect(10, 235, 190, 30, 3, 3, 'F');
+    doc.roundedRect(10, lastY + 5, 190, 30, 3, 3, 'F');
     
     doc.setFont("Poppins", "normal");
     doc.setFontSize(11);
     doc.setTextColor(60, 60, 60);
     
     const splitDescription = doc.splitTextToSize(proposal.description || "", 180);
-    doc.text(splitDescription, 15, 245);
+    doc.text(splitDescription, 15, lastY + 15);
     
-    // Características personalizadas
-    if (proposal.customFeatures && proposal.customFeatures.length > 0) {
-      const startY = 275;
-      
+    lastY += 40;
+    
+    // Notas adicionales si están presentes
+    if (proposal.additionalNotes) {
       doc.setFontSize(14);
       doc.setFont("Poppins", "bold");
       doc.setTextColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
-      doc.text("Características Personalizadas", 14, startY);
+      doc.text("Notas Adicionales", 14, lastY);
+      
+      // Rectángulo decorativo para las notas
+      doc.setFillColor(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]);
+      doc.roundedRect(10, lastY + 5, 190, 30, 3, 3, 'F');
+      
+      doc.setFont("Poppins", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(60, 60, 60);
+      
+      const splitNotes = doc.splitTextToSize(proposal.additionalNotes || "", 180);
+      doc.text(splitNotes, 15, lastY + 15);
+      
+      lastY += 40;
+    }
+    
+    // Características personalizadas
+    if (proposal.customFeatures && proposal.customFeatures.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont("Poppins", "bold");
+      doc.setTextColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
+      doc.text("Características Personalizadas", 14, lastY);
       
       // Rectángulo decorativo para las características
       doc.setFillColor(COLORS.background.light[0], COLORS.background.light[1], COLORS.background.light[2]);
-      doc.roundedRect(10, startY + 5, 190, 10 + (proposal.customFeatures.length * 8), 3, 3, 'F');
+      doc.roundedRect(10, lastY + 5, 190, 10 + (proposal.customFeatures.length * 8), 3, 3, 'F');
       
       // Listar características con check marks
       doc.setFont("Poppins", "normal");
@@ -249,7 +273,7 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
       doc.setTextColor(60, 60, 60);
       
       proposal.customFeatures.forEach((feature, index) => {
-        const y = startY + 15 + (index * 8);
+        const y = lastY + 15 + (index * 8);
         
         // Check mark circle
         doc.setDrawColor(COLORS.primary.purple[0], COLORS.primary.purple[1], COLORS.primary.purple[2]);
@@ -257,6 +281,69 @@ export const generateProposalPdf = async (proposal: Proposal): Promise<Blob> => 
         doc.circle(20, y - 2, 1.5, 'FD');
         
         doc.text(feature, 25, y);
+      });
+      
+      lastY += 15 + (proposal.customFeatures.length * 8);
+    }
+    
+    // Contenido AI si está disponible
+    if (proposal.aiContent) {
+      doc.addPage();
+      
+      // Cabecera con color corporativo para la página de contenido
+      createGradient(0, 0, doc.internal.pageSize.width, 40);
+      
+      // Añadir título en la cabecera
+      doc.setTextColor(COLORS.text.white[0], COLORS.text.white[1], COLORS.text.white[2]);
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(22);
+      doc.text("CONTENIDO DETALLADO", 105, 20, { align: "center" });
+      
+      // Título de sección
+      doc.setTextColor(COLORS.text.dark[0], COLORS.text.dark[1], COLORS.text.dark[2]);
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(16);
+      doc.text(proposal.title, 105, 50, { align: "center" });
+      
+      // Agregar línea decorativa
+      doc.setDrawColor(COLORS.primary.blue[0], COLORS.primary.blue[1], COLORS.primary.blue[2]);
+      doc.setLineWidth(1);
+      doc.line(40, 55, 170, 55);
+      
+      // Convertir markdown a texto plano para PDF (versión simplificada)
+      const markdownToPlainText = (markdown: string) => {
+        return markdown
+          .replace(/#{1,6}\s(.*)/g, "$1") // Eliminar encabezados
+          .replace(/\*\*(.*?)\*\*/g, "$1") // Eliminar negrita
+          .replace(/\*(.*?)\*/g, "$1")     // Eliminar cursiva
+          .replace(/\[(.*?)\]\(.*?\)/g, "$1") // Eliminar enlaces, conservar el texto
+          .replace(/^\s*[\*\-]\s+(.*)/gm, "• $1"); // Convertir listas a puntos
+      };
+      
+      // Texto del contenido
+      doc.setFont("Poppins", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      
+      // Procesar el texto markdown
+      const plainTextContent = markdownToPlainText(proposal.aiContent);
+      const splitContent = doc.splitTextToSize(plainTextContent, 180);
+      
+      // Si el contenido es muy largo, se ajustará a múltiples páginas automáticamente
+      autoTable(doc, {
+        startY: 60,
+        head: [],
+        body: [[splitContent]],
+        theme: "plain",
+        styles: { 
+          fontSize: 10,
+          fontStyle: "normal",
+          font: "Poppins",
+          cellPadding: 4,
+          overflow: 'linebreak',
+          minCellHeight: 8
+        },
+        margin: { left: 15, right: 15 }
       });
     }
     

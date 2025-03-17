@@ -17,7 +17,8 @@ export const mapProposalFromDB = (dbProposal: any): Proposal => {
     expiresAt: dbProposal.expires_at,
     createdAt: dbProposal.created_at,
     updatedAt: dbProposal.updated_at,
-    aiContent: dbProposal.ai_content
+    aiContent: dbProposal.ai_content,
+    additionalNotes: dbProposal.additional_notes
   };
 };
 
@@ -39,6 +40,7 @@ export const mapProposalToDB = (proposal: Partial<Proposal>): any => {
   if (proposal.createdAt !== undefined) result.created_at = proposal.createdAt;
   if (proposal.updatedAt !== undefined) result.updated_at = proposal.updatedAt;
   if (proposal.aiContent !== undefined) result.ai_content = proposal.aiContent;
+  if (proposal.additionalNotes !== undefined) result.additional_notes = proposal.additionalNotes;
   
   return result;
 };

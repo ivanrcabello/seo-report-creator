@@ -24,6 +24,7 @@ const proposalFormSchema = z.object({
   title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
   description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
   customPrice: z.string().optional(),
+  additionalNotes: z.string().optional(),
 });
 
 export default function ProposalForm() {
@@ -62,6 +63,7 @@ export default function ProposalForm() {
       title: "",
       description: "",
       customPrice: "",
+      additionalNotes: "",
     },
   });
 
@@ -86,7 +88,9 @@ export default function ProposalForm() {
         data.packId,
         data.title,
         data.description,
-        customPrice
+        customPrice,
+        undefined,
+        data.additionalNotes
       );
       
       if (proposal) {
@@ -208,6 +212,25 @@ export default function ProposalForm() {
                       <FormControl>
                         <Textarea 
                           placeholder="Descripción detallada de la propuesta" 
+                          className="min-h-[120px]" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Notas adicionales para el contenido AI */}
+                <FormField
+                  control={form.control}
+                  name="additionalNotes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notas adicionales para el contenido AI</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Instrucciones o información adicional que quieras incluir en la propuesta generada por IA" 
                           className="min-h-[120px]" 
                           {...field} 
                         />

@@ -10,7 +10,8 @@ export const createProposalFromPack = async (
   title: string,
   description: string,
   customPrice?: number,
-  customFeatures?: string[]
+  customFeatures?: string[],
+  additionalNotes?: string
 ): Promise<Proposal | undefined> => {
   try {
     const pack = await getSeoPack(packId);
@@ -23,7 +24,8 @@ export const createProposalFromPack = async (
         description,
         status: 'draft',
         customPrice,
-        customFeatures
+        customFeatures,
+        additionalNotes
       };
       
       return addProposal(proposal);

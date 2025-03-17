@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { getProposal, getClient, getSeoPack, sendProposal, acceptProposal, rejectProposal, generatePublicProposalUrl, downloadProposalPdf } from "@/services/proposalService";
+import { getProposal, sendProposal, acceptProposal, rejectProposal, generatePublicProposalUrl } from "@/services/proposalService";
+import { downloadProposalPdf } from "@/services/proposalPdfService";
+import { getClient } from "@/services/clientService";
+import { getSeoPack } from "@/services/packService";
 import { ProposalDetails } from "@/components/proposals/ProposalDetails";
 import { ProposalStatusBadge } from "@/components/proposals/ProposalStatusBadge";
 import { ClientInfoCard } from "@/components/proposals/ClientInfoCard";
@@ -154,7 +157,7 @@ export default function ProposalDetail() {
     
     setLoadingAI(true);
     try {
-      const content = await generateProposalContent(client, pack);
+      const content = await generateProposalContent(client, pack, proposal.additionalNotes);
       if (!content) {
         throw new Error("No se pudo generar el contenido");
       }
@@ -332,6 +335,16 @@ export default function ProposalDetail() {
                     <h3 className="text-sm font-medium text-gray-500 mb-2">Descripción</h3>
                     <p className="text-gray-700">{proposal.description}</p>
                   </div>
+                  
+                  {proposal.additionalNotes && (
+                    <>
+                      <Separator className="my-6" />
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">Notas adicionales</h3>
+                        <p className="text-gray-700">{proposal.additionalNotes}</p>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
               
@@ -348,6 +361,10 @@ export default function ProposalDetail() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
+                        <p className="text-sm text-gray-500 mb-4">
+                          Utiliza la IA para generar una propuesta detallada basada en el cliente y paquete seleccionados.
+                          {proposal.additionalNotes && " Se incluirán las notas adicionales que has proporcionado."}
+                        </p>
                         <Button 
                           onClick={handleGenerateAIContent}
                           disabled={loadingAI}

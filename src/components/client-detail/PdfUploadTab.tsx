@@ -6,6 +6,8 @@ interface PdfUploadTabProps {
 }
 
 export const PdfUploadTab = ({ clientId }: PdfUploadTabProps) => {
+  console.log("PdfUploadTab rendering with clientId:", clientId);
+  
   return (
     <ClientDocuments 
       clientId={clientId}

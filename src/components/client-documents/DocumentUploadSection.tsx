@@ -2,8 +2,9 @@
 import React from "react";
 import { FileUploader } from "@/components/FileUploader";
 import { ClientDocument } from "@/types/client";
-import { FileText } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 
 interface DocumentUploadSectionProps {
   clientId: string;
@@ -25,15 +26,40 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({
   const handleFileUpload = async (file: File, content: string, type: "pdf" | "image" | "doc" | "text") => {
     setIsUploading(true);
     try {
-      const fileURL = URL.createObjectURL(file);
+      console.log("Uploading file:", file.name, "for client:", clientId);
+      
+      // 1. Upload file to Supabase storage
+      const fileName = `${uuidv4()}-${file.name}`;
+      const filePath = `client-documents/${clientId}/${fileName}`;
+      
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+      
+      if (storageError) {
+        console.error("Storage upload error:", storageError);
+        throw new Error("Error al subir el archivo a almacenamiento");
+      }
+      
+      // 2. Get public URL
+      const { data: publicUrlData } = await supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+      
+      const fileUrl = publicUrlData?.publicUrl;
+      if (!fileUrl) {
+        throw new Error("No se pudo obtener URL pública del archivo");
+      }
+      
+      console.log("File uploaded successfully:", fileUrl);
 
       const newDocument: Omit<ClientDocument, "id"> = {
         clientId: clientId,
         name: file.name,
         type: type,
-        url: fileURL,
+        url: fileUrl,
         uploadDate: new Date().toISOString(),
-        analyzedStatus: "pending",
+        analyzedStatus: content ? "analyzed" : "pending",
         content: content,
       };
 

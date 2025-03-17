@@ -1,15 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { getClientDocuments, addDocument, deleteDocument, getFileType, extractFileContent } from '@/services/documentService';
+import { getClientDocuments, addDocument, deleteDocument } from '@/services/documentService';
 import { ClientDocument } from '@/types/client';
-import { DocumentList } from './DocumentList';
-import { DocumentUploadSection } from './DocumentUploadSection';
-import { NotesSection } from './NotesSection';
-import { GenerateReportButton } from './GenerateReportButton';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
+import { DocumentList } from './DocumentList';
+import { DocumentUploadSection } from './DocumentUploadSection';
+import { NotesSection } from './NotesSection';
+import { GenerateReportButton } from './GenerateReportButton';
 
 interface ClientDocumentsProps {
   clientId: string;
@@ -24,6 +24,7 @@ export const ClientDocuments = ({ clientId, onNoteAdded, onGenerateReport }: Cli
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [newNote, setNewNote] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   // Load documents
@@ -97,18 +98,28 @@ export const ClientDocuments = ({ clientId, onNoteAdded, onGenerateReport }: Cli
       console.log("File uploaded successfully:", fileUrl);
       
       // 3. Extract content for analysis
-      const fileType = getFileType(file);
       let content = '';
+      let fileType = "text";
       
-      if (fileType === 'pdf') {
-        content = await extractFileContent(file);
+      if (file.type === "application/pdf") {
+        fileType = "pdf";
+        try {
+          const { extractFileContent } = await import('@/services/documentService');
+          content = await extractFileContent(file);
+        } catch (err) {
+          console.error("Error extracting content:", err);
+        }
+      } else if (file.type.startsWith("image/")) {
+        fileType = "image";
+      } else if (file.type === "application/msword" || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        fileType = "doc";
       }
       
       // 4. Add document to database
       const newDocument: Omit<ClientDocument, "id"> = {
         clientId,
         name: file.name,
-        type: fileType,
+        type: fileType as "pdf" | "image" | "doc" | "text",
         url: fileUrl,
         uploadDate: new Date().toISOString(),
         analyzedStatus: content ? 'analyzed' : 'pending',
@@ -157,11 +168,11 @@ export const ClientDocuments = ({ clientId, onNoteAdded, onGenerateReport }: Cli
     }
   };
 
-  const handleDocumentSelect = (documentId: string, isSelected: boolean) => {
-    if (isSelected) {
-      setSelectedDocuments([...selectedDocuments, documentId]);
-    } else {
+  const toggleDocumentSelection = (documentId: string) => {
+    if (selectedDocuments.includes(documentId)) {
       setSelectedDocuments(selectedDocuments.filter(id => id !== documentId));
+    } else {
+      setSelectedDocuments([...selectedDocuments, documentId]);
     }
   };
 
@@ -212,26 +223,39 @@ export const ClientDocuments = ({ clientId, onNoteAdded, onGenerateReport }: Cli
 
   return (
     <div className="space-y-6">
-      <DocumentUploadSection onFileUpload={handleFileUpload} isUploading={uploading} />
+      <DocumentUploadSection 
+        clientId={clientId}
+        isUploading={uploading}
+        documents={documents}
+        setDocuments={setDocuments}
+        setIsUploading={setUploading}
+      />
       
       <DocumentList 
-        documents={documents} 
-        onDelete={handleDocumentDelete}
-        onSelect={handleDocumentSelect}
+        documents={documents}
         selectedDocuments={selectedDocuments}
+        isLoading={loading}
+        toggleDocumentSelection={toggleDocumentSelection}
+        setSelectedDocuments={setSelectedDocuments}
+        setDocuments={setDocuments}
       />
       
       <NotesSection 
-        notes={notes} 
-        newNote={newNote} 
-        onNoteChange={setNewNote} 
-        onAddNote={handleAddNote} 
-        onRemoveNote={handleRemoveNote} 
+        notes={notes}
+        newNote={newNote}
+        onNoteChange={setNewNote}
+        onAddNote={handleAddNote}
+        onRemoveNote={handleRemoveNote}
       />
       
       <GenerateReportButton 
-        disabled={selectedDocuments.length === 0} 
-        onClick={handleGenerateReport} 
+        selectedDocuments={selectedDocuments}
+        documents={documents}
+        setDocuments={setDocuments}
+        isGenerating={isGenerating}
+        setIsGenerating={setIsGenerating}
+        setSelectedDocuments={setSelectedDocuments}
+        onGenerateReport={onGenerateReport}
       />
     </div>
   );

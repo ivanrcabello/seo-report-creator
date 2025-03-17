@@ -61,6 +61,7 @@ serve(async (req) => {
 
     console.log("Datos de auditoría recibidos:", JSON.stringify(auditResult).slice(0, 200) + "...");
     console.log("Template type:", templateType);
+    console.log("Company name:", auditResult.companyName);
 
     // Preparar el prompt según el tipo de informe
     let systemPrompt = "";
@@ -70,7 +71,7 @@ serve(async (req) => {
 Genera un informe SEO detallado en español basado en los datos proporcionados.
 El informe debe tener un formato profesional y estar estructurado en estas secciones:
 
-1. Introducción personalizada
+1. Introducción personalizada para ${auditResult.companyName || 'el cliente'}
 2. Análisis de la situación actual con métricas
 3. Análisis de palabras clave
 4. SEO técnico
@@ -82,7 +83,7 @@ El informe debe tener un formato profesional y estar estructurado en estas secci
 Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y profesional.`;
     } else if (templateType === 'local') {
       systemPrompt = `Eres un consultor de SEO Local experto especializado en crear informes profesionales para clientes.
-Genera un informe de SEO Local detallado en español basado en los datos proporcionados.
+Genera un informe de SEO Local detallado en español basado en los datos proporcionados para ${auditResult.companyName || 'el cliente'}.
 El informe debe tener un formato profesional y estar estructurado en estas secciones:
 
 1. Introducción personalizada
@@ -97,7 +98,7 @@ El informe debe tener un formato profesional y estar estructurado en estas secci
 Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y profesional.`;
     } else if (templateType === 'technical') {
       systemPrompt = `Eres un consultor SEO técnico experto especializado en crear informes profesionales para clientes.
-Genera un informe de SEO técnico detallado en español basado en los datos proporcionados.
+Genera un informe de SEO técnico detallado en español basado en los datos proporcionados para ${auditResult.companyName || 'el cliente'}.
 El informe debe tener un formato profesional y estar estructurado en estas secciones:
 
 1. Introducción personalizada
@@ -112,7 +113,7 @@ El informe debe tener un formato profesional y estar estructurado en estas secci
 Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y profesional.`;
     } else if (templateType === 'performance') {
       systemPrompt = `Eres un consultor de rendimiento web experto especializado en crear informes profesionales para clientes.
-Genera un informe de rendimiento web detallado en español basado en los datos proporcionados.
+Genera un informe de rendimiento web detallado en español basado en los datos proporcionados para ${auditResult.companyName || 'el cliente'}.
 El informe debe tener un formato profesional y estar estructurado en estas secciones:
 
 1. Introducción personalizada
@@ -141,7 +142,7 @@ Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y p
         { role: 'system', content: systemPrompt },
         { 
           role: 'user', 
-          content: `Genera un informe profesional y detallado basado en estos datos de auditoría: ${JSON.stringify(auditResult, null, 2)}` 
+          content: `Genera un informe profesional y detallado basado en estos datos de auditoría para ${auditResult.companyName || 'el cliente'}: ${JSON.stringify(auditResult, null, 2)}` 
         }
       ],
       temperature: 0.7,
@@ -150,6 +151,7 @@ Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y p
 
     const content = chatCompletion.choices[0].message.content;
     console.log("Contenido generado exitosamente, longitud:", content?.length);
+    console.log("Primeros 100 caracteres:", content?.substring(0, 100));
 
     return new Response(
       JSON.stringify({ content }),

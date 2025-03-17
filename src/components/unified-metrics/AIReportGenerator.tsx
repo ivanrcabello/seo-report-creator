@@ -1,7 +1,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, FileText, AlertCircle, Clock } from "lucide-react";
+import { 
+  Sparkles, 
+  FileText, 
+  AlertCircle, 
+  Clock, 
+  Settings,
+  MessageSquare
+} from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { getPageSpeedReport } from "@/services/pageSpeedService";
@@ -11,6 +18,24 @@ import { getClientKeywords } from "@/services/clientKeywordsService";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { getClientDocuments } from "@/services/documentService";
 import { generateAndSaveOpenAIReport } from "@/services/reports/openAIReportService";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AIReportGeneratorProps {
   clientId: string;
@@ -20,9 +45,12 @@ interface AIReportGeneratorProps {
 export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [reportType, setReportType] = useState<'seo' | 'local' | 'technical' | 'performance'>('seo');
+  const [showCustomPromptDialog, setShowCustomPromptDialog] = useState(false);
   const navigate = useNavigate();
 
-  const generateComprehensiveReport = async () => {
+  const generateComprehensiveReport = async (useCustomPrompt = false) => {
     try {
       console.log("Starting comprehensive report generation for client:", clientId, clientName);
       setIsGenerating(true);
@@ -181,7 +209,8 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
           name: doc.name,
           type: doc.type,
           content: doc.content || ""
-        }))
+        })),
+        customPrompt: useCustomPrompt ? customPrompt : undefined
       };
       
       setProgress(80);
@@ -191,6 +220,8 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       console.log("- URL: ", auditResult.url);
       console.log("- Company name: ", auditResult.companyName);
       console.log("- SEO score: ", auditResult.seoScore);
+      console.log("- Using custom prompt: ", useCustomPrompt);
+      console.log("- Report type: ", reportType);
       
       const report = await generateAndSaveOpenAIReport(
         clientId,
@@ -221,6 +252,7 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       setIsGenerating(false);
     } finally {
       setIsGenerating(false);
+      setShowCustomPromptDialog(false);
     }
   };
   
@@ -247,10 +279,10 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         </div>
       )}
       
-      <div className="flex justify-center">
+      <div className="flex flex-col sm:flex-row justify-center gap-3">
         <Button
           size="lg"
-          onClick={generateComprehensiveReport}
+          onClick={() => generateComprehensiveReport(false)}
           disabled={isGenerating}
           className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
@@ -267,6 +299,86 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
             </>
           )}
         </Button>
+        
+        <Dialog open={showCustomPromptDialog} onOpenChange={setShowCustomPromptDialog}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              disabled={isGenerating}
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-5 w-5" />
+              <MessageSquare className="h-5 w-5" />
+              Personalizar Prompt
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Personalizar Prompt para OpenAI</DialogTitle>
+              <DialogDescription>
+                Puedes personalizar el prompt que se enviará a OpenAI para generar un informe más específico.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="report-type">Tipo de Informe</Label>
+                <Select 
+                  value={reportType} 
+                  onValueChange={(value) => setReportType(value as 'seo' | 'local' | 'technical' | 'performance')}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el tipo de informe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="seo">SEO General</SelectItem>
+                    <SelectItem value="local">SEO Local</SelectItem>
+                    <SelectItem value="technical">SEO Técnico</SelectItem>
+                    <SelectItem value="performance">Rendimiento Web</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="custom-prompt">Instrucciones Adicionales</Label>
+                <Textarea
+                  id="custom-prompt"
+                  placeholder="Escribe instrucciones específicas para la generación del informe..."
+                  rows={6}
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  className="resize-none"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCustomPromptDialog(false)}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => generateComprehensiveReport(true)}
+                disabled={isGenerating}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                {isGenerating ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generar con Prompt Personalizado
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

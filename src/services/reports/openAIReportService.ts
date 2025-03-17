@@ -21,7 +21,10 @@ export const generateAndSaveOpenAIReport = async (
 ): Promise<ClientReport | null> => {
   try {
     console.log("Starting generateAndSaveOpenAIReport for client:", clientId, clientName);
-    toast.loading("Generando informe con OpenAI...");
+    console.log("Client name:", clientName);
+    console.log("Document IDs:", documentIds);
+    
+    const toastId = toast.loading("Generando informe con OpenAI...");
     
     // Ensure auditData has the client name
     const enhancedAuditData = {
@@ -45,7 +48,7 @@ export const generateAndSaveOpenAIReport = async (
     const reportContent = await generateOpenAIReport(enhancedAuditData, reportType);
     
     if (!reportContent) {
-      toast.dismiss();
+      toast.dismiss(toastId);
       toast.error("No se pudo generar el contenido del informe");
       return null;
     }
@@ -62,17 +65,18 @@ export const generateAndSaveOpenAIReport = async (
       documentIds
     );
     
-    toast.dismiss();
+    toast.dismiss(toastId);
     
     if (savedReport) {
+      console.log("Report saved successfully:", savedReport.id);
       toast.success("Informe generado y guardado correctamente");
       return savedReport;
     } else {
+      console.error("Failed to save report");
       toast.error("Error guardando el informe");
       return null;
     }
   } catch (error) {
-    toast.dismiss();
     console.error("Error in generateAndSaveOpenAIReport:", error);
     toast.error("Error en el proceso de generación del informe: " + 
       (error instanceof Error ? error.message : "Error desconocido"));

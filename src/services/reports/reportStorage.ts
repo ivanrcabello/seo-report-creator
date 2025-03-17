@@ -54,7 +54,7 @@ export const saveGeminiReport = async (
       analytics_data: {
         auditResult: serializableAuditData,
         generatedAt: new Date().toISOString(),
-        generatedBy: "openai"  // Cambiado de "gemini" a "openai"
+        generatedBy: "openai"
       },
       document_ids: documentIds,
       status: reportStatus

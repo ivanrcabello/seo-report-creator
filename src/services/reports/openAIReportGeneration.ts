@@ -50,8 +50,10 @@ export const generateOpenAIReport = async (
       throw new Error("No se recibió contenido de la API de OpenAI");
     }
     
-    console.log("Report generated successfully");
+    console.log("Report generated successfully with OpenAI");
     console.log("Content length:", data.content.length);
+    console.log("Content preview:", data.content.substring(0, 100) + "...");
+    
     return data.content;
   } catch (error) {
     console.error("Error in generateOpenAIReport:", error);

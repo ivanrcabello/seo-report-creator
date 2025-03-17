@@ -23,12 +23,12 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
   const navigate = useNavigate();
 
   const generateComprehensiveReport = async () => {
-    console.log("Starting comprehensive report generation for client:", clientId, clientName);
-    setIsGenerating(true);
-    setProgress(10);
-    const toastId = toast.loading("Preparando datos para generar informe...");
-    
     try {
+      console.log("Starting comprehensive report generation for client:", clientId, clientName);
+      setIsGenerating(true);
+      setProgress(10);
+      const toastId = toast.loading("Preparando datos para generar informe...");
+      
       if (!clientId || !clientName) {
         throw new Error("Se requiere ID y nombre del cliente para generar el informe");
       }
@@ -76,7 +76,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         documents: documents.length
       });
       
-      // Aunque no tengamos datos completos, procedemos con lo que tenemos
       toast.dismiss(toastId);
       toast.loading("Generando informe con IA de OpenAI...");
       setProgress(60);
@@ -217,8 +216,9 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       }
     } catch (error) {
       console.error("Error generando informe completo:", error);
-      toast.dismiss(toastId);
+      toast.dismiss();
       toast.error(`Error al generar el informe: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      setIsGenerating(false);
     } finally {
       setIsGenerating(false);
     }

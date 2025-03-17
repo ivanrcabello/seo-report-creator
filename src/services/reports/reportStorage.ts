@@ -42,7 +42,7 @@ export const saveGeminiReport = async (
       reportType = 'performance';
     }
     
-    // Define the status with the correct type - this is the fix for the TypeScript error
+    // Define the status with the correct type for TypeScript
     const reportStatus: 'draft' | 'published' | 'shared' = 'draft';
     
     const reportData = {

@@ -22,10 +22,14 @@ export const getFilteredReports = async (clientId?: string, isAdmin = false): Pr
       // Admins can see all reports or filter by clientId if provided
       if (clientId) {
         console.log("Admin filtering reports for specific client:", clientId);
-        return await getClientReports(clientId);
+        const reports = await getClientReports(clientId);
+        console.log("Admin: Got reports for client", clientId, "reports count:", reports.length);
+        return reports;
       } else {
         console.log("Admin getting all reports");
-        return await getAllReports();
+        const reports = await getAllReports();
+        console.log("Admin: Got all reports, count:", reports.length);
+        return reports;
       }
     } else {
       // Regular users can only see their own reports
@@ -34,7 +38,9 @@ export const getFilteredReports = async (clientId?: string, isAdmin = false): Pr
         return [];
       }
       console.log("Regular user getting own reports:", clientId);
-      return await getClientReports(clientId);
+      const reports = await getClientReports(clientId);
+      console.log("User: Got reports, count:", reports.length);
+      return reports;
     }
   } catch (error) {
     console.error("Error getting filtered reports:", error);

@@ -27,9 +27,16 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
       try {
         console.log("Fetching invoices for client:", clientId);
         
-        // For non-admin users, ensure they only see their own invoices
-        const effectiveClientId = !isAdmin && user?.id ? user.id : clientId;
-        const data = await getClientInvoices(effectiveClientId);
+        // SECURITY FIX: Only fetch invoices that belong to the current user unless admin
+        // Admin can see specific client invoices, but regular user can only see their own
+        if (!isAdmin && user?.id !== clientId) {
+          console.log("Security check: Non-admin trying to access another user's invoices");
+          setInvoices([]);
+          toast.error("No tienes permiso para ver estas facturas");
+          return;
+        }
+        
+        const data = await getClientInvoices(clientId);
         
         console.log("Invoices data:", data);
         setInvoices(data);
@@ -50,6 +57,7 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
 
   // Custom back navigation for client view
   const handleViewAllInvoices = () => {
+    // SECURITY FIX: Always navigate to the correct user's invoices
     if (!isAdmin && user?.id) {
       // If client, navigate to their dashboard with invoices tab selected
       navigate(`/clients/${user.id}?tab=invoices`);

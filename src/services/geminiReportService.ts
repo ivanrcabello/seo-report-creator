@@ -4,7 +4,7 @@
 // TODO: Remove this file in future updates
 
 export { 
-  generateAndSaveReport as generateAndSaveGeminiReport,
+  generateAndSaveOpenAIReport as generateAndSaveGeminiReport,
 } from "./reports/openAIReportService";
 
 // For backward compatibility
@@ -17,4 +17,3 @@ export const saveGeminiReport = () => {
   console.warn("Gemini is deprecated, using OpenAI instead");
   return { success: false, error: "Gemini is deprecated" };
 };
-

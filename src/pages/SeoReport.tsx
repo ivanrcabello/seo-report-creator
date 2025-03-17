@@ -61,7 +61,6 @@ const SeoReport = () => {
           console.log("SEO report loaded successfully:", reportData.id, reportData.title);
           setReport(reportData);
           
-          // If the report has audit results, use those
           if (reportData.analyticsData?.auditResult) {
             console.log("Report has audit results");
             setAuditResult(reportData.analyticsData.auditResult);
@@ -87,13 +86,11 @@ const SeoReport = () => {
   };
 
   useEffect(() => {
-    // Get audit result from location state
     if (location.state?.auditResult) {
       console.log("Using audit result from location state");
       setAuditResult(location.state.auditResult);
     }
     
-    // If we have a report ID, fetch the report
     fetchReport();
   }, [location, id]);
 
@@ -124,9 +121,8 @@ const SeoReport = () => {
     toast.loading("Generando informe con Gemini...");
     
     try {
-      const content = await generateGeminiReport(auditResult);
+      const content = await generateGeminiReport();
       if (content && report) {
-        // Update the report with the new content
         const updatedReport = {
           ...report,
           content: content,
@@ -152,7 +148,6 @@ const SeoReport = () => {
     try {
       await deleteReport(id);
       toast.success("Informe eliminado correctamente");
-      // Navigate back to reports list or client page
       navigate(-1);
     } catch (error) {
       console.error("Error deleting report:", error);

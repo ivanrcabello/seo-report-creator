@@ -4,11 +4,10 @@ export * from './reportMappers';
 export * from './reportCrud';
 export * from './reportSharing';
 export * from './reportAI';
-export * from './reportGeneration';
 export * from './reportStorage';
 export * from './openAIReportGeneration';
 export * from './openAIReportService';
 
-// Export Gemini for backward compatibility but mark as deprecated
-export * from './geminiReportService';
-
+// We don't need to export reportGeneration directly as it causes a conflict with generateGeminiReport
+// We'll export Gemini-related functionality through a dedicated path for backward compatibility
+export * from '../geminiReportService';

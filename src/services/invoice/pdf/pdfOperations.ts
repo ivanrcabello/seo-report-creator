@@ -113,13 +113,13 @@ export const shareInvoice = async (invoiceId: string): Promise<{ url: string } |
     const shareToken = uuidv4();
     
     // Update invoice with share token and timestamp
-    // Use type assertion to bypass TypeScript checking for fields not in the type
+    // Use an explicit type cast to avoid TypeScript issues
     const { data, error } = await supabase
       .from('invoices')
       .update({
         shared_at: new Date().toISOString(),
         share_token: shareToken
-      } as any)
+      } as any)  // Use 'as any' to bypass TypeScript checking
       .eq('id', invoiceId)
       .select();
     
@@ -197,22 +197,25 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{ invo
       return null;
     }
 
-    // Map company settings - only include fields that exist in CompanySettings type
+    // Create a type-safe version of company settings
+    const dbCompanyData = companyResponse.data;
+    
+    // Map company settings with defined properties
     const company: CompanySettings = {
-      id: companyResponse.data.id,
-      companyName: companyResponse.data.company_name,
-      taxId: companyResponse.data.tax_id,
-      address: companyResponse.data.address,
-      phone: companyResponse.data.phone || undefined,
-      email: companyResponse.data.email || undefined,
-      logoUrl: companyResponse.data.logo_url || undefined,
-      bankAccount: companyResponse.data.bank_account || undefined,
-      createdAt: companyResponse.data.created_at,
-      updatedAt: companyResponse.data.updated_at,
-      // Fields that might not exist in the database
+      id: dbCompanyData.id,
+      companyName: dbCompanyData.company_name,
+      taxId: dbCompanyData.tax_id,
+      address: dbCompanyData.address,
+      phone: dbCompanyData.phone || undefined,
+      email: dbCompanyData.email || undefined,
+      logoUrl: dbCompanyData.logo_url || undefined,
+      // Handle fields that might not exist in the database
       primaryColor: undefined,
       secondaryColor: undefined,
-      accentColor: undefined
+      accentColor: undefined,
+      bankAccount: dbCompanyData.bank_account || undefined,
+      createdAt: dbCompanyData.created_at,
+      updatedAt: dbCompanyData.updated_at
     };
 
     return { invoice, client, company };

@@ -1,10 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Invoice, CompanySettings } from "@/types/invoice";
 import { Client } from "@/types/client";
 import { getInvoiceByShareToken } from "@/services/invoiceService";
-import { getClient } from "@/services/clientService";
-import { getCompanySettings } from "@/services/settingsService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, FileSpreadsheet, Building, User } from "lucide-react";
@@ -41,6 +40,7 @@ export default function InvoiceShare() {
         return;
       }
       
+      // Correctly set each state individually
       setInvoice(result.invoice);
       setClient(result.client);
       setCompany(result.company);

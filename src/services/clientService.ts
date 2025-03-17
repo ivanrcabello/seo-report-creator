@@ -1,4 +1,3 @@
-
 import { Client } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,7 +15,12 @@ const mapClientFromDB = (client: any): Client => ({
   documents: [],
   analyticsConnected: client.analytics_connected,
   searchConsoleConnected: client.search_console_connected,
-  isActive: client.is_active
+  isActive: client.is_active,
+  website: client.website,
+  sector: client.sector,
+  hostingDetails: client.hosting_details,
+  wordpressAccess: client.wordpress_access,
+  projectPasswords: client.project_passwords
 });
 
 // Función para convertir datos de la aplicación al formato de Supabase
@@ -28,7 +32,12 @@ const mapClientToDB = (client: Partial<Client>) => ({
   notes: client.notes,
   analytics_connected: client.analyticsConnected,
   search_console_connected: client.searchConsoleConnected,
-  is_active: client.isActive
+  is_active: client.isActive,
+  website: client.website,
+  sector: client.sector,
+  hosting_details: client.hostingDetails,
+  wordpress_access: client.wordpressAccess,
+  project_passwords: client.projectPasswords
 });
 
 // Client CRUD operations

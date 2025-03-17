@@ -399,39 +399,54 @@ export type Database = {
           company: string | null
           created_at: string
           email: string
+          hosting_details: Json | null
           id: string
           is_active: boolean | null
           last_report: string | null
           name: string
           notes: string[] | null
           phone: string | null
+          project_passwords: Json | null
           search_console_connected: boolean | null
+          sector: string | null
+          website: string | null
+          wordpress_access: Json | null
         }
         Insert: {
           analytics_connected?: boolean | null
           company?: string | null
           created_at?: string
           email: string
+          hosting_details?: Json | null
           id?: string
           is_active?: boolean | null
           last_report?: string | null
           name: string
           notes?: string[] | null
           phone?: string | null
+          project_passwords?: Json | null
           search_console_connected?: boolean | null
+          sector?: string | null
+          website?: string | null
+          wordpress_access?: Json | null
         }
         Update: {
           analytics_connected?: boolean | null
           company?: string | null
           created_at?: string
           email?: string
+          hosting_details?: Json | null
           id?: string
           is_active?: boolean | null
           last_report?: string | null
           name?: string
           notes?: string[] | null
           phone?: string | null
+          project_passwords?: Json | null
           search_console_connected?: boolean | null
+          sector?: string | null
+          website?: string | null
+          wordpress_access?: Json | null
         }
         Relationships: []
       }

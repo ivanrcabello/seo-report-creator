@@ -1,4 +1,3 @@
-
 export interface ClientReport {
   id: string;
   clientId: string;
@@ -31,6 +30,11 @@ export interface Client {
   analyticsConnected?: boolean;
   searchConsoleConnected?: boolean;
   isActive?: boolean;
+  website?: string;
+  sector?: string;
+  hostingDetails?: Record<string, any>;
+  wordpressAccess?: Record<string, any>;
+  projectPasswords?: Record<string, any>;
 }
 
 export interface ClientDocument {

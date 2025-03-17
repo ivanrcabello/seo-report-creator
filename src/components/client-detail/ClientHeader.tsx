@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Client } from "@/types/client";
-import { ArrowLeft, Edit, Trash2, Mail, Phone, Building, Calendar, Power } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Mail, Phone, Building, Calendar, Power, Globe, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +68,25 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                   <div className="flex items-center gap-2">
                     <Building className="h-4 w-4 text-seo-blue" />
                     <span>{client.company}</span>
+                  </div>
+                )}
+                {client.website && (
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-seo-blue" />
+                    <a 
+                      href={client.website.startsWith('http') ? client.website : `https://${client.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {client.website}
+                    </a>
+                  </div>
+                )}
+                {client.sector && (
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-seo-blue" />
+                    <span>{client.sector}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">

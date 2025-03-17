@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SeoContract, Client } from "@/types/client";
-import { signContract, generateAndSaveContractPDF, deleteContract } from "@/services/contractService";
+import { signContract, generateAndSaveContractPDF, deleteContract } from "@/services/contract";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Card,

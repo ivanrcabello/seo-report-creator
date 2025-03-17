@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getContract, getClientContracts } from "@/services/contractService";
+import { getContract, getClientContracts } from "@/services/contract";
 import { getClient } from "@/services/clientService";
 import { SeoContract, Client } from "@/types/client";
 import { ContractDetail as ContractDetailComponent } from "@/components/contracts/ContractDetail";

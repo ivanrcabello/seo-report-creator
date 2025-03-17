@@ -8,7 +8,7 @@ import {
   createContract, 
   updateContract, 
   createDefaultContractSections 
-} from "@/services/contractService";
+} from "@/services/contract";
 import { getCompanySettings } from "@/services/settingsService";
 import { useToast } from "@/components/ui/use-toast";
 import { useContractForm } from "./ContractFormContext";

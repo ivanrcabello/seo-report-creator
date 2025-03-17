@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SeoContract } from "@/types/client";
-import { getClientContracts } from "@/services/contractService";
+import { getClientContracts } from "@/services/contract";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";

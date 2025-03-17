@@ -1,7 +1,11 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SeoContract } from "@/types/client";
+import { 
+  deleteContract, 
+  generateAndSaveContractPDF, 
+  signContract 
+} from "@/services/contract";
 import { 
   Table, 
   TableBody, 
@@ -37,7 +41,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { deleteContract, generateAndSaveContractPDF, signContract } from "@/services/contractService";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -85,11 +88,9 @@ export const ContractsList = ({
       let pdfUrl = contract.pdfUrl;
       
       if (!pdfUrl) {
-        // Generate PDF if not already available
         pdfUrl = await generateAndSaveContractPDF(contract.id);
       }
       
-      // Open the PDF in a new tab
       window.open(pdfUrl, '_blank');
       
       toast({

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { SeoContract } from "@/types/client";
-import { getContracts } from "@/services/contractService";
+import { getContracts } from "@/services/contract";
 import { ContractsList } from "@/components/contracts/ContractsList";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

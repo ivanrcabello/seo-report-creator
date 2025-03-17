@@ -14,14 +14,11 @@ export const shareInvoice = async (invoiceId: string): Promise<{ url: string } |
     // Generate a unique share token
     const shareToken = uuidv4();
     
-    // Update the invoice with the share token
-    const { error } = await supabase
-      .from('invoice_shares')
-      .insert({
-        invoice_id: invoiceId,
-        share_token: shareToken,
-        shared_at: new Date().toISOString()
-      });
+    // Create a custom SQL query to insert into invoice_shares
+    const { error } = await supabase.rpc('create_invoice_share', {
+      p_invoice_id: invoiceId,
+      p_share_token: shareToken
+    });
     
     if (error) {
       console.error("Error sharing invoice:", error);
@@ -49,14 +46,12 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{
   company: CompanySettings | null;
 }> => {
   try {
-    // Get the invoice_id from the share token
-    const { data: shareData, error: shareError } = await supabase
-      .from('invoice_shares')
-      .select('invoice_id')
-      .eq('share_token', shareToken)
-      .single();
+    // Get the invoice_id from the share token using a stored procedure
+    const { data: shareData, error: shareError } = await supabase.rpc('get_invoice_by_share_token', {
+      p_share_token: shareToken
+    });
     
-    if (shareError || !shareData) {
+    if (shareError || !shareData || !shareData.invoice_id) {
       console.error("Error getting shared invoice:", shareError);
       return { invoice: null, client: null, company: null };
     }
@@ -88,13 +83,14 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{
         client = {
           id: clientData.id,
           name: clientData.name,
+          company: clientData.company,
           email: clientData.email,
           phone: clientData.phone,
-          address: clientData.address,
           taxId: clientData.tax_id,
           website: clientData.website,
+          isActive: clientData.is_active,
           createdAt: clientData.created_at,
-          updatedAt: clientData.updated_at
+          notes: clientData.notes
         };
       }
     }
@@ -115,10 +111,6 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{
         phone: companyData.phone,
         email: companyData.email,
         logoUrl: companyData.logo_url,
-        primaryColor: companyData.primary_color,
-        secondaryColor: companyData.secondary_color,
-        accentColor: companyData.accent_color,
-        bankAccount: companyData.bank_account || undefined,
         createdAt: companyData.created_at,
         updatedAt: companyData.updated_at
       };

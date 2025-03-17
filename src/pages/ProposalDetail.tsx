@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { getProposal, sendProposal, acceptProposal, rejectProposal, generatePublicProposalUrl } from "@/services/proposalService";
+import { getProposal, sendProposal, acceptProposal, rejectProposal, generatePublicProposalUrl, updateProposal } from "@/services/proposalService";
 import { downloadProposalPdf } from "@/services/proposalPdfService";
 import { getClient } from "@/services/clientService";
 import { getSeoPack } from "@/services/packService";
@@ -147,19 +147,22 @@ export default function ProposalDetail() {
     setLoadingAI(true);
     try {
       const content = await generateProposalContent(client, pack, proposal.additionalNotes);
+      
       if (!content) {
         throw new Error("No se pudo generar el contenido");
       }
       
-      await fetch(`/api/proposals/${proposalId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ aiContent: content })
-      });
-      
-      toast.success("Contenido generado correctamente");
-      refetchProposal();
-      setActiveTab("ai-content");
+      if (proposal.id) {
+        const updatedProposal = {
+          ...proposal,
+          aiContent: content
+        };
+        
+        await updateProposal(updatedProposal);
+        toast.success("Contenido AI generado correctamente");
+        refetchProposal();
+        setActiveTab("ai-content");
+      }
     } catch (error) {
       console.error("Error al generar contenido AI:", error);
       toast.error("Error al generar contenido con IA");
@@ -313,7 +316,7 @@ export default function ProposalDetail() {
                 <CardContent>
                   <ProposalDetails 
                     proposal={proposal} 
-                    client={client!} 
+                    client={client} 
                     proposalExpired={proposalExpired}
                   />
                   

@@ -1,87 +1,50 @@
 
-// OpenAI API configuration
-import OpenAI from "openai";
-import { getApiKeys } from "@/services/settingsService";
-import { toast } from "sonner";
+import { OpenAI } from "openai";
+import { getSettings } from "../settingsService";
 
-// Common OpenAI API call function
-export async function callOpenAI(
-  prompt: string, 
-  systemPrompt: string,
-  model: string = "gpt-4o",
-  temperature: number = 0.7,
-  maxTokens: number = 3000
-): Promise<string | null> {
+/**
+ * Llama a la API de OpenAI para generar contenido
+ * @param prompt El texto del prompt a enviar
+ * @param systemPrompt Instrucciones de sistema para el modelo
+ * @returns El texto generado o null si hay error
+ */
+export async function callOpenAI(prompt: string, systemPrompt: string = ""): Promise<string | null> {
+  console.info("Calling OpenAI API with prompt:", prompt.substring(0, 50) + "...");
+  
   try {
-    console.log("Calling OpenAI API with prompt:", prompt.substring(0, 50) + "...");
+    // Obtener las API keys desde la base de datos
+    console.info("Fetching API keys from the database");
+    const settings = await getSettings();
     
-    // Get API key from the database
-    const apiKeys = await getApiKeys();
-    if (!apiKeys || !apiKeys.openaiApiKey) {
+    if (!settings || !settings.openaiApiKey) {
       console.error("No OpenAI API key found in settings");
-      toast.error("No se ha configurado la clave API de OpenAI. Por favor, configúrela en la sección de Configuración > API Keys.");
-      throw new Error("No se ha configurado la clave API de OpenAI. Por favor, configúrela en la sección de Configuración > API Keys.");
+      return null;
     }
-
-    console.log("Creating OpenAI instance with API key");
     
-    // Create OpenAI instance with the stored API key
-    const openai = new OpenAI({
-      apiKey: apiKeys.openaiApiKey,
+    console.info("API keys retrieved successfully:", settings.id);
+    
+    // Crear instancia de OpenAI con la API key
+    console.info("Creating OpenAI instance with API key");
+    const openai = new OpenAI({ 
+      apiKey: settings.openaiApiKey,
+      dangerouslyAllowBrowser: true // Permitir uso en el navegador (con precaución)
     });
-
-    console.log("Sending request to OpenAI API with model:", model);
     
+    // Hacer la llamada a la API
     const response = await openai.chat.completions.create({
-      model: model,
+      model: "gpt-3.5-turbo",
       messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        },
-        {
-          role: "user",
-          content: prompt
-        }
+        ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
+        { role: "user", content: prompt }
       ],
-      temperature: temperature,
-      max_tokens: maxTokens
+      temperature: 0.7,
+      max_tokens: 2500,
     });
-
-    console.log("OpenAI API response received:", response.choices ? "Has choices" : "No choices");
     
-    if (response.choices && response.choices.length > 0) {
-      const content = response.choices[0].message.content;
-      console.log("OpenAI content received, length:", content ? content.length : 0);
-      return response.choices[0].message.content || null;
-    } else {
-      console.error("No content received from OpenAI API");
-      throw new Error("No se recibió contenido de la API de OpenAI");
-    }
+    // Devolver el contenido generado
+    return response.choices[0].message.content;
   } catch (error) {
     console.error("Error calling OpenAI API:", error);
-    toast.error("Error al llamar a la API de OpenAI: " + (error instanceof Error ? error.message : "Error desconocido"));
-    return null;
+    throw error;
   }
-}
-
-// Export interface for OpenAI response
-export interface OpenAIResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
 }

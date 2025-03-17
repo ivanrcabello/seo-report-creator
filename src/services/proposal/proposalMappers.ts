@@ -1,35 +1,44 @@
 
 import { Proposal } from "@/types/client";
 
-// Función para convertir datos de Supabase al formato de la aplicación
-export const mapProposalFromDB = (proposal: any): Proposal => ({
-  id: proposal.id,
-  clientId: proposal.client_id,
-  packId: proposal.pack_id,
-  title: proposal.title,
-  description: proposal.description,
-  status: proposal.status,
-  createdAt: proposal.created_at,
-  updatedAt: proposal.updated_at,
-  sentAt: proposal.sent_at,
-  expiresAt: proposal.expires_at,
-  customPrice: proposal.custom_price,
-  customFeatures: proposal.custom_features,
-  reportIds: proposal.report_ids,
-  publicUrl: proposal.public_url,
-});
+// Mapeo de la propuesta desde la base de datos al formato de la aplicación
+export const mapProposalFromDB = (dbProposal: any): Proposal => {
+  return {
+    id: dbProposal.id,
+    clientId: dbProposal.client_id,
+    packId: dbProposal.pack_id,
+    title: dbProposal.title,
+    description: dbProposal.description,
+    status: dbProposal.status,
+    customPrice: dbProposal.custom_price,
+    customFeatures: dbProposal.custom_features,
+    publicUrl: dbProposal.public_url,
+    sentAt: dbProposal.sent_at,
+    expiresAt: dbProposal.expires_at,
+    createdAt: dbProposal.created_at,
+    updatedAt: dbProposal.updated_at,
+    aiContent: dbProposal.ai_content
+  };
+};
 
-// Función para convertir datos de la aplicación al formato de Supabase
-export const mapProposalToDB = (proposal: Partial<Proposal>) => ({
-  client_id: proposal.clientId,
-  pack_id: proposal.packId,
-  title: proposal.title,
-  description: proposal.description,
-  status: proposal.status,
-  sent_at: proposal.sentAt,
-  expires_at: proposal.expiresAt,
-  custom_price: proposal.customPrice,
-  custom_features: proposal.customFeatures,
-  report_ids: proposal.reportIds,
-  public_url: proposal.publicUrl,
-});
+// Mapeo de la propuesta desde el formato de la aplicación a la base de datos
+export const mapProposalToDB = (proposal: Partial<Proposal>): any => {
+  const result: any = {};
+  
+  if (proposal.id !== undefined) result.id = proposal.id;
+  if (proposal.clientId !== undefined) result.client_id = proposal.clientId;
+  if (proposal.packId !== undefined) result.pack_id = proposal.packId;
+  if (proposal.title !== undefined) result.title = proposal.title;
+  if (proposal.description !== undefined) result.description = proposal.description;
+  if (proposal.status !== undefined) result.status = proposal.status;
+  if (proposal.customPrice !== undefined) result.custom_price = proposal.customPrice;
+  if (proposal.customFeatures !== undefined) result.custom_features = proposal.customFeatures;
+  if (proposal.publicUrl !== undefined) result.public_url = proposal.publicUrl;
+  if (proposal.sentAt !== undefined) result.sent_at = proposal.sentAt;
+  if (proposal.expiresAt !== undefined) result.expires_at = proposal.expiresAt;
+  if (proposal.createdAt !== undefined) result.created_at = proposal.createdAt;
+  if (proposal.updatedAt !== undefined) result.updated_at = proposal.updatedAt;
+  if (proposal.aiContent !== undefined) result.ai_content = proposal.aiContent;
+  
+  return result;
+};

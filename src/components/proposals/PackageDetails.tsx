@@ -1,50 +1,55 @@
 
 import React from "react";
-import { CheckCircle, Euro, Package } from "lucide-react";
-import { SeoPack } from "@/types/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Pack } from "@/types/client";
 
 interface PackageDetailsProps {
-  pack: SeoPack;
+  pack: Pack;
   customPrice?: number;
-  customFeatures?: string[];
 }
 
-export const PackageDetails = ({ pack, customPrice, customFeatures }: PackageDetailsProps) => {
+export const PackageDetails: React.FC<PackageDetailsProps> = ({ pack, customPrice }) => {
+  const displayPrice = customPrice !== undefined ? customPrice : pack.price;
+  
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-        <Package className="h-5 w-5 text-purple-600" />
-        Paquete: {pack.name}
-      </h3>
-      <p className="text-gray-600 mb-4">{pack.description}</p>
-      
-      <div className="mb-4">
-        <div className="flex items-center">
-          <span className="text-sm text-gray-500 mr-2">Precio base:</span>
-          <span className="font-medium">{pack.price.toFixed(2)} €</span>
-          <span className="text-xs text-gray-500 ml-1">(IVA incluido)</span>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl">{pack.name}</CardTitle>
+          <Badge variant="secondary" className="text-lg font-bold">
+            {displayPrice}€
+          </Badge>
         </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-700 mb-4">{pack.description}</p>
         
-        {customPrice !== undefined && (
-          <div className="flex items-center mt-1">
-            <span className="text-sm text-gray-500 mr-2">Precio personalizado:</span>
-            <span className="font-bold text-xl text-purple-700">{customPrice.toFixed(2)} €</span>
-            <span className="text-xs text-gray-500 ml-1">(IVA incluido)</span>
+        {pack.features && pack.features.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-500">Características</h3>
+            <ul className="space-y-2">
+              {pack.features.map((feature, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
-      </div>
-      
-      <div>
-        <h4 className="font-medium mb-2">Características incluidas:</h4>
-        <ul className="space-y-2">
-          {(customFeatures || pack.features).map((feature: string, index: number) => (
-            <li key={index} className="flex items-start gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+        
+        {customPrice !== undefined && customPrice !== pack.price && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-sm text-gray-500">
+              <span className="font-medium">Nota:</span> Este paquete tiene un precio personalizado.
+              <br />
+              Precio original: <span className="line-through">{pack.price}€</span>
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

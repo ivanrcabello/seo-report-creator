@@ -1,128 +1,138 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle, 
-  AlertDialogTrigger 
-} from "@/components/ui/alert-dialog";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Edit, Send, Trash, XCircle } from "lucide-react";
+import { Proposal } from "@/types/client";
+import { Download, Send, Check, X, Share2, Loader2 } from "lucide-react";
 
 interface ProposalActionsProps {
-  proposalId: string;
-  status: string;
-  isExpired: boolean;
-  onDelete: () => void;
-  onSend: () => void;
-  onAccept: () => void;
-  onReject: () => void;
+  proposal: Proposal;
+  onSend: () => Promise<void>;
+  onAccept: () => Promise<void>;
+  onReject: () => Promise<void>;
+  onShare: () => Promise<void>;
+  onDownload: () => Promise<void>;
+  loading: string | null;
 }
 
-export const ProposalActions = ({
-  proposalId,
-  status,
-  isExpired,
-  onDelete,
+export const ProposalActions: React.FC<ProposalActionsProps> = ({
+  proposal,
   onSend,
   onAccept,
-  onReject
-}: ProposalActionsProps) => {
-  const navigate = useNavigate();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const handleDelete = () => {
-    onDelete();
-    setIsDeleteDialogOpen(false);
-  };
-
+  onReject,
+  onShare,
+  onDownload,
+  loading
+}) => {
+  // Comprobar si la propuesta ha expirado
+  const expired = proposal.expiresAt ? new Date(proposal.expiresAt) < new Date() : false;
+  
   return (
-    <div className="flex justify-between border-t pt-6">
-      <div>
-        {status === "draft" && (
-          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" className="gap-1 text-destructive border-destructive hover:bg-destructive/10">
-                <Trash className="h-4 w-4" />
-                Eliminar
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta acción no se puede deshacer. Se eliminará permanentemente esta propuesta.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Eliminar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-      </div>
-      
-      <div className="flex gap-2">
-        {status === "draft" && (
-          <>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate(`/proposals/edit/${proposalId}`)}
-              className="gap-1"
-            >
-              <Edit className="h-4 w-4" />
-              Editar
-            </Button>
-            <Button 
-              onClick={() => onSend()}
-              className="gap-1"
-            >
-              <Send className="h-4 w-4" />
-              Enviar al Cliente
-            </Button>
-          </>
-        )}
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">Acciones</CardTitle>
+        <CardDescription>Gestiona el estado de la propuesta</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-2"
+          onClick={onDownload}
+          disabled={loading === "download"}
+        >
+          {loading === "download" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          Descargar PDF
+        </Button>
         
-        {status === "sent" && !isExpired && (
-          <>
-            <Button 
-              variant="outline" 
-              className="gap-1 border-red-200 text-red-600 hover:bg-red-50"
-              onClick={() => onReject()}
-            >
-              <XCircle className="h-4 w-4" />
-              Marcar como Rechazada
-            </Button>
-            <Button 
-              className="gap-1 bg-green-600 hover:bg-green-700"
-              onClick={() => onAccept()}
-            >
-              <CheckCircle className="h-4 w-4" />
-              Marcar como Aceptada
-            </Button>
-          </>
-        )}
-        
-        {isExpired && (
-          <Button 
-            variant="outline" 
-            onClick={() => navigate(`/proposals/edit/${proposalId}`)}
-            className="gap-1"
+        {proposal.status === 'draft' && (
+          <Button
+            className="w-full justify-start gap-2"
+            onClick={onSend}
+            disabled={loading === "send"}
           >
-            <Edit className="h-4 w-4" />
-            Renovar Propuesta
+            {loading === "send" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            Enviar al Cliente
           </Button>
         )}
-      </div>
-    </div>
+        
+        {proposal.status === 'sent' && !expired && (
+          <>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={onShare}
+              disabled={loading === "share"}
+            >
+              {loading === "share" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Share2 className="h-4 w-4" />
+              )}
+              Compartir Enlace
+            </Button>
+            
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <Button
+                variant="destructive"
+                className="justify-center gap-1"
+                onClick={onReject}
+                disabled={loading === "reject"}
+              >
+                {loading === "reject" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <X className="h-4 w-4" />
+                    Rechazar
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                variant="default"
+                className="justify-center gap-1"
+                onClick={onAccept}
+                disabled={loading === "accept"}
+              >
+                {loading === "accept" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Aceptar
+                  </>
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+        
+        {proposal.status === 'sent' && expired && (
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
+            Esta propuesta ha caducado y ya no se puede aceptar o rechazar.
+          </div>
+        )}
+        
+        {proposal.status === 'accepted' && (
+          <div className="bg-green-50 border border-green-200 rounded-md p-3 text-sm text-green-800">
+            Esta propuesta ha sido aceptada por el cliente.
+          </div>
+        )}
+        
+        {proposal.status === 'rejected' && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-800">
+            Esta propuesta ha sido rechazada por el cliente.
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

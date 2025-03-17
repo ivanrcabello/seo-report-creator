@@ -46,18 +46,18 @@ export interface ClientDocument {
 export interface Proposal {
   id: string;
   clientId: string;
+  packId: string;
   title: string;
   description: string;
-  packId: string;
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
-  createdAt: string;
-  updatedAt: string;
-  sentAt?: string;
-  expiresAt?: string;
   customPrice?: number;
   customFeatures?: string[];
-  reportIds?: string[];
   publicUrl?: string;
+  sentAt?: string;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  aiContent?: string;
 }
 
 export interface Invoice {

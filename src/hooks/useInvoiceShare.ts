@@ -1,15 +1,14 @@
 
 import { useState, useEffect } from "react";
-import { Invoice, CompanySettings } from "@/types/invoice";
-import { Client } from "@/types/client";
+import { ShareInvoiceResult } from "@/types/invoiceTypes";
 import { getInvoiceByShareToken } from "@/services/invoiceService";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 export const useInvoiceShare = (token: string | undefined) => {
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [client, setClient] = useState<Client | null>(null);
-  const [company, setCompany] = useState<CompanySettings | null>(null);
+  const [invoice, setInvoice] = useState<ShareInvoiceResult['invoice']>(null);
+  const [client, setClient] = useState<ShareInvoiceResult['client']>(null);
+  const [company, setCompany] = useState<ShareInvoiceResult['company']>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -45,11 +44,9 @@ export const useInvoiceShare = (token: string | undefined) => {
         return;
       }
       
-      // Correctly set each state individually
       setInvoice(result.invoice);
       setClient(result.client);
       setCompany(result.company);
-      
       setLoading(false);
     } catch (err: any) {
       console.error("Error fetching shared invoice:", err);

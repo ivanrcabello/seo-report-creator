@@ -31,7 +31,7 @@ export const mapInvoiceFromDB = (data: any): Invoice => {
 };
 
 export const mapInvoiceToDB = (invoice: Partial<Invoice>): any => {
-  return {
+  const dbObject: any = {
     id: invoice.id,
     invoice_number: invoice.invoiceNumber,
     client_id: invoice.clientId,
@@ -48,8 +48,17 @@ export const mapInvoiceToDB = (invoice: Partial<Invoice>): any => {
     notes: invoice.notes,
     pdf_url: invoice.pdfUrl,
     created_at: invoice.createdAt,
-    updated_at: invoice.updatedAt,
-    share_token: invoice.shareToken,
-    shared_at: invoice.sharedAt
+    updated_at: invoice.updatedAt
   };
+
+  // Add share_token and shared_at only if they exist
+  if (invoice.shareToken) {
+    dbObject.share_token = invoice.shareToken;
+  }
+  
+  if (invoice.sharedAt) {
+    dbObject.shared_at = invoice.sharedAt;
+  }
+
+  return dbObject;
 };

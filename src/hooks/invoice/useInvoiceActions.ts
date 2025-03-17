@@ -1,7 +1,8 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Invoice } from '@/types/invoice';
+import { Invoice } from '@/types/invoiceTypes';
 import { 
   generateInvoicePdf, 
   downloadInvoicePdf, 

@@ -180,22 +180,49 @@ export const shareInvoice = async (invoiceId: string): Promise<InvoiceShareRespo
     
     // Generate a share token
     const shareToken = uuidv4();
+    const now = new Date().toISOString();
     
-    // Update the invoice with the share token and timestamp
-    const { error } = await supabase
-      .from('invoices')
-      .update({
-        share_token: shareToken,
-        shared_at: new Date().toISOString()
-      })
-      .eq('id', invoiceId);
+    // First, check if we need to create an invoice_shares entry
+    const { data: sharesData, error: sharesError } = await supabase
+      .from('invoice_shares')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .maybeSingle();
     
-    if (error) {
-      console.error("Error updating invoice with share token:", error);
-      return null;
+    if (sharesError) {
+      console.error("Error checking for existing share:", sharesError);
+      // Continue anyway to try the direct update
     }
     
-    // Return the share URL - adjust the URL format according to your app's routing
+    if (!sharesData) {
+      // Create a new entry in invoice_shares
+      const { error: insertError } = await supabase
+        .from('invoice_shares')
+        .insert({
+          invoice_id: invoiceId,
+          share_token: shareToken
+        });
+      
+      if (insertError) {
+        console.error("Error creating invoice share:", insertError);
+        return null;
+      }
+    } else {
+      // Update existing share token
+      const { error: updateShareError } = await supabase
+        .from('invoice_shares')
+        .update({
+          share_token: shareToken
+        })
+        .eq('invoice_id', invoiceId);
+      
+      if (updateShareError) {
+        console.error("Error updating invoice share:", updateShareError);
+        return null;
+      }
+    }
+    
+    // Return the share URL
     const baseUrl = window.location.origin;
     return {
       url: `${baseUrl}/invoices/share/${shareToken}`
@@ -211,10 +238,23 @@ export const shareInvoice = async (invoiceId: string): Promise<InvoiceShareRespo
  */
 export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareInvoiceResult> => {
   try {
+    // First, get the invoice_id from the invoice_shares table
+    const { data: shareData, error: shareError } = await supabase
+      .from('invoice_shares')
+      .select('invoice_id')
+      .eq('share_token', shareToken)
+      .maybeSingle();
+    
+    if (shareError || !shareData) {
+      console.error("Error fetching invoice share:", shareError || "No data returned");
+      return { invoice: null, client: null, company: null };
+    }
+    
+    // Now get the invoice with that ID
     const { data, error } = await supabase
       .from('invoices')
-      .select('*, clients(name, company, email, phone)')
-      .eq('share_token', shareToken)
+      .select('*, clients(*)')
+      .eq('id', shareData.invoice_id)
       .maybeSingle();
     
     if (error || !data) {
@@ -224,7 +264,7 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
     
     const invoice = mapInvoiceFromDB(data);
     
-    // Get client data
+    // Extract client data
     const client = data.clients ? {
       id: data.clients.id,
       name: data.clients.name,
@@ -247,7 +287,7 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
       phone: companyData.phone,
       email: companyData.email,
       logoUrl: companyData.logo_url,
-      bankAccount: companyData.bank_account,
+      bankAccount: companyData.bank_account || '',
       createdAt: companyData.created_at,
       updatedAt: companyData.updated_at
     };

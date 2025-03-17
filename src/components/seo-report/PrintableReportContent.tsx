@@ -1,6 +1,8 @@
 
 import { ClientReport } from "@/types/client";
 import { KeywordsAccordion } from "./KeywordsAccordion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface PrintableReportContentProps {
   report: ClientReport;
@@ -11,7 +13,10 @@ export const PrintableReportContent = ({ report, printContent }: PrintableReport
   return (
     <div className="hidden print:block">
       <div className="prose max-w-none">
-        <div dangerouslySetInnerHTML={{ __html: printContent }} />
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {report.content}
+        </ReactMarkdown>
+        
         {report.analyticsData?.auditResult?.keywords && report.analyticsData.auditResult.keywords.length > 0 && (
           <KeywordsAccordion report={report} isPrintView={true} />
         )}

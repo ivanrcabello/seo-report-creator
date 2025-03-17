@@ -124,7 +124,6 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
       phone: companyData.phone,
       email: companyData.email,
       logoUrl: companyData.logo_url,
-      // Using nullish coalescing operator to handle undefined bank_account
       bankAccount: companyData.bank_account ?? '',
       createdAt: companyData.created_at,
       updatedAt: companyData.updated_at

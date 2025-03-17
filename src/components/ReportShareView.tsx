@@ -10,11 +10,13 @@ import {
   Calendar, 
   Globe,
   BarChart,
-  Printer
+  Printer,
+  Download
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { downloadSeoReportPdf } from "@/services/pdf/seoReportPdfOperations";
 
 interface ReportShareViewProps {
   report: ClientReport;
@@ -42,6 +44,19 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    try {
+      if (report.id) {
+        await downloadSeoReportPdf(report.id);
+      } else {
+        throw new Error("No report ID available");
+      }
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error("Error al descargar el PDF");
+    }
+  };
+
   console.log("Report in ReportShareView:", report.id, report.title);
   console.log("Report content preview:", report.content ? report.content.substring(0, 100) + "..." : "No content");
 
@@ -53,15 +68,26 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
           <h1 className="text-3xl font-bold">
             {report.title || "Informe SEO"}
           </h1>
-          <Button 
-            onClick={handlePrintPdf} 
-            variant="secondary" 
-            size="sm"
-            className="gap-2 print:hidden"
-          >
-            <Printer className="h-4 w-4" />
-            Imprimir / Guardar PDF
-          </Button>
+          <div className="flex gap-2 print:hidden">
+            <Button 
+              onClick={handlePrintPdf} 
+              variant="secondary" 
+              size="sm"
+              className="gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir
+            </Button>
+            <Button 
+              onClick={handleDownloadPdf} 
+              variant="secondary" 
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Descargar PDF
+            </Button>
+          </div>
         </div>
         <p className="text-white/80 mt-2">
           Informe generado el {formattedDate || "N/A"}

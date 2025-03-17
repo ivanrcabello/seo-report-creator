@@ -86,6 +86,8 @@ function AppRoutes() {
         <Route path="/contracts" element={<Contracts />} />
         <Route path="/contracts/new" element={<ContractForm />} />
         <Route path="/contracts/:id" element={<ContractDetail />} />
+        <Route path="/contracts/client/:clientId/new" element={<ContractForm />} />
+        <Route path="/contracts/client/:clientId/edit/:id" element={<ContractForm />} />
         <Route path="/settings/api" element={
           <ProtectedRoute>
             <ApiSettings />

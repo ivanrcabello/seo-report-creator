@@ -32,7 +32,7 @@ export const getContracts = async (): Promise<SeoContract[]> => {
     
     if (error) {
       console.error("Error fetching contracts:", error);
-      return [];
+      throw error;
     }
     
     return (data || []).map(mapContractFromDB);
@@ -50,6 +50,7 @@ export const getClientContracts = async (clientId: string): Promise<SeoContract[
       return [];
     }
 
+    console.log("Fetching client contracts with clientId:", clientId);
     const { data, error } = await supabase
       .from('seo_contracts')
       .select('*')
@@ -58,9 +59,10 @@ export const getClientContracts = async (clientId: string): Promise<SeoContract[
     
     if (error) {
       console.error("Error fetching client contracts:", error);
-      return [];
+      throw error;
     }
     
+    console.log("Client contracts query result:", data);
     return (data || []).map(mapContractFromDB);
   } catch (error) {
     console.error("Unexpected error in getClientContracts:", error);
@@ -85,7 +87,7 @@ export const getContract = async (id: string): Promise<SeoContract | undefined> 
     
     if (error) {
       console.error("Error fetching contract:", error);
-      return undefined;
+      throw error;
     }
     
     if (!data) {

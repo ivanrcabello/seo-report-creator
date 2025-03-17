@@ -67,6 +67,10 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
     navigate(`/contracts/client/${clientId}/edit/${contractId}`);
   };
 
+  const handleViewContract = (contractId: string) => {
+    navigate(`/contracts/${contractId}`);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -149,6 +153,15 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
                   </div>
                 </div>
                 <div className="p-4 flex flex-wrap justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => handleViewContract(contract.id)}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    Ver
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"

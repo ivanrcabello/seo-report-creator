@@ -9,7 +9,7 @@ const ContractForm = () => {
   
   return (
     <div className="container mx-auto py-6">
-      <ContractFormComponent clientId={clientId} />
+      <ContractFormComponent clientId={clientId} contractId={id} />
     </div>
   );
 };

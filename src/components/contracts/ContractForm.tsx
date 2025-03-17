@@ -27,10 +27,11 @@ import { SectionsTab } from "./form/SectionsTab";
 
 interface ContractFormProps {
   clientId?: string;
+  contractId?: string;
 }
 
-export const ContractFormComponent = ({ clientId: propClientId }: ContractFormProps) => {
-  const { id, clientId: paramClientId } = useParams<{ id: string; clientId: string }>();
+export const ContractFormComponent = ({ clientId: propClientId, contractId: propContractId }: ContractFormProps) => {
+  const { id: paramId, clientId: paramClientId } = useParams<{ id: string; clientId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
@@ -38,10 +39,13 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
   const [saving, setSaving] = useState(false);
   const [sections, setSections] = useState<ContractSection[]>([]);
 
-  // Establish priority for clientId: prop > param
+  // Establecer prioridad: prop > param para clientId
   const clientId = propClientId || paramClientId;
+  // Establecer prioridad: prop > param para id del contrato
+  const id = propContractId || paramId;
 
   console.log("ContractForm: Using clientId:", clientId, "from prop:", propClientId, "from param:", paramClientId);
+  console.log("ContractForm: Using contractId:", id, "from prop:", propContractId, "from param:", paramId);
 
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractFormSchema),
@@ -85,9 +89,11 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
         }
 
         if (id) {
+          console.log("Fetching contract data for id:", id);
           const contractData = await getContract(id);
           
           if (contractData) {
+            console.log("Contract data loaded:", contractData.title);
             form.setValue("title", contractData.title);
             form.setValue("clientId", contractData.clientId);
             form.setValue("startDate", new Date(contractData.startDate));
@@ -119,18 +125,32 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
             }
             
             setSections(contractData.content.sections || []);
+          } else {
+            console.error("Contract not found for id:", id);
+            toast({
+              title: "Error",
+              description: "No se encontró el contrato",
+              variant: "destructive",
+            });
           }
         } else if (clientId) {
+          console.log("Fetching client data for clientId:", clientId);
           const clientData = await getClient(clientId);
           
           if (clientData) {
+            console.log("Client data loaded:", clientData.name);
             form.setValue("clientId", clientId);
             form.setValue("clientInfo.name", clientData.name);
             form.setValue("clientInfo.company", clientData.company || "");
+          } else {
+            console.error("Client not found for clientId:", clientId);
           }
           
-          setSections(createDefaultContractSections());
+          const defaultSections = createDefaultContractSections();
+          console.log("Using default sections, count:", defaultSections.length);
+          setSections(defaultSections);
         } else {
+          console.log("No clientId or contractId provided, using default sections");
           setSections(createDefaultContractSections());
         }
       } catch (error) {
@@ -151,6 +171,7 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
   const onSubmit = async (values: ContractFormValues) => {
     try {
       setSaving(true);
+      console.log("Submitting form with values:", values.title, values.clientId);
 
       if (sections.some(section => !section.title || !section.content)) {
         toast({
@@ -189,6 +210,7 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
       };
 
       if (id) {
+        console.log("Updating contract:", id);
         await updateContract({
           ...contractData,
           id,
@@ -201,7 +223,9 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
           description: "El contrato ha sido actualizado correctamente",
         });
       } else {
+        console.log("Creating new contract for client:", values.clientId);
         const newContract = await createContract(contractData);
+        console.log("New contract created with id:", newContract.id);
         
         toast({
           title: "Contrato creado",
@@ -209,7 +233,12 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
         });
       }
       
-      navigate(clientId ? `/clients/${clientId}?tab=contracts` : "/contracts");
+      // Redireccionar al cliente si hay un clientId, o a la lista de contratos si no
+      if (values.clientId) {
+        navigate(`/clients/${values.clientId}?tab=contracts`);
+      } else {
+        navigate("/contracts");
+      }
     } catch (error) {
       console.error("Error saving contract:", error);
       toast({

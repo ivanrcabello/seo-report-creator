@@ -1,9 +1,7 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { SeoContract, Client } from "@/types/client";
-import { getContract, signContract, generateAndSaveContractPDF, deleteContract } from "@/services/contractService";
-import { getClient } from "@/services/clientService";
+import { signContract, generateAndSaveContractPDF, deleteContract } from "@/services/contractService";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Card,
@@ -40,77 +38,37 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
 
-export const ContractDetail = () => {
-  const { id } = useParams<{ id: string }>();
+interface ContractDetailProps {
+  contract: SeoContract;
+  client: Client;
+}
+
+export const ContractDetail = ({ contract, client }: ContractDetailProps) => {
   const navigate = useNavigate();
   const { toast: uiToast } = useToast();
-  const [contract, setContract] = useState<SeoContract | null>(null);
-  const [client, setClient] = useState<Client | null>(null);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const fetchContractData = async () => {
-      if (!id) return;
-      
-      setLoading(true);
-      try {
-        const contractData = await getContract(id);
-        
-        if (contractData) {
-          setContract(contractData);
-          
-          const clientData = await getClient(contractData.clientId);
-          if (clientData) {
-            setClient(clientData);
-          }
-        } else {
-          uiToast({
-            title: "Error",
-            description: "No se encontró el contrato",
-            variant: "destructive",
-          });
-          navigate("/contracts");
-        }
-      } catch (error) {
-        console.error("Error fetching contract:", error);
-        uiToast({
-          title: "Error",
-          description: "No se pudo cargar el contrato",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchContractData();
-  }, [id, navigate, uiToast]);
+  const [currentContract, setCurrentContract] = useState<SeoContract>(contract);
 
   const handleEditContract = () => {
-    if (contract) {
-      navigate(`/contracts/edit/${contract.id}`);
-    }
+    navigate(`/contracts/edit/${currentContract.id}`);
   };
 
   const handleDownloadPDF = async () => {
-    if (!contract) return;
-    
     try {
       setActionLoading(true);
       
-      const pdfUrl = await generateAndSaveContractPDF(contract.id);
+      const pdfUrl = await generateAndSaveContractPDF(currentContract.id);
       
-      setContract({
-        ...contract,
+      setCurrentContract({
+        ...currentContract,
         pdfUrl
       });
       
       if (pdfUrl.startsWith('data:')) {
         const link = document.createElement('a');
         link.href = pdfUrl;
-        link.download = `contrato_${contract.title.replace(/\s+/g, '_')}.pdf`;
+        link.download = `contrato_${currentContract.title.replace(/\s+/g, '_')}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -135,14 +93,12 @@ export const ContractDetail = () => {
   };
 
   const handleSignContract = async (signedBy: 'client' | 'professional') => {
-    if (!contract) return;
-    
     try {
       setActionLoading(true);
       
-      const updatedContract = await signContract(contract.id, signedBy);
+      const updatedContract = await signContract(currentContract.id, signedBy);
       
-      setContract(updatedContract);
+      setCurrentContract(updatedContract);
       
       uiToast({
         title: "Contrato firmado",
@@ -161,12 +117,12 @@ export const ContractDetail = () => {
   };
 
   const handleDeleteContract = async () => {
-    if (!contract?.id) return;
+    if (!currentContract?.id) return;
     
     setIsDeleting(true);
     
     try {
-      const success = await deleteContract(contract.id);
+      const success = await deleteContract(currentContract.id);
       
       if (success) {
         toast("Contrato eliminado correctamente", {
@@ -201,16 +157,7 @@ export const ContractDetail = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Cargando...</span>
-      </div>
-    );
-  }
-
-  if (!contract || !client) {
+  if (!currentContract || !client) {
     return (
       <div className="text-center py-8">
         <h2 className="text-2xl font-bold mb-2">Contrato no encontrado</h2>
@@ -227,15 +174,15 @@ export const ContractDetail = () => {
           <CardHeader className="pb-4">
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle className="text-2xl">{contract.title}</CardTitle>
+                <CardTitle className="text-2xl">{currentContract.title}</CardTitle>
                 <CardDescription className="mt-1">
                   Contrato para {client.name}{" "}
                   {client.company && `(${client.company})`}
                 </CardDescription>
               </div>
               <div className="flex items-center space-x-2">
-                {getStatusBadge(contract.status)}
-                {contract.signedByClient && contract.signedByProfessional && (
+                {getStatusBadge(currentContract.status)}
+                {currentContract.signedByClient && currentContract.signedByProfessional && (
                   <Badge variant="default" className="bg-green-500 hover:bg-green-600">Firmado</Badge>
                 )}
               </div>
@@ -249,22 +196,22 @@ export const ContractDetail = () => {
                   <p className="flex justify-between">
                     <span className="text-sm">Fecha de inicio:</span>
                     <span className="font-medium">
-                      {format(new Date(contract.startDate), "d MMMM yyyy", { locale: es })}
+                      {format(new Date(currentContract.startDate), "d MMMM yyyy", { locale: es })}
                     </span>
                   </p>
-                  {contract.endDate && (
+                  {currentContract.endDate && (
                     <p className="flex justify-between">
                       <span className="text-sm">Fecha de finalización:</span>
                       <span className="font-medium">
-                        {format(new Date(contract.endDate), "d MMMM yyyy", { locale: es })}
+                        {format(new Date(currentContract.endDate), "d MMMM yyyy", { locale: es })}
                       </span>
                     </p>
                   )}
-                  {contract.signedAt && (
+                  {currentContract.signedAt && (
                     <p className="flex justify-between">
                       <span className="text-sm">Firmado el:</span>
                       <span className="font-medium">
-                        {format(new Date(contract.signedAt), "d MMMM yyyy", { locale: es })}
+                        {format(new Date(currentContract.signedAt), "d MMMM yyyy", { locale: es })}
                       </span>
                     </p>
                   )}
@@ -275,11 +222,11 @@ export const ContractDetail = () => {
                 <div className="space-y-1">
                   <p className="flex justify-between">
                     <span className="text-sm">Primera fase:</span>
-                    <span className="font-medium">{contract.phase1Fee.toLocaleString('es-ES')} €</span>
+                    <span className="font-medium">{currentContract.phase1Fee.toLocaleString('es-ES')} €</span>
                   </p>
                   <p className="flex justify-between">
                     <span className="text-sm">Cuota mensual:</span>
-                    <span className="font-medium">{contract.monthlyFee.toLocaleString('es-ES')} €</span>
+                    <span className="font-medium">{currentContract.monthlyFee.toLocaleString('es-ES')} €</span>
                   </p>
                 </div>
               </div>
@@ -293,9 +240,9 @@ export const ContractDetail = () => {
                 <div className="flex items-center justify-between p-3 border rounded-md">
                   <div>
                     <p className="font-medium">Cliente</p>
-                    <p className="text-sm text-muted-foreground">{contract.content.clientInfo.name}</p>
+                    <p className="text-sm text-muted-foreground">{currentContract.content.clientInfo.name}</p>
                   </div>
-                  {contract.signedByClient ? (
+                  {currentContract.signedByClient ? (
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                   ) : (
                     <XCircle className="h-5 w-5 text-muted-foreground" />
@@ -304,9 +251,9 @@ export const ContractDetail = () => {
                 <div className="flex items-center justify-between p-3 border rounded-md">
                   <div>
                     <p className="font-medium">Profesional</p>
-                    <p className="text-sm text-muted-foreground">{contract.content.professionalInfo.name}</p>
+                    <p className="text-sm text-muted-foreground">{currentContract.content.professionalInfo.name}</p>
                   </div>
-                  {contract.signedByProfessional ? (
+                  {currentContract.signedByProfessional ? (
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                   ) : (
                     <XCircle className="h-5 w-5 text-muted-foreground" />
@@ -320,7 +267,7 @@ export const ContractDetail = () => {
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-muted-foreground">Contenido del Contrato</h3>
               
-              {contract.content.sections.map((section, index) => (
+              {currentContract.content.sections.map((section, index) => (
                 <div key={index} className="space-y-1">
                   <h4 className="font-medium">{index + 1}. {section.title}</h4>
                   <p className="text-sm whitespace-pre-line">{section.content}</p>
@@ -333,7 +280,7 @@ export const ContractDetail = () => {
               <Button
                 variant="outline"
                 className="flex items-center gap-1"
-                onClick={() => navigate(`/clients/${contract.clientId}`)}
+                onClick={() => navigate(`/clients/${currentContract.clientId}?tab=contracts`)}
               >
                 Volver al Cliente
               </Button>
@@ -382,7 +329,7 @@ export const ContractDetail = () => {
             </div>
             
             <div className="flex flex-wrap gap-2">
-              {!contract.signedByClient && (
+              {!currentContract.signedByClient && (
                 <Button 
                   variant="default" 
                   className="flex items-center gap-1"
@@ -398,7 +345,7 @@ export const ContractDetail = () => {
                 </Button>
               )}
               
-              {!contract.signedByProfessional && (
+              {!currentContract.signedByProfessional && (
                 <Button 
                   variant="default" 
                   className="flex items-center gap-1"

@@ -1,27 +1,49 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getContract, getClientContracts } from "@/services/contractService";
+import { getClient } from "@/services/clientService";
+import { SeoContract, Client } from "@/types/client";
+import { ContractDetail as ContractDetailComponent } from "@/components/contracts/ContractDetail";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { getContract } from "@/services/contractService";
-import { SeoContract } from "@/types/client";
 
 export default function ContractDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [contract, setContract] = useState<SeoContract | null>(null);
+  const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchContract = async () => {
-      if (!id) return;
+      if (!id) {
+        setError("ID de contrato no proporcionado");
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
       try {
+        console.log("Fetching contract with ID:", id);
         const contractData = await getContract(id);
-        setContract(contractData || null);
+        
+        if (contractData) {
+          setContract(contractData);
+          console.log("Fetching client data for contract:", contractData.clientId);
+          
+          const clientData = await getClient(contractData.clientId);
+          if (clientData) {
+            setClient(clientData);
+          } else {
+            console.error("Client not found for ID:", contractData.clientId);
+          }
+        } else {
+          setError("No se encontró el contrato");
+          console.error("Contract not found for ID:", id);
+        }
       } catch (err: any) {
         console.error("Error fetching contract:", err);
         setError(err.message || "Error al cargar el contrato");
@@ -63,7 +85,7 @@ export default function ContractDetail() {
     );
   }
 
-  if (!contract) {
+  if (!contract || !client) {
     return (
       <div className="container mx-auto py-10">
         <Card>
@@ -84,49 +106,5 @@ export default function ContractDetail() {
     );
   }
 
-  return (
-    <div className="container mx-auto py-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Contrato: {contract.title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Cliente</h3>
-                <p>{contract.clientId}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Estado</h3>
-                <p className="capitalize">{contract.status}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Fecha de inicio</h3>
-                <p>{new Date(contract.startDate).toLocaleDateString('es-ES')}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Tarifa primera fase</h3>
-                <p>{contract.phase1Fee} €</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Tarifa mensual</h3>
-                <p>{contract.monthlyFee} €</p>
-              </div>
-            </div>
-            
-            <div className="mt-6 space-y-2">
-              <Button 
-                onClick={() => navigate("/contracts")}
-                variant="outline"
-                className="mr-2"
-              >
-                Volver a Contratos
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <ContractDetailComponent contract={contract} client={client} />;
 }

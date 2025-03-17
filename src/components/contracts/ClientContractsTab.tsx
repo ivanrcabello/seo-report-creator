@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SeoContract } from "@/types/client";
@@ -40,12 +39,31 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
 
     if (clientId) {
       fetchContracts();
+    } else {
+      console.error("No clientId provided to ClientContractsTab");
+      setIsLoading(false);
     }
   }, [clientId]);
 
   const handleCreateContract = () => {
+    if (!clientId) {
+      console.error("Cannot create contract: No clientId available");
+      toast.error("Error: No se pudo identificar el cliente");
+      return;
+    }
+    
     console.log("Creating new contract for client:", clientId);
     navigate(`/contracts/new/${clientId}`);
+  };
+
+  const handleEditContract = (contractId: string) => {
+    if (!contractId) {
+      console.error("Cannot edit contract: No contractId provided");
+      return;
+    }
+    
+    console.log("Editing contract with ID:", contractId);
+    navigate(`/contracts/edit/${contractId}`);
   };
 
   const getStatusBadge = (status: string) => {
@@ -134,7 +152,7 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
                     variant="outline"
                     size="sm"
                     className="gap-1"
-                    onClick={() => navigate(`/contracts/${contract.id}`)}
+                    onClick={() => handleEditContract(contract.id)}
                   >
                     <Pencil className="h-3.5 w-3.5" />
                     Editar

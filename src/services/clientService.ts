@@ -129,8 +129,30 @@ export const updateClient = async (client: Client): Promise<Client> => {
   }
 };
 
-export const deleteClient = async (id: string): Promise<void> => {
+export const deleteClient = async (id: string): Promise<{ success: boolean; error?: string }> => {
   try {
+    // Primero verificamos si el cliente tiene facturas asociadas
+    const { data: invoices, error: invoicesError } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('client_id', id);
+    
+    if (invoicesError) {
+      console.error("Error checking client invoices:", invoicesError);
+      return { 
+        success: false, 
+        error: "Error al verificar las facturas del cliente" 
+      };
+    }
+    
+    if (invoices && invoices.length > 0) {
+      return { 
+        success: false, 
+        error: "No se puede eliminar el cliente porque tiene facturas asociadas. Elimine primero las facturas." 
+      };
+    }
+    
+    // Si no hay facturas, procedemos a eliminar el cliente
     const { error } = await supabase
       .from('clients')
       .delete()
@@ -138,15 +160,19 @@ export const deleteClient = async (id: string): Promise<void> => {
     
     if (error) {
       console.error("Error deleting client:", error);
-      toast.error("Error al eliminar el cliente");
-      throw error;
+      return { 
+        success: false, 
+        error: `Error al eliminar el cliente: ${error.message}` 
+      };
     }
     
-    toast.success("Cliente eliminado correctamente");
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
     console.error("Exception deleting client:", error);
-    toast.error("Error al eliminar el cliente");
-    throw error;
+    return { 
+      success: false, 
+      error: `Error al eliminar el cliente: ${error.message}` 
+    };
   }
 };
 

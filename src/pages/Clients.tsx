@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ClientsList } from "@/components/ClientsList";
@@ -19,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Clients = () => {
-  const { toast: uiToast } = useToast(); // Rename to avoid confusion with sonner's toast
+  const { toast: uiToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,7 +29,6 @@ const Clients = () => {
   const params = useParams();
   const navigate = useNavigate();
 
-  // Check if we're on the "new" or "edit" route
   useEffect(() => {
     const initializeComponent = async () => {
       if (params.id === "new") {
@@ -38,7 +36,6 @@ const Clients = () => {
         setIsEditMode(false);
         setCurrentClient(null);
       } else if (params.id && window.location.pathname.includes("/clients/edit/")) {
-        // We're editing a client
         setIsLoading(true);
         setIsEditMode(true);
         setShowForm(true);
@@ -104,9 +101,14 @@ const Clients = () => {
     if (!clientToDelete) return;
     
     try {
-      await deleteClient(clientToDelete.id);
-      setClients(clients.filter(c => c.id !== clientToDelete.id));
-      toast.success(`Cliente ${clientToDelete.name} eliminado correctamente`);
+      const result = await deleteClient(clientToDelete.id);
+      
+      if (result.success) {
+        setClients(clients.filter(c => c.id !== clientToDelete.id));
+        toast.success(`Cliente ${clientToDelete.name} eliminado correctamente`);
+      } else {
+        toast.error(result.error || "No se pudo eliminar el cliente");
+      }
     } catch (error) {
       console.error("Error deleting client:", error);
       toast.error("No se pudo eliminar el cliente");
@@ -129,14 +131,12 @@ const Clients = () => {
 
   const handleCancelForm = () => {
     setShowForm(false);
-    // Navigate back to clients list
     navigate("/clients");
   };
 
   const handleClientSubmit = async (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
     try {
       if (isEditMode && currentClient) {
-        // Update existing client - combine the current client data with the updated fields
         const updatedClientData = {
           ...currentClient,
           name: clientData.name,
@@ -146,12 +146,10 @@ const Clients = () => {
           isActive: currentClient.isActive
         };
         
-        // Call updateClient with the complete client object
         const updatedClient = await updateClient(updatedClientData);
         setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
         toast.success(`Cliente ${updatedClient.name} actualizado correctamente`);
       } else {
-        // Create new client
         const newClient = await addClient(clientData);
         setClients([...clients, newClient]);
         toast.success(`Cliente ${newClient.name} creado correctamente`);

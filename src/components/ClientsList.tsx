@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,7 +11,7 @@ import { Client } from "@/types/client";
 import { 
   Eye, Plus, User, Building, Mail, Calendar, Search, UserPlus, 
   FileText, ScrollText, Edit, Trash2, Power, Filter, 
-  ChevronsUpDown, CheckCircle2, XCircle, AlertCircle 
+  ChevronsUpDown, CheckCircle2, XCircle, AlertCircle, UserCheck, UserX
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
@@ -23,6 +22,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 
 export interface ClientsListProps {
   clients: Client[];
@@ -49,6 +50,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [activeFilter, setActiveFilter] = useState<Filter>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive'>('all');
 
   const toggleSort = (field: SortField) => {
     if (field === sortField) {
@@ -59,7 +61,7 @@ export const ClientsList: React.FC<ClientsListProps> = ({
     }
   };
 
-  // Filter clients based on search term and active filter
+  // Filter clients based on search term and active filter/tab
   const filteredClients = clients.filter(client => {
     const matchesSearch = 
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -67,6 +69,12 @@ export const ClientsList: React.FC<ClientsListProps> = ({
       (client.company && client.company.toLowerCase().includes(searchTerm.toLowerCase()));
     
     if (!matchesSearch) return false;
+
+    if (activeTab === 'active') {
+      return client.isActive;
+    } else if (activeTab === 'inactive') {
+      return !client.isActive;
+    }
 
     switch (activeFilter) {
       case 'active':
@@ -79,6 +87,10 @@ export const ClientsList: React.FC<ClientsListProps> = ({
         return true;
     }
   });
+
+  // Get active and inactive client counts
+  const activeCount = clients.filter(client => client.isActive).length;
+  const inactiveCount = clients.filter(client => !client.isActive).length;
 
   // Sort clients
   const sortedClients = [...filteredClients].sort((a, b) => {
@@ -173,6 +185,175 @@ export const ClientsList: React.FC<ClientsListProps> = ({
     return null;
   };
 
+  // Render the client table with the provided data
+  const renderClientTable = (clients: Client[]) => {
+    if (clients.length === 0) {
+      return (
+        <div className="text-center py-12 px-4 bg-gray-50 rounded-lg border border-gray-100">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+            <User className="h-8 w-8 text-gray-400" />
+          </div>
+          <p className="text-gray-500 mb-4 text-lg">No se encontraron clientes</p>
+          <Button onClick={onAddClient} className="gap-1 bg-gradient-to-r from-seo-blue to-seo-purple hover:opacity-90 transition-all">
+            <UserPlus className="h-4 w-4" />
+            Añadir Cliente
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="overflow-hidden rounded-lg border border-gray-100">
+        <Table>
+          <TableHeader className="bg-gray-50">
+            <TableRow>
+              <TableHead className="cursor-pointer" onClick={() => toggleSort('name')}>
+                <div className="flex items-center gap-1">
+                  Cliente
+                  {sortField === 'name' && (
+                    <ChevronsUpDown className={`h-4 w-4 ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
+                  )}
+                </div>
+              </TableHead>
+              <TableHead>Contacto</TableHead>
+              <TableHead>Empresa</TableHead>
+              <TableHead className="cursor-pointer" onClick={() => toggleSort('createdAt')}>
+                <div className="flex items-center gap-1">
+                  Registro
+                  {sortField === 'createdAt' && (
+                    <ChevronsUpDown className={`h-4 w-4 ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
+                  )}
+                </div>
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => toggleSort('lastReport')}>
+                <div className="flex items-center gap-1">
+                  Último Informe
+                  {sortField === 'lastReport' && (
+                    <ChevronsUpDown className={`h-4 w-4 ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
+                  )}
+                </div>
+              </TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {clients.map((client) => (
+              <TableRow key={client.id} className="hover:bg-gray-50 transition-colors">
+                <TableCell className="font-medium flex items-center gap-2">
+                  {client.name}
+                  {getClientTenure(client.createdAt)}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="text-sm flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5 text-gray-500" />
+                      {client.email}
+                    </span>
+                    {client.phone && (
+                      <span className="text-xs text-gray-500 mt-1">{client.phone}</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {client.company ? (
+                    <div className="flex items-center gap-1.5">
+                      <Building className="h-3.5 w-3.5 text-gray-500" />
+                      <span>{client.company}</span>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                  <span className="text-sm">{format(new Date(client.createdAt), "d MMM yyyy", { locale: es })}</span>
+                </TableCell>
+                <TableCell>
+                  {client.lastReport ? (
+                    <Badge variant="secondary" className="font-normal gap-1 bg-seo-purple/10 text-seo-purple">
+                      <ScrollText className="h-3 w-3" />
+                      {format(new Date(client.lastReport), "d MMM yyyy", { locale: es })}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-gray-500 font-normal">
+                      Sin informes
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {getClientStatus(client)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Switch
+                      checked={client.isActive}
+                      onCheckedChange={(checked) => onToggleStatus(client.id, checked)}
+                      className="data-[state=checked]:bg-green-500"
+                    />
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/clients/${client.id}`} className="flex items-center">
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver detalles
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEditClient(client.id)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => onDeleteClient(client)}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-md border-0">
+        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 border-b">
+          <div>
+            <CardTitle className="text-xl font-bold">Gestión de Clientes</CardTitle>
+            <CardDescription>Cargando clientes...</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center space-x-4 py-3">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+              <Skeleton className="h-8 w-24" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-md border-0">
       <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-white to-gray-50 border-b">
@@ -242,156 +423,78 @@ export const ClientsList: React.FC<ClientsListProps> = ({
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        {isLoading ? (
-          <div className="p-6 space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center space-x-4 py-3">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-1/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
-                <Skeleton className="h-8 w-24" />
+      <CardContent className="p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <Card className="overflow-hidden border border-green-100 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="bg-green-50 p-4 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold text-green-700 flex items-center gap-2">
+                  <UserCheck className="h-5 w-5" />
+                  Clientes Activos
+                </CardTitle>
+                <CardDescription className="text-green-600">
+                  {activeCount} {activeCount === 1 ? 'cliente activo' : 'clientes activos'}
+                </CardDescription>
               </div>
-            ))}
-          </div>
-        ) : sortedClients.length === 0 ? (
-          <div className="text-center py-16 px-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-              <User className="h-8 w-8 text-gray-400" />
-            </div>
-            <p className="text-gray-500 mb-4 text-lg">No se encontraron clientes</p>
-            <Button onClick={onAddClient} className="gap-1 bg-gradient-to-r from-seo-blue to-seo-purple hover:opacity-90 transition-all">
-              <UserPlus className="h-4 w-4" />
-              Añadir Primer Cliente
-            </Button>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-b-lg">
-            <Table>
-              <TableHeader className="bg-gray-50">
-                <TableRow>
-                  <TableHead className="cursor-pointer" onClick={() => toggleSort('name')}>
-                    <div className="flex items-center gap-1">
-                      Cliente
-                      {sortField === 'name' && (
-                        <ChevronsUpDown className={`h-4 w-4 ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead>Contacto</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => toggleSort('createdAt')}>
-                    <div className="flex items-center gap-1">
-                      Registro
-                      {sortField === 'createdAt' && (
-                        <ChevronsUpDown className={`h-4 w-4 ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => toggleSort('lastReport')}>
-                    <div className="flex items-center gap-1">
-                      Último Informe
-                      {sortField === 'lastReport' && (
-                        <ChevronsUpDown className={`h-4 w-4 ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedClients.map((client) => (
-                  <TableRow key={client.id} className="hover:bg-gray-50 transition-colors">
-                    <TableCell className="font-medium flex items-center gap-2">
-                      {client.name}
-                      {getClientTenure(client.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-sm flex items-center gap-1.5">
-                          <Mail className="h-3.5 w-3.5 text-gray-500" />
-                          {client.email}
-                        </span>
-                        {client.phone && (
-                          <span className="text-xs text-gray-500 mt-1">{client.phone}</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {client.company ? (
-                        <div className="flex items-center gap-1.5">
-                          <Building className="h-3.5 w-3.5 text-gray-500" />
-                          <span>{client.company}</span>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-gray-500" />
-                      <span className="text-sm">{format(new Date(client.createdAt), "d MMM yyyy", { locale: es })}</span>
-                    </TableCell>
-                    <TableCell>
-                      {client.lastReport ? (
-                        <Badge variant="secondary" className="font-normal gap-1 bg-seo-purple/10 text-seo-purple">
-                          <ScrollText className="h-3 w-3" />
-                          {format(new Date(client.lastReport), "d MMM yyyy", { locale: es })}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-gray-500 font-normal">
-                          Sin informes
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {getClientStatus(client)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Switch
-                          checked={client.isActive}
-                          onCheckedChange={(checked) => onToggleStatus(client.id, checked)}
-                          className="data-[state=checked]:bg-green-500"
-                        />
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link to={`/clients/${client.id}`} className="flex items-center">
-                                <Eye className="h-4 w-4 mr-2" />
-                                Ver detalles
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onEditClient(client.id)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => onDeleteClient(client)}
-                              className="text-red-600 focus:text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white border-green-200 text-green-700 hover:bg-green-50"
+                onClick={() => setActiveTab('active')}
+              >
+                Ver todos
+              </Button>
+            </CardHeader>
+          </Card>
+
+          <Card className="overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="bg-gray-50 p-4 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+                  <UserX className="h-5 w-5" />
+                  Clientes Inactivos
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  {inactiveCount} {inactiveCount === 1 ? 'cliente inactivo' : 'clientes inactivos'}
+                </CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                onClick={() => setActiveTab('inactive')}
+              >
+                Ver todos
+              </Button>
+            </CardHeader>
+          </Card>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'active' | 'inactive')} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="all" className="data-[state=active]:bg-gray-100">
+              Todos los Clientes
+            </TabsTrigger>
+            <TabsTrigger value="active" className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800">
+              Clientes Activos
+            </TabsTrigger>
+            <TabsTrigger value="inactive" className="data-[state=active]:bg-gray-200 data-[state=active]:text-gray-800">
+              Clientes Inactivos
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="all" className="mt-0">
+            {renderClientTable(sortedClients)}
+          </TabsContent>
+          
+          <TabsContent value="active" className="mt-0">
+            {renderClientTable(sortedClients.filter(client => client.isActive))}
+          </TabsContent>
+          
+          <TabsContent value="inactive" className="mt-0">
+            {renderClientTable(sortedClients.filter(client => !client.isActive))}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );

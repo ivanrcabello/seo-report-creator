@@ -8,6 +8,7 @@ import { getClient } from "@/services/clientService";
 import { getCompanySettings } from "@/services/settingsService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { InvoiceDetailsCard } from "@/components/invoice/InvoiceDetailsCard";
 import { InvoiceDetailHeader } from "@/components/invoice/InvoiceDetailHeader";
 import { PaymentInfoCard } from "@/components/invoice/PaymentInfoCard";
@@ -141,8 +142,22 @@ export default function InvoiceDetail() {
   };
 
   const getStatusBadge = () => {
-    // This would be your implementation for rendering a status badge
-    return <Badge>{invoice?.status}</Badge>;
+    if (!invoice) return null;
+    
+    const statusColors = {
+      draft: "bg-gray-200 text-gray-800",
+      pending: "bg-yellow-100 text-yellow-800",
+      paid: "bg-green-100 text-green-800",
+      overdue: "bg-red-100 text-red-800"
+    };
+    
+    const color = statusColors[invoice.status as keyof typeof statusColors] || statusColors.draft;
+    
+    return (
+      <Badge className={color}>
+        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+      </Badge>
+    );
   };
 
   return (

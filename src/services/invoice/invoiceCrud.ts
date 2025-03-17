@@ -181,6 +181,9 @@ export const createInvoiceFromProposal = async (
     const taxAmount = (baseAmount * taxRate) / 100;
     const totalAmount = baseAmount + taxAmount;
     
+    // Generate an invoice number for this new invoice
+    const invoiceNumber = await generateInvoiceNumber();
+    
     // Create invoice data
     const invoiceData = {
       clientId: proposal.clientId,
@@ -192,7 +195,8 @@ export const createInvoiceFromProposal = async (
       totalAmount,
       status: "pending" as const,
       dueDate: dueDate || null,
-      issueDate: new Date().toISOString()
+      issueDate: new Date().toISOString(),
+      invoiceNumber // Add the invoiceNumber property
     };
     
     return createInvoice(invoiceData);

@@ -3,6 +3,6 @@
 // It re-exports all functionality from the refactored modules
 export { 
   generateGeminiReport,
-  saveGeminiReport,
+  saveReport as saveGeminiReport,
   generateAndSaveReport 
 } from "./reports/geminiReportService";

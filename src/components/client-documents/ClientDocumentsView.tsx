@@ -1,4 +1,4 @@
 
-import { ClientDocuments } from "./index";
+import { ClientDocuments } from "./ClientDocuments";
 
 export { ClientDocuments };

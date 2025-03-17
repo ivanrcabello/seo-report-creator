@@ -1,140 +1,238 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { ClientDocument } from "@/types/client";
-import { getClientDocuments } from "@/services/documentService";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StickyNote, FilePlus } from "lucide-react";
-
-// Import our refactored components
-import { DocumentUploadSection } from "./DocumentUploadSection";
-import { DocumentList } from "./DocumentList";
-import { NotesSection } from "./NotesSection";
-import { GenerateReportButton } from "./GenerateReportButton";
+import { useState, useEffect } from 'react';
+import { getClientDocuments, addDocument, deleteDocument, getFileType, extractFileContent } from '@/services/documentService';
+import { ClientDocument } from '@/types/client';
+import { DocumentList } from './DocumentList';
+import { DocumentUploadSection } from './DocumentUploadSection';
+import { NotesSection } from './NotesSection';
+import { GenerateReportButton } from './GenerateReportButton';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ClientDocumentsProps {
   clientId: string;
-  notes?: string[];
-  onNoteAdded?: (updatedNotes: string[]) => void;
+  onNoteAdded?: (notes: string[]) => void;
   onGenerateReport?: (documentIds: string[]) => void;
 }
 
-export const ClientDocuments: React.FC<ClientDocumentsProps> = ({ 
-  clientId, 
-  notes = [],
-  onNoteAdded,
-  onGenerateReport 
-}) => {
-  const { toast } = useToast();
+export const ClientDocuments = ({ clientId, onNoteAdded, onGenerateReport }: ClientDocumentsProps) => {
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [notes, setNotes] = useState<string[]>([]);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState<"documents" | "notes">("documents");
-  const [clientNotes, setClientNotes] = useState<string[]>(notes);
+  const [newNote, setNewNote] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
+  // Load documents
   useEffect(() => {
-    setClientNotes(notes);
-  }, [notes]);
+    const loadDocuments = async () => {
+      if (!clientId) {
+        console.error("No clientId provided to ClientDocuments");
+        setLoading(false);
+        return;
+      }
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      setIsLoading(true);
+      setLoading(true);
       try {
-        const fetchedDocuments = await getClientDocuments(clientId);
-        setDocuments(fetchedDocuments);
+        console.log("Fetching documents for client:", clientId);
+        const docs = await getClientDocuments(clientId);
+        console.log("Fetched documents:", docs);
+        setDocuments(docs);
       } catch (error) {
-        console.error("Error fetching documents:", error);
+        console.error("Error loading documents:", error);
         toast({
           title: "Error",
-          description: "No se pudieron cargar los documentos. Inténtalo de nuevo.",
+          description: "No se pudieron cargar los documentos del cliente",
           variant: "destructive",
         });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchDocuments();
+    loadDocuments();
   }, [clientId, toast]);
 
-  const toggleDocumentSelection = (documentId: string) => {
-    if (selectedDocuments.includes(documentId)) {
-      setSelectedDocuments(selectedDocuments.filter(id => id !== documentId));
-    } else {
-      setSelectedDocuments([...selectedDocuments, documentId]);
+  const handleFileUpload = async (file: File) => {
+    if (!clientId) {
+      console.error("Cannot upload file: No clientId available");
+      toast({
+        title: "Error",
+        description: "No se pudo identificar el cliente",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      console.log("Uploading file:", file.name, "for client:", clientId);
+      
+      // 1. Upload file to Supabase storage
+      const fileName = `${uuidv4()}-${file.name}`;
+      const filePath = `client-documents/${clientId}/${fileName}`;
+      
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+      
+      if (storageError) {
+        console.error("Storage upload error:", storageError);
+        throw new Error("Error al subir el archivo a almacenamiento");
+      }
+      
+      // 2. Get public URL
+      const { data: publicUrlData } = await supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+      
+      const fileUrl = publicUrlData?.publicUrl;
+      if (!fileUrl) {
+        throw new Error("No se pudo obtener URL pública del archivo");
+      }
+      
+      console.log("File uploaded successfully:", fileUrl);
+      
+      // 3. Extract content for analysis
+      const fileType = getFileType(file);
+      let content = '';
+      
+      if (fileType === 'pdf') {
+        content = await extractFileContent(file);
+      }
+      
+      // 4. Add document to database
+      const newDocument: Omit<ClientDocument, "id"> = {
+        clientId,
+        name: file.name,
+        type: fileType,
+        url: fileUrl,
+        uploadDate: new Date().toISOString(),
+        analyzedStatus: content ? 'analyzed' : 'pending',
+        content
+      };
+      
+      const addedDoc = await addDocument(newDocument);
+      console.log("Document added to database:", addedDoc);
+      
+      // 5. Update local state
+      setDocuments(prevDocs => [...prevDocs, addedDoc]);
+      
+      toast({
+        title: "Documento subido",
+        description: "El documento ha sido subido correctamente",
+      });
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error al subir el documento",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
+  const handleDocumentDelete = async (documentId: string) => {
+    try {
+      await deleteDocument(documentId);
+      setDocuments(documents.filter(doc => doc.id !== documentId));
+      setSelectedDocuments(selectedDocuments.filter(id => id !== documentId));
+      
+      toast({
+        title: "Documento eliminado",
+        description: "El documento ha sido eliminado correctamente",
+      });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el documento",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDocumentSelect = (documentId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedDocuments([...selectedDocuments, documentId]);
+    } else {
+      setSelectedDocuments(selectedDocuments.filter(id => id !== documentId));
+    }
+  };
+
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
+    
+    const updatedNotes = [...notes, newNote];
+    setNotes(updatedNotes);
+    setNewNote('');
+    
+    if (onNoteAdded) {
+      onNoteAdded(updatedNotes);
+    }
+  };
+
+  const handleRemoveNote = (index: number) => {
+    const updatedNotes = notes.filter((_, i) => i !== index);
+    setNotes(updatedNotes);
+    
+    if (onNoteAdded) {
+      onNoteAdded(updatedNotes);
+    }
+  };
+
+  const handleGenerateReport = () => {
+    if (selectedDocuments.length === 0) {
+      toast({
+        title: "Seleccione documentos",
+        description: "Por favor, seleccione al menos un documento para generar el informe",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (onGenerateReport) {
+      onGenerateReport(selectedDocuments);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-2">Cargando documentos...</span>
+      </div>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Documentos del Cliente</CardTitle>
-        <CardDescription>
-          Gestiona los documentos y notas asociados a este cliente
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Tabs defaultValue="documents" value={activeTab} onValueChange={(value) => setActiveTab(value as "documents" | "notes")}>
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="documents" className="flex items-center gap-1.5">
-              <FilePlus className="h-4 w-4" />
-              Documentos
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="flex items-center gap-1.5">
-              <StickyNote className="h-4 w-4" />
-              Notas
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="documents" className="space-y-6">
-            <DocumentUploadSection 
-              clientId={clientId}
-              isUploading={isUploading}
-              documents={documents}
-              setDocuments={setDocuments}
-              setIsUploading={setIsUploading}
-            />
-
-            <DocumentList 
-              documents={documents}
-              selectedDocuments={selectedDocuments}
-              isLoading={isLoading}
-              toggleDocumentSelection={toggleDocumentSelection}
-              setSelectedDocuments={setSelectedDocuments}
-              setDocuments={setDocuments}
-            />
-
-            {documents.length > 0 && onGenerateReport && (
-              <GenerateReportButton 
-                selectedDocuments={selectedDocuments}
-                documents={documents}
-                setDocuments={setDocuments}
-                isGenerating={isGenerating}
-                setIsGenerating={setIsGenerating}
-                setSelectedDocuments={setSelectedDocuments}
-                onGenerateReport={onGenerateReport}
-              />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="notes" className="space-y-6">
-            <NotesSection 
-              clientNotes={clientNotes}
-              setClientNotes={setClientNotes}
-              onNoteAdded={onNoteAdded}
-            />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <DocumentUploadSection onFileUpload={handleFileUpload} isUploading={uploading} />
+      
+      <DocumentList 
+        documents={documents} 
+        onDelete={handleDocumentDelete}
+        onSelect={handleDocumentSelect}
+        selectedDocuments={selectedDocuments}
+      />
+      
+      <NotesSection 
+        notes={notes} 
+        newNote={newNote} 
+        onNoteChange={setNewNote} 
+        onAddNote={handleAddNote} 
+        onRemoveNote={handleRemoveNote} 
+      />
+      
+      <GenerateReportButton 
+        disabled={selectedDocuments.length === 0} 
+        onClick={handleGenerateReport} 
+      />
+    </div>
   );
 };

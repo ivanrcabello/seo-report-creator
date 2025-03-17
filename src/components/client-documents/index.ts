@@ -1,2 +1,2 @@
 
-export { ClientDocuments } from "./ClientDocuments";
+export * from './ClientDocuments';

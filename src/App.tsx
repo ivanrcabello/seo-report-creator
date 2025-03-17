@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -24,6 +25,7 @@ import TemplateSettings from './pages/TemplateSettings';
 import Contracts from './pages/Contracts';
 import ContractForm from './pages/ContractForm';
 import ContractDetail from './pages/ContractDetail';
+import ContractShare from './pages/ContractShare';
 import ApiSettings from './pages/ApiSettings';
 
 const queryClient = new QueryClient({
@@ -54,6 +56,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/share/report/:token" element={<ReportShare />} />
+            <Route path="/share/contract/:token" element={<ContractShare />} />
             <Route path="*" element={<AppRoutes />} />
           </Routes>
         </AuthProvider>

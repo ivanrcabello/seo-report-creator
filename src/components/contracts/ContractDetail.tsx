@@ -1,7 +1,13 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SeoContract, Client } from "@/types/client";
-import { signContract, generateAndSaveContractPDF, deleteContract } from "@/services/contract";
+import { 
+  signContract, 
+  generateAndSaveContractPDF, 
+  deleteContract, 
+  generateShareableContractUrl 
+} from "@/services/contract";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Card,
@@ -33,6 +39,8 @@ import {
   Loader2,
   Trash2,
   XCircle,
+  Share2,
+  Link,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -46,7 +54,7 @@ interface ContractDetailProps {
 export const ContractDetail = ({ contract, client }: ContractDetailProps) => {
   const navigate = useNavigate();
   const { toast: uiToast } = useToast();
-  const [actionLoading, setActionLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentContract, setCurrentContract] = useState<SeoContract>(contract);
 
@@ -56,7 +64,7 @@ export const ContractDetail = ({ contract, client }: ContractDetailProps) => {
 
   const handleDownloadPDF = async () => {
     try {
-      setActionLoading(true);
+      setActionLoading("download");
       
       const pdfUrl = await generateAndSaveContractPDF(currentContract.id);
       
@@ -88,13 +96,37 @@ export const ContractDetail = ({ contract, client }: ContractDetailProps) => {
         variant: "destructive",
       });
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
+    }
+  };
+
+  const handleShareContract = async () => {
+    try {
+      setActionLoading("share");
+      
+      const shareUrl = await generateShareableContractUrl(currentContract.id);
+      
+      if (!shareUrl) {
+        throw new Error("No se pudo generar el enlace compartido");
+      }
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+      
+      toast.success("Enlace copiado al portapapeles", {
+        description: "Ya puedes compartir el contrato"
+      });
+    } catch (error) {
+      console.error("Error sharing contract:", error);
+      toast.error("Error al generar el enlace compartido");
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleSignContract = async (signedBy: 'client' | 'professional') => {
     try {
-      setActionLoading(true);
+      setActionLoading("sign");
       
       const updatedContract = await signContract(currentContract.id, signedBy);
       
@@ -112,7 +144,7 @@ export const ContractDetail = ({ contract, client }: ContractDetailProps) => {
         variant: "destructive",
       });
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
@@ -329,14 +361,28 @@ export const ContractDetail = ({ contract, client }: ContractDetailProps) => {
             </div>
             
             <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-1"
+                onClick={handleShareContract}
+                disabled={actionLoading === "share"}
+              >
+                {actionLoading === "share" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Share2 className="h-4 w-4" />
+                )}
+                Compartir
+              </Button>
+            
               {!currentContract.signedByClient && (
                 <Button 
                   variant="default" 
                   className="flex items-center gap-1"
                   onClick={() => handleSignContract('client')}
-                  disabled={actionLoading}
+                  disabled={actionLoading === "sign"}
                 >
-                  {actionLoading ? (
+                  {actionLoading === "sign" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <CheckCircle2 className="h-4 w-4" />
@@ -350,9 +396,9 @@ export const ContractDetail = ({ contract, client }: ContractDetailProps) => {
                   variant="default" 
                   className="flex items-center gap-1"
                   onClick={() => handleSignContract('professional')}
-                  disabled={actionLoading}
+                  disabled={actionLoading === "sign"}
                 >
-                  {actionLoading ? (
+                  {actionLoading === "sign" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <CheckCircle2 className="h-4 w-4" />
@@ -365,9 +411,9 @@ export const ContractDetail = ({ contract, client }: ContractDetailProps) => {
                 variant="default" 
                 className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
                 onClick={handleDownloadPDF}
-                disabled={actionLoading}
+                disabled={actionLoading === "download"}
               >
-                {actionLoading ? (
+                {actionLoading === "download" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Download className="h-4 w-4" />

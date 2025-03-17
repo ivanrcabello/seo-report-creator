@@ -12,6 +12,12 @@ import {
 
 import { createDefaultContractSections } from './contractSections';
 import { generateContractPDF, saveContractPDF } from './contractPdf';
+import {
+  getContractByShareToken,
+  generateContractShareToken,
+  generateShareableContractUrl,
+  getContractShareUrl
+} from './contractSharing';
 
 // Generate and save contract PDF
 export const generateAndSaveContractPDF = async (contractId: string): Promise<string> => {
@@ -38,5 +44,9 @@ export {
   signContract,
   createDefaultContractSections,
   generateContractPDF,
-  saveContractPDF
+  saveContractPDF,
+  getContractByShareToken,
+  generateContractShareToken,
+  generateShareableContractUrl,
+  getContractShareUrl
 };

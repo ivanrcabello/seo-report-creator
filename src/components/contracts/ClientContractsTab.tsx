@@ -44,7 +44,7 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
   }, [clientId]);
 
   const handleCreateContract = () => {
-    // Usar la ruta correcta con el clientId como parámetro
+    console.log("Creating new contract for client:", clientId);
     navigate(`/contracts/new/${clientId}`);
   };
 

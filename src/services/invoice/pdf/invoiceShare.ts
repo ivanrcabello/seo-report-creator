@@ -124,7 +124,9 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
       phone: companyData.phone,
       email: companyData.email,
       logoUrl: companyData.logo_url,
-      bankAccount: companyData.bank_account ?? '', // Fixed: Use nullish coalescing for optional bank_account
+      // The company_settings table doesn't have a bank_account field,
+      // so we'll set this to an empty string or undefined
+      bankAccount: '',
       createdAt: companyData.created_at,
       updatedAt: companyData.updated_at
     };

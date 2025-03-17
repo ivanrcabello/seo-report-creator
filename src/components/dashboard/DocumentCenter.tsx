@@ -7,12 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ClientDocument } from "@/types/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function DocumentCenter() {
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -54,6 +55,13 @@ export function DocumentCenter() {
 
     fetchDocuments();
   }, [user]);
+
+  const handleViewAllDocuments = () => {
+    // Navigate to the client's documents tab
+    if (user?.id) {
+      navigate(`/clients/${user.id}?tab=documents`);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -119,9 +127,9 @@ export function DocumentCenter() {
               </div>
             ))}
             <div className="text-center pt-4">
-              <Link to={`/clients/${user?.id}?tab=documents`}>
-                <Button variant="secondary">Ver todos los documentos</Button>
-              </Link>
+              <Button variant="secondary" onClick={handleViewAllDocuments}>
+                Ver todos los documentos
+              </Button>
             </div>
           </div>
         )}

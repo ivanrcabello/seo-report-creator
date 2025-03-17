@@ -12,9 +12,12 @@ import { UserProfile } from "./UserProfile";
 import { SupportTickets } from "./SupportTickets";
 import { ClientInvoicesWidget } from "./ClientInvoicesWidget";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart2, TrendingUp, MessageSquare, User, FileText } from "lucide-react";
+import { BarChart2, TrendingUp, MessageSquare, User, FileText, FileSpreadsheet, FileSignature, MailOpen } from "lucide-react";
 import { toast } from "sonner";
 import { ClientMetric, getClientMetrics } from "@/services/clientMetricsService";
+import { ClientReports } from "@/components/ClientReports";
+import { ClientProposals } from "@/components/ClientProposals";
+import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
 
 export function ClientDashboard() {
   const { user } = useAuth();
@@ -105,6 +108,22 @@ export function ClientDashboard() {
             <BarChart2 className="h-4 w-4" />
             Dashboard
           </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-1">
+            <FileText className="h-4 w-4" />
+            Informes
+          </TabsTrigger>
+          <TabsTrigger value="proposals" className="flex items-center gap-1">
+            <MailOpen className="h-4 w-4" />
+            Propuestas
+          </TabsTrigger>
+          <TabsTrigger value="contracts" className="flex items-center gap-1">
+            <FileSignature className="h-4 w-4" />
+            Contratos
+          </TabsTrigger>
+          <TabsTrigger value="invoices" className="flex items-center gap-1">
+            <FileSpreadsheet className="h-4 w-4" />
+            Facturas
+          </TabsTrigger>
           <TabsTrigger value="documents" className="flex items-center gap-1">
             <FileText className="h-4 w-4" />
             Documentos
@@ -189,6 +208,22 @@ export function ClientDashboard() {
             </div>
             <DocumentCenter />
           </div>
+        </TabsContent>
+        
+        <TabsContent value="reports">
+          {user?.id && <ClientReports clientId={user.id} />}
+        </TabsContent>
+        
+        <TabsContent value="proposals">
+          {user?.id && <ClientProposals clientId={user.id} />}
+        </TabsContent>
+        
+        <TabsContent value="contracts">
+          {user?.id && <ClientContractsTab clientId={user.id} />}
+        </TabsContent>
+        
+        <TabsContent value="invoices">
+          {user?.id && <ClientInvoicesTab clientId={user.id} />}
         </TabsContent>
         
         <TabsContent value="documents">

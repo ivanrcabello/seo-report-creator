@@ -23,8 +23,11 @@ import {
 // Import styles from pdfStyles.ts
 import { textStyles, tableStyles, getStatusColor, getStatusText } from './pdfStyles';
 
-// Add autoTable to jsPDF prototype
-jsPDF.prototype.autoTable = autoTable;
+// Fix the autoTable assignment to work correctly with TypeScript
+(jsPDF.prototype as any).autoTable = function(options) {
+  autoTable(this, options);
+  return this;
+};
 
 /**
  * Generates an invoice PDF

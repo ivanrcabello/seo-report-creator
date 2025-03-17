@@ -120,7 +120,7 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice): void => {
   }
   
   // Using autoTable plugin
-  (doc as any).autoTable({
+  doc.autoTable({
     startY: startY + 10,
     head: [["Concepto", "Importe"]],
     body: tableData,
@@ -135,7 +135,7 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice): void => {
  * Adds invoice totals to the PDF
  */
 export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice): void => {
-  const finalY = (doc as any).lastAutoTable?.finalY || 150;
+  const finalY = doc.lastAutoTable?.finalY || 150;
   
   // Add totals table
   const totalsData = [
@@ -144,7 +144,7 @@ export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice): void => {
     ["TOTAL", formatCurrency(invoice.totalAmount)],
   ];
   
-  (doc as any).autoTable({
+  doc.autoTable({
     startY: finalY + 10,
     body: totalsData,
     columns: [
@@ -175,7 +175,7 @@ export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice): void => {
  * Adds footer with payment information
  */
 export const addFooterWithPaymentInfo = (doc: jsPDF, invoice: Invoice): void => {
-  const finalY = (doc as any).lastAutoTable?.finalY || 200;
+  const finalY = doc.lastAutoTable?.finalY || 200;
   
   doc.setFont(textStyles.subheader.font, textStyles.subheader.style);
   doc.setFontSize(textStyles.subheader.size);

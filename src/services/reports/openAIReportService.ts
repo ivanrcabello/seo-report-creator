@@ -79,9 +79,8 @@ export const generateAndSaveOpenAIReport = async (
         title: `Informe SEO - ${clientName}`,
         content: reportContent,
         date: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        status: 'draft',
         type: reportType,
+        status: 'draft',
         documentIds: documentIds,
         analyticsData: {}
       };
@@ -103,3 +102,4 @@ export const generateAndSaveOpenAIReport = async (
 // Re-export all functions
 export { generateOpenAIReport } from "./openAIReportGeneration";
 export { saveReport } from "./reportStorage";
+

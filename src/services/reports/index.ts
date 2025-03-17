@@ -6,6 +6,9 @@ export * from './reportSharing';
 export * from './reportAI';
 export * from './reportGeneration';
 export * from './reportStorage';
-export * from './geminiReportService';
 export * from './openAIReportGeneration';
 export * from './openAIReportService';
+
+// Export Gemini for backward compatibility but mark as deprecated
+export * from './geminiReportService';
+

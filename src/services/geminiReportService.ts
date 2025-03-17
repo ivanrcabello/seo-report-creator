@@ -1,8 +1,20 @@
 
-// This file is maintained for backward compatibility
-// It re-exports all functionality from the refactored modules
+// This file is maintained for backward compatibility but Gemini is no longer in use
+// All functionality is now handled by OpenAI services
+// TODO: Remove this file in future updates
+
 export { 
-  generateGeminiReport,
-  saveReport as saveGeminiReport,
-  generateAndSaveReport 
-} from "./reports/geminiReportService";
+  generateAndSaveReport as generateAndSaveGeminiReport,
+} from "./reports/openAIReportService";
+
+// For backward compatibility
+export const generateGeminiReport = () => {
+  console.warn("Gemini is deprecated, using OpenAI instead");
+  return null;
+};
+
+export const saveGeminiReport = () => {
+  console.warn("Gemini is deprecated, using OpenAI instead");
+  return { success: false, error: "Gemini is deprecated" };
+};
+

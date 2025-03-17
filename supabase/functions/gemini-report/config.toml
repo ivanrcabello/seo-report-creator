@@ -2,5 +2,6 @@
 project_id = "gwscyovvgivbtqtmbdth"
 [parameters]
 allowed_environments = ["dev", "staging", "prod"]
-[config]
-GEMINI_API_KEY = "AIzaSyDtqQWnGPrKlzE2G8q_zc4HOdjrlNWhqAk"
+# Gemini API key not needed as service is now using OpenAI
+# GEMINI_API_KEY = "REMOVED - Service deprecated"
+

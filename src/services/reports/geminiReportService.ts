@@ -2,16 +2,11 @@
 import { AuditResult } from "@/services/pdfAnalyzer";
 import { ClientReport } from "@/types/client";
 import { toast } from "sonner";
-import { generateGeminiReport } from "./reportGeneration";
+import { generateOpenAIReport } from "./openAIReportGeneration";
 import { saveReport } from "./reportStorage";
 
 /**
- * Generate a report using Gemini and save it to the database
- * @param clientId The client ID
- * @param clientName The client name
- * @param auditData The audit data to use for generation
- * @param documentIds Optional array of document IDs used in the report
- * @returns The saved report object
+ * @deprecated Use generateAndSaveOpenAIReport from openAIReportService instead
  */
 export const generateAndSaveReport = async (
   clientId: string,
@@ -20,7 +15,8 @@ export const generateAndSaveReport = async (
   documentIds: string[] = []
 ): Promise<ClientReport | null> => {
   try {
-    console.log("Starting generateAndSaveReport for client:", clientId, clientName);
+    console.log("DEPRECATED: Using OpenAI service instead of Gemini");
+    
     toast.loading("Generando informe con IA...");
     
     // Ensure auditData has the client name
@@ -39,19 +35,14 @@ export const generateAndSaveReport = async (
       reportType = 'performance';
     }
     
-    console.log(`Using report type: ${reportType}`);
-    
-    // Generate the report content
-    const reportContent = await generateGeminiReport(enhancedAuditData, reportType);
+    // Generate the report using OpenAI instead of Gemini
+    const reportContent = await generateOpenAIReport(enhancedAuditData, reportType);
     
     if (!reportContent) {
       toast.dismiss();
       toast.error("No se pudo generar el contenido del informe");
       return null;
     }
-    
-    console.log("Report content generated, saving to database");
-    console.log("Content preview:", reportContent.substring(0, 100) + "...");
     
     // Save the report
     const { success, reportId, error } = await saveReport(
@@ -72,7 +63,6 @@ export const generateAndSaveReport = async (
         title: `Informe SEO - ${clientName}`,
         content: reportContent,
         date: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
         status: 'draft',
         type: reportType,
         documentIds: documentIds,
@@ -93,6 +83,7 @@ export const generateAndSaveReport = async (
   }
 };
 
-// Re-export all functions for backward compatibility
-export { generateGeminiReport } from "./reportGeneration";
+// Re-export necessary functions for backward compatibility
+export { generateOpenAIReport as generateGeminiReport } from "./openAIReportGeneration";
 export { saveReport } from "./reportStorage";
+

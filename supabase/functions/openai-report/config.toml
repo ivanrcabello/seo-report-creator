@@ -2,7 +2,7 @@
 project_id = "gwscyovvgivbtqtmbdth"
 name = "openai-report"
 models = [
-  { name = "config.ts", content_type = "application/typescript; charset=utf-8", path = "../commons/config.ts" }
+  { name = "cors.ts", content_type = "application/typescript; charset=utf-8", path = "../cors.ts" }
 ]
 [[env.options]]
 name = "OPENAI_API_KEY"

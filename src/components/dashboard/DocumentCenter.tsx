@@ -32,7 +32,19 @@ export function DocumentCenter() {
           return;
         }
         
-        setDocuments(data || []);
+        // Map database fields to client type fields
+        const mappedDocuments: ClientDocument[] = data ? data.map(doc => ({
+          id: doc.id,
+          clientId: doc.client_id,
+          name: doc.name,
+          type: doc.type as "pdf" | "doc" | "image" | "text",
+          url: doc.url,
+          uploadDate: doc.upload_date,
+          analyzedStatus: doc.analyzed_status as "pending" | "analyzed" | "processed" | "error" | "failed",
+          content: doc.content
+        })) : [];
+        
+        setDocuments(mappedDocuments);
       } catch (error) {
         console.error("Exception fetching documents:", error);
       } finally {
@@ -82,7 +94,7 @@ export function DocumentCenter() {
                   <div>
                     <p className="font-medium">{doc.name}</p>
                     <p className="text-sm text-gray-500">
-                      {new Date(doc.upload_date).toLocaleDateString()}
+                      {new Date(doc.uploadDate).toLocaleDateString()}
                     </p>
                   </div>
                 </div>

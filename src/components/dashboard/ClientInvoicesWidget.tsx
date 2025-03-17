@@ -36,7 +36,28 @@ export function ClientInvoicesWidget() {
           return;
         }
         
-        setInvoices(data || []);
+        // Map database fields to client type fields
+        const mappedInvoices: Invoice[] = data ? data.map(item => ({
+          id: item.id,
+          invoiceNumber: item.invoice_number,
+          clientId: item.client_id,
+          issueDate: item.issue_date,
+          dueDate: item.due_date,
+          packId: item.pack_id,
+          proposalId: item.proposal_id,
+          baseAmount: item.base_amount,
+          taxRate: item.tax_rate,
+          taxAmount: item.tax_amount,
+          totalAmount: item.total_amount,
+          status: item.status as "pending" | "paid" | "cancelled" | "draft",
+          paymentDate: item.payment_date,
+          notes: item.notes,
+          pdfUrl: item.pdf_url,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at
+        })) : [];
+        
+        setInvoices(mappedInvoices);
       } catch (error) {
         console.error("Exception fetching invoices:", error);
       } finally {

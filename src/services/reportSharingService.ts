@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { getReportByShareToken } from "./reportService";
+import { getReportByShareToken } from "./reports/reportSharing";
 
 /**
  * Get the URL for a shared report

@@ -8,6 +8,7 @@ import { PrintableReportContent } from "@/components/seo-report/PrintableReportC
 import { AnalyticsReportView } from "@/components/seo-report/AnalyticsReportView";
 import { EmptyReportState } from "@/components/seo-report/EmptyReportState";
 import { downloadSeoReportPdf } from "@/services/pdf/seoReportPdfOperations";
+import { KeywordsAccordion } from "@/components/seo-report/KeywordsAccordion";
 
 interface ShareableReportViewProps {
   report: ClientReport;
@@ -26,7 +27,7 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
   console.log("Report content in ShareableReportView:", report.content ? report.content.substring(0, 100) + "..." : "No content");
 
   // Fix: Change the return type to void by not returning the result
-  const handleDownloadPdf = async () => {
+  const handleDownloadPdf = async (): Promise<void> => {
     if (report.id) {
       await downloadSeoReportPdf(report.id);
     } else {
@@ -48,6 +49,13 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
         />
         
         <FormattedReportContent report={report} formattedContent={formattedContent} />
+        
+        {/* Explicitly add KeywordsAccordion here for shared report view */}
+        {report.analyticsData?.auditResult?.keywords && report.analyticsData.auditResult.keywords.length > 0 && (
+          <div className="mt-8">
+            <KeywordsAccordion report={report} />
+          </div>
+        )}
         
         <PrintableReportContent report={report} printContent={printContent} />
       </div>

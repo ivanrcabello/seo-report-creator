@@ -1,4 +1,7 @@
 
+/**
+ * Invoice payment functionality
+ */
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -6,22 +9,25 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const markInvoiceAsPaid = async (invoiceId: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
+    const now = new Date().toISOString();
+    
+    const { error } = await supabase
       .from('invoices')
       .update({
-        status: 'paid' as 'pending' | 'paid' | 'cancelled' | 'draft', // Fix the type issue by casting
-        payment_date: new Date().toISOString(),
+        status: 'paid',
+        payment_date: now,
+        updated_at: now
       })
       .eq('id', invoiceId);
-
+    
     if (error) {
-      console.error('Error marking invoice as paid:', error);
+      console.error("Error marking invoice as paid:", error);
       return false;
     }
-
+    
     return true;
   } catch (error) {
-    console.error('Error in markInvoiceAsPaid:', error);
+    console.error("Error marking invoice as paid:", error);
     return false;
   }
 };

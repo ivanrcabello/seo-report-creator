@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ClientsList } from "@/components/ClientsList";
@@ -26,6 +27,7 @@ const Clients = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const params = useParams();
   const navigate = useNavigate();
 
@@ -94,6 +96,7 @@ const Clients = () => {
 
   const handleDeleteClient = (client: Client) => {
     setClientToDelete(client);
+    setDeleteError(null);
     setShowDeleteDialog(true);
   };
 
@@ -101,20 +104,23 @@ const Clients = () => {
     if (!clientToDelete) return;
     
     try {
+      setIsLoading(true);
       const result = await deleteClient(clientToDelete.id);
       
       if (result.success) {
         setClients(clients.filter(c => c.id !== clientToDelete.id));
         toast.success(`Cliente ${clientToDelete.name} eliminado correctamente`);
+        setShowDeleteDialog(false);
+        setClientToDelete(null);
       } else {
-        toast.error(result.error || "No se pudo eliminar el cliente");
+        setDeleteError(result.error || "No se pudo eliminar el cliente");
+        // Leave dialog open so user can see the error
       }
     } catch (error) {
       console.error("Error deleting client:", error);
-      toast.error("No se pudo eliminar el cliente");
+      setDeleteError("No se pudo eliminar el cliente");
     } finally {
-      setShowDeleteDialog(false);
-      setClientToDelete(null);
+      setIsLoading(false);
     }
   };
 
@@ -196,19 +202,33 @@ const Clients = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción eliminará al cliente {clientToDelete?.name} y no se puede deshacer.
-              Todos los datos asociados a este cliente serán eliminados permanentemente.
+            <AlertDialogDescription className="space-y-2">
+              {!deleteError ? (
+                <>
+                  Esta acción eliminará al cliente {clientToDelete?.name} y no se puede deshacer.
+                  Todos los datos asociados a este cliente serán eliminados permanentemente.
+                </>
+              ) : (
+                <div className="text-red-500 font-medium">{deleteError}</div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDeleteClient}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Eliminar
-            </AlertDialogAction>
+            <AlertDialogCancel onClick={() => {
+              setDeleteError(null);
+              setClientToDelete(null);
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            {!deleteError && (
+              <AlertDialogAction 
+                onClick={confirmDeleteClient}
+                className="bg-red-600 hover:bg-red-700"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Eliminando...' : 'Eliminar'}
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

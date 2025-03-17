@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Invoice } from "@/types/invoice";
+import { Invoice, CompanySettings } from "@/types/invoice";
 import { Client } from "@/types/client";
 import { getInvoiceByShareToken } from "@/services/invoiceService";
 import { getClient } from "@/services/clientService";
@@ -17,7 +16,7 @@ export default function InvoiceShare() {
   const { token } = useParams<{ token: string }>();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
-  const [company, setCompany] = useState<any | null>(null);
+  const [company, setCompany] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -34,25 +33,17 @@ export default function InvoiceShare() {
       setLoading(true);
       setIsRetrying(false);
       
-      const invoiceData = await getInvoiceByShareToken(token);
+      const result = await getInvoiceByShareToken(token);
       
-      if (!invoiceData) {
+      if (!result) {
         setError("Factura no encontrada");
         setLoading(false);
         return;
       }
       
-      setInvoice(invoiceData);
-      
-      // Get client information
-      if (invoiceData.clientId) {
-        const clientData = await getClient(invoiceData.clientId);
-        setClient(clientData);
-      }
-      
-      // Get company settings
-      const companyData = await getCompanySettings();
-      setCompany(companyData);
+      setInvoice(result.invoice);
+      setClient(result.client);
+      setCompany(result.company);
       
       setLoading(false);
     } catch (error) {

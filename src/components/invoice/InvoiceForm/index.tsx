@@ -1,21 +1,12 @@
 
 import React from "react";
-import { Form } from "@/components/ui/form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
 import { useInvoiceForm } from "./useInvoiceForm";
 import { InvoiceFormHeader } from "./InvoiceFormHeader";
 import { InvoiceFormSkeleton } from "./InvoiceFormSkeleton";
 import { InvoiceFormError } from "./InvoiceFormError";
 import { InvoiceFormNoClients } from "./InvoiceFormNoClients";
-import { ClientSelection } from "../ClientSelection";
-import { InvoiceStatus } from "../InvoiceStatus";
-import { InvoiceNumberField } from "../InvoiceNumberField";
-import { DateFields } from "../DateFields";
-import { AmountFields } from "../AmountFields";
-import { AmountSummary } from "../AmountSummary";
-import { NotesField } from "../NotesField";
+import { FormContent } from "./FormContent";
 
 export const InvoiceForm = () => {
   const {
@@ -59,50 +50,21 @@ export const InvoiceForm = () => {
         />
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ClientSelection 
-                form={form} 
-                isNewInvoice={isNewInvoice} 
-                isLoading={isLoading}
-                availableClients={availableClients}
-                onClientChange={handleClientChange} 
-              />
-              <InvoiceStatus form={form} />
-              
-              {!isNewInvoice && (
-                <InvoiceNumberField 
-                  form={form} 
-                  isNewInvoice={isNewInvoice} 
-                  invoiceNumber={invoice?.invoiceNumber} 
-                />
-              )}
-              
-              <DateFields form={form} />
-              
-              <AmountFields form={form} />
-              
-              <AmountSummary 
-                baseAmount={baseAmountNum} 
-                taxRate={taxRateNum} 
-                taxAmount={taxAmount} 
-                totalAmount={totalAmount} 
-              />
-              
-              <NotesField form={form} />
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="gap-2 mt-6"
-              disabled={isSubmitting}
-            >
-              <Save className="h-4 w-4" />
-              {isSubmitting ? "Guardando..." : isNewInvoice ? "Crear Factura" : "Actualizar Factura"}
-            </Button>
-          </form>
-        </Form>
+        <FormContent
+          form={form}
+          invoice={invoice}
+          client={client}
+          isNewInvoice={isNewInvoice}
+          isSubmitting={isSubmitting}
+          availableClients={availableClients}
+          isLoading={isLoading}
+          baseAmountNum={baseAmountNum}
+          taxRateNum={taxRateNum}
+          taxAmount={taxAmount}
+          totalAmount={totalAmount}
+          handleClientChange={handleClientChange}
+          onSubmit={onSubmit}
+        />
       </CardContent>
     </Card>
   );

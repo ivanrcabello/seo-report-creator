@@ -42,8 +42,7 @@ export const saveGeminiReport = async (
       reportType = 'performance';
     }
     
-    // Define the status with the correct type
-    // Este es el cambio clave para solucionar el error TS2322
+    // Define the status with the correct type - this is the fix for the TypeScript error
     const reportStatus: 'draft' | 'published' | 'shared' = 'draft';
     
     const reportData = {

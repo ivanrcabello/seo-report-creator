@@ -25,6 +25,7 @@ export const mapInvoiceFromDB = (data: any): Invoice => {
     pdfUrl: data.pdf_url,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
+    // Manejar los campos de compartir que ahora vienen de invoice_shares
     shareToken: data.share_token,
     sharedAt: data.shared_at
   };

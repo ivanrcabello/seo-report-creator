@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ClientReport } from "@/types/client";
@@ -33,8 +34,15 @@ export const AllReports = () => {
       console.log("Informes cargados:", allReports);
       setReports(allReports);
       
-      const types = Array.from(new Set(allReports.map(report => report.type)))
-        .filter(Boolean) as string[];
+      // Filter out null, undefined, or empty string values before creating the set
+      const types = Array.from(
+        new Set(
+          allReports
+            .map(report => report.type)
+            .filter(type => type && type.trim() !== "")
+        )
+      ) as string[];
+      
       setReportTypes(types);
     } catch (err) {
       console.error("Error loading reports:", err);
@@ -112,7 +120,9 @@ export const AllReports = () => {
                 <SelectContent>
                   <SelectItem value="">Todos los tipos</SelectItem>
                   {reportTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type || "Sin tipo"}</SelectItem>
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

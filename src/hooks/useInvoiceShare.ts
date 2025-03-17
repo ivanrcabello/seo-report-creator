@@ -39,7 +39,7 @@ export const useInvoiceShare = (token: string | undefined) => {
       
       const result = await getInvoiceByShareToken(token);
       
-      if (!result) {
+      if (!result || !result.invoice) {
         setError("Factura no encontrada");
         setLoading(false);
         return;

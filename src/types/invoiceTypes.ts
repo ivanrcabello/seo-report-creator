@@ -30,6 +30,8 @@ export interface Invoice {
   pdfUrl?: string;
   createdAt: string;
   updatedAt: string;
+  shareToken?: string;  // Added for invoice sharing
+  sharedAt?: string;    // Added for invoice sharing
   // Campos opcionales para visualización
   items?: Array<{
     description: string;
@@ -71,4 +73,20 @@ export interface CompanySettings {
   accentColor?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Invoice share response 
+ */
+export interface InvoiceShareResponse {
+  url: string;
+}
+
+/**
+ * Share invoice result containing all needed entities
+ */
+export interface ShareInvoiceResult {
+  invoice: Invoice | null;
+  client: any | null;  // Using any for now, should be updated to use Client type
+  company: CompanySettings | null;
 }

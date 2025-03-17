@@ -24,7 +24,9 @@ export const mapInvoiceFromDB = (data: any): Invoice => {
     notes: data.notes,
     pdfUrl: data.pdf_url,
     createdAt: data.created_at,
-    updatedAt: data.updated_at
+    updatedAt: data.updated_at,
+    shareToken: data.share_token,
+    sharedAt: data.shared_at
   };
 };
 
@@ -46,6 +48,8 @@ export const mapInvoiceToDB = (invoice: Partial<Invoice>): any => {
     notes: invoice.notes,
     pdf_url: invoice.pdfUrl,
     created_at: invoice.createdAt,
-    updated_at: invoice.updatedAt
+    updated_at: invoice.updatedAt,
+    share_token: invoice.shareToken,
+    shared_at: invoice.sharedAt
   };
 };

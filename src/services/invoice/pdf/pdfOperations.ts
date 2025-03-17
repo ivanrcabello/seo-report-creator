@@ -1,3 +1,4 @@
+
 /**
  * PDF Operations for invoices (download, email, share, etc.)
  */
@@ -5,8 +6,8 @@ import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { generateInvoicePdf } from "@/services/invoiceService";
-import { mapInvoiceFromDB } from "../invoiceMappers";
-import { Invoice } from "@/types/invoiceTypes";
+import { mapInvoiceFromDB, mapInvoiceToDB } from "../invoiceMappers";
+import { Invoice, InvoiceShareResponse, ShareInvoiceResult } from "@/types/invoiceTypes";
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -173,7 +174,7 @@ export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> =>
 /**
  * Share an invoice - creates a share token and returns share URL
  */
-export const shareInvoice = async (invoiceId: string): Promise<string | null> => {
+export const shareInvoice = async (invoiceId: string): Promise<InvoiceShareResponse | null> => {
   try {
     console.log("Sharing invoice:", invoiceId);
     
@@ -196,7 +197,9 @@ export const shareInvoice = async (invoiceId: string): Promise<string | null> =>
     
     // Return the share URL - adjust the URL format according to your app's routing
     const baseUrl = window.location.origin;
-    return `${baseUrl}/invoices/share/${shareToken}`;
+    return {
+      url: `${baseUrl}/invoices/share/${shareToken}`
+    };
   } catch (error) {
     console.error("Error in shareInvoice:", error);
     return null;
@@ -206,7 +209,7 @@ export const shareInvoice = async (invoiceId: string): Promise<string | null> =>
 /**
  * Get invoice by share token
  */
-export const getInvoiceByShareToken = async (shareToken: string): Promise<Invoice | null> => {
+export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareInvoiceResult> => {
   try {
     const { data, error } = await supabase
       .from('invoices')
@@ -216,13 +219,43 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<Invoic
     
     if (error || !data) {
       console.error("Error fetching invoice by share token:", error || "No data returned");
-      return null;
+      return { invoice: null, client: null, company: null };
     }
     
-    return mapInvoiceFromDB(data);
+    const invoice = mapInvoiceFromDB(data);
+    
+    // Get client data
+    const client = data.clients ? {
+      id: data.clients.id,
+      name: data.clients.name,
+      company: data.clients.company,
+      email: data.clients.email,
+      phone: data.clients.phone
+    } : null;
+    
+    // Get company settings
+    const { data: companyData, error: companyError } = await supabase
+      .from('company_settings')
+      .select('*')
+      .single();
+      
+    const company = companyError || !companyData ? null : {
+      id: companyData.id,
+      companyName: companyData.company_name,
+      taxId: companyData.tax_id,
+      address: companyData.address,
+      phone: companyData.phone,
+      email: companyData.email,
+      logoUrl: companyData.logo_url,
+      bankAccount: companyData.bank_account,
+      createdAt: companyData.created_at,
+      updatedAt: companyData.updated_at
+    };
+    
+    return { invoice, client, company };
   } catch (error) {
     console.error("Error in getInvoiceByShareToken:", error);
-    return null;
+    return { invoice: null, client: null, company: null };
   }
 };
 

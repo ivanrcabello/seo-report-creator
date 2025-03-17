@@ -45,7 +45,6 @@ export const useInvoiceActions = (id?: string, setInvoice?: React.Dispatch<React
       if (success) {
         toast.success('Factura marcada como pagada');
         
-        // Update the local invoice state if we have a setter
         if (setInvoice) {
           const now = new Date().toISOString();
           setInvoice((prevInvoice) => {

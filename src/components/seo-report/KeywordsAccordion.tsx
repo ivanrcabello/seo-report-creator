@@ -9,6 +9,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface KeywordsAccordionProps {
   report: ClientReport;
@@ -65,58 +66,60 @@ export const KeywordsAccordion = ({ report, isPrintView = false }: KeywordsAccor
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Palabra Clave</TableHead>
-                    <TableHead className="w-[120px]">Posición</TableHead>
-                    <TableHead className="w-[100px]">Evolución</TableHead>
-                    <TableHead className="w-[120px]">Vol. Búsqueda</TableHead>
-                    <TableHead className="w-[100px]">Dificultad</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedKeywords.map((keyword, index) => {
-                    const trend = getPositionTrend(keyword);
-                    
-                    return (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{keyword.word}</TableCell>
-                        <TableCell>{getPositionBadge(keyword.position)}</TableCell>
-                        <TableCell>
-                          {trend && (
-                            <div className="flex items-center gap-1">
-                              {trend.icon}
-                              <span>{trend.text}</span>
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>{keyword.searchVolume || "N/A"}</TableCell>
-                        <TableCell>
-                          {keyword.difficulty !== undefined ? (
-                            <div className="flex items-center">
-                              <div className="h-2 w-16 bg-gray-200 rounded-full overflow-hidden">
-                                <div 
-                                  className={`h-2 ${
-                                    keyword.difficulty < 30 ? "bg-green-500" : 
-                                    keyword.difficulty < 60 ? "bg-yellow-500" : "bg-red-500"
-                                  }`}
-                                  style={{ width: `${keyword.difficulty}%` }}
-                                />
+            <ScrollArea className="h-[400px] rounded-md">
+              <div className="px-1">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-white z-10">
+                    <TableRow>
+                      <TableHead>Palabra Clave</TableHead>
+                      <TableHead className="w-[120px]">Posición</TableHead>
+                      <TableHead className="w-[100px]">Evolución</TableHead>
+                      <TableHead className="w-[120px]">Vol. Búsqueda</TableHead>
+                      <TableHead className="w-[100px]">Dificultad</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedKeywords.map((keyword, index) => {
+                      const trend = getPositionTrend(keyword);
+                      
+                      return (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{keyword.word}</TableCell>
+                          <TableCell>{getPositionBadge(keyword.position)}</TableCell>
+                          <TableCell>
+                            {trend && (
+                              <div className="flex items-center gap-1">
+                                {trend.icon}
+                                <span>{trend.text}</span>
                               </div>
-                              <span className="ml-2 text-xs">{keyword.difficulty}</span>
-                            </div>
-                          ) : (
-                            "N/A"
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                            )}
+                          </TableCell>
+                          <TableCell>{keyword.searchVolume || "N/A"}</TableCell>
+                          <TableCell>
+                            {keyword.difficulty !== undefined ? (
+                              <div className="flex items-center">
+                                <div className="h-2 w-16 bg-gray-200 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-2 ${
+                                      keyword.difficulty < 30 ? "bg-green-500" : 
+                                      keyword.difficulty < 60 ? "bg-yellow-500" : "bg-red-500"
+                                    }`}
+                                    style={{ width: `${keyword.difficulty}%` }}
+                                  />
+                                </div>
+                                <span className="ml-2 text-xs">{keyword.difficulty}</span>
+                              </div>
+                            ) : (
+                              "N/A"
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
           </AccordionContent>
         </AccordionItem>
       </Accordion>

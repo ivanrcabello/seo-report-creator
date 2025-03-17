@@ -1,131 +1,132 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
-import { Invoice, CompanySettings } from "@/types/invoice";
+import { toast } from "sonner";
+import { Invoice, CompanySettings } from "@/types/invoice"; 
 import { Client } from "@/types/client";
 import { mapInvoiceFromDB } from "../invoiceMappers";
 
 /**
- * Share an invoice using a unique token
+ * Shares an invoice by creating a unique share token
  */
 export const shareInvoice = async (invoiceId: string): Promise<{ url: string } | null> => {
   try {
+    // Generate a unique share token
     const shareToken = uuidv4();
     
-    // Update invoice with share token and timestamp
-    // Use the correct type for the data being updated
-    const { data, error } = await supabase
-      .from('invoices')
-      .update({
-        shared_at: new Date().toISOString(),
-        share_token: shareToken
-      })
-      .eq('id', invoiceId)
-      .select();
+    // Update the invoice with the share token
+    const { error } = await supabase
+      .from('invoice_shares')
+      .insert({
+        invoice_id: invoiceId,
+        share_token: shareToken,
+        shared_at: new Date().toISOString()
+      });
     
     if (error) {
-      console.error('Error sharing invoice:', error);
+      console.error("Error sharing invoice:", error);
+      toast.error("Error al compartir la factura");
       return null;
     }
-
-    // Use window.location.origin to get the base URL
-    const baseUrl = window.location.origin;
-    const shareUrl = `${baseUrl}/invoice-share/${shareToken}`;
-
-    return { url: shareUrl };
+    
+    // Return the URL that can be used to access the shared invoice
+    return {
+      url: `${window.location.origin}/shared/invoice/${shareToken}`
+    };
   } catch (error) {
-    console.error('Error in shareInvoice:', error);
+    console.error("Error sharing invoice:", error);
+    toast.error("Error al compartir la factura");
     return null;
   }
 };
 
 /**
- * Get an invoice using its share token
+ * Gets an invoice by its share token
  */
-export const getInvoiceByShareToken = async (shareToken: string): Promise<{ invoice: Invoice; client: Client; company: CompanySettings } | null> => {
+export const getInvoiceByShareToken = async (shareToken: string): Promise<{
+  invoice: Invoice | null;
+  client: Client | null;
+  company: CompanySettings | null;
+}> => {
   try {
-    // First get the invoice by share token
-    const { data, error } = await supabase
-      .from('invoices')
-      .select('*')
+    // Get the invoice_id from the share token
+    const { data: shareData, error: shareError } = await supabase
+      .from('invoice_shares')
+      .select('invoice_id')
       .eq('share_token', shareToken)
       .single();
-
-    if (error || !data) {
-      console.error('Error getting invoice by share token:', error);
-      return null;
+    
+    if (shareError || !shareData) {
+      console.error("Error getting shared invoice:", shareError);
+      return { invoice: null, client: null, company: null };
     }
-
-    // Map database response to Invoice type
-    const invoice = mapInvoiceFromDB(data);
-
-    // Then get the client
-    const clientResponse = await supabase
-      .from('clients')
+    
+    // Get the invoice using the invoice_id
+    const { data: invoiceData, error: invoiceError } = await supabase
+      .from('invoices')
       .select('*')
-      .eq('id', invoice.clientId)
+      .eq('id', shareData.invoice_id)
       .single();
-
-    if (clientResponse.error || !clientResponse.data) {
-      console.error('Error getting client:', clientResponse.error);
-      return null;
+    
+    if (invoiceError || !invoiceData) {
+      console.error("Error getting invoice data:", invoiceError);
+      return { invoice: null, client: null, company: null };
     }
-
-    // Map the client data - only include fields that exist in the Client type
-    const client: Client = {
-      id: clientResponse.data.id,
-      name: clientResponse.data.name,
-      email: clientResponse.data.email,
-      phone: clientResponse.data.phone || undefined,
-      company: clientResponse.data.company || undefined,
-      createdAt: clientResponse.data.created_at,
-      // Optional fields
-      lastReport: clientResponse.data.last_report || undefined,
-      notes: clientResponse.data.notes || undefined,
-      isActive: clientResponse.data.is_active,
-      website: clientResponse.data.website || undefined,
-      sector: clientResponse.data.sector || undefined,
-      analyticsConnected: clientResponse.data.analytics_connected,
-      searchConsoleConnected: clientResponse.data.search_console_connected,
-    };
-
-    // Get company settings
-    const companyResponse = await supabase
+    
+    const invoice = mapInvoiceFromDB(invoiceData);
+    
+    // Get the client data
+    let client: Client | null = null;
+    if (invoice.clientId) {
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', invoice.clientId)
+        .single();
+      
+      if (!clientError && clientData) {
+        client = {
+          id: clientData.id,
+          name: clientData.name,
+          email: clientData.email,
+          phone: clientData.phone,
+          address: clientData.address,
+          taxId: clientData.tax_id,
+          website: clientData.website,
+          createdAt: clientData.created_at,
+          updatedAt: clientData.updated_at
+        };
+      }
+    }
+    
+    // Get the company settings
+    let company: CompanySettings | null = null;
+    const { data: companyData, error: companyError } = await supabase
       .from('company_settings')
       .select('*')
       .single();
-
-    if (companyResponse.error || !companyResponse.data) {
-      console.error('Error getting company settings:', companyResponse.error);
-      return null;
-    }
-
-    // Create a type-safe version of company settings
-    const dbCompanyData = companyResponse.data;
     
-    // Map company settings to CompanySettings type with proper properties
-    const company: CompanySettings = {
-      id: dbCompanyData.id,
-      companyName: dbCompanyData.company_name,
-      taxId: dbCompanyData.tax_id,
-      address: dbCompanyData.address,
-      phone: dbCompanyData.phone || undefined,
-      email: dbCompanyData.email || undefined,
-      logoUrl: dbCompanyData.logo_url || undefined,
-      // Add bankAccount as undefined since it's not in the database response
-      bankAccount: undefined,
-      // Add required fields from CompanySettings
-      createdAt: dbCompanyData.created_at,
-      updatedAt: dbCompanyData.updated_at,
-      // Add other optional fields as undefined
-      primaryColor: undefined,
-      secondaryColor: undefined,
-      accentColor: undefined
-    };
-
+    if (!companyError && companyData) {
+      company = {
+        id: companyData.id,
+        companyName: companyData.company_name,
+        taxId: companyData.tax_id,
+        address: companyData.address,
+        phone: companyData.phone,
+        email: companyData.email,
+        logoUrl: companyData.logo_url,
+        primaryColor: companyData.primary_color,
+        secondaryColor: companyData.secondary_color,
+        accentColor: companyData.accent_color,
+        bankAccount: companyData.bank_account || undefined,
+        createdAt: companyData.created_at,
+        updatedAt: companyData.updated_at
+      };
+    }
+    
     return { invoice, client, company };
   } catch (error) {
-    console.error('Error in getInvoiceByShareToken:', error);
-    return null;
+    console.error("Error getting invoice by share token:", error);
+    return { invoice: null, client: null, company: null };
   }
 };

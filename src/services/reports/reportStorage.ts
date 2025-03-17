@@ -60,7 +60,7 @@ export const saveGeminiReport = async (
       status: reportStatus
     };
     
-    console.log("Inserting report into database");
+    console.log("Inserting report into database", reportData);
     
     // Save to database
     const { data, error } = await supabase
@@ -100,4 +100,3 @@ export const saveGeminiReport = async (
     return null;
   }
 };
-

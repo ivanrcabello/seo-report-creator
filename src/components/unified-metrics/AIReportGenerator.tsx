@@ -221,13 +221,15 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       console.log("- Company name: ", auditResult.companyName);
       console.log("- SEO score: ", auditResult.seoScore);
       console.log("- Using custom prompt: ", useCustomPrompt);
+      console.log("- Custom prompt: ", useCustomPrompt ? customPrompt : "None");
       console.log("- Report type: ", reportType);
       
       const report = await generateAndSaveOpenAIReport(
         clientId,
         clientName,
         auditResult,
-        documents.map(doc => doc.id)
+        documents.map(doc => doc.id),
+        useCustomPrompt ? customPrompt : undefined
       );
       
       setProgress(100);

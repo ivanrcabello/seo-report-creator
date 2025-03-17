@@ -11,18 +11,21 @@ import { saveGeminiReport } from "./reportStorage";
  * @param clientName The client name
  * @param auditData The audit data to use for generation
  * @param documentIds Optional array of document IDs used in the report
+ * @param customPrompt Optional custom prompt to guide the AI
  * @returns The saved report object
  */
 export const generateAndSaveOpenAIReport = async (
   clientId: string,
   clientName: string,
   auditData: AuditResult,
-  documentIds: string[] = []
+  documentIds: string[] = [],
+  customPrompt?: string
 ): Promise<ClientReport | null> => {
   try {
     console.log("Starting generateAndSaveOpenAIReport for client:", clientId, clientName);
     console.log("Client name:", clientName);
     console.log("Document IDs:", documentIds);
+    console.log("Custom prompt:", customPrompt || "None provided");
     
     const toastId = toast.loading("Generando informe con OpenAI...");
     
@@ -45,7 +48,7 @@ export const generateAndSaveOpenAIReport = async (
     console.log(`Using report type: ${reportType}`);
     
     // Generate the report content
-    const reportContent = await generateOpenAIReport(enhancedAuditData, reportType);
+    const reportContent = await generateOpenAIReport(enhancedAuditData, reportType, customPrompt);
     
     if (!reportContent) {
       toast.dismiss(toastId);

@@ -7,31 +7,29 @@ import { toast } from "sonner";
  * Generate a report using the OpenAI API
  * @param auditData The audit data to be processed
  * @param templateType The type of report template to use (seo, local, etc.)
+ * @param customPrompt Optional custom prompt to guide the AI
  * @returns The generated report content
  */
 export const generateOpenAIReport = async (
   auditData: AuditResult, 
-  templateType: 'seo' | 'local' | 'technical' | 'performance' = 'seo'
+  templateType: 'seo' | 'local' | 'technical' | 'performance' = 'seo',
+  customPrompt?: string
 ): Promise<string | null> => {
   try {
     console.log("Generating report with OpenAI API");
     console.log("Template type:", templateType);
+    console.log("Custom prompt:", customPrompt || "None provided");
+    console.log("Company name:", auditData.companyName);
     
     // Validate essential data
     if (!auditData || !auditData.companyName) {
+      console.error("Missing required data:", { hasAuditData: !!auditData, hasCompanyName: auditData ? !!auditData.companyName : false });
       throw new Error("Datos de auditoría incompletos. Se requiere al menos el nombre de la empresa.");
     }
     
     // Remove circular or non-serializable properties
     const sanitizedAuditData = JSON.parse(JSON.stringify(auditData));
     console.log("Audit data sanitized successfully");
-    
-    // Add custom prompt if provided
-    const customPrompt = sanitizedAuditData.customPrompt;
-    if (customPrompt) {
-      console.log("Using custom prompt:", customPrompt);
-      delete sanitizedAuditData.customPrompt; // Remove it from the data to avoid confusing the API
-    }
     
     // Call Supabase Edge Function for OpenAI
     console.log("Calling Supabase Function: openai-report");

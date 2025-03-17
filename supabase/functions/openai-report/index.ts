@@ -19,6 +19,7 @@ serve(async (req) => {
   try {
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiApiKey) {
+      console.error("OpenAI API key is not configured");
       return new Response(
         JSON.stringify({
           error: "OpenAI API key is not configured in the environment",
@@ -31,13 +32,19 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { auditResult, templateType, customPrompt } = await req.json();
+    const requestData = await req.json();
+    const { auditResult, templateType, customPrompt } = requestData;
     
     console.log("Processing OpenAI report request");
     console.log("Template type:", templateType);
     console.log("Custom prompt provided:", !!customPrompt);
+    console.log("Audit Result company name:", auditResult.companyName);
 
     if (!auditResult || !auditResult.companyName) {
+      console.error("Missing required data:", { 
+        hasAuditResult: !!auditResult, 
+        hasCompanyName: auditResult ? !!auditResult.companyName : false 
+      });
       throw new Error("Invalid request body: auditResult or companyName missing");
     }
 
@@ -83,11 +90,12 @@ serve(async (req) => {
     // Add custom prompt if provided
     if (customPrompt) {
       systemPrompt += `\n\nAdditional instructions: ${customPrompt}`;
+      console.log("Added custom prompt to system instructions");
     }
 
     console.log("Starting OpenAI chat completion");
     
-    // Select model from config.toml
+    // Select model from config.toml or use default
     const model = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
     console.log(`Using OpenAI model: ${model}`);
     
@@ -108,12 +116,14 @@ serve(async (req) => {
     console.log("OpenAI response received");
     
     if (!completion.choices || completion.choices.length === 0 || !completion.choices[0].message) {
+      console.error("No choices in OpenAI response:", completion);
       throw new Error("No content received from OpenAI");
     }
     
     const content = completion.choices[0].message.content;
     
     if (!content) {
+      console.error("Empty content received from OpenAI");
       throw new Error("Empty content received from OpenAI");
     }
     

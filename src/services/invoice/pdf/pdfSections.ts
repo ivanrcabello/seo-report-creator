@@ -125,9 +125,17 @@ export const addInvoiceItems = (doc: jsPDF, invoice: Invoice): void => {
     head: [["Concepto", "Importe"]],
     body: tableData,
     styles: tableStyles.styles,
-    headStyles: tableStyles.headStyles,
-    bodyStyles: tableStyles.bodyStyles,
-    alternateRowStyles: tableStyles.alternateRowStyles
+    headStyles: {
+      fillColor: [241, 245, 249] as [number, number, number],
+      textColor: [31, 41, 55] as [number, number, number],
+      fontStyle: 'bold'
+    },
+    bodyStyles: {
+      textColor: [31, 41, 55] as [number, number, number]
+    },
+    alternateRowStyles: {
+      fillColor: [249, 250, 251] as [number, number, number]
+    }
   });
 };
 

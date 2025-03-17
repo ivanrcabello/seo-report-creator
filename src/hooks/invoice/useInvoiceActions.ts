@@ -1,71 +1,71 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Invoice } from '@/types/invoice';
 import { 
-  markInvoiceAsPaid, 
-  deleteInvoice, 
+  generateInvoicePdf, 
   downloadInvoicePdf, 
   sendInvoiceByEmail, 
-  generateInvoicePdf, 
-  shareInvoice
-} from "@/services/invoiceService";
-import { toast } from "sonner";
-import { getInvoice } from "@/services/invoiceService";
-import { Invoice } from "@/types/invoice";
+  shareInvoice, 
+  deleteInvoice,
+  markInvoiceAsPaid
+} from '@/services/invoiceService';
 
-export const useInvoiceActions = (id: string | undefined, setInvoice: (invoice: Invoice) => void) => {
+export const useInvoiceActions = (id?: string, setInvoice?: (invoice: Invoice | null) => void) => {
   const navigate = useNavigate();
-  const [markingAsPaid, setMarkingAsPaid] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [isPdfDownloading, setIsPdfDownloading] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [isSharing, setIsSharing] = useState(false);
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-
-  const handleMarkAsPaid = async () => {
-    if (!id) return;
-
-    setMarkingAsPaid(true);
-
-    try {
-      const success = await markInvoiceAsPaid(id);
-
-      if (success) {
-        toast.success("Factura marcada como pagada correctamente");
-        setMarkingAsPaid(false);
-        const updatedInvoice = await getInvoice(id);
-        if (updatedInvoice) {
-          setInvoice(updatedInvoice);
-        }
-      } else {
-        throw new Error("Error al marcar la factura como pagada");
-      }
-    } catch (error) {
-      console.error("Error marking invoice as paid:", error);
-      toast.error("No se pudo marcar la factura como pagada");
-      setMarkingAsPaid(false);
-    }
-  };
 
   const handleDeleteInvoice = async () => {
     if (!id) return;
     
-    setIsDeleting(true);
-    
     try {
       const success = await deleteInvoice(id);
-      
       if (success) {
-        toast.success("Factura eliminada correctamente");
-        navigate("/invoices");
+        toast.success('Factura eliminada correctamente');
+        navigate('/invoices');
       } else {
-        throw new Error("Error al eliminar la factura");
+        toast.error('Error al eliminar la factura');
       }
     } catch (error) {
-      console.error("Error deleting invoice:", error);
-      toast.error("No se pudo eliminar la factura");
-      setIsDeleting(false);
+      console.error('Error deleting invoice:', error);
+      toast.error('Error al eliminar la factura');
+    }
+  };
+
+  const handleMarkAsPaid = async () => {
+    if (!id) return;
+    
+    try {
+      const success = await markInvoiceAsPaid(id);
+      if (success) {
+        toast.success('Factura marcada como pagada');
+        
+        // Update the local invoice state if we have a setter
+        if (setInvoice) {
+          const now = new Date().toISOString();
+          setInvoice(prevInvoice => {
+            if (!prevInvoice) return null;
+            
+            return {
+              ...prevInvoice,
+              status: 'paid',
+              paymentDate: now,
+              updatedAt: now
+            };
+          });
+        }
+      } else {
+        toast.error('Error al marcar la factura como pagada');
+      }
+    } catch (error) {
+      console.error('Error marking invoice as paid:', error);
+      toast.error('Error al marcar la factura como pagada');
     }
   };
 
@@ -74,34 +74,15 @@ export const useInvoiceActions = (id: string | undefined, setInvoice: (invoice: 
     
     setIsPdfDownloading(true);
     try {
-      // First check if the invoice has a PDF URL
-      const invoiceData = await getInvoice(id);
-      if (!invoiceData?.pdfUrl) {
-        // Generate the PDF first if it doesn't exist
-        toast.info("Generando PDF...");
-        const generated = await generateInvoicePdf(id);
-        if (!generated) {
-          toast.error("Error al generar el PDF");
-          setIsPdfDownloading(false);
-          return;
-        }
-        
-        // Refresh the invoice to get the PDF URL
-        const updatedInvoice = await getInvoice(id);
-        if (updatedInvoice) {
-          setInvoice(updatedInvoice);
-        }
-      }
-      
-      // Now download the PDF
+      console.log("Triggering PDF download for invoice:", id);
       const success = await downloadInvoicePdf(id);
       
       if (!success) {
-        toast.error("Error al descargar el PDF");
+        toast.error('Error al descargar el PDF');
       }
     } catch (error) {
-      console.error("Error downloading PDF:", error);
-      toast.error("Error al descargar el PDF");
+      console.error('Error downloading PDF:', error);
+      toast.error('Error al descargar el PDF');
     } finally {
       setIsPdfDownloading(false);
     }
@@ -112,35 +93,17 @@ export const useInvoiceActions = (id: string | undefined, setInvoice: (invoice: 
     
     setIsSendingEmail(true);
     try {
-      // First check if the invoice has a PDF URL
-      const invoiceData = await getInvoice(id);
-      if (!invoiceData?.pdfUrl) {
-        // Generate the PDF first if it doesn't exist
-        toast.info("Generando PDF para enviar por email...");
-        const generated = await generateInvoicePdf(id);
-        if (!generated) {
-          toast.error("Error al generar el PDF para el email");
-          setIsSendingEmail(false);
-          return;
-        }
-        
-        // Refresh the invoice to get the PDF URL
-        const updatedInvoice = await getInvoice(id);
-        if (updatedInvoice) {
-          setInvoice(updatedInvoice);
-        }
-      }
-      
+      console.log("Sending invoice by email:", id);
       const success = await sendInvoiceByEmail(id);
       
       if (success) {
-        toast.success("Factura enviada por email correctamente");
+        toast.success('Factura enviada por email correctamente');
       } else {
-        toast.error("Error al enviar el email");
+        toast.error('Error al enviar la factura por email');
       }
     } catch (error) {
-      console.error("Error sending email:", error);
-      toast.error("Error al enviar el email");
+      console.error('Error sending email:', error);
+      toast.error('Error al enviar la factura por email');
     } finally {
       setIsSendingEmail(false);
     }
@@ -151,36 +114,57 @@ export const useInvoiceActions = (id: string | undefined, setInvoice: (invoice: 
     
     setIsSharing(true);
     try {
+      console.log("Sharing invoice:", id);
       const result = await shareInvoice(id);
+      
       if (result && result.url) {
         setShareUrl(result.url);
         setIsShareDialogOpen(true);
-        toast.success("Enlace de factura generado correctamente");
       } else {
-        toast.error("Error al compartir la factura");
+        toast.error('Error al compartir la factura');
       }
     } catch (error) {
-      console.error("Error sharing invoice:", error);
-      toast.error("Error al compartir la factura");
+      console.error('Error sharing invoice:', error);
+      toast.error('Error al compartir la factura');
     } finally {
       setIsSharing(false);
     }
   };
 
+  const handleGeneratePdf = async () => {
+    if (!id) return;
+    
+    setIsPdfGenerating(true);
+    try {
+      console.log("Generating PDF for invoice:", id);
+      const success = await generateInvoicePdf(id);
+      
+      if (success) {
+        toast.success('PDF generado correctamente');
+      } else {
+        toast.error('Error al generar el PDF');
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Error al generar el PDF');
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
+
   return {
-    markingAsPaid,
-    isDeleting,
+    isPdfGenerating,
     isPdfDownloading,
     isSendingEmail,
+    isSharing,
     isShareDialogOpen,
     setIsShareDialogOpen,
     shareUrl,
-    isSharing,
-    handleMarkAsPaid,
     handleDeleteInvoice,
+    handleMarkAsPaid,
     handleDownloadPdf,
     handleSendEmail,
     handleShareInvoice,
-    navigate
+    handleGeneratePdf
   };
 };

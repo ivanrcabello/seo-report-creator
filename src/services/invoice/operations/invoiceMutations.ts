@@ -89,15 +89,32 @@ export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefin
 
 // Delete an invoice
 export const deleteInvoice = async (id: string): Promise<boolean> => {
-  const { error } = await supabase
-    .from('invoices')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
-    console.error("Error deleting invoice:", error);
+  try {
+    // First delete any related invoice shares
+    const { error: shareError } = await supabase
+      .from('invoice_shares')
+      .delete()
+      .eq('invoice_id', id);
+    
+    if (shareError) {
+      console.error("Error deleting invoice shares:", shareError);
+      // Continue with deletion of the invoice itself
+    }
+    
+    // Delete the invoice
+    const { error } = await supabase
+      .from('invoices')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error("Error deleting invoice:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in deleteInvoice:", error);
     return false;
   }
-  
-  return true;
 };

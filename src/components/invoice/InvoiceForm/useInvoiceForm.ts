@@ -71,7 +71,9 @@ export function useInvoiceForm() {
         setError("No se pudieron cargar los clientes");
         toast.error("No se pudieron cargar los clientes");
       } finally {
-        setIsLoading(false);
+        if (isNewInvoice) {
+          setIsLoading(false);
+        }
       }
     };
     
@@ -82,7 +84,6 @@ export function useInvoiceForm() {
   useEffect(() => {
     const loadInvoiceData = async () => {
       if (isNewInvoice) {
-        setIsLoading(false);
         return;
       }
       
@@ -90,15 +91,28 @@ export function useInvoiceForm() {
       try {
         console.log("Loading invoice data for:", id);
         const data = await getInvoice(id);
+        console.log("Invoice data loaded:", data);
+        
         if (data) {
           setInvoice(data);
-          const clientData = await getClient(data.clientId);
-          if (clientData) {
-            setClient(clientData);
+          
+          if (data.clientId) {
+            console.log("Loading client data for invoice:", data.clientId);
+            const clientData = await getClient(data.clientId);
+            if (clientData) {
+              setClient(clientData);
+              console.log("Client data loaded:", clientData);
+            }
           }
           
-          const issueDate = data.issueDate ? format(new Date(data.issueDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd");
-          const dueDate = data.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd") : format(addDays(new Date(), 30), "yyyy-MM-dd");
+          // Format dates properly for form inputs
+          const issueDate = data.issueDate 
+            ? format(new Date(data.issueDate), "yyyy-MM-dd") 
+            : format(new Date(), "yyyy-MM-dd");
+            
+          const dueDate = data.dueDate 
+            ? format(new Date(data.dueDate), "yyyy-MM-dd") 
+            : format(addDays(new Date(), 30), "yyyy-MM-dd");
           
           console.log("Setting form values with:", {
             clientId: data.clientId,
@@ -113,6 +127,7 @@ export function useInvoiceForm() {
             invoiceNumber: data.invoiceNumber,
           });
           
+          // Reset form with invoice data
           form.reset({
             clientId: data.clientId,
             packId: data.packId,
@@ -125,10 +140,12 @@ export function useInvoiceForm() {
             notes: data.notes || "",
             invoiceNumber: data.invoiceNumber,
           });
+        } else {
+          throw new Error("No se encontró la factura");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading invoice:", error);
-        setError("No se pudo cargar la factura");
+        setError(error.message || "No se pudo cargar la factura");
         toast.error("No se pudo cargar la factura");
       } finally {
         setIsLoading(false);
@@ -146,6 +163,7 @@ export function useInvoiceForm() {
       const clientData = await getClient(clientId);
       if (clientData) {
         setClient(clientData);
+        console.log("Client data set:", clientData);
       }
     } catch (error) {
       console.error("Error loading client:", error);
@@ -187,6 +205,7 @@ export function useInvoiceForm() {
           invoiceNumber: data.invoiceNumber || ''
         };
         
+        console.log("Creating new invoice with data:", invoiceData);
         result = await createInvoice(invoiceData);
       } else {
         if (!id) {
@@ -213,18 +232,20 @@ export function useInvoiceForm() {
           updatedAt: new Date().toISOString()
         };
         
+        console.log("Updating invoice with data:", updateData);
         result = await updateInvoice(updateData);
       }
       
       if (result) {
+        console.log("Invoice saved successfully:", result);
         toast.success(isNewInvoice ? "Factura creada correctamente" : "Factura actualizada correctamente");
         navigate(`/invoices/${result.id}`);
       } else {
         throw new Error("No se pudo guardar la factura");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving invoice:", error);
-      toast.error("Error al guardar la factura");
+      toast.error(error.message || "Error al guardar la factura");
     } finally {
       setIsSubmitting(false);
     }

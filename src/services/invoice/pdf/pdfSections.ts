@@ -1,222 +1,228 @@
-
-import { jsPDF } from "jspdf";
+/**
+ * PDF sections for invoices
+ */
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import { Invoice } from "@/types/invoiceTypes";
-import { formatCurrency, formatDate } from "../invoiceFormatters";
-
-// Configuración de estilos
-const fontSizes = {
-  title: 20,
-  subtitle: 16,
-  heading: 12,
-  normal: 10,
-  small: 8
-};
-
-const colors = {
-  primary: [41, 128, 185], // RGB para azul
-  secondary: [52, 73, 94], // RGB para gris oscuro
-  accent: [26, 188, 156], // RGB para verde/turquesa
-  lightGray: [189, 195, 199], // RGB para gris claro
-  text: [44, 62, 80] // RGB para texto principal
-};
+import { CompanySettings } from "@/types/settings";
+import { format } from "date-fns";
 
 /**
- * Adds the company header to the PDF
+ * Add company info to the PDF
  */
-export const addCompanyHeader = (doc: jsPDF) => {
-  // Usamos la información de prueba hasta que tengamos la real
-  // TODO: Obtener datos reales de la empresa desde la configuración
+export const addCompanyInfo = (doc: jsPDF, company: CompanySettings) => {
+  const startY = 10;
   
-  doc.setFontSize(fontSizes.title);
-  doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.text("Mi Empresa", 20, 20);
+  // Company name
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text(company.companyName, 10, startY);
   
-  doc.setFontSize(fontSizes.normal);
-  doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-  doc.text("CIF: B12345678", 20, 30);
-  doc.text("Calle Principal 123", 20, 35);
-  doc.text("28001 Madrid", 20, 40);
-  doc.text("info@miempresa.com", 20, 45);
-  doc.text("Tel: +34 91 123 45 67", 20, 50);
+  // Company info
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
   
-  // Línea divisoria
-  doc.setDrawColor(colors.lightGray[0], colors.lightGray[1], colors.lightGray[2]);
-  doc.line(20, 55, 190, 55);
-};
-
-/**
- * Adds the invoice header information to the PDF
- */
-export const addInvoiceHeader = (doc: jsPDF, invoice: Invoice) => {
-  doc.setFontSize(fontSizes.subtitle);
-  doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
-  doc.text(`FACTURA ${invoice.invoiceNumber}`, 140, 20);
+  const companyInfo = [
+    `CIF/NIF: ${company.taxId || 'N/A'}`,
+    company.address,
+    `Tel: ${company.phone || 'N/A'}`,
+    `Email: ${company.email || 'N/A'}`
+  ];
   
-  doc.setFontSize(fontSizes.normal);
-  doc.text(`Fecha de emisión: ${formatDate(invoice.issueDate)}`, 140, 30);
+  companyInfo.forEach((line, index) => {
+    doc.text(line, 10, startY + 6 + (index * 3.5));
+  });
   
-  if (invoice.dueDate) {
-    doc.text(`Fecha de vencimiento: ${formatDate(invoice.dueDate)}`, 140, 35);
-  }
-  
-  doc.text(`Estado: ${translateStatus(invoice.status)}`, 140, 40);
-  
-  // Si la factura está pagada y tiene fecha de pago
-  if (invoice.status === "paid" && invoice.paymentDate) {
-    doc.text(`Fecha de pago: ${formatDate(invoice.paymentDate)}`, 140, 45);
+  // Add logo if available
+  if (company.logoUrl) {
+    try {
+      // Placeholder for logo
+      // In a real implementation, you would load the image and add it
+      // doc.addImage(company.logoUrl, 'JPEG', 150, 10, 40, 20);
+    } catch (e) {
+      console.error("Could not add logo:", e);
+    }
   }
 };
 
 /**
- * Adds client information to the PDF
+ * Add client info to the PDF
  */
 export const addClientInfo = (doc: jsPDF, invoice: Invoice) => {
-  doc.setFontSize(fontSizes.heading);
-  doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.text("DATOS DEL CLIENTE", 20, 70);
+  const startY = 35;
   
-  doc.setFontSize(fontSizes.normal);
-  doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-  // Usamos el nombre del cliente si está disponible, o el ID si no
-  const clientName = invoice.clientName || `Cliente ID: ${invoice.clientId}`;
-  doc.text(clientName, 20, 80);
+  // Client section title
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text("DATOS DEL CLIENTE", 10, startY);
+  doc.setDrawColor(200, 200, 200);
+  doc.line(10, startY + 2, 70, startY + 2);
   
-  // TODO: Añadir más información del cliente (dirección, etc.) cuando esté disponible
-};
-
-/**
- * Adds invoice items to the PDF
- */
-export const addInvoiceItems = (doc: jsPDF, invoice: Invoice) => {
-  doc.setFontSize(fontSizes.heading);
-  doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.text("CONCEPTOS", 20, 100);
+  // Client info
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
   
-  // Definir la tabla de conceptos
-  const tableColumn = ["Concepto", "Cantidad", "Precio", "Importe"];
-  const tableRows = [];
+  const clientInfo = [
+    invoice.clientName || 'N/A',
+    invoice.clientEmail || '',
+    invoice.clientPhone || ''
+  ].filter(Boolean);
   
-  // Si hay items específicos en la factura
-  if (invoice.items && invoice.items.length > 0) {
-    invoice.items.forEach(item => {
-      const tableRow = [
-        item.description,
-        item.quantity.toString(),
-        formatCurrency(item.unitPrice),
-        formatCurrency(item.quantity * item.unitPrice)
-      ];
-      tableRows.push(tableRow);
-    });
-  } else {
-    // Si no hay items, usamos el importe base como un solo concepto
-    const tableRow = [
-      "Servicios profesionales",
-      "1",
-      formatCurrency(invoice.baseAmount),
-      formatCurrency(invoice.baseAmount)
-    ];
-    tableRows.push(tableRow);
-  }
-  
-  // Añadir la tabla
-  doc.autoTable({
-    head: [tableColumn],
-    body: tableRows,
-    startY: 105,
-    styles: { fontSize: fontSizes.normal, cellPadding: 3 },
-    headStyles: { 
-      fillColor: [colors.primary[0], colors.primary[1], colors.primary[2]],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold' 
-    },
-    margin: { top: 10, left: 20, right: 20 },
-    theme: 'grid'
+  clientInfo.forEach((line, index) => {
+    doc.text(line, 10, startY + 7 + (index * 3.5));
   });
 };
 
 /**
- * Adds invoice totals to the PDF
+ * Add invoice header to the PDF
  */
-export const addInvoiceTotals = (doc: jsPDF, invoice: Invoice) => {
-  // Obtener la posición Y después de la tabla
+export const addInvoiceHeader = (doc: jsPDF, invoice: Invoice) => {
+  const startY = 35;
+  
+  // Invoice number and info on the right side
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`FACTURA: ${invoice.invoiceNumber}`, 120, startY);
+  
+  // Other invoice details
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  
+  const issueDate = invoice.issueDate 
+    ? format(new Date(invoice.issueDate), 'dd/MM/yyyy')
+    : 'N/A';
+    
+  const dueDate = invoice.dueDate 
+    ? format(new Date(invoice.dueDate), 'dd/MM/yyyy') 
+    : 'N/A';
+    
+  const invoiceInfo = [
+    `Fecha de emisión: ${issueDate}`,
+    `Fecha de vencimiento: ${dueDate}`,
+    `Estado: ${getStatusText(invoice.status)}`
+  ];
+  
+  invoiceInfo.forEach((line, index) => {
+    doc.text(line, 120, startY + 7 + (index * 3.5));
+  });
+};
+
+/**
+ * Add invoice items to the PDF
+ */
+export const addInvoiceItems = (doc: jsPDF, invoice: Invoice) => {
+  const startY = 65;
+  
+  // Set up the table headers
+  const headers = [
+    ['Concepto', 'Cantidad', 'Precio Unitario', 'Importe']
+  ];
+  
+  // Set up the table data - Since we don't have line items in our current model,
+  // we're adding a single row for the service
+  const data = [
+    ['Servicios Profesionales', '1', invoice.baseAmount.toFixed(2) + ' €', invoice.baseAmount.toFixed(2) + ' €']
+  ];
+  
+  // Add the table to the document
+  (doc as any).autoTable({
+    startY: startY,
+    head: headers,
+    body: data,
+    theme: 'plain',
+    styles: {
+      fontSize: 8,
+      cellPadding: 3
+    },
+    headStyles: {
+      fillColor: [240, 240, 240],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold'
+    },
+    columnStyles: {
+      0: { cellWidth: 100 },
+      1: { cellWidth: 20, halign: 'center' },
+      2: { cellWidth: 30, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' }
+    }
+  });
+  
+  // Add tax and total after the table
   const finalY = (doc as any).lastAutoTable.finalY + 10;
   
-  const rightAlign = 170;
+  // Base amount
+  doc.text('Base imponible:', 130, finalY);
+  doc.text(`${invoice.baseAmount.toFixed(2)} €`, 180, finalY, { align: 'right' });
   
-  doc.setFontSize(fontSizes.normal);
-  doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  // Tax
+  doc.text(`IVA (${invoice.taxRate}%):`, 130, finalY + 5);
+  doc.text(`${invoice.taxAmount.toFixed(2)} €`, 180, finalY + 5, { align: 'right' });
   
-  // Base imponible
-  doc.text("Base imponible:", 110, finalY);
-  doc.text(formatCurrency(invoice.baseAmount), rightAlign, finalY, { align: "right" });
-  
-  // IVA
-  doc.text(`IVA (${invoice.taxRate}%):`, 110, finalY + 7);
-  doc.text(formatCurrency(invoice.taxAmount), rightAlign, finalY + 7, { align: "right" });
-  
-  // Línea divisoria
-  doc.setDrawColor(colors.lightGray[0], colors.lightGray[1], colors.lightGray[2]);
-  doc.line(110, finalY + 10, 190, finalY + 10);
+  // Draw a line before the total
+  doc.setDrawColor(200, 200, 200);
+  doc.line(130, finalY + 7, 180, finalY + 7);
   
   // Total
-  doc.setFontSize(fontSizes.heading);
-  doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.text("TOTAL:", 110, finalY + 18);
-  doc.text(formatCurrency(invoice.totalAmount), rightAlign, finalY + 18, { align: "right" });
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('TOTAL:', 130, finalY + 12);
+  doc.text(`${invoice.totalAmount.toFixed(2)} €`, 180, finalY + 12, { align: 'right' });
 };
 
 /**
- * Adds notes to the PDF
+ * Add invoice footer to the PDF
  */
-export const addInvoiceNotes = (doc: jsPDF, notes: string) => {
-  // Obtener la posición Y de la última sección
-  // Si el invoice tiene items, usamos la posición de la tabla, si no, es finalY + 30
-  const finalY = (doc as any).lastAutoTable ? 
-                (doc as any).lastAutoTable.finalY + 30 : 
-                130;
-  
-  doc.setFontSize(fontSizes.heading);
-  doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.text("NOTAS", 20, finalY);
-  
-  doc.setFontSize(fontSizes.normal);
-  doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-  
-  // Formatear las notas para que quepa en la página
-  const splitNotes = doc.splitTextToSize(notes, 170);
-  doc.text(splitNotes, 20, finalY + 10);
-};
-
-/**
- * Adds footer information to the PDF
- */
-export const addInvoiceFooter = (doc: jsPDF) => {
+export const addInvoiceFooter = (doc: jsPDF, invoice: Invoice, company: CompanySettings) => {
   const pageHeight = doc.internal.pageSize.height;
   
-  doc.setFontSize(fontSizes.small);
-  doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+  // Notes
+  if (invoice.notes) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Notas:', 10, pageHeight - 45);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(invoice.notes, 10, pageHeight - 40, {
+      maxWidth: 180
+    });
+  }
   
-  // Añadir información de la cuenta bancaria
-  doc.text("INFORMACIÓN DE PAGO", 20, pageHeight - 30);
-  doc.text("Cuenta Bancaria: ES00 0000 0000 0000 0000 0000", 20, pageHeight - 25);
+  // Payment information
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Información de pago:', 10, pageHeight - 30);
   
-  // Línea divisoria
-  doc.setDrawColor(colors.lightGray[0], colors.lightGray[1], colors.lightGray[2]);
-  doc.line(20, pageHeight - 20, 190, pageHeight - 20);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
   
-  // Texto de pie de página
-  doc.text("Documento generado electrónicamente. No requiere firma.", 20, pageHeight - 15);
-  doc.text(`Generado el ${new Date().toLocaleDateString()}`, 20, pageHeight - 10);
+  const bankAccount = company.bankAccount || 'No especificado';
+  doc.text(`Cuenta bancaria: ${bankAccount}`, 10, pageHeight - 25);
+  
+  // Footer with company info
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${company.companyName} - CIF/NIF: ${company.taxId} - ${company.address}`, 10, pageHeight - 10);
+  doc.text(`Teléfono: ${company.phone} - Email: ${company.email}`, 10, pageHeight - 7);
+  
+  // Page numbers
+  doc.text(`Página 1 de 1`, 180, pageHeight - 7, { align: 'right' });
 };
 
-// Función auxiliar para traducir el estado de la factura
-const translateStatus = (status: string): string => {
-  const statusMap: Record<string, string> = {
-    draft: "Borrador",
-    pending: "Pendiente",
-    paid: "Pagada",
-    cancelled: "Cancelada"
-  };
-  
-  return statusMap[status] || status;
+/**
+ * Helper function to get the status text
+ */
+const getStatusText = (status: string): string => {
+  switch (status) {
+    case 'draft':
+      return 'Borrador';
+    case 'pending':
+      return 'Pendiente';
+    case 'paid':
+      return 'Pagada';
+    case 'overdue':
+      return 'Vencida';
+    default:
+      return status;
+  }
 };

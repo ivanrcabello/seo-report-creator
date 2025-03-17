@@ -9,7 +9,8 @@ import {
   downloadInvoicePdf,
   sendInvoiceByEmail,
   shareInvoice,
-  getInvoiceByShareToken
+  getInvoiceByShareToken,
+  markInvoiceAsPaid
 } from "./invoice/pdf/pdfOperations";
 
 // Re-export invoice CRUD operations
@@ -31,6 +32,9 @@ export {
   shareInvoice,
   getInvoiceByShareToken
 };
+
+// Make sure jspdf-autotable is imported before using it
+import 'jspdf-autotable';
 
 // Generate PDF wrapper that first gets the invoice, then generates PDF
 export const generateInvoicePdf = async (invoiceId: string): Promise<boolean> => {

@@ -1,49 +1,47 @@
 
-import { jsPDF } from "jspdf";
-import 'jspdf-autotable'; // Importación crucial para habilitar el plugin autoTable
+/**
+ * PDF generator for invoices
+ */
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import { Invoice } from "@/types/invoiceTypes";
-import { 
-  addCompanyHeader,
-  addInvoiceHeader,
-  addClientInfo,
-  addInvoiceItems,
-  addInvoiceTotals,
-  addInvoiceNotes,
-  addInvoiceFooter
-} from "./pdfSections";
+import { addCompanyInfo, addClientInfo, addInvoiceHeader, addInvoiceItems, addInvoiceFooter } from './pdfSections';
+import { getCompanySettings } from "@/services/settingsService";
 
 /**
- * Generates a PDF for the specified invoice and returns it as a Blob
+ * Generate a PDF for an invoice
  */
-export const generateInvoicePdf = async (
-  invoice: Invoice
-): Promise<Blob | null> => {
+export const generateInvoicePdf = async (invoice: Invoice): Promise<Blob | null> => {
   try {
-    console.log("Generating PDF for invoice:", invoice.id);
+    console.log("Generating PDF for invoice:", invoice.invoiceNumber);
     
-    // Create a new PDF document
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4"
-    });
-    
-    // Add sections to the PDF document
-    addCompanyHeader(doc);
-    addInvoiceHeader(doc, invoice);
-    addClientInfo(doc, invoice);
-    addInvoiceItems(doc, invoice);
-    addInvoiceTotals(doc, invoice);
-    
-    if (invoice.notes) {
-      addInvoiceNotes(doc, invoice.notes);
+    // Get company settings
+    const companySettings = await getCompanySettings();
+    if (!companySettings) {
+      console.error("Company settings not found");
+      return null;
     }
     
-    addInvoiceFooter(doc);
+    // Create PDF document
+    const doc = new jsPDF();
     
-    // Return the PDF as a Blob
-    const pdfBlob = doc.output('blob');
-    return pdfBlob;
+    // Add company info
+    addCompanyInfo(doc, companySettings);
+    
+    // Add client info
+    addClientInfo(doc, invoice);
+    
+    // Add invoice header
+    addInvoiceHeader(doc, invoice);
+    
+    // Add invoice items
+    addInvoiceItems(doc, invoice);
+    
+    // Add invoice footer
+    addInvoiceFooter(doc, invoice, companySettings);
+    
+    // Return the PDF as blob
+    return doc.output('blob');
   } catch (error) {
     console.error("Error generating PDF:", error);
     return null;

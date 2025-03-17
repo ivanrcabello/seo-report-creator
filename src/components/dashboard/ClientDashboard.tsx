@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -18,6 +17,7 @@ import { ClientMetric, getClientMetrics } from "@/services/clientMetricsService"
 import { ClientReports } from "@/components/ClientReports";
 import { ClientProposals } from "@/components/ClientProposals";
 import { ClientContractsTab } from "@/components/contracts/ClientContractsTab";
+import { ClientInvoicesTab } from "@/components/invoice/ClientInvoicesTab";
 
 export function ClientDashboard() {
   const { user } = useAuth();

@@ -52,7 +52,8 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
         
         {/* Explicitly add KeywordsAccordion here for shared report view */}
         {report.analyticsData?.auditResult?.keywords && report.analyticsData.auditResult.keywords.length > 0 && (
-          <div className="mt-8">
+          <div className="mt-8" id="keywords-section">
+            <h2 className="text-2xl font-bold text-blue-600 mb-4">Palabras Clave Analizadas</h2>
             <KeywordsAccordion report={report} />
           </div>
         )}

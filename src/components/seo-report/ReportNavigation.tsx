@@ -26,7 +26,13 @@ export const ReportNavigation = ({ sections, onDownload, reportId }: ReportNavig
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      // Use smooth scrolling with a slight offset to account for fixed headers
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Add a little delay before focusing to ensure scrolling is complete
+      setTimeout(() => {
+        element.focus();
+      }, 100);
+      console.log(`Scrolling to section: ${sectionId}`);
     } else {
       console.error(`Element with id '${sectionId}' not found`);
     }
@@ -63,7 +69,7 @@ export const ReportNavigation = ({ sections, onDownload, reportId }: ReportNavig
             <DropdownMenuItem 
               key={index}
               onClick={() => scrollToSection(section.id)}
-              className="cursor-pointer"
+              className="cursor-pointer hover:bg-gray-100"
             >
               {section.title}
             </DropdownMenuItem>

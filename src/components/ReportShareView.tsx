@@ -1,4 +1,3 @@
-
 import { ClientReport } from "@/types/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -159,14 +158,6 @@ export const ReportShareView = ({ report, client }: ReportShareViewProps) => {
           <div>
             <ShareableReportView report={report} />
           </div>
-
-          {/* Explicitly add KeywordsAccordion here for shared report view */}
-          {report.analyticsData?.auditResult?.keywords && report.analyticsData.auditResult.keywords.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold text-blue-600 mb-4">Palabras Clave Analizadas</h2>
-              <KeywordsAccordion report={report} isPrintView={false} />
-            </div>
-          )}
 
           {/* Notes */}
           {report.notes && (

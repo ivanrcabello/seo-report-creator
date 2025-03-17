@@ -8,13 +8,12 @@ import { getClient } from "@/services/clientService";
 import { getCompanySettings } from "@/services/settingsService";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { InvoiceDetailsCard } from "@/components/invoice/InvoiceDetailsCard";
 import { InvoiceDetailHeader } from "@/components/invoice/InvoiceDetailHeader";
+import { StatusBadge } from "@/components/invoice/detail";
 import { PaymentInfoCard } from "@/components/invoice/PaymentInfoCard";
 import { toast } from "sonner";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { FileSpreadsheet, Loader2, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { shareInvoice } from "@/services/invoice/pdf/pdfOperations";
@@ -53,24 +52,20 @@ export default function InvoiceDetail() {
       setError(null);
 
       try {
-        // Fetch invoice
         const invoiceData = await getInvoice(id);
         if (!invoiceData) {
           throw new Error("Invoice not found");
         }
         setInvoice(invoiceData);
 
-        // Fetch client data
         if (invoiceData.clientId) {
           const clientData = await getClient(invoiceData.clientId);
           setClient(clientData || null);
         }
 
-        // Fetch company settings
         const companyData = await getCompanySettings();
         setCompany(companyData || null);
 
-        // Fetch package name if applicable
         if (invoiceData.packId) {
           // Implement if you have a getPackage service
           // const packData = await getPackage(invoiceData.packId);
@@ -110,7 +105,6 @@ export default function InvoiceDetail() {
       if (success) {
         toast.success("Factura marcada como pagada correctamente");
         setMarkingAsPaid(false);
-        // Refresh invoice data
         const updatedInvoice = await getInvoice(id);
         if (updatedInvoice) {
           setInvoice(updatedInvoice);
@@ -211,25 +205,6 @@ export default function InvoiceDetail() {
     }
   };
 
-  const getStatusBadge = () => {
-    if (!invoice) return null;
-    
-    const statusColors = {
-      draft: "bg-gray-200 text-gray-800",
-      pending: "bg-yellow-100 text-yellow-800",
-      paid: "bg-green-100 text-green-800",
-      overdue: "bg-red-100 text-red-800"
-    };
-    
-    const color = statusColors[invoice.status as keyof typeof statusColors] || statusColors.draft;
-    
-    return (
-      <Badge className={color}>
-        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-      </Badge>
-    );
-  };
-
   return (
     <div className="container mx-auto py-8">
       {invoice && (
@@ -244,7 +219,7 @@ export default function InvoiceDetail() {
             isDownloading={isPdfDownloading}
             isSendingEmail={isSendingEmail}
             isSharing={isSharing}
-            statusBadge={getStatusBadge()}
+            statusBadge={<StatusBadge status={invoice.status} />}
             onGoBack={() => navigate("/invoices")}
           />
           
@@ -283,7 +258,6 @@ export default function InvoiceDetail() {
         </div>
       )}
 
-      {/* Share Invoice Dialog */}
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

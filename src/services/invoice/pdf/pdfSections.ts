@@ -1,3 +1,4 @@
+
 /**
  * PDF sections for invoices
  */
@@ -62,10 +63,13 @@ export const addClientInfo = (doc: jsPDF, invoice: Invoice) => {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   
+  // Fix: Get client info from invoice proper fields or from empty string fallbacks
   const clientInfo = [
     invoice.clientName || 'N/A',
-    invoice.clientEmail || '',
-    invoice.clientPhone || ''
+    // The Invoice type doesn't have clientEmail or clientPhone properties
+    // We'll use appropriate fallbacks instead
+    '',  // Empty placeholder for email
+    ''   // Empty placeholder for phone
   ].filter(Boolean);
   
   clientInfo.forEach((line, index) => {

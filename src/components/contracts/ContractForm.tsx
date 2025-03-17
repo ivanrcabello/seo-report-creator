@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -29,7 +30,7 @@ interface ContractFormProps {
 }
 
 export const ContractFormComponent = ({ clientId: propClientId }: ContractFormProps) => {
-  const { id } = useParams<{ id: string }>();
+  const { id, clientId: paramClientId } = useParams<{ id: string; clientId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
@@ -37,7 +38,10 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
   const [saving, setSaving] = useState(false);
   const [sections, setSections] = useState<ContractSection[]>([]);
 
-  const clientId = propClientId || useParams<{ clientId: string }>().clientId;
+  // Establish priority for clientId: prop > param
+  const clientId = propClientId || paramClientId;
+
+  console.log("ContractForm: Using clientId:", clientId, "from prop:", propClientId, "from param:", paramClientId);
 
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractFormSchema),
@@ -205,7 +209,7 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
         });
       }
       
-      navigate(clientId ? `/clients/${clientId}` : "/contracts");
+      navigate(clientId ? `/clients/${clientId}?tab=contracts` : "/contracts");
     } catch (error) {
       console.error("Error saving contract:", error);
       toast({
@@ -264,7 +268,7 @@ export const ContractFormComponent = ({ clientId: propClientId }: ContractFormPr
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate(clientId ? `/clients/${clientId}` : "/contracts")}
+              onClick={() => navigate(clientId ? `/clients/${clientId}?tab=contracts` : "/contracts")}
               disabled={saving}
             >
               Cancelar

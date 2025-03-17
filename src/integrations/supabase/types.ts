@@ -771,6 +771,8 @@ export type Database = {
       }
       proposals: {
         Row: {
+          additional_notes: string | null
+          ai_content: string | null
           client_id: string
           created_at: string
           custom_features: string[] | null
@@ -787,6 +789,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          additional_notes?: string | null
+          ai_content?: string | null
           client_id: string
           created_at?: string
           custom_features?: string[] | null
@@ -803,6 +807,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          additional_notes?: string | null
+          ai_content?: string | null
           client_id?: string
           created_at?: string
           custom_features?: string[] | null

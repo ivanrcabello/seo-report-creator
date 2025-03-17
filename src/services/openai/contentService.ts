@@ -16,7 +16,10 @@ export async function generateAIContent(prompt: string, systemPrompt: string = "
       ? prompt 
       : `${prompt} (Por favor, responde en español)`;
     
-    return await callOpenAI(enhancedPrompt, systemPrompt || defaultSystemPrompt, "gpt-4o", 0.7, 2000);
+    return await callOpenAI(
+      enhancedPrompt, 
+      systemPrompt || defaultSystemPrompt
+    );
   } catch (error) {
     console.error("Error generando contenido con OpenAI:", error);
     return null;

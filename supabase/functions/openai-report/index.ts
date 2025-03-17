@@ -1,6 +1,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { OpenAI } from "https://deno.land/x/openai@v4.16.1/mod.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
@@ -126,43 +127,29 @@ El informe debe tener un formato profesional y estar estructurado en estas secci
 Usa formato Markdown para estructurar el informe. Sé conciso pero detallado y profesional.`;
     }
 
-    console.log("Enviando solicitud a OpenAI API");
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',  // Modelo más rápido y económico
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { 
-            role: 'user', 
-            content: `Genera un informe profesional y detallado basado en estos datos de auditoría: ${JSON.stringify(auditResult, null, 2)}` 
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,  // Permitimos más tokens para un informe más detallado
-      }),
+    console.log("Enviando solicitud a OpenAI API usando la biblioteca oficial");
+    
+    // Inicializamos el cliente de OpenAI
+    const openai = new OpenAI({
+      apiKey: openAIApiKey,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("OpenAI API error:", errorData);
-      throw new Error(`Error en la API de OpenAI: ${response.status}`);
-    }
+    // Realizamos la llamada utilizando la biblioteca oficial
+    const chatCompletion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',  // Modelo más rápido y económico
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { 
+          role: 'user', 
+          content: `Genera un informe profesional y detallado basado en estos datos de auditoría: ${JSON.stringify(auditResult, null, 2)}` 
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 4000,  // Permitimos más tokens para un informe más detallado
+    });
 
-    const data = await response.json();
-    console.log("Respuesta recibida de OpenAI API");
-    
-    if (data.error) {
-      console.error('Error de OpenAI API:', data.error);
-      throw new Error(`Error de OpenAI API: ${data.error.message}`);
-    }
-
-    const content = data.choices[0].message.content;
-    console.log("Contenido generado exitosamente, longitud:", content.length);
+    const content = chatCompletion.choices[0].message.content;
+    console.log("Contenido generado exitosamente, longitud:", content?.length);
 
     return new Response(
       JSON.stringify({ content }),

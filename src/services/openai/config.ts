@@ -1,10 +1,14 @@
 
 // OpenAI API configuration
+import OpenAI from "openai";
 
-// Define the OpenAI API key
+// Define the OpenAI API key - esto se cargará desde los secretos de Supabase en las Edge Functions
 export const OPENAI_API_KEY = "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";
 
-export const API_URL = "https://api.openai.com/v1/chat/completions";
+// OpenAI client instance
+export const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+});
 
 export interface OpenAIResponse {
   id: string;
@@ -35,39 +39,24 @@ export async function callOpenAI(
   maxTokens: number = 3000
 ): Promise<string | null> {
   try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: temperature,
-        max_tokens: maxTokens
-      })
+    const response = await openai.chat.completions.create({
+      model: model,
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: temperature,
+      max_tokens: maxTokens
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("OpenAI API error:", errorData);
-      throw new Error(`Error en la API de OpenAI: ${response.status}`);
-    }
-
-    const data: OpenAIResponse = await response.json();
-    
-    if (data.choices && data.choices.length > 0) {
-      return data.choices[0].message.content;
+    if (response.choices && response.choices.length > 0) {
+      return response.choices[0].message.content || null;
     } else {
       throw new Error("No se recibió contenido de la API de OpenAI");
     }

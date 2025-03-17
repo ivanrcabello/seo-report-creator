@@ -54,7 +54,7 @@ export const saveGeminiReport = async (
       analytics_data: {
         auditResult: serializableAuditData,
         generatedAt: new Date().toISOString(),
-        generatedBy: "gemini"
+        generatedBy: "openai"  // Cambiado de "gemini" a "openai"
       },
       document_ids: documentIds,
       status: reportStatus
@@ -91,7 +91,7 @@ export const saveGeminiReport = async (
       shareToken: data.share_token,
       sharedAt: data.shared_at,
       includeInProposal: data.include_in_proposal || false,
-      status: data.status || 'draft'
+      status: data.status
     };
   } catch (error) {
     console.error("Error in saveGeminiReport:", error);

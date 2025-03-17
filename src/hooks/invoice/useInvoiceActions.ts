@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -6,9 +5,9 @@ import {
   deleteInvoice, 
   downloadInvoicePdf, 
   sendInvoiceByEmail, 
-  generateInvoicePdf 
+  generateInvoicePdf, 
+  shareInvoice
 } from "@/services/invoiceService";
-import { shareInvoice } from "@/services/invoice/pdf/invoiceShare";
 import { toast } from "sonner";
 import { getInvoice } from "@/services/invoiceService";
 import { Invoice } from "@/types/invoice";

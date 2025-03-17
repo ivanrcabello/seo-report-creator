@@ -528,6 +528,35 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_shares: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          share_token: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          share_token: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          share_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_shares_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           base_amount: number

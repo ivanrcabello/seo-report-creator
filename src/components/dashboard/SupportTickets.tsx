@@ -87,7 +87,14 @@ export function SupportTickets() {
         throw error;
       }
       
-      setTickets(data || []);
+      // Map the data to ensure status is of the correct type
+      const typedTickets: SupportTicket[] = (data || []).map(ticket => ({
+        ...ticket,
+        status: (ticket.status as 'open' | 'in_progress' | 'resolved') || 'open',
+        priority: (ticket.priority as 'low' | 'medium' | 'high') || 'medium'
+      }));
+      
+      setTickets(typedTickets);
     } catch (error) {
       console.error("Error fetching tickets:", error);
       toast.error("Error al cargar los tickets de soporte");

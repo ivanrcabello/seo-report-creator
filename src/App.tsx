@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -13,6 +12,7 @@ import AllReports from './pages/AllReports';
 import ReportDetail from './pages/ReportDetail';
 import SeoReport from './pages/SeoReport';
 import ReportShare from './pages/ReportShare';
+import InvoiceShare from './pages/InvoiceShare';
 import Packages from './pages/Packages';
 import Proposals from './pages/Proposals';
 import ProposalForm from './pages/ProposalForm';
@@ -57,6 +57,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/share/report/:token" element={<ReportShare />} />
             <Route path="/share/contract/:token" element={<ContractShare />} />
+            <Route path="/share/invoice/:token" element={<InvoiceShare />} />
             <Route path="*" element={<AppRoutes />} />
           </Routes>
         </AuthProvider>

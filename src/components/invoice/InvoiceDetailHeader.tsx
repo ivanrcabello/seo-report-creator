@@ -10,7 +10,8 @@ import {
   Check, 
   Download,
   Printer,
-  Mail
+  Mail,
+  Share2
 } from "lucide-react";
 import { Invoice } from "@/types/invoice";
 import {
@@ -31,6 +32,10 @@ interface InvoiceDetailHeaderProps {
   onMarkAsPaid: () => Promise<void>;
   onDownloadPdf: () => Promise<void>;
   onSendEmail: () => Promise<void>;
+  onShareInvoice: () => Promise<void>;
+  isDownloading?: boolean;
+  isSendingEmail?: boolean;
+  isSharing?: boolean;
   statusBadge: React.ReactNode;
   onGoBack: () => void;
 }
@@ -41,6 +46,10 @@ export const InvoiceDetailHeader = ({
   onMarkAsPaid,
   onDownloadPdf,
   onSendEmail,
+  onShareInvoice,
+  isDownloading = false,
+  isSendingEmail = false,
+  isSharing = false,
   statusBadge,
   onGoBack
 }: InvoiceDetailHeaderProps) => {
@@ -57,7 +66,7 @@ export const InvoiceDetailHeader = ({
           Volver
         </Button>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <FileSpreadsheet className="h-6 w-6 text-white" />
+          <FileSpreadsheet className="h-6 w-6 text-primary" />
           Factura {invoice.invoiceNumber}
         </h1>
         {statusBadge}
@@ -67,19 +76,31 @@ export const InvoiceDetailHeader = ({
         <Button
           onClick={onDownloadPdf}
           variant="outline"
+          disabled={isDownloading}
           className="gap-1 bg-white text-seo-blue hover:bg-gray-100"
         >
           <Download className="h-4 w-4" />
-          Descargar PDF
+          {isDownloading ? "Descargando..." : "Descargar PDF"}
         </Button>
         
         <Button
           onClick={onSendEmail}
           variant="outline"
+          disabled={isSendingEmail}
           className="gap-1 bg-white text-seo-blue hover:bg-gray-100"
         >
           <Mail className="h-4 w-4" />
-          Enviar por Email
+          {isSendingEmail ? "Enviando..." : "Enviar por Email"}
+        </Button>
+        
+        <Button
+          onClick={onShareInvoice}
+          variant="outline"
+          disabled={isSharing}
+          className="gap-1 bg-white text-seo-blue hover:bg-gray-100"
+        >
+          <Share2 className="h-4 w-4" />
+          {isSharing ? "Compartiendo..." : "Compartir"}
         </Button>
         
         {invoice.status === "pending" && (

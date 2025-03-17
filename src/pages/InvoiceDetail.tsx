@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Invoice, CompanySettings } from "@/types/invoice";
 import { Client } from "@/types/client";
-import { getInvoice, markInvoiceAsPaid, deleteInvoice } from "@/services/invoiceService";
+import { getInvoice, markInvoiceAsPaid, deleteInvoice, downloadInvoicePdf, sendInvoiceByEmail } from "@/services/invoiceService";
 import { getClient } from "@/services/clientService";
 import { getCompanySettings } from "@/services/settingsService";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { FileSpreadsheet, Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { shareInvoice } from "@/services/invoice/pdf/pdfOperations";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 export default function InvoiceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +39,11 @@ export default function InvoiceDetail() {
   const [markingAsPaid, setMarkingAsPaid] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPdfDownloading, setIsPdfDownloading] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -132,13 +147,68 @@ export default function InvoiceDetail() {
   };
 
   const handleDownloadPdf = async () => {
-    // TODO: Implement PDF download
-    toast.info("Función de descarga en desarrollo");
+    if (!id) return;
+    
+    setIsPdfDownloading(true);
+    try {
+      const success = await downloadInvoicePdf(id);
+      
+      if (!success) {
+        toast.error("Error al descargar el PDF");
+      }
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error("Error al descargar el PDF");
+    } finally {
+      setIsPdfDownloading(false);
+    }
   };
 
   const handleSendEmail = async () => {
-    // TODO: Implement email sending
-    toast.info("Función de envío por email en desarrollo");
+    if (!id) return;
+    
+    setIsSendingEmail(true);
+    try {
+      const success = await sendInvoiceByEmail(id);
+      
+      if (success) {
+        toast.success("Factura enviada por email correctamente");
+      } else {
+        toast.error("Error al enviar el email");
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error("Error al enviar el email");
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleShareInvoice = async () => {
+    if (!id) return;
+    
+    setIsSharing(true);
+    try {
+      const result = await shareInvoice(id);
+      if (result && result.url) {
+        setShareUrl(result.url);
+        setIsShareDialogOpen(true);
+      } else {
+        toast.error("Error al compartir la factura");
+      }
+    } catch (error) {
+      console.error("Error sharing invoice:", error);
+      toast.error("Error al compartir la factura");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl);
+      toast.success("Enlace copiado al portapapeles");
+    }
   };
 
   const getStatusBadge = () => {
@@ -170,6 +240,10 @@ export default function InvoiceDetail() {
             onMarkAsPaid={handleMarkAsPaid}
             onDownloadPdf={handleDownloadPdf}
             onSendEmail={handleSendEmail}
+            onShareInvoice={handleShareInvoice}
+            isDownloading={isPdfDownloading}
+            isSendingEmail={isSendingEmail}
+            isSharing={isSharing}
             statusBadge={getStatusBadge()}
             onGoBack={() => navigate("/invoices")}
           />
@@ -208,6 +282,41 @@ export default function InvoiceDetail() {
           <Button onClick={() => navigate("/invoices")}>Volver a Facturas</Button>
         </div>
       )}
+
+      {/* Share Invoice Dialog */}
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Compartir Factura</DialogTitle>
+            <DialogDescription>
+              Comparte este enlace con tu cliente para que pueda ver la factura.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2 mt-4">
+            <Input
+              value={shareUrl || ""}
+              readOnly
+              className="flex-1"
+            />
+            <Button type="submit" onClick={copyToClipboard}>
+              Copiar
+            </Button>
+          </div>
+          <div className="p-4 bg-blue-50 rounded-md my-4 border border-blue-100">
+            <p className="text-sm text-blue-800">
+              El cliente podrá ver la factura usando este enlace. No se requiere inicio de sesión.
+            </p>
+          </div>
+          <DialogFooter className="sm:justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsShareDialogOpen(false)}
+            >
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

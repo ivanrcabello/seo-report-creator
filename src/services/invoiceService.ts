@@ -8,7 +8,9 @@ import { generateInvoiceNumber } from "./invoice/invoiceNumberGenerator";
 import { generateInvoicePdf } from "./invoice/pdf/pdfGenerator";
 import {
   downloadInvoicePdf,
-  sendInvoiceByEmail
+  sendInvoiceByEmail,
+  shareInvoice,
+  getInvoiceByShareToken
 } from "./invoice/pdf/pdfOperations";
 
 // Re-export invoice CRUD operations
@@ -27,5 +29,7 @@ export {
 export { 
   downloadInvoicePdf,
   sendInvoiceByEmail, 
-  generateInvoicePdf
+  generateInvoicePdf,
+  shareInvoice,
+  getInvoiceByShareToken
 };

@@ -35,9 +35,14 @@ export const InvoiceHeader = ({
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { isAdmin } = useAuth();
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   const handleShareInvoice = async () => {
     setShowShareDialog(true);
+    // When showing the dialog, prepare the share URL (this could be a mock for now)
+    setShareUrl(`https://example.com/invoices/share/${invoice.id}`);
+    // Also trigger the actual sharing functionality
+    await onShareInvoice();
   };
 
   const handleDeleteInvoice = async () => {
@@ -101,13 +106,12 @@ export const InvoiceHeader = ({
       <ShareInvoiceDialog
         open={showShareDialog}
         onOpenChange={setShowShareDialog}
-        onConfirm={onShareInvoice}
-        isSharing={isSharing}
+        shareUrl={shareUrl}
       />
+      
       <DeleteInvoiceDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={onDelete}
+        invoiceNumber={invoice.invoiceNumber}
+        onDelete={onDelete}
       />
     </div>
   );

@@ -28,6 +28,7 @@ const Clients = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const params = useParams();
   const navigate = useNavigate();
 
@@ -104,7 +105,7 @@ const Clients = () => {
     if (!clientToDelete) return;
     
     try {
-      setIsLoading(true);
+      setIsDeleting(true);
       const result = await deleteClient(clientToDelete.id);
       
       if (result.success) {
@@ -114,13 +115,12 @@ const Clients = () => {
         setClientToDelete(null);
       } else {
         setDeleteError(result.error || "No se pudo eliminar el cliente");
-        // Leave dialog open so user can see the error
       }
     } catch (error) {
       console.error("Error deleting client:", error);
       setDeleteError("No se pudo eliminar el cliente");
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
     }
   };
 
@@ -173,6 +173,12 @@ const Clients = () => {
     }
   };
 
+  const handleCloseDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setDeleteError(null);
+    setClientToDelete(null);
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="max-w-7xl mx-auto">
@@ -198,35 +204,29 @@ const Clients = () => {
         )}
       </div>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={handleCloseDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
+            <AlertDialogDescription>
               {!deleteError ? (
-                <>
-                  Esta acción eliminará al cliente {clientToDelete?.name} y no se puede deshacer.
-                  Todos los datos asociados a este cliente serán eliminados permanentemente.
-                </>
+                "Esta acción eliminará al cliente " + clientToDelete?.name + " y no se puede deshacer. Todos los datos asociados a este cliente serán eliminados permanentemente."
               ) : (
-                <div className="text-red-500 font-medium">{deleteError}</div>
+                <span className="text-red-500 font-medium">{deleteError}</span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setDeleteError(null);
-              setClientToDelete(null);
-            }}>
+            <AlertDialogCancel onClick={handleCloseDeleteDialog}>
               Cancelar
             </AlertDialogCancel>
             {!deleteError && (
               <AlertDialogAction 
                 onClick={confirmDeleteClient}
                 className="bg-red-600 hover:bg-red-700"
-                disabled={isLoading}
+                disabled={isDeleting}
               >
-                {isLoading ? 'Eliminando...' : 'Eliminar'}
+                {isDeleting ? 'Eliminando...' : 'Eliminar'}
               </AlertDialogAction>
             )}
           </AlertDialogFooter>

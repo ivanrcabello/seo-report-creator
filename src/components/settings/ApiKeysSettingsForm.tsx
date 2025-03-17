@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ReloadIcon, SaveIcon } from "lucide-react";
+import { Loader, Save } from "lucide-react";
 import { toast } from "sonner";
 
 // Esquema de validación con Zod
@@ -107,12 +107,12 @@ const ApiKeysSettingsForm = () => {
               <Button type="submit" disabled={isLoading || isSaving}>
                 {isSaving ? (
                   <>
-                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader className="mr-2 h-4 w-4 animate-spin" />
                     Guardando...
                   </>
                 ) : (
                   <>
-                    <SaveIcon className="mr-2 h-4 w-4" />
+                    <Save className="mr-2 h-4 w-4" />
                     Guardar
                   </>
                 )}

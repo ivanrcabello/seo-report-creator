@@ -1,5 +1,9 @@
 
 // Fix the StatusType for the report
+import { supabase } from "@/integrations/supabase/client";
+
+type ReportStatus = "draft" | "published" | "archived";
+
 const saveReport = async (reportData: any, clientId: string, reportName: string): Promise<{ success: boolean; error?: string; reportId?: string }> => {
   try {
     console.log("Starting report saving process");
@@ -19,7 +23,7 @@ const saveReport = async (reportData: any, clientId: string, reportName: string)
     console.log("Preparing report data for storage");
     
     // Prepare report data
-    const reportStatus = "draft" as const;
+    const reportStatus: ReportStatus = "draft";
     
     const { data, error } = await supabase
       .from('client_reports')
@@ -52,3 +56,6 @@ const saveReport = async (reportData: any, clientId: string, reportName: string)
     return { success: false, error: error.message || "Unknown error saving report" };
   }
 };
+
+// Export as both saveReport and saveGeminiReport for backward compatibility
+export { saveReport, saveReport as saveGeminiReport };

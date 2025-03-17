@@ -3,7 +3,7 @@ import { AuditResult } from "@/services/pdfAnalyzer";
 import { ClientReport } from "@/types/client";
 import { toast } from "sonner";
 import { generateGeminiReport } from "./reportGeneration";
-import { saveGeminiReport } from "./reportStorage";
+import { saveReport } from "./reportStorage";
 
 /**
  * Generate a report using Gemini and save it to the database
@@ -54,21 +54,32 @@ export const generateAndSaveReport = async (
     console.log("Content preview:", reportContent.substring(0, 100) + "...");
     
     // Save the report
-    const savedReport = await saveGeminiReport(
-      clientId,
-      clientName,
+    const { success, reportId, error } = await saveReport(
       reportContent,
-      enhancedAuditData,
-      documentIds
+      clientId,
+      `Informe SEO - ${clientName}`
     );
     
     toast.dismiss();
     
-    if (savedReport) {
+    if (success && reportId) {
       toast.success("Informe generado y guardado correctamente");
+      
+      // Create a minimal ClientReport object to return
+      const savedReport: ClientReport = {
+        id: reportId,
+        clientId,
+        title: `Informe SEO - ${clientName}`,
+        content: reportContent,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'draft',
+        type: reportType
+      };
+      
       return savedReport;
     } else {
-      toast.error("Error guardando el informe");
+      toast.error("Error guardando el informe: " + error);
       return null;
     }
   } catch (error) {
@@ -82,4 +93,4 @@ export const generateAndSaveReport = async (
 
 // Re-export all functions for backward compatibility
 export { generateGeminiReport } from "./reportGeneration";
-export { saveGeminiReport } from "./reportStorage";
+export { saveReport } from "./reportStorage";

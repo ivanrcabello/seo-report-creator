@@ -3,7 +3,7 @@ import { AuditResult } from "@/services/pdfAnalyzer";
 import { ClientReport } from "@/types/client";
 import { toast } from "sonner";
 import { generateOpenAIReport } from "./openAIReportGeneration";
-import { saveGeminiReport } from "./reportStorage";
+import { saveReport } from "./reportStorage";
 
 /**
  * Generate a report using OpenAI and save it to the database
@@ -60,23 +60,34 @@ export const generateAndSaveOpenAIReport = async (
     console.log("Content preview:", reportContent.substring(0, 100) + "...");
     
     // Save the report
-    const savedReport = await saveGeminiReport(
-      clientId,
-      clientName,
+    const { success, reportId, error } = await saveReport(
       reportContent,
-      enhancedAuditData,
-      documentIds
+      clientId,
+      `Informe SEO - ${clientName}`
     );
     
     toast.dismiss(toastId);
     
-    if (savedReport) {
-      console.log("Report saved successfully:", savedReport.id);
+    if (success && reportId) {
+      console.log("Report saved successfully:", reportId);
       toast.success("Informe generado y guardado correctamente");
+      
+      // Create a minimal ClientReport object to return
+      const savedReport: ClientReport = {
+        id: reportId,
+        clientId,
+        title: `Informe SEO - ${clientName}`,
+        content: reportContent,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'draft',
+        type: reportType
+      };
+      
       return savedReport;
     } else {
-      console.error("Failed to save report");
-      toast.error("Error guardando el informe");
+      console.error("Failed to save report:", error);
+      toast.error("Error guardando el informe: " + error);
       return null;
     }
   } catch (error) {
@@ -89,4 +100,4 @@ export const generateAndSaveOpenAIReport = async (
 
 // Re-export all functions
 export { generateOpenAIReport } from "./openAIReportGeneration";
-export { saveGeminiReport } from "./reportStorage";
+export { saveReport } from "./reportStorage";

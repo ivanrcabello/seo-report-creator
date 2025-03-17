@@ -13,14 +13,12 @@ export const shareInvoice = async (invoiceId: string): Promise<{ url: string } |
     const shareToken = uuidv4();
     
     // Update invoice with share token and timestamp
+    // Use the correct type for the data being updated
     const { data, error } = await supabase
       .from('invoices')
       .update({
         shared_at: new Date().toISOString(),
         share_token: shareToken
-      } as {
-        shared_at: string;
-        share_token: string;
       })
       .eq('id', invoiceId)
       .select();
@@ -105,7 +103,7 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{ invo
     // Create a type-safe version of company settings
     const dbCompanyData = companyResponse.data;
     
-    // Map company settings with defined properties
+    // Map company settings to CompanySettings type with proper properties
     const company: CompanySettings = {
       id: dbCompanyData.id,
       companyName: dbCompanyData.company_name,
@@ -114,13 +112,15 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{ invo
       phone: dbCompanyData.phone || undefined,
       email: dbCompanyData.email || undefined,
       logoUrl: dbCompanyData.logo_url || undefined,
-      // Handle fields that might not exist in the database
+      // Add bankAccount as undefined since it's not in the database response
+      bankAccount: undefined,
+      // Add required fields from CompanySettings
+      createdAt: dbCompanyData.created_at,
+      updatedAt: dbCompanyData.updated_at,
+      // Add other optional fields as undefined
       primaryColor: undefined,
       secondaryColor: undefined,
-      accentColor: undefined,
-      bankAccount: dbCompanyData.bank_account || undefined,
-      createdAt: dbCompanyData.created_at,
-      updatedAt: dbCompanyData.updated_at
+      accentColor: undefined
     };
 
     return { invoice, client, company };

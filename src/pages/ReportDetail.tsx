@@ -48,10 +48,12 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ErrorAlert } from "@/components/client-detail/metrics/ErrorAlert";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ReportDetail = () => {
   const { reportId } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
+  const { isAdmin, user } = useAuth();
   const [report, setReport] = useState<ClientReport | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [sharedUrl, setSharedUrl] = useState<string | null>(null);
@@ -128,6 +130,16 @@ const ReportDetail = () => {
     }
   };
 
+  const handleGoBack = () => {
+    if (client && isAdmin) {
+      navigate(`/clients/${client.id}`);
+    } else if (user && !isAdmin) {
+      navigate("/dashboard");
+    } else {
+      navigate("/reports");
+    }
+  };
+
   const loadReportData = async () => {
     setIsLoading(true);
     setError(null);
@@ -147,7 +159,6 @@ const ReportDetail = () => {
         console.log("Report loaded successfully:", reportData.id, reportData.title);
         setReport(reportData);
         
-        // Solo intentamos obtener el cliente si tenemos un ID de cliente válido
         if (reportData.clientId) {
           try {
             const clientData = await getClient(reportData.clientId);
@@ -158,18 +169,15 @@ const ReportDetail = () => {
             }
           } catch (clientError) {
             console.error("Error fetching client:", clientError);
-            // No establecemos un error fatal aquí, ya que el informe aún se puede ver
           }
         }
         
-        // Si el informe tiene un token de compartición, obtenemos la URL
         if (reportData.shareToken) {
           try {
             const shareUrl = await getSharedReportUrl(reportData.id);
             setSharedUrl(shareUrl);
           } catch (shareError) {
             console.error("Error getting share URL:", shareError);
-            // No establecemos un error fatal aquí
           }
         }
       } else {
@@ -270,7 +278,7 @@ const ReportDetail = () => {
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate("/reports")} className="gap-1">
+          <Button variant="outline" size="sm" onClick={handleGoBack} className="gap-1">
             <ArrowLeft className="h-4 w-4" />
             Volver
           </Button>

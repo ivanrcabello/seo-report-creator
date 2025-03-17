@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SeoReport = () => {
   const location = useLocation();
@@ -50,6 +51,7 @@ const SeoReport = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
+  const { isAdmin, user } = useAuth();
 
   const fetchReport = async () => {
     if (id) {
@@ -159,6 +161,16 @@ const SeoReport = () => {
     }
   };
 
+  const handleGoBack = () => {
+    if (report && report.clientId && isAdmin) {
+      navigate(`/clients/${report.clientId}`);
+    } else if (user && !isAdmin) {
+      navigate("/dashboard");
+    } else {
+      navigate("/reports");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-4 flex items-center justify-center">
@@ -226,7 +238,7 @@ const SeoReport = () => {
           <Button 
             variant="ghost" 
             className="gap-2" 
-            onClick={() => navigate(-1)}
+            onClick={handleGoBack}
           >
             <ArrowLeft className="h-4 w-4" />
             Volver

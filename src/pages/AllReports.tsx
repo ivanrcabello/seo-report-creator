@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ClientReport } from "@/types/client";
 import { getAllReports, getFilteredReports } from "@/services/reportService";
 import { toast } from "sonner";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Calendar, Filter, Search, RefreshCw } from "lucide-react";
+import { FileText, Calendar, Filter, Search, RefreshCw, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
@@ -16,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/contexts/AuthContext";
 
 export const AllReports = () => {
+  const navigate = useNavigate();
   const [reports, setReports] = useState<ClientReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,12 +29,10 @@ export const AllReports = () => {
       setIsLoading(true);
       setError(null);
       
-      // Use the filtered reports function to get appropriate reports based on user role
       const allReports = await getFilteredReports(user?.id, isAdmin);
       console.log("Informes cargados:", allReports);
       setReports(allReports);
       
-      // Extract unique report types and filter out any empty or null values
       const types = Array.from(new Set(allReports.map(report => report.type)))
         .filter(Boolean) as string[];
       setReportTypes(types);
@@ -51,7 +49,6 @@ export const AllReports = () => {
     loadReports();
   }, [user, isAdmin]);
   
-  // Filter reports based on search and type
   const filteredReports = reports.filter(report => {
     const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === "" || report.type === selectedType;
@@ -62,13 +59,28 @@ export const AllReports = () => {
     loadReports();
   };
 
+  const handleGoBack = () => {
+    navigate("/dashboard");
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <FileText className="h-8 w-8 text-blue-600" />
-          {isAdmin ? "Todos los Informes" : "Mis Informes"}
-        </h1>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleGoBack}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver al Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <FileText className="h-8 w-8 text-blue-600" />
+            {isAdmin ? "Todos los Informes" : "Mis Informes"}
+          </h1>
+        </div>
       </div>
       
       <Card className="mb-6">

@@ -8,9 +8,10 @@ import { toast } from "sonner";
 interface ReportHeaderProps {
   handlePrint: () => void;
   handleDownload: () => void;
+  onGoBack: () => void;
 }
 
-export const ReportHeader = ({ handlePrint, handleDownload }: ReportHeaderProps) => {
+export const ReportHeader = ({ handlePrint, handleDownload, onGoBack }: ReportHeaderProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadClick = async () => {
@@ -27,10 +28,8 @@ export const ReportHeader = ({ handlePrint, handleDownload }: ReportHeaderProps)
 
   return (
     <div className="flex justify-between items-center mb-8">
-      <Button variant="outline" asChild>
-        <Link to="/" className="flex items-center gap-2">
-          <ArrowLeft className="h-4 w-4" /> Volver
-        </Link>
+      <Button variant="outline" onClick={onGoBack} className="flex items-center gap-2">
+        <ArrowLeft className="h-4 w-4" /> Volver
       </Button>
       <div className="flex gap-2 print:hidden">
         <Button variant="outline" onClick={handlePrint} className="flex items-center gap-2">

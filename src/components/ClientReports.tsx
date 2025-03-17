@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ClientReport } from "@/types/client";
 import { getAllReports, getClientReports } from "@/services/reportService";
@@ -44,6 +43,10 @@ export function ClientReports({ clientId, clientName }: ClientReportsProps) {
       fetchReports();
     }
   }, [clientId, isAdmin]);
+
+  const handleViewReport = (reportId: string) => {
+    navigate(`/reports/${reportId}`);
+  };
 
   return (
     <Card>
@@ -102,12 +105,15 @@ export function ClientReports({ clientId, clientName }: ClientReportsProps) {
                       </Badge>
                     </div>
                   </div>
-                  <Link to={`/reports/${report.id}`}>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Eye className="h-3.5 w-3.5" />
-                      Ver Informe
-                    </Button>
-                  </Link>
+                  <Button 
+                    onClick={() => handleViewReport(report.id)} 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-1"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Ver Informe
+                  </Button>
                 </div>
               </div>
             ))}

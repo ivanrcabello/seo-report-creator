@@ -2,9 +2,10 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
+import { InvoiceFormValues } from "@/types/invoiceTypes";
 
 interface AmountFieldsProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<InvoiceFormValues>;
 }
 
 export const AmountFields = ({ form }: AmountFieldsProps) => {
@@ -38,6 +39,8 @@ export const AmountFields = ({ form }: AmountFieldsProps) => {
               <Input 
                 type="number" 
                 step="0.1"
+                min="0"
+                max="100"
                 {...field} 
               />
             </FormControl>

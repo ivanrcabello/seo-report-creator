@@ -30,6 +30,12 @@ export interface Invoice {
   pdfUrl?: string;
   createdAt: string;
   updatedAt: string;
+  // Campos opcionales para visualización
+  items?: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
 }
 
 /**

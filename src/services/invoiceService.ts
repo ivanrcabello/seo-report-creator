@@ -40,7 +40,7 @@ export const generateInvoicePdf = async (invoiceId: string): Promise<boolean> =>
     // Get the invoice data first
     const { data, error } = await supabase
       .from('invoices')
-      .select('*')
+      .select('*, clients(name)')
       .eq('id', invoiceId)
       .maybeSingle();
     

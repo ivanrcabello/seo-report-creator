@@ -1,91 +1,93 @@
-
 /**
  * PDF Operations for invoices (download, email, share, etc.)
  */
-import { Invoice, CompanySettings } from "@/types/invoice";
-import { Client } from "@/types/client";
-import { v4 as uuidv4 } from "uuid";
+import { saveAs } from 'file-saver';
+import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { generateInvoicePdf } from "@/services/invoiceService";
 import { mapInvoiceFromDB } from "../invoiceMappers";
+import { Invoice } from "@/types/invoiceTypes";
+import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Downloads an invoice PDF
+ * Downloads the PDF for an invoice
  */
 export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> => {
   try {
     console.log("Downloading PDF for invoice:", invoiceId);
     
-    // First check if the invoice has a PDF URL
-    const { data: invoiceData, error: invoiceError } = await supabase
+    // Get invoice data
+    const { data, error } = await supabase
       .from('invoices')
-      .select('pdf_url, invoice_number')
+      .select('*')
       .eq('id', invoiceId)
       .maybeSingle();
     
-    if (invoiceError) {
-      console.error("Error fetching invoice for PDF download:", invoiceError);
+    if (error) {
+      console.error("Error fetching invoice for download:", error);
+      toast.error("Error al obtener la factura para descarga");
       return false;
     }
     
-    if (!invoiceData) {
-      console.error("Invoice not found for PDF download");
+    if (!data) {
+      toast.error("Factura no encontrada");
       return false;
     }
     
-    // If there's no PDF URL, generate one first
-    if (!invoiceData.pdf_url) {
-      console.log("No PDF URL found. Generating PDF first...");
-      const generated = await generateInvoicePdf(invoiceId);
-      
-      if (!generated) {
-        console.error("Failed to generate PDF for download");
-        return false;
-      }
-      
-      // Fetch the updated invoice with the PDF URL
-      const { data: updatedInvoice, error: updateFetchError } = await supabase
-        .from('invoices')
-        .select('pdf_url, invoice_number')
-        .eq('id', invoiceId)
-        .maybeSingle();
-      
-      if (updateFetchError || !updatedInvoice?.pdf_url) {
-        console.error("Error fetching updated invoice with PDF URL:", updateFetchError);
-        return false;
-      }
-      
-      // Now we have a PDF URL to download
-      const pdfUrl = updatedInvoice.pdf_url;
-      const invoiceNumber = updatedInvoice.invoice_number;
-      
-      // Create a temporary anchor to download the file
-      const link = document.createElement("a");
-      link.href = pdfUrl;
-      link.download = `Factura_${invoiceNumber}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      return true;
-    } else {
-      // We already have a PDF URL, download it directly
-      const pdfUrl = invoiceData.pdf_url;
-      const invoiceNumber = invoiceData.invoice_number;
-      
-      // Create a temporary anchor to download the file
-      const link = document.createElement("a");
-      link.href = pdfUrl;
-      link.download = `Factura_${invoiceNumber}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
+    const invoice = mapInvoiceFromDB(data);
+    
+    // If the invoice already has a PDF URL, download that instead of generating new
+    if (invoice.pdfUrl) {
+      console.log("Invoice already has PDF URL:", invoice.pdfUrl);
+      // Fetch the PDF from the URL
+      const response = await fetch(invoice.pdfUrl);
+      const blob = await response.blob();
+      const fileName = `Factura_${invoice.invoiceNumber}.pdf`;
+      saveAs(blob, fileName);
       return true;
     }
+    
+    // Otherwise generate a new PDF
+    console.log("No PDF URL found. Generating PDF first...");
+    const success = await generateInvoicePdf(invoiceId);
+    
+    if (!success) {
+      console.error("Failed to generate PDF for download");
+      toast.error("Error al generar el PDF para descarga");
+      return false;
+    }
+    
+    // Fetch the invoice again to get the updated PDF URL
+    const { data: updatedData, error: fetchError } = await supabase
+      .from('invoices')
+      .select('*')
+      .eq('id', invoiceId)
+      .maybeSingle();
+    
+    if (fetchError || !updatedData) {
+      console.error("Error fetching updated invoice:", fetchError);
+      toast.error("Error al obtener la factura actualizada");
+      return false;
+    }
+    
+    const updatedInvoice = mapInvoiceFromDB(updatedData);
+    
+    if (!updatedInvoice.pdfUrl) {
+      console.error("Updated invoice still doesn't have a PDF URL");
+      toast.error("La factura no tiene una URL de PDF");
+      return false;
+    }
+    
+    // Fetch and download the PDF
+    const response = await fetch(updatedInvoice.pdfUrl);
+    const blob = await response.blob();
+    const fileName = `Factura_${updatedInvoice.invoiceNumber}.pdf`;
+    saveAs(blob, fileName);
+    
+    return true;
   } catch (error) {
-    console.error("Error downloading invoice PDF:", error);
+    console.error("Error in downloadInvoicePdf:", error);
+    toast.error("Error al descargar el PDF");
     return false;
   }
 };
@@ -97,227 +99,130 @@ export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> =>
   try {
     console.log("Sending invoice by email:", invoiceId);
     
-    // First ensure the invoice has a PDF URL
-    const { data: invoiceData, error: invoiceError } = await supabase
+    // Get invoice data
+    const { data, error } = await supabase
       .from('invoices')
-      .select('pdf_url, client_id')
+      .select('*, clients(name, email)')
       .eq('id', invoiceId)
       .maybeSingle();
     
-    if (invoiceError) {
-      console.error("Error fetching invoice for email:", invoiceError);
+    if (error) {
+      console.error("Error fetching invoice for email:", error);
+      toast.error("Error al obtener la factura para enviar por email");
       return false;
     }
     
-    if (!invoiceData) {
-      console.error("Invoice not found for email");
+    if (!data) {
+      toast.error("Factura no encontrada");
       return false;
     }
     
-    // If there's no PDF URL, generate one first
-    if (!invoiceData.pdf_url) {
+    const invoice = mapInvoiceFromDB(data);
+    
+    // Check if client has an email
+    if (!data.clients || !data.clients.email) {
+      toast.error("El cliente no tiene un email asociado");
+      return false;
+    }
+    
+    // If invoice has no PDF URL, generate one
+    if (!invoice.pdfUrl) {
       console.log("No PDF URL found. Generating PDF first...");
-      const generated = await generateInvoicePdf(invoiceId);
+      const success = await generateInvoicePdf(invoiceId);
       
-      if (!generated) {
+      if (!success) {
         console.error("Failed to generate PDF for email");
+        toast.error("Error al generar el PDF para el email");
         return false;
       }
+      
+      // Fetch updated invoice with PDF URL
+      const { data: updatedData, error: fetchError } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('id', invoiceId)
+        .maybeSingle();
+      
+      if (fetchError || !updatedData) {
+        console.error("Error fetching updated invoice:", fetchError);
+        toast.error("Error al obtener la factura actualizada");
+        return false;
+      }
+      
+      invoice.pdfUrl = updatedData.pdf_url;
     }
     
-    // Get client email
-    const { data: clientData, error: clientError } = await supabase
-      .from('clients')
-      .select('email, name')
-      .eq('id', invoiceData.client_id)
-      .maybeSingle();
+    // Call an RPC function or API to send the email
+    // TODO: Implement actual email sending functionality
+    // For now, we'll just simulate it with a delay
     
-    if (clientError || !clientData) {
-      console.error("Error fetching client for email:", clientError);
-      return false;
-    }
-    
-    // In a real application, you'd call an Email API here
-    // For this demo, we'll just simulate success
-    console.log(`Email would be sent to ${clientData.email} with invoice PDF`);
-    
-    // Set a timeout to simulate email sending
     await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Log the email details and return success
+    console.log("Email would be sent to:", data.clients.email);
+    console.log("With PDF URL:", invoice.pdfUrl);
     
     return true;
   } catch (error) {
-    console.error("Error sending invoice by email:", error);
+    console.error("Error in sendInvoiceByEmail:", error);
+    toast.error("Error al enviar el email");
     return false;
   }
 };
 
 /**
- * Shares an invoice by creating a unique share token
+ * Share an invoice - creates a share token and returns share URL
  */
-export const shareInvoice = async (invoiceId: string): Promise<{ url: string } | null> => {
+export const shareInvoice = async (invoiceId: string): Promise<string | null> => {
   try {
     console.log("Sharing invoice:", invoiceId);
     
-    // First ensure the invoice has a PDF URL
-    const { data: invoiceData, error: invoiceError } = await supabase
-      .from('invoices')
-      .select('pdf_url')
-      .eq('id', invoiceId)
-      .maybeSingle();
-    
-    if (invoiceError) {
-      console.error("Error fetching invoice for sharing:", invoiceError);
-      return null;
-    }
-    
-    if (!invoiceData) {
-      console.error("Invoice not found for sharing");
-      return null;
-    }
-    
-    // If there's no PDF URL, generate one first
-    if (!invoiceData.pdf_url) {
-      console.log("No PDF URL found. Generating PDF first...");
-      const generated = await generateInvoicePdf(invoiceId);
-      
-      if (!generated) {
-        console.error("Failed to generate PDF for sharing");
-        return null;
-      }
-    }
-    
-    // Generate a unique share token
+    // Generate a share token
     const shareToken = uuidv4();
     
-    // Check if there's already a share token for this invoice
-    const { data: existingShare, error: checkError } = await supabase
-      .from('invoice_shares')
-      .select('share_token')
-      .eq('invoice_id', invoiceId)
-      .maybeSingle();
-    
-    if (checkError) {
-      console.error("Error checking existing shares:", checkError);
-    }
-    
-    if (existingShare) {
-      // Use the existing share token
-      return {
-        url: `${window.location.origin}/shared/invoice/${existingShare.share_token}`
-      };
-    }
-    
-    // Insert the share record
+    // Update the invoice with the share token and timestamp
     const { error } = await supabase
-      .from('invoice_shares')
-      .insert({
-        invoice_id: invoiceId,
-        share_token: shareToken
-      });
+      .from('invoices')
+      .update({
+        share_token: shareToken,
+        shared_at: new Date().toISOString()
+      })
+      .eq('id', invoiceId);
     
     if (error) {
-      console.error("Error sharing invoice:", error);
-      toast.error("Error al compartir la factura");
+      console.error("Error updating invoice with share token:", error);
       return null;
     }
     
-    // Return the URL that can be used to access the shared invoice
-    return {
-      url: `${window.location.origin}/shared/invoice/${shareToken}`
-    };
+    // Return the share URL - adjust the URL format according to your app's routing
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/invoices/share/${shareToken}`;
   } catch (error) {
-    console.error("Error sharing invoice:", error);
-    toast.error("Error al compartir la factura");
+    console.error("Error in shareInvoice:", error);
     return null;
   }
 };
 
 /**
- * Gets an invoice by its share token
+ * Get invoice by share token
  */
-export const getInvoiceByShareToken = async (shareToken: string): Promise<{
-  invoice: Invoice | null;
-  client: Client | null;
-  company: CompanySettings | null;
-}> => {
+export const getInvoiceByShareToken = async (shareToken: string): Promise<Invoice | null> => {
   try {
-    console.log("Getting invoice by share token:", shareToken);
-    
-    // Get the invoice_id from the share token
-    const { data: shareData, error: shareError } = await supabase
-      .from('invoice_shares')
-      .select('invoice_id')
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('*, clients(name, company, email, phone)')
       .eq('share_token', shareToken)
       .maybeSingle();
     
-    if (shareError || !shareData) {
-      console.error("Error getting shared invoice:", shareError);
-      return { invoice: null, client: null, company: null };
+    if (error || !data) {
+      console.error("Error fetching invoice by share token:", error || "No data returned");
+      return null;
     }
     
-    // Get the invoice using the invoice_id
-    const { data: invoiceData, error: invoiceError } = await supabase
-      .from('invoices')
-      .select('*')
-      .eq('id', shareData.invoice_id)
-      .maybeSingle();
-    
-    if (invoiceError || !invoiceData) {
-      console.error("Error getting invoice data:", invoiceError);
-      return { invoice: null, client: null, company: null };
-    }
-    
-    const invoice = mapInvoiceFromDB(invoiceData);
-    
-    // Get the client data
-    let client: Client | null = null;
-    if (invoice.clientId) {
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('id', invoice.clientId)
-        .maybeSingle();
-      
-      if (!clientError && clientData) {
-        client = {
-          id: clientData.id,
-          name: clientData.name,
-          company: clientData.company,
-          email: clientData.email,
-          phone: clientData.phone,
-          website: clientData.website,
-          isActive: clientData.is_active,
-          createdAt: clientData.created_at,
-          notes: clientData.notes || []
-        };
-      }
-    }
-    
-    // Get the company settings
-    let company: CompanySettings | null = null;
-    const { data: companyData, error: companyError } = await supabase
-      .from('company_settings')
-      .select('*')
-      .maybeSingle();
-    
-    if (!companyError && companyData) {
-      company = {
-        id: companyData.id,
-        companyName: companyData.company_name,
-        taxId: companyData.tax_id,
-        address: companyData.address,
-        phone: companyData.phone,
-        email: companyData.email,
-        logoUrl: companyData.logo_url,
-        createdAt: companyData.created_at,
-        updatedAt: companyData.updated_at
-      };
-    }
-    
-    return { invoice, client, company };
+    return mapInvoiceFromDB(data);
   } catch (error) {
-    console.error("Error getting invoice by share token:", error);
-    return { invoice: null, client: null, company: null };
+    console.error("Error in getInvoiceByShareToken:", error);
+    return null;
   }
 };
 

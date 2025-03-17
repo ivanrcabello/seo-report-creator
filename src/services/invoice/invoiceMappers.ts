@@ -1,63 +1,51 @@
 
-import { Invoice } from "@/types/invoice";
-import { v4 as uuidv4 } from "uuid";
+import { Invoice } from "@/types/invoiceTypes";
 
-/**
- * Converts database invoice data to application format
- */
-export const mapInvoiceFromDB = (invoice: any): Invoice => ({
-  id: invoice.id,
-  number: invoice.invoice_number || '',  // Keep for compatibility
-  invoiceNumber: invoice.invoice_number,
-  clientId: invoice.client_id,
-  clientName: invoice.client_name || undefined, // Keep for UI display but not for DB operations
-  date: invoice.issue_date || invoice.created_at, // Keep for compatibility
-  issueDate: invoice.issue_date,
-  dueDate: invoice.due_date || '',
-  packId: invoice.pack_id,
-  proposalId: invoice.proposal_id,
-  baseAmount: invoice.base_amount,
-  subtotal: invoice.base_amount || 0, // Keep for compatibility
-  taxRate: invoice.tax_rate || 21,
-  tax: invoice.tax_rate || 21, // Keep for compatibility
-  taxAmount: invoice.tax_amount,
-  totalAmount: invoice.total_amount,
-  total: invoice.total_amount || 0, // Keep for compatibility
-  status: invoice.status,
-  paymentDate: invoice.payment_date,
-  notes: invoice.notes,
-  pdfUrl: invoice.pdf_url,
-  createdAt: invoice.created_at,
-  updatedAt: invoice.updated_at,
-  items: invoice.items || [],
-  paidAt: invoice.payment_date // Keep for compatibility
-});
+export const mapInvoiceFromDB = (data: any): Invoice => {
+  // Asegurarnos de que el nombre del cliente se extrae correctamente
+  const clientName = data.clients?.name || null;
 
-/**
- * Converts application invoice data to database format
- */
-export const mapInvoiceToDB = (invoice: Partial<Invoice>) => {
-  // For new invoices without an ID, generate one
-  const id = invoice.id || uuidv4();
-  
-  // Only include fields that exist in the database table
   return {
-    id,
-    invoice_number: invoice.invoiceNumber || invoice.number, // Handle both property names
+    id: data.id,
+    invoiceNumber: data.invoice_number,
+    clientId: data.client_id,
+    // Añadimos el nombre del cliente si está disponible
+    clientName: clientName,
+    issueDate: data.issue_date,
+    dueDate: data.due_date,
+    packId: data.pack_id,
+    proposalId: data.proposal_id,
+    baseAmount: data.base_amount,
+    taxRate: data.tax_rate,
+    taxAmount: data.tax_amount,
+    totalAmount: data.total_amount,
+    status: data.status,
+    paymentDate: data.payment_date,
+    notes: data.notes,
+    pdfUrl: data.pdf_url,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  };
+};
+
+export const mapInvoiceToDB = (invoice: Partial<Invoice>): any => {
+  return {
+    id: invoice.id,
+    invoice_number: invoice.invoiceNumber,
     client_id: invoice.clientId,
-    issue_date: invoice.issueDate || invoice.date, // Handle both property names
+    issue_date: invoice.issueDate,
     due_date: invoice.dueDate,
     pack_id: invoice.packId,
     proposal_id: invoice.proposalId,
-    base_amount: invoice.baseAmount || invoice.subtotal, // Handle both property names
-    tax_rate: invoice.taxRate || invoice.tax, // Handle both property names
+    base_amount: invoice.baseAmount,
+    tax_rate: invoice.taxRate,
     tax_amount: invoice.taxAmount,
-    total_amount: invoice.totalAmount || invoice.total, // Handle both property names
+    total_amount: invoice.totalAmount,
     status: invoice.status,
-    payment_date: invoice.paymentDate || invoice.paidAt, // Handle both property names
+    payment_date: invoice.paymentDate,
     notes: invoice.notes,
     pdf_url: invoice.pdfUrl,
-    updated_at: invoice.updatedAt,
-    created_at: invoice.createdAt
+    created_at: invoice.createdAt,
+    updated_at: invoice.updatedAt
   };
 };

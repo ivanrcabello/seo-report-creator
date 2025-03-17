@@ -7,7 +7,7 @@ import { Client, Proposal } from "@/types/client";
 
 interface ProposalDetailsProps {
   proposal: Proposal;
-  client: Client;
+  client?: Client;  // Hacemos que client sea opcional
   proposalExpired: boolean;
 }
 
@@ -17,14 +17,20 @@ export const ProposalDetails = ({ proposal, client, proposalExpired }: ProposalD
       <div>
         <h3 className="text-sm font-medium text-gray-500 mb-2">Detalles del Cliente</h3>
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">{client.name}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Building className="h-4 w-4 text-gray-500" />
-            <span>{client.company || "Sin empresa"}</span>
-          </div>
+          {client ? (
+            <>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="font-medium">{client.name}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Building className="h-4 w-4 text-gray-500" />
+                <span>{client.company || "Sin empresa"}</span>
+              </div>
+            </>
+          ) : (
+            <div className="text-gray-500">Cargando información del cliente...</div>
+          )}
         </div>
       </div>
       

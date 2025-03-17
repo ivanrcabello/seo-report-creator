@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -27,7 +26,6 @@ export default function ProposalDetail() {
   const [loadingAI, setLoadingAI] = useState(false);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   
-  // Cargar datos de la propuesta
   const { 
     data: proposal, 
     isLoading: isLoadingProposal,
@@ -38,26 +36,22 @@ export default function ProposalDetail() {
     enabled: !!proposalId
   });
 
-  // Cargar datos del cliente
   const { data: client } = useQuery({
     queryKey: ["client", proposal?.clientId],
     queryFn: () => proposal?.clientId ? getClient(proposal.clientId) : undefined,
     enabled: !!proposal?.clientId
   });
 
-  // Cargar datos del paquete
   const { data: pack } = useQuery({
     queryKey: ["package", proposal?.packId],
     queryFn: () => proposal?.packId ? getSeoPack(proposal.packId) : undefined,
     enabled: !!proposal?.packId
   });
 
-  // Verificar si la propuesta ha expirado
   const proposalExpired = proposal?.expiresAt 
     ? new Date(proposal.expiresAt) < new Date() 
     : false;
 
-  // Manejar el envío de la propuesta
   const handleSendProposal = async () => {
     if (!proposalId) return;
     
@@ -74,7 +68,6 @@ export default function ProposalDetail() {
     }
   };
 
-  // Manejar la aceptación de la propuesta
   const handleAcceptProposal = async () => {
     if (!proposalId) return;
     
@@ -91,7 +84,6 @@ export default function ProposalDetail() {
     }
   };
 
-  // Manejar el rechazo de la propuesta
   const handleRejectProposal = async () => {
     if (!proposalId) return;
     
@@ -108,7 +100,6 @@ export default function ProposalDetail() {
     }
   };
 
-  // Manejar la compartición de la propuesta
   const handleShareProposal = async () => {
     if (!proposalId) return;
     
@@ -131,7 +122,6 @@ export default function ProposalDetail() {
     }
   };
 
-  // Manejar la descarga de la propuesta en PDF
   const handleDownloadPdf = async () => {
     if (!proposalId) return;
     
@@ -151,7 +141,6 @@ export default function ProposalDetail() {
     }
   };
 
-  // Generar contenido de propuesta con AI
   const handleGenerateAIContent = async () => {
     if (!client || !pack || !proposal) return;
     
@@ -162,7 +151,6 @@ export default function ProposalDetail() {
         throw new Error("No se pudo generar el contenido");
       }
       
-      // Actualizar el contenido AI de la propuesta
       await fetch(`/api/proposals/${proposalId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

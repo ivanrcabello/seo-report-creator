@@ -8,8 +8,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ProjectTimeline } from "./ProjectTimeline";
 import { SeoPerformanceCharts } from "./SeoPerformanceCharts";
 import { DocumentCenter } from "./DocumentCenter";
-import { FeedbackForm } from "./FeedbackForm";
-import { BarChart2, TrendingUp, MessageSquare } from "lucide-react";
+import { UserProfile } from "./UserProfile";
+import { SupportTickets } from "./SupportTickets";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart2, TrendingUp, MessageSquare, User, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { ClientMetric, getClientMetrics } from "@/services/clientMetricsService";
 
@@ -96,75 +98,101 @@ export function ClientDashboard() {
         <p className="text-gray-500">Resumen de rendimiento SEO y actividades</p>
       </div>
 
-      {metrics && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
-                Visitas web
-              </CardTitle>
-              <CardDescription>Este mes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">+{metrics.web_visits}%</div>
-              <div className="text-sm text-gray-500 mt-1">Incremento desde el mes pasado</div>
-            </CardContent>
-          </Card>
+      <Tabs defaultValue="dashboard">
+        <TabsList className="mb-8">
+          <TabsTrigger value="dashboard" className="flex items-center gap-1">
+            <BarChart2 className="h-4 w-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="flex items-center gap-1">
+            <FileText className="h-4 w-4" />
+            Documentos
+          </TabsTrigger>
+          <TabsTrigger value="support" className="flex items-center gap-1">
+            <MessageSquare className="h-4 w-4" />
+            Soporte
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="flex items-center gap-1">
+            <User className="h-4 w-4" />
+            Perfil
+          </TabsTrigger>
+        </TabsList>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium flex items-center">
-                <BarChart2 className="h-5 w-5 mr-2 text-blue-500" />
-                Keywords TOP10
-              </CardTitle>
-              <CardDescription>Posiciones 1-10 en Google</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{metrics.keywords_top10}</div>
-              <div className="text-sm text-gray-500 mt-1">
-                <Badge className="mr-2 bg-blue-100 text-blue-700 hover:bg-blue-200">+2 este mes</Badge>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="dashboard">
+          {metrics && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <TrendingUp className="h-5 w-5 mr-2 text-green-500" />
+                    Visitas web
+                  </CardTitle>
+                  <CardDescription>Este mes</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">+{metrics.web_visits}%</div>
+                  <div className="text-sm text-gray-500 mt-1">Incremento desde el mes pasado</div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium flex items-center">
-                <MessageSquare className="h-5 w-5 mr-2 text-orange-500" />
-                Conversiones obtenidas
-              </CardTitle>
-              <CardDescription>Meta: {metrics.conversion_goal}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="text-2xl font-bold text-orange-600">{metrics.conversions}</div>
-                <Progress 
-                  value={(metrics.conversions / metrics.conversion_goal) * 100} 
-                  className="h-2" 
-                />
-                <div className="text-sm text-gray-500">
-                  {((metrics.conversions / metrics.conversion_goal) * 100).toFixed(0)}% del objetivo mensual
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <BarChart2 className="h-5 w-5 mr-2 text-blue-500" />
+                    Keywords TOP10
+                  </CardTitle>
+                  <CardDescription>Posiciones 1-10 en Google</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{metrics.keywords_top10}</div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    <Badge className="mr-2 bg-blue-100 text-blue-700 hover:bg-blue-200">+2 este mes</Badge>
+                  </div>
+                </CardContent>
+              </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <ProjectTimeline />
-        <SeoPerformanceCharts />
-      </div>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <MessageSquare className="h-5 w-5 mr-2 text-orange-500" />
+                    Conversiones obtenidas
+                  </CardTitle>
+                  <CardDescription>Meta: {metrics.conversion_goal}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-orange-600">{metrics.conversions}</div>
+                    <Progress 
+                      value={(metrics.conversions / metrics.conversion_goal) * 100} 
+                      className="h-2" 
+                    />
+                    <div className="text-sm text-gray-500">
+                      {((metrics.conversions / metrics.conversion_goal) * 100).toFixed(0)}% del objetivo mensual
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <ProjectTimeline />
+            <SeoPerformanceCharts />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="documents">
           <DocumentCenter />
-        </div>
-        <div>
-          <FeedbackForm />
-        </div>
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="support">
+          <SupportTickets />
+        </TabsContent>
+        
+        <TabsContent value="profile">
+          <UserProfile />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

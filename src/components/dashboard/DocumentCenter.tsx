@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Download, Eye, FileCheck, Scroll } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
-import { downloadDocumentPdf, viewDocument } from "@/services/document/pdfOperations";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Document {
   id: string;
@@ -31,45 +31,53 @@ export function DocumentCenter() {
       try {
         setIsLoading(true);
         
-        // In a real app, you'd fetch actual documents from your database
-        // For mock data, we need to use proper UUIDs
-        const mockDocuments: Document[] = [
-          {
-            id: uuidv4(), // Using UUID instead of numeric ID
-            name: 'Propuesta comercial inicial',
-            type: 'proposal',
-            url: '#'
-          },
-          {
-            id: uuidv4(), // Using UUID instead of numeric ID
-            name: 'Contrato firmado',
-            type: 'contract',
-            url: '#'
-          },
-          {
-            id: uuidv4(), // Using UUID instead of numeric ID
-            name: 'Informe SEO diciembre 2024',
-            type: 'report',
-            url: '#'
-          },
-          {
-            id: uuidv4(), // Using UUID instead of numeric ID
-            name: 'Informe SEO noviembre 2024',
-            type: 'report',
-            url: '#'
-          }
+        // Fetch actual documents from database for the current user
+        const reportsPromise = supabase
+          .from('client_reports')
+          .select('id, title, date, status')
+          .eq('client_id', user.id)
+          .order('date', { ascending: false });
+        
+        const contractsPromise = supabase
+          .from('seo_contracts')
+          .select('id, title, created_at, status')
+          .eq('client_id', user.id)
+          .order('created_at', { ascending: false });
+          
+        // Add more document types as needed
+        
+        const [reportsResult, contractsResult] = await Promise.all([
+          reportsPromise,
+          contractsPromise
+        ]);
+        
+        if (reportsResult.error) {
+          console.error("Error fetching reports:", reportsResult.error);
+          toast.error("Error al cargar los informes");
+        }
+        
+        if (contractsResult.error) {
+          console.error("Error fetching contracts:", contractsResult.error);
+          toast.error("Error al cargar los contratos");
+        }
+        
+        const clientDocuments: Document[] = [
+          ...(reportsResult.data || []).map(report => ({
+            id: report.id,
+            name: report.title || `Informe ${new Date(report.date).toLocaleDateString('es-ES')}`,
+            type: 'report' as const
+          })),
+          ...(contractsResult.data || []).map(contract => ({
+            id: contract.id,
+            name: contract.title || `Contrato ${new Date(contract.created_at).toLocaleDateString('es-ES')}`,
+            type: 'contract' as const
+          }))
         ];
         
-        // Let's persist these mock documents in session storage to maintain IDs between renders
-        const storedDocuments = sessionStorage.getItem('mockDocuments');
-        if (storedDocuments) {
-          setDocuments(JSON.parse(storedDocuments));
-        } else {
-          setDocuments(mockDocuments);
-          sessionStorage.setItem('mockDocuments', JSON.stringify(mockDocuments));
-        }
+        setDocuments(clientDocuments);
       } catch (error) {
         console.error("Error fetching documents:", error);
+        toast.error("Error al cargar los documentos");
       } finally {
         setIsLoading(false);
       }
@@ -83,23 +91,29 @@ export function DocumentCenter() {
   const handleDownload = async (doc: Document) => {
     setDownloadingId(doc.id);
     try {
-      if (doc.type === 'contract') {
-        // Para contratos, navegamos a la página de detalle que tiene la funcionalidad de descarga
-        navigate(`/contracts/${doc.id}`);
-        return;
+      if (doc.type === 'report') {
+        window.open(`/reports/${doc.id}?download=true`, '_blank');
+      } else if (doc.type === 'contract') {
+        window.open(`/contracts/${doc.id}?download=true`, '_blank');
+      } else if (doc.type === 'proposal') {
+        window.open(`/proposals/${doc.id}?download=true`, '_blank');
       }
-      
-      // Para informes y propuestas, usamos el servicio centralizado
-      await downloadDocumentPdf(doc.id, doc.name, doc.type);
     } catch (error) {
       console.error(`Error downloading ${doc.type}:`, error);
+      toast.error(`Error al descargar el ${doc.type === 'report' ? 'informe' : doc.type === 'contract' ? 'contrato' : 'propuesta'}`);
     } finally {
       setDownloadingId(null);
     }
   };
 
   const handleView = (doc: Document) => {
-    viewDocument(doc.id, doc.name, doc.type);
+    if (doc.type === 'report') {
+      navigate(`/reports/${doc.id}`);
+    } else if (doc.type === 'contract') {
+      navigate(`/contracts/${doc.id}`);
+    } else if (doc.type === 'proposal') {
+      navigate(`/proposals/${doc.id}`);
+    }
   };
 
   return (

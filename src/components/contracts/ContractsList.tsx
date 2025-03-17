@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SeoContract } from "@/types/client";
@@ -43,6 +44,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ContractsListProps {
   contracts: SeoContract[];
@@ -63,7 +65,11 @@ export const ContractsList = ({
 }: ContractsListProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
+
+  // Filter contracts to only show the ones for the current user if not admin
+  const filteredContracts = isAdmin ? contracts : contracts.filter(contract => contract.clientId === user?.id);
 
   const handleCreateContract = () => {
     if (clientId) {
@@ -199,7 +205,7 @@ export const ContractsList = ({
             Gestiona los contratos de servicios SEO{clientName ? ` para ${clientName}` : ""}
           </CardDescription>
         </div>
-        {allowNewContract && (
+        {allowNewContract && isAdmin && (
           <Button onClick={handleCreateContract} className="flex items-center gap-1">
             <FilePlus className="h-4 w-4" />
             Nuevo Contrato
@@ -207,7 +213,7 @@ export const ContractsList = ({
         )}
       </CardHeader>
       <CardContent>
-        {contracts.length > 0 ? (
+        {filteredContracts.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -220,7 +226,7 @@ export const ContractsList = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {contracts.map((contract) => (
+              {filteredContracts.map((contract) => (
                 <TableRow key={contract.id}>
                   <TableCell className="font-medium">{contract.title}</TableCell>
                   <TableCell>
@@ -234,7 +240,7 @@ export const ContractsList = ({
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" disabled={loading[contract.id]}>
                           {loading[contract.id] ? (
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-900 mx-auto mb-4"></div>
                           ) : (
                             <MoreVertical className="h-4 w-4" />
                           )}
@@ -246,10 +252,12 @@ export const ContractsList = ({
                           <FileText className="mr-2 h-4 w-4" />
                           Ver contrato
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditContract(contract.id)}>
-                          <FileEdit className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
+                        {isAdmin && (
+                          <DropdownMenuItem onClick={() => handleEditContract(contract.id)}>
+                            <FileEdit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => handleDownloadContract(contract)}>
                           <Download className="mr-2 h-4 w-4" />
                           Descargar PDF
@@ -261,20 +269,24 @@ export const ContractsList = ({
                             Firmar como cliente
                           </DropdownMenuItem>
                         )}
-                        {!contract.signedByProfessional && (
+                        {isAdmin && !contract.signedByProfessional && (
                           <DropdownMenuItem onClick={() => handleSignContract(contract, 'professional')}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Firmar como profesional
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => handleDeleteContract(contract.id)}
-                          className="text-red-600 focus:bg-red-50"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
+                        {isAdmin && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteContract(contract.id)}
+                              className="text-red-600 focus:bg-red-50"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -286,7 +298,7 @@ export const ContractsList = ({
           <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
             <FileText className="mb-2 h-10 w-10 text-muted-foreground/50" />
             <p>{emptyMessage}</p>
-            {allowNewContract && (
+            {allowNewContract && isAdmin && (
               <Button 
                 variant="outline" 
                 className="mt-4"
@@ -301,4 +313,4 @@ export const ContractsList = ({
       </CardContent>
     </Card>
   );
-};
+}

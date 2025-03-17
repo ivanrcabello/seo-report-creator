@@ -1,45 +1,42 @@
 
-import { useState, useEffect } from "react";
-import { Invoice } from "@/types/invoice";
-import { getClientInvoices } from "@/services/invoiceService";
-import { ClientInvoices } from "@/components/ClientInvoices";
-import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { Loader2, FileSpreadsheet } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Invoice } from "@/types/invoice";
+import { ClientInvoices } from "@/components/ClientInvoices";
+import { getClientInvoices } from "@/services/invoiceService";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface ClientInvoicesTabProps {
   clientId: string;
-  clientName: string;
+  clientName?: string;
 }
 
 export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadInvoices = async () => {
+    const fetchInvoices = async () => {
+      if (!clientId) return;
+      
       setIsLoading(true);
       try {
-        const invoicesData = await getClientInvoices(clientId);
-        setInvoices(invoicesData);
+        console.log("Fetching invoices for client:", clientId);
+        const data = await getClientInvoices(clientId);
+        console.log("Invoices data:", data);
+        setInvoices(data);
       } catch (error) {
-        console.error("Error loading client invoices:", error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar las facturas del cliente",
-          variant: "destructive"
-        });
+        console.error("Error fetching invoices:", error);
+        toast.error("Error al cargar las facturas");
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadInvoices();
-  }, [clientId, toast]);
+    fetchInvoices();
+  }, [clientId]);
 
   const handleAddInvoice = () => {
     navigate(`/invoices/new?clientId=${clientId}`);
@@ -47,20 +44,18 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-6">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500 mr-3" />
-          <span className="text-lg">Cargando facturas...</span>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-1/3" />
+        <Skeleton className="h-32 w-full" />
+      </div>
     );
   }
 
   return (
-    <ClientInvoices
-      invoices={invoices}
+    <ClientInvoices 
+      invoices={invoices} 
       clientName={clientName}
-      clientId={clientId}
+      clientId={clientId} 
       onAddInvoice={handleAddInvoice}
     />
   );

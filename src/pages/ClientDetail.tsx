@@ -71,115 +71,144 @@ export default function ClientDetail() {
         const clientData = await getClient(id);
         console.log("Client data received:", clientData);
         setClient(clientData);
-      } catch (e: any) {
-        console.error("Error fetching client:", e);
-        setError(e.message || "Failed to fetch client");
-        toast.error("Failed to fetch client");
+      } catch (error) {
+        console.error("Error fetching client:", error);
+        setError("No se pudo cargar la información del cliente");
       } finally {
         setIsLoading(false);
       }
     };
-    
-    const fetchLocalSeoReports = async () => {
-      try {
-        const reports = await getLocalSeoReports(id);
-        setLocalSeoReports(reports);
-        if (reports.length > 0) {
-          setCurrentLocalSeoReport(reports[0]);
-        }
-      } catch (e) {
-        console.error("Error fetching local SEO reports:", e);
-      }
-    };
-    
-    const fetchProposals = async () => {
-      try {
-        const clientProposals = await getClientProposals(id);
-        setProposals(clientProposals);
-      } catch (e) {
-        console.error("Error fetching client proposals:", e);
-      }
-    };
 
     fetchClient();
-    fetchLocalSeoReports();
-    fetchProposals();
   }, [id]);
 
-  const handleUpdateClient = (updatedClient: Client) => {
-    setClient(updatedClient);
-  };
+  // Fetch proposals for the client
+  useEffect(() => {
+    if (id) {
+      const fetchProposals = async () => {
+        try {
+          const proposalsData = await getClientProposals(id);
+          setProposals(proposalsData);
+        } catch (error) {
+          console.error("Error fetching proposals:", error);
+        }
+      };
 
-  if (isLoading) {
-    return <div className="container mx-auto py-6">Loading client details...</div>;
-  }
+      fetchProposals();
+    }
+  }, [id]);
 
   if (error) {
-    return <div className="container mx-auto py-6 text-red-500">Error: {error}</div>;
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <div className="bg-red-50 p-6 rounded-lg">
+          <h1 className="text-2xl font-bold text-red-700 mb-4">Error</h1>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Link to="/clients">
+            <Button>Volver a Clientes</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
   }
 
   if (!client) {
-    return <div className="container mx-auto py-6">Client not found</div>;
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <div className="bg-yellow-50 p-6 rounded-lg">
+          <h1 className="text-2xl font-bold text-yellow-700 mb-4">Cliente no encontrado</h1>
+          <p className="text-yellow-600 mb-4">No se encontró información para el cliente solicitado.</p>
+          <Link to="/clients">
+            <Button>Volver a Clientes</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="container mx-auto p-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">{client.name}</h1>
-          <p className="text-gray-500">Detalles y gestión del cliente</p>
+          <h1 className="text-3xl font-bold">{client.name}</h1>
+          {client.company && (
+            <p className="text-gray-600">{client.company}</p>
+          )}
         </div>
-        <div>
-          <Button asChild variant="outline">
-            <Link to={`/clients/edit/${id}`} className="flex items-center gap-2">
+        <div className="flex gap-2 mt-4 md:mt-0">
+          <Link to={`/clients/edit/${client.id}`}>
+            <Button variant="outline" className="gap-2">
               <Pencil className="h-4 w-4" />
               Editar Cliente
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
       </div>
-      
-      <Tabs 
-        value={activeTab} 
-        onValueChange={handleTabChange} 
-        className="w-full"
-      >
-        <TabsList>
+
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="mb-6">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="metrics">Métricas</TabsTrigger>
-          <TabsTrigger value="invoices">Facturas</TabsTrigger>
-          <TabsTrigger value="proposals">Propuestas</TabsTrigger>
-          <TabsTrigger value="contract">Contrato</TabsTrigger>
           <TabsTrigger value="reports">Informes</TabsTrigger>
+          <TabsTrigger value="proposals">Propuestas</TabsTrigger>
+          <TabsTrigger value="contracts">Contratos</TabsTrigger>
+          <TabsTrigger value="invoices">Facturas</TabsTrigger>
+          <TabsTrigger value="documents">Documentos</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
-          <ClientProfileTab client={client} onSave={handleUpdateClient} />
+          <ClientProfileTab client={client} />
         </TabsContent>
         
         <TabsContent value="metrics">
-          <ClientMetricsTab clientId={id} clientName={client.name} />
+          <ClientMetricsTab clientId={client.id} />
         </TabsContent>
         
-        <TabsContent value="invoices">
-          <ClientInvoicesTab clientId={id} clientName={client?.name || ""} />
+        <TabsContent value="reports">
+          <ClientReports clientId={client.id} clientName={client.name} />
         </TabsContent>
         
         <TabsContent value="proposals">
           <ClientProposalsList 
-            clientId={id} 
             proposals={proposals} 
+            clientId={client.id} 
+            clientName={client.name}
           />
         </TabsContent>
         
-        <TabsContent value="contract">
-          <ClientContractsTab clientName={client.name} />
+        <TabsContent value="contracts">
+          <ClientContractsTab 
+            clientId={client.id} 
+            clientName={client.name} 
+          />
         </TabsContent>
         
-        <TabsContent value="reports">
-          <ClientReports clientId={id} clientName={client.name} />
+        <TabsContent value="invoices">
+          <ClientInvoicesTab 
+            clientId={client.id} 
+            clientName={client.name} 
+          />
+        </TabsContent>
+        
+        <TabsContent value="documents">
+          <PdfUploadTab 
+            clientId={client.id} 
+            clientName={client.name} 
+          />
         </TabsContent>
       </Tabs>
     </div>
   );
-};
+}

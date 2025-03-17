@@ -1,121 +1,79 @@
 
-/**
- * Invoice PDF operations (download, email, etc.)
- */
-
+import { toast } from "sonner";
+import { Invoice } from "@/types/invoice";
 import { getInvoice } from "../invoiceCrud";
 import { generateInvoicePdf } from "./pdfGenerator";
-import { Invoice } from "@/types/invoice";
-import { getClient } from "@/services/clientService";
-import { toast } from "sonner";
 
 /**
- * Downloads the invoice as a PDF file
+ * Downloads an invoice as PDF
  */
-export const downloadInvoicePdf = async (invoiceId: string): Promise<boolean> => {
+export const downloadInvoicePdf = async (id: string): Promise<boolean> => {
   try {
-    console.log("Starting PDF download for invoice:", invoiceId);
-    // Get the invoice
-    const invoice = await getInvoice(invoiceId);
-    
+    const invoice = await getInvoice(id);
     if (!invoice) {
-      console.error("Invoice not found for ID:", invoiceId);
-      toast.error("No se pudo encontrar la factura");
+      toast.error("Factura no encontrada");
       return false;
     }
     
-    console.log("Invoice data loaded, generating PDF");
-    
-    try {
-      // Generate the PDF
-      const pdfBlob = await generateInvoicePdf(invoice as Invoice);
-      
-      console.log("PDF generated successfully, size:", pdfBlob.size, "bytes");
-      console.log("Creating download link");
-      
-      // Create a download link
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Factura_${invoice.invoiceNumber}.pdf`;
-      
-      // Trigger the download
-      document.body.appendChild(link);
-      link.click();
-      
-      // Clean up
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(link);
-      
-      console.log("PDF download complete");
-      toast.success("Factura descargada correctamente");
-      return true;
-    } catch (error) {
-      console.error("Error in PDF generation:", error);
+    // Generate PDF
+    const pdfBlob = await generateInvoicePdf(invoice);
+    if (!pdfBlob) {
       toast.error("Error al generar el PDF");
       return false;
     }
+    
+    // Create a download link
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `factura_${invoice.invoiceNumber}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+    
+    toast.success("PDF descargado correctamente");
+    return true;
   } catch (error) {
     console.error("Error downloading invoice PDF:", error);
-    toast.error("Error al descargar la factura");
+    toast.error("Error al descargar el PDF");
     return false;
   }
 };
 
 /**
- * Sends the invoice by email
+ * Sends an invoice via email
  */
-export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> => {
+export const sendInvoiceByEmail = async (id: string): Promise<boolean> => {
   try {
-    console.log("Starting email process for invoice:", invoiceId);
-    // Get the invoice
-    const invoice = await getInvoice(invoiceId);
-    
+    const invoice = await getInvoice(id);
     if (!invoice) {
-      console.error("Invoice not found for ID:", invoiceId);
-      toast.error("No se pudo encontrar la factura");
+      toast.error("Factura no encontrada");
       return false;
     }
     
-    // Get the client
-    const client = await getClient(invoice.clientId);
-    
-    if (!client) {
-      console.error("Client not found for ID:", invoice.clientId);
-      toast.error("No se pudo encontrar el cliente de la factura");
-      return false;
+    // Generate PDF first if it doesn't exist
+    if (!invoice.pdfUrl) {
+      await generateInvoicePdf(invoice);
+      // Fetch updated invoice with PDF URL
+      const updatedInvoice = await getInvoice(id);
+      if (!updatedInvoice || !updatedInvoice.pdfUrl) {
+        toast.error("Error al generar el PDF");
+        return false;
+      }
     }
     
-    console.log("Generating PDF for email attachment");
-    
-    try {
-      // Generate the PDF
-      const pdfBlob = await generateInvoicePdf(invoice as Invoice);
-      
-      console.log("PDF generated successfully, size:", pdfBlob.size, "bytes");
-      
-      // Create a file object from the blob
-      const file = new File([pdfBlob], `Factura_${invoice.invoiceNumber}.pdf`, { type: 'application/pdf' });
-      
-      // In a real app, you would upload the file to a server and send the email from there
-      // For now, we'll simulate a successful email send
-      
-      console.log("Simulating sending email to client:", client.email);
-      // Simulate API call to send email with attachment
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Display success toast
-      toast.success(`Factura enviada a ${client.email}`);
-      
-      return true;
-    } catch (error) {
-      console.error("Error generating PDF for email:", error);
-      toast.error("Error al generar el PDF para el email");
-      return false;
-    }
+    // For now, this is just a mock implementation
+    // In a real app, you would call a server function to send the email
+    toast.success("Factura enviada por email correctamente");
+    return true;
   } catch (error) {
     console.error("Error sending invoice email:", error);
-    toast.error("Error al enviar la factura por email");
+    toast.error("Error al enviar el email");
     return false;
   }
 };

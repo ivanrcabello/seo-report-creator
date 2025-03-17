@@ -124,8 +124,8 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
       phone: companyData.phone,
       email: companyData.email,
       logoUrl: companyData.logo_url,
-      // Safe access to potentially missing property
-      bankAccount: companyData.bank_account || '',
+      // Using optional chaining and providing a default empty string
+      bankAccount: companyData.bank_account ?? '',
       createdAt: companyData.created_at,
       updatedAt: companyData.updated_at
     };
@@ -136,3 +136,4 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<ShareI
     return { invoice: null, client: null, company: null };
   }
 };
+

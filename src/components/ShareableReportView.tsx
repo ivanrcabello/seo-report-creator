@@ -63,6 +63,28 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
   console.log("Report content in ShareableReportView:", report.content ? report.content.substring(0, 100) + "..." : "No content");
 
   if (report.content) {
+    // Process the content with more careful regex replacements
+    const formattedContent = report.content
+      .replace(/^#{2}\s+(.*?)$/gm, '<h2 id="$1" class="text-2xl font-bold text-blue-600 mt-6 mb-4 scroll-mt-16">$1</h2>')
+      .replace(/^#{3}\s+(.*?)$/gm, '<h3 class="text-xl font-semibold text-purple-600 mt-5 mb-3">$1</h3>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+      .replace(/\n\n/g, '</p><p class="my-3">')
+      .replace(/\n- (.*?)(?=\n|$)/g, '</p><ul class="list-disc pl-6 my-4"><li>$1</li></ul><p>')
+      .replace(/<\/ul><p><\/p><ul class="list-disc pl-6 my-4">/g, '')
+      .replace(/^<\/p>/, '')
+      .replace(/<p>$/, '');
+      
+    // Format the content for printing to avoid regex issues
+    const printContent = report.content
+      .replace(/^#{2}\s+(.*?)$/gm, '<h2 class="text-2xl font-bold text-blue-600 mt-6 mb-4">$1</h2>')
+      .replace(/^#{3}\s+(.*?)$/gm, '<h3 class="text-xl font-semibold text-purple-600 mt-5 mb-3">$1</h3>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+      .replace(/\n\n/g, '</p><p class="my-3">')
+      .replace(/\n- (.*?)(?=\n|$)/g, '</p><ul class="list-disc pl-6 my-4"><li>$1</li></ul><p>')
+      .replace(/<\/ul><p><\/p><ul class="list-disc pl-6 my-4">/g, '')
+      .replace(/^<\/p>/, '')
+      .replace(/<p>$/, '');
+
     return (
       <div className="p-4">
         {sections.length > 0 && (
@@ -97,25 +119,7 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
           
           <TabsContent value="formatted" className="mt-2">
             <div className="prose max-w-none">
-              <div 
-                dangerouslySetInnerHTML={{ 
-                  __html: report.content
-                    .replace(/^#{2}\s+(.*?)$/gm, '<h2 id="$1" class="text-2xl font-bold text-blue-600 mt-6 mb-4 scroll-mt-16">$1</h2>')
-                    .replace(/^#{3}\s+(.*?)$/gm, '<h3 class="text-xl font-semibold text-purple-600 mt-5 mb-3">$1</h3>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
-                    .replace(/\n\n/g, '</p><p class="my-3">')
-                    .replace(/\n- (.*?)(?=\n|$)/g, (match, item) => {
-                      if (item.includes('Posición actual:')) {
-                        return '</p><div class="keywords-list hidden-keywords"><ul class="list-disc pl-6 my-1"><li>$1</li></ul></div><p>';
-                      }
-                      return '</p><ul class="list-disc pl-6 my-4"><li>$1</li></ul><p>';
-                    })
-                    .replace(/<\/ul><p><\/p><ul class="list-disc pl-6 my-4">/g, '')
-                    .replace(/<\/ul><p><\/p><div class="keywords-list hidden-keywords">/g, '')
-                    .replace(/^<\/p>/, '')
-                    .replace(/<p>$/, '')
-                }} 
-              />
+              <div dangerouslySetInnerHTML={{ __html: formattedContent }} />
 
               {report.content.includes("Análisis de Palabras Clave") && (
                 <div className="mt-6">
@@ -162,19 +166,7 @@ export const ShareableReportView = ({ report }: ShareableReportViewProps) => {
 
         <div className="hidden print:block">
           <div className="prose max-w-none">
-            <div 
-              dangerouslySetInnerHTML={{ 
-                __html: report.content
-                  .replace(/^#{2}\s+(.*?)$/gm, '<h2 class="text-2xl font-bold text-blue-600 mt-6 mb-4">$1</h2>')
-                  .replace(/^#{3}\s+(.*?)$/gm, '<h3 class="text-xl font-semibold text-purple-600 mt-5 mb-3">$1</h3>')
-                  .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
-                  .replace(/\n\n/g, '</p><p class="my-3">')
-                  .replace(/\n- (.*?)(?=\n|$)/g, '</p><ul class="list-disc pl-6 my-4"><li>$1</li></ul><p>')
-                  .replace(/<\/ul><p><\/p><ul class="list-disc pl-6 my-4">/g, '')
-                  .replace(/^<\/p>/, '')
-                  .replace(/<p>$/, '')
-              }} 
-            />
+            <div dangerouslySetInnerHTML={{ __html: printContent }} />
 
             {report.analyticsData?.auditResult?.keywords && report.analyticsData.auditResult.keywords.length > 0 && (
               <div className="mt-6 border-t pt-4">

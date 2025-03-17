@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { SeoContract } from "@/types/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,20 @@ import {
   Download, 
   Building2, 
   User, 
-  DollarSign
+  DollarSign,
+  PenLine
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { signContractByClient } from "@/services/contract";
 
 interface ContractShareViewProps {
   contract: SeoContract;
@@ -23,11 +34,37 @@ interface ContractShareViewProps {
 }
 
 export const ContractShareView = ({ contract, client }: ContractShareViewProps) => {
+  const [isSigning, setIsSigning] = useState(false);
+  const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [signSuccess, setSignSuccess] = useState(false);
+
   const handleDownloadContract = () => {
     if (contract.pdfUrl) {
       window.open(contract.pdfUrl, '_blank');
     } else {
       toast.error("No hay PDF disponible para este contrato");
+    }
+  };
+
+  const handleSignContract = async () => {
+    setIsSigning(true);
+    try {
+      const success = await signContractByClient(contract.id);
+      if (success) {
+        setSignSuccess(true);
+        toast.success("Contrato firmado correctamente");
+        // Update local contract state to reflect the signing
+        contract.signedByClient = true;
+        contract.signedAt = new Date().toISOString();
+      } else {
+        toast.error("Error al firmar el contrato");
+      }
+    } catch (error) {
+      console.error("Error signing contract:", error);
+      toast.error("Error al firmar el contrato");
+    } finally {
+      setIsSigning(false);
+      setSignDialogOpen(false);
     }
   };
 
@@ -43,16 +80,28 @@ export const ContractShareView = ({ contract, client }: ContractShareViewProps) 
                 Contrato compartido • {format(new Date(contract.startDate), "d 'de' MMMM yyyy", { locale: es })}
               </p>
             </div>
-            {contract.pdfUrl && (
-              <Button 
-                onClick={handleDownloadContract} 
-                variant="secondary"
-                className="gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Descargar PDF
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {!contract.signedByClient && (
+                <Button
+                  onClick={() => setSignDialogOpen(true)}
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  <PenLine className="h-4 w-4" />
+                  Firmar Contrato
+                </Button>
+              )}
+              {contract.pdfUrl && (
+                <Button
+                  onClick={handleDownloadContract}
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar PDF
+                </Button>
+              )}
+            </div>
           </div>
         </div>
         
@@ -110,6 +159,11 @@ export const ContractShareView = ({ contract, client }: ContractShareViewProps) 
                     <CheckCircle className={`h-6 w-6 ${contract.signedByClient ? 'text-green-600' : 'text-gray-400'}`} />
                   </div>
                   <p className="text-sm font-medium">Firmado por Cliente</p>
+                  {contract.signedByClient && contract.signedAt && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {format(new Date(contract.signedAt), "d MMM yyyy", { locale: es })}
+                    </p>
+                  )}
                 </div>
                 
                 <div className="text-center">
@@ -117,6 +171,11 @@ export const ContractShareView = ({ contract, client }: ContractShareViewProps) 
                     <CheckCircle className={`h-6 w-6 ${contract.signedByProfessional ? 'text-green-600' : 'text-gray-400'}`} />
                   </div>
                   <p className="text-sm font-medium">Firmado por Profesional</p>
+                  {contract.signedByProfessional && contract.signedAt && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {format(new Date(contract.signedAt), "d MMM yyyy", { locale: es })}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -154,6 +213,41 @@ export const ContractShareView = ({ contract, client }: ContractShareViewProps) 
           </CardContent>
         </Card>
       </div>
+
+      {/* Sign Contract Dialog */}
+      <Dialog open={signDialogOpen} onOpenChange={setSignDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Firmar Contrato</DialogTitle>
+            <DialogDescription>
+              Al hacer clic en "Firmar", usted confirma que ha leído y acepta los términos y condiciones de este contrato.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 bg-gray-50 rounded-md my-4">
+            <p className="text-sm text-gray-700">
+              Este documento constituye un acuerdo legalmente vinculante entre usted y {contract.content.professionalInfo.name}. 
+              Su firma electrónica tiene el mismo valor legal que una firma física.
+            </p>
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setSignDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              onClick={handleSignContract}
+              disabled={isSigning}
+              className="gap-2"
+            >
+              {isSigning && <span className="animate-spin">⏳</span>}
+              {isSigning ? "Firmando..." : "Firmar Contrato"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

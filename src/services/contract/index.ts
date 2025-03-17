@@ -16,7 +16,9 @@ import {
   getContractByShareToken,
   generateContractShareToken,
   generateShareableContractUrl,
-  getContractShareUrl
+  getContractShareUrl,
+  shareContract,
+  signContractByClient
 } from './contractSharing';
 
 // Generate and save contract PDF
@@ -48,5 +50,7 @@ export {
   getContractByShareToken,
   generateContractShareToken,
   generateShareableContractUrl,
-  getContractShareUrl
+  getContractShareUrl,
+  shareContract,
+  signContractByClient
 };

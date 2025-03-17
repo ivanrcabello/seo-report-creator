@@ -72,3 +72,43 @@ export const generateShareableContractUrl = async (contractId: string): Promise<
   
   return getContractShareUrl(token);
 };
+
+// Share a contract (similar to report sharing)
+export const shareContract = async (contractId: string): Promise<{ url: string } | null> => {
+  try {
+    const token = await generateContractShareToken(contractId);
+    
+    if (!token) {
+      console.error("Failed to generate share token for contract:", contractId);
+      return null;
+    }
+    
+    return { url: getContractShareUrl(token) };
+  } catch (error) {
+    console.error("Error sharing contract:", error);
+    return null;
+  }
+};
+
+// Sign a contract by client
+export const signContractByClient = async (contractId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from("seo_contracts")
+      .update({
+        signed_by_client: true,
+        signed_at: new Date().toISOString()
+      })
+      .eq("id", contractId);
+
+    if (error) {
+      console.error("Error signing contract by client:", error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in signContractByClient:", error);
+    return false;
+  }
+};

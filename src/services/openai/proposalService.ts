@@ -15,7 +15,8 @@ export async function generateProposalContent(
   additionalNotes?: string
 ): Promise<string | null> {
   try {
-    const prompt = `
+    // Construimos el prompt base con la información del cliente y paquete
+    let prompt = `
 Genera una propuesta comercial profesional para el siguiente cliente:
 
 Cliente: ${clientData.name || 'No especificado'}
@@ -28,9 +29,18 @@ Descripción: ${packData.description || 'No especificada'}
 
 Características incluidas:
 ${packData.features ? packData.features.map((f: string) => `- ${f}`).join('\n') : 'No especificadas'}
+`;
 
-${additionalNotes ? `Notas adicionales para incluir en la propuesta:\n${additionalNotes}` : ''}
+    // Añadimos las notas adicionales si existen
+    if (additionalNotes && additionalNotes.trim().length > 0) {
+      prompt += `\nNotas adicionales para incluir en la propuesta:\n${additionalNotes}\n`;
+      console.log("Incluyendo notas adicionales en el prompt:", additionalNotes);
+    } else {
+      console.log("No hay notas adicionales para incluir");
+    }
 
+    // Añadimos las instrucciones finales para la generación
+    prompt += `
 Crea una propuesta detallada en formato markdown que incluya:
 
 1. Introducción personalizada al cliente
@@ -46,6 +56,8 @@ La propuesta debe ser persuasiva, profesional, destacar el valor del servicio y 
 `;
 
     const systemPrompt = "Eres un experto en marketing digital y ventas especializado en la creación de propuestas comerciales persuasivas en español. Tus propuestas son profesionales, orientadas a resultados y destacan el valor del servicio ofrecido. Escribe siempre en español usando un tono formal pero cercano.";
+    
+    console.log("Enviando prompt a OpenAI con longitud:", prompt.length);
     
     return await callOpenAI(prompt, systemPrompt);
   } catch (error) {

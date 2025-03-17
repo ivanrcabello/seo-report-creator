@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -64,7 +63,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       console.log("Fetching all metrics data in parallel");
       setProgress(20);
       
-      // Utilizamos Promise.allSettled para que si una falla, las otras sigan
       const [pageSpeedData, metricsData, localSeoData, keywordsData, documentsData] = await Promise.allSettled([
         getPageSpeedReport(clientId).catch(err => {
           console.error("Error fetching page speed:", err);
@@ -108,7 +106,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       toast.loading("Generando informe con IA de OpenAI...");
       setProgress(60);
       
-      // Preparamos datos de la auditoría para el informe con valores por defecto sólidos
       const auditResult = {
         url: pageSpeed?.metrics?.url || "https://example.com",
         companyName: clientName,
@@ -213,6 +210,11 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         customPrompt: useCustomPrompt ? customPrompt : undefined
       };
       
+      if (useCustomPrompt && customPrompt.trim()) {
+        console.log("Using custom prompt:", customPrompt.substring(0, 100) + "...");
+        auditResult.customPrompt = customPrompt.trim();
+      }
+      
       setProgress(80);
       console.log("Sending audit data to generateAndSaveOpenAIReport function");
       
@@ -221,7 +223,8 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
       console.log("- Company name: ", auditResult.companyName);
       console.log("- SEO score: ", auditResult.seoScore);
       console.log("- Using custom prompt: ", useCustomPrompt);
-      console.log("- Custom prompt: ", useCustomPrompt ? customPrompt : "None");
+      console.log("- Custom prompt: ", useCustomPrompt ? customPrompt.substring(0, 100) + "..." : "None");
+      console.log("- Custom prompt in auditResult: ", auditResult.customPrompt ? "Yes" : "No");
       console.log("- Report type: ", reportType);
       
       const report = await generateAndSaveOpenAIReport(
@@ -239,7 +242,6 @@ export const AIReportGenerator = ({ clientId, clientName }: AIReportGeneratorPro
         toast.dismiss();
         toast.success("Informe generado correctamente con OpenAI");
         
-        // Small delay to allow the user to see the success message
         setTimeout(() => {
           console.log("Navigating to report view:", `/reports/${report.id}`);
           navigate(`/reports/${report.id}`);

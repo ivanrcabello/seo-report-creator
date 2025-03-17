@@ -37,6 +37,18 @@ serve(async (req) => {
 
     console.log("Processing request for template type:", templateType);
     console.log("Company name:", auditResult.companyName);
+    
+    // Log whether we're using custom prompt
+    if (customPrompt) {
+      console.log("Using custom prompt with length:", customPrompt.length);
+    } else {
+      console.log("No custom prompt provided, using default");
+    }
+
+    // Log additional notes if they exist
+    if (auditResult.customPrompt) {
+      console.log("Additional notes from auditResult.customPrompt:", auditResult.customPrompt.substring(0, 100) + "...");
+    }
 
     // Initialize OpenAI with the provided API key
     const openai = new OpenAI({ apiKey });
@@ -45,11 +57,17 @@ serve(async (req) => {
     const systemPrompt = getSystemPrompt(templateType);
     
     // Prepare the user prompt with audit data
-    const combinedPrompt = customPrompt 
-      ? `${customPrompt}\n\nAudit data: ${JSON.stringify(auditResult)}` 
-      : `Genera un informe SEO detallado en español para ${auditResult.companyName} basado en estos datos de auditoría: ${JSON.stringify(auditResult)}`;
+    let combinedPrompt;
+    
+    if (customPrompt) {
+      combinedPrompt = `${customPrompt}\n\nAudit data: ${JSON.stringify(auditResult)}`;
+    } else if (auditResult.customPrompt) {
+      combinedPrompt = `${auditResult.customPrompt}\n\nAudit data: ${JSON.stringify(auditResult)}`;
+    } else {
+      combinedPrompt = `Genera un informe SEO detallado en español para ${auditResult.companyName} basado en estos datos de auditoría: ${JSON.stringify(auditResult)}`;
+    }
 
-    console.log("Calling OpenAI API");
+    console.log("Calling OpenAI API with prompt length:", combinedPrompt.length);
     
     // Call OpenAI API
     const response = await openai.chat.completions.create({

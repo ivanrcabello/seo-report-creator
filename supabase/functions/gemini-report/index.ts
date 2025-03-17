@@ -1,21 +1,20 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3"
 
-// Obtener la clave API de Gemini de las variables de entorno
+// Get Gemini API key from environment variables
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 if (!GEMINI_API_KEY) {
   console.error('GEMINI_API_KEY env var not found')
 }
 
-// Cabeceras CORS para permitir solicitudes desde cualquier origen
+// CORS headers to allow requests from any origin
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
-  // Manejar solicitudes de preflight CORS
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -23,7 +22,7 @@ serve(async (req) => {
   try {
     console.log("Gemini Report function called")
     
-    // Parsear el cuerpo de la solicitud
+    // Parse request body
     let body;
     try {
       body = await req.json()
@@ -47,10 +46,9 @@ serve(async (req) => {
     }
     
     console.log("Template type:", templateType || 'seo')
-    console.log("Audit data received, company name:", auditData.companyName || 'Not provided')
-    console.log("Audit data size:", JSON.stringify(auditData).length, "bytes")
-
-    // Verificar la clave API de nuevo para facilitar la depuración
+    console.log("Company name:", auditData.companyName || 'Not provided')
+    
+    // Check API key again for debugging
     if (!GEMINI_API_KEY) {
       console.error("GEMINI_API_KEY is not configured in the environment")
       return new Response(
@@ -59,22 +57,22 @@ serve(async (req) => {
       )
     }
 
-    // Inicializar la API de Gemini
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-    // Crear una plantilla para el informe basado en los datos de auditoría
-    const prompt = createSeoReportPrompt(auditData, templateType);
-    console.log("Prompt created, sending to Gemini API");
-    console.log("Prompt length:", prompt.length);
-
-    // Si el prompt es demasiado largo, podríamos tener problemas
-    if (prompt.length > 100000) {
-      console.warn("Warning: Prompt is very large, may exceed API limits");
-    }
-
-    // Generar respuesta con Gemini
+    // Initialize Gemini API
     try {
+      const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      // Create a prompt based on audit data
+      const prompt = createSeoReportPrompt(auditData, templateType);
+      console.log("Prompt created, length:", prompt.length);
+      
+      // If prompt is too large, we might have issues
+      if (prompt.length > 100000) {
+        console.warn("Warning: Prompt is very large, may exceed API limits");
+      }
+      
+      // Generate response with Gemini
+      console.log("Calling Gemini API...");
       const result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         generationConfig: {
@@ -102,14 +100,12 @@ serve(async (req) => {
           }
         ]
       });
-
-      const response = result.response;
-      const generatedText = response.text();
-      console.log("Gemini response received successfully");
+      
+      console.log("Gemini API response received");
+      const generatedText = result.response.text();
       console.log("Response length:", generatedText.length);
-      console.log("First 200 chars:", generatedText.substring(0, 200));
-
-      // Devolver el contenido generado
+      
+      // Return the generated content
       return new Response(
         JSON.stringify({ 
           content: generatedText,
@@ -118,51 +114,41 @@ serve(async (req) => {
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    } catch (error) {
-      console.error('Error calling Gemini API:', error);
-      // Agregar más detalles sobre el error para la depuración
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const errorStack = error instanceof Error && error.stack ? error.stack : 'No stack available';
-      console.error('Error details:', errorMessage);
-      console.error('Stack trace:', errorStack);
+    } catch (apiError) {
+      console.error('Error calling Gemini API:', apiError);
+      const errorMessage = apiError instanceof Error ? apiError.message : 'Unknown error';
       
       return new Response(
         JSON.stringify({ 
-          error: `Error calling Gemini API: ${errorMessage}`, 
-          details: errorStack
+          error: `Error calling Gemini API: ${errorMessage}`,
+          details: apiError instanceof Error && apiError.stack ? apiError.stack : 'No stack available'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
   } catch (error) {
     console.error('Unhandled error in gemini-report function:', error);
-    // Agregar más detalles sobre el error para la depuración
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error && error.stack ? error.stack : 'No stack available';
-    console.error('Error details:', errorMessage);
-    console.error('Stack trace:', errorStack);
     
     return new Response(
       JSON.stringify({ 
-        error: `Unhandled error in gemini-report function: ${errorMessage}`,
-        details: errorStack
+        error: `Unhandled error in gemini-report function: ${error instanceof Error ? error.message : 'Unknown error'}` 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
 
-// Crear un prompt para el informe SEO
+// Create a prompt for the SEO report
 function createSeoReportPrompt(auditData, templateType = 'seo') {
   console.log("Creating prompt with template type:", templateType);
   
-  // Verificación de seguridad para auditData nulo o indefinido
+  // Safety check for null auditData
   if (!auditData) {
     console.error("auditData is null or undefined");
     return "Please provide audit data for the SEO report.";
   }
   
-  // Extraer datos de forma segura con valores predeterminados para evitar errores
+  // Safely extract data with defaults to avoid errors
   const url = auditData.url || 'No URL provided';
   const companyName = auditData.companyName || 'the company';
   const seoScore = auditData.seoScore || 0;
@@ -181,7 +167,7 @@ Datos del análisis:
 
 `;
 
-  // Agregar secciones específicas según el tipo de plantilla
+  // Add specific sections based on template type
   if (templateType === 'seo') {
     if (auditData.seoResults) {
       basePrompt += `
@@ -252,7 +238,7 @@ Sección SEO Local:
     }
   }
   
-  // Core web vitals si están disponibles
+  // Core web vitals if available
   if (auditData.pagespeed) {
     basePrompt += `
 Core Web Vitals:
@@ -265,7 +251,7 @@ Core Web Vitals:
 `;
   }
   
-  // Agregar una sección sobre los documentos si están disponibles
+  // Add section about documents if available
   if (auditData.documents && auditData.documents.length > 0) {
     basePrompt += `
 Documentos analizados:
@@ -275,7 +261,7 @@ Basado en estos documentos, incluye recomendaciones específicas en el informe.
 `;
   }
   
-  // Instrucciones para el formato del informe
+  // Instructions for report format
   basePrompt += `
 Estructura el informe con las siguientes secciones:
 

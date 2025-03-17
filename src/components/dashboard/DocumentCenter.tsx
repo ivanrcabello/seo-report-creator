@@ -31,6 +31,16 @@ export function DocumentCenter() {
       try {
         setIsLoading(true);
         
+        // Fetch client documents first
+        const { data: clientDocuments, error: clientDocumentsError } = await supabase
+          .from('client_documents')
+          .select('*')
+          .eq('client_id', user.id);
+          
+        if (clientDocumentsError) {
+          console.error("Error fetching client documents:", clientDocumentsError);
+        }
+        
         // Fetch actual documents from database for the current user
         const reportsPromise = supabase
           .from('client_reports')
@@ -51,17 +61,21 @@ export function DocumentCenter() {
           contractsPromise
         ]);
         
-        if (reportsResult.error) {
+        if (reportsResult.error && reportsResult.error.code !== 'PGRST116') {
           console.error("Error fetching reports:", reportsResult.error);
           toast.error("Error al cargar los informes");
         }
         
-        if (contractsResult.error) {
+        if (contractsResult.error && contractsResult.error.code !== 'PGRST116') {
           console.error("Error fetching contracts:", contractsResult.error);
           toast.error("Error al cargar los contratos");
         }
         
-        const clientDocuments: Document[] = [
+        console.log("Client documents:", clientDocuments);
+        console.log("Reports:", reportsResult.data);
+        console.log("Contracts:", contractsResult.data);
+        
+        const clientDocumentsList: Document[] = [
           ...(reportsResult.data || []).map(report => ({
             id: report.id,
             name: report.title || `Informe ${new Date(report.date).toLocaleDateString('es-ES')}`,
@@ -71,10 +85,16 @@ export function DocumentCenter() {
             id: contract.id,
             name: contract.title || `Contrato ${new Date(contract.created_at).toLocaleDateString('es-ES')}`,
             type: 'contract' as const
+          })),
+          ...(clientDocuments || []).map(doc => ({
+            id: doc.id,
+            name: doc.name || `Documento ${new Date(doc.upload_date).toLocaleDateString('es-ES')}`,
+            type: (doc.type as 'report' | 'proposal' | 'contract') || 'report',
+            url: doc.url
           }))
         ];
         
-        setDocuments(clientDocuments);
+        setDocuments(clientDocumentsList);
       } catch (error) {
         console.error("Error fetching documents:", error);
         toast.error("Error al cargar los documentos");
@@ -86,12 +106,22 @@ export function DocumentCenter() {
     fetchDocuments();
   }, [user]);
 
-  const filteredDocuments = documents.filter(doc => doc.type === activeTab.slice(0, -1));
+  const filteredDocuments = documents.filter(doc => {
+    // For reports tab, show both reports and any document with report type
+    if (activeTab === 'reports') return doc.type === 'report';
+    // For proposals tab, show proposals
+    if (activeTab === 'proposals') return doc.type === 'proposal';
+    // For contracts tab, show contracts
+    return doc.type === 'contract';
+  });
 
   const handleDownload = async (doc: Document) => {
     setDownloadingId(doc.id);
     try {
-      if (doc.type === 'report') {
+      if (doc.url) {
+        // For documents with direct URLs
+        window.open(doc.url, '_blank');
+      } else if (doc.type === 'report') {
         window.open(`/reports/${doc.id}?download=true`, '_blank');
       } else if (doc.type === 'contract') {
         window.open(`/contracts/${doc.id}?download=true`, '_blank');
@@ -107,7 +137,10 @@ export function DocumentCenter() {
   };
 
   const handleView = (doc: Document) => {
-    if (doc.type === 'report') {
+    if (doc.url) {
+      // For documents with direct URLs
+      window.open(doc.url, '_blank');
+    } else if (doc.type === 'report') {
       navigate(`/reports/${doc.id}`);
     } else if (doc.type === 'contract') {
       navigate(`/contracts/${doc.id}`);

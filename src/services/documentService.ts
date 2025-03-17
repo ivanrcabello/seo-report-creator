@@ -33,9 +33,16 @@ export const getClientDocuments = async (clientId: string): Promise<ClientDocume
   
   if (error) {
     console.error("Error fetching client documents:", error);
+    console.error("Error details:", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    });
     return [];
   }
   
+  console.log("Fetched client documents:", data);
   return (data || []).map(mapDocumentFromDB);
 };
 

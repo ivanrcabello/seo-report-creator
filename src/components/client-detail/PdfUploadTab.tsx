@@ -1,35 +1,22 @@
 
-import React from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { PdfUploader } from "@/components/PdfUploader";
-import { UploadCloud } from "lucide-react";
-import { AuditResult } from "@/services/pdfAnalyzer";
+import { ClientDocuments } from "../client-documents/ClientDocumentsView";
 
 interface PdfUploadTabProps {
   clientId: string;
-  clientName?: string;
-  onAnalysisComplete?: (result: AuditResult) => void;
 }
 
-export const PdfUploadTab: React.FC<PdfUploadTabProps> = ({ 
-  clientId, 
-  clientName, 
-  onAnalysisComplete 
-}) => {
+export const PdfUploadTab = ({ clientId }: PdfUploadTabProps) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UploadCloud className="h-5 w-5 text-blue-600" />
-          Subir informe PDF
-        </CardTitle>
-        <CardDescription>
-          Sube un PDF de auditoría para analizar y generar automáticamente un informe para {clientName || "este cliente"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <PdfUploader onAnalysisComplete={onAnalysisComplete} />
-      </CardContent>
-    </Card>
+    <ClientDocuments 
+      clientId={clientId}
+      onNoteAdded={(notes) => {
+        console.log("Notes updated:", notes);
+        // We could update the client state here if needed
+      }}
+      onGenerateReport={(documentIds) => {
+        console.log("Generate report with documents:", documentIds);
+        // Here we could implement report generation functionality
+      }}
+    />
   );
 };

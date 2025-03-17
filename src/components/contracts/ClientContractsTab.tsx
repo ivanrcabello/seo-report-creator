@@ -53,7 +53,7 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
     }
     
     console.log("Creating new contract for client:", clientId);
-    navigate(`/contracts/new/${clientId}`);
+    navigate(`/contracts/client/${clientId}/new`);
   };
 
   const handleEditContract = (contractId: string) => {
@@ -62,8 +62,8 @@ export const ClientContractsTab = ({ clientId, clientName }: ClientContractsTabP
       return;
     }
     
-    console.log("Editing contract with ID:", contractId);
-    navigate(`/contracts/edit/${contractId}`);
+    console.log("Editing contract with ID:", contractId, "for client:", clientId);
+    navigate(`/contracts/client/${clientId}/edit/${contractId}`);
   };
 
   const getStatusBadge = (status: string) => {

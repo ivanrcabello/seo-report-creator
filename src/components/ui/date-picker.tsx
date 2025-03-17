@@ -99,34 +99,14 @@ export function DatePickerWithButton({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        {mode === "single" && (
-          <Calendar
-            mode="single"
-            selected={effectiveSelected as Date}
-            onSelect={effectiveOnSelect as (date: Date | undefined) => void}
-            initialFocus={initialFocus}
-            className="pointer-events-auto"
-          />
-        )}
-        {mode === "range" && (
-          <Calendar
-            mode="range"
-            selected={effectiveSelected as { from: Date; to: Date }}
-            onSelect={effectiveOnSelect as (range: { from: Date; to: Date } | undefined) => void}
-            initialFocus={initialFocus}
-            className="pointer-events-auto"
-          />
-        )}
-        {mode === "multiple" && (
-          <Calendar
-            mode="multiple"
-            selected={effectiveSelected as Date[]}
-            onSelect={effectiveOnSelect as (dates: Date[] | undefined) => void}
-            initialFocus={initialFocus}
-            className="pointer-events-auto"
-          />
-        )}
+        <Calendar
+          mode="single"
+          selected={effectiveSelected as Date}
+          onSelect={effectiveOnSelect as (date: Date | undefined) => void}
+          initialFocus={initialFocus}
+          className="pointer-events-auto"
+        />
       </PopoverContent>
     </Popover>
-  );
+  )
 }

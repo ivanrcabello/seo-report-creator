@@ -31,21 +31,27 @@ interface ContractFormProps {
 }
 
 export const ContractFormComponent = ({ clientId: propClientId, contractId: propContractId }: ContractFormProps) => {
-  const { id: paramId, clientId: paramClientId } = useParams<{ id: string; clientId: string }>();
+  // Get URL parameters as a fallback
+  const params = useParams<{ clientId: string; id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sections, setSections] = useState<ContractSection[]>([]);
 
-  // Establecer prioridad: prop > param para clientId
-  const clientId = propClientId || paramClientId;
-  // Establecer prioridad: prop > param para id del contrato
-  const id = propContractId || paramId;
+  // Set priority: props > URL params
+  const clientId = propClientId || params.clientId || "";
+  const contractId = propContractId || params.id || "";
 
-  console.log("ContractForm: Using clientId:", clientId, "from prop:", propClientId, "from param:", paramClientId);
-  console.log("ContractForm: Using contractId:", id, "from prop:", propContractId, "from param:", paramId);
+  console.log("ContractForm component initialized with:");
+  console.log("- clientId from props:", propClientId);
+  console.log("- clientId from URL params:", params.clientId);
+  console.log("- Using clientId:", clientId);
+  console.log("- contractId from props:", propContractId);
+  console.log("- contractId from URL params:", params.id);
+  console.log("- Using contractId:", contractId);
 
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractFormSchema),
@@ -76,21 +82,25 @@ export const ContractFormComponent = ({ clientId: propClientId, contractId: prop
     const fetchData = async () => {
       setLoading(true);
       try {
+        console.log("Fetching clients data...");
         const clientsData = await getClients();
         setClients(clientsData);
+        console.log("Clients data loaded, count:", clientsData.length);
 
+        console.log("Fetching company settings...");
         const settings = await getCompanySettings();
 
         if (settings) {
+          console.log("Company settings loaded");
           form.setValue("professionalInfo.name", settings.companyName);
           form.setValue("professionalInfo.company", settings.companyName);
           form.setValue("professionalInfo.address", settings.address);
           form.setValue("professionalInfo.taxId", settings.taxId);
         }
 
-        if (id) {
-          console.log("Fetching contract data for id:", id);
-          const contractData = await getContract(id);
+        if (contractId) {
+          console.log("Fetching contract data for contractId:", contractId);
+          const contractData = await getContract(contractId);
           
           if (contractData) {
             console.log("Contract data loaded:", contractData.title);
@@ -126,7 +136,7 @@ export const ContractFormComponent = ({ clientId: propClientId, contractId: prop
             
             setSections(contractData.content.sections || []);
           } else {
-            console.error("Contract not found for id:", id);
+            console.error("Contract not found for contractId:", contractId);
             toast({
               title: "Error",
               description: "No se encontró el contrato",
@@ -142,6 +152,7 @@ export const ContractFormComponent = ({ clientId: propClientId, contractId: prop
             form.setValue("clientId", clientId);
             form.setValue("clientInfo.name", clientData.name);
             form.setValue("clientInfo.company", clientData.company || "");
+            form.setValue("title", `Contrato de Servicios SEO - ${clientData.name}`);
           } else {
             console.error("Client not found for clientId:", clientId);
           }
@@ -166,7 +177,7 @@ export const ContractFormComponent = ({ clientId: propClientId, contractId: prop
     };
 
     fetchData();
-  }, [id, clientId, form, toast]);
+  }, [contractId, clientId, form, toast]);
 
   const onSubmit = async (values: ContractFormValues) => {
     try {
@@ -209,11 +220,11 @@ export const ContractFormComponent = ({ clientId: propClientId, contractId: prop
         signedByProfessional: false,
       };
 
-      if (id) {
-        console.log("Updating contract:", id);
+      if (contractId) {
+        console.log("Updating contract:", contractId);
         await updateContract({
           ...contractData,
-          id,
+          id: contractId,
           createdAt: "",
           updatedAt: "",
         });
@@ -265,9 +276,9 @@ export const ContractFormComponent = ({ clientId: propClientId, contractId: prop
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
-            <CardTitle>{id ? "Editar Contrato" : "Nuevo Contrato"}</CardTitle>
+            <CardTitle>{contractId ? "Editar Contrato" : "Nuevo Contrato"}</CardTitle>
             <CardDescription>
-              {id
+              {contractId
                 ? "Modifica los detalles del contrato existente"
                 : "Crea un nuevo contrato de servicios SEO"}
             </CardDescription>
@@ -309,7 +320,7 @@ export const ContractFormComponent = ({ clientId: propClientId, contractId: prop
                   Guardando...
                 </>
               ) : (
-                <>{id ? "Actualizar" : "Crear"} Contrato</>
+                <>{contractId ? "Actualizar" : "Crear"} Contrato</>
               )}
             </Button>
           </CardFooter>

@@ -1,6 +1,17 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { SeoContract } from '@/types/client';
 import { v4 as uuidv4 } from 'uuid';
+import { getClient } from '@/services/clientService';
+import { getCompanySettings } from '@/services/settingsService';
+import jsPDF from 'jspdf';
+
+// Define ContractSection type
+interface ContractSection {
+  title: string;
+  content: string;
+  order: number;
+}
 
 // Helper functions to map Supabase data to app types and vice versa
 const mapContractFromDB = (contract: any): SeoContract => ({

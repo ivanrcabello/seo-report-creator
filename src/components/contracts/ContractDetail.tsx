@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SeoContract, Client } from "@/types/client";
@@ -168,14 +169,19 @@ export const ContractDetail = () => {
       const success = await deleteContract(contract.id);
       
       if (success) {
-        uiToast.success("Contrato eliminado correctamente");
+        toast("Contrato eliminado correctamente", {
+          description: "El contrato ha sido eliminado"
+        });
         navigate("/contracts");
       } else {
         throw new Error("Error al eliminar el contrato");
       }
     } catch (error) {
       console.error("Error deleting contract:", error);
-      uiToast.error("No se pudo eliminar el contrato");
+      toast("Error al eliminar el contrato", {
+        description: "No se pudo eliminar el contrato",
+        style: { backgroundColor: 'red', color: 'white' }
+      });
       setIsDeleting(false);
     }
   };

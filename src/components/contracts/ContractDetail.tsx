@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SeoContract, Client } from "@/types/client";
-import { getContract, signContract, generateAndSaveContractPDF } from "@/services/contractService";
+import { getContract, signContract, generateAndSaveContractPDF, deleteContract } from "@/services/contractService";
 import { getClient } from "@/services/clientService";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -17,24 +16,38 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent, 
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+import {
   CheckCircle2,
   Download,
   Edit,
   FileText,
   Loader2,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "sonner";
 
 export const ContractDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const [contract, setContract] = useState<SeoContract | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchContractData = async () => {
@@ -47,13 +60,12 @@ export const ContractDetail = () => {
         if (contractData) {
           setContract(contractData);
           
-          // Fetch client data
           const clientData = await getClient(contractData.clientId);
           if (clientData) {
             setClient(clientData);
           }
         } else {
-          toast({
+          uiToast({
             title: "Error",
             description: "No se encontró el contrato",
             variant: "destructive",
@@ -62,7 +74,7 @@ export const ContractDetail = () => {
         }
       } catch (error) {
         console.error("Error fetching contract:", error);
-        toast({
+        uiToast({
           title: "Error",
           description: "No se pudo cargar el contrato",
           variant: "destructive",
@@ -73,7 +85,7 @@ export const ContractDetail = () => {
     };
 
     fetchContractData();
-  }, [id, navigate, toast]);
+  }, [id, navigate, uiToast]);
 
   const handleEditContract = () => {
     if (contract) {
@@ -87,18 +99,14 @@ export const ContractDetail = () => {
     try {
       setActionLoading(true);
       
-      // Generate and save the PDF document
       const pdfUrl = await generateAndSaveContractPDF(contract.id);
       
-      // Update local state with the new PDF URL
       setContract({
         ...contract,
         pdfUrl
       });
       
-      // Check if the URL is a data URL (base64) or a storage URL
       if (pdfUrl.startsWith('data:')) {
-        // For data URLs, create a download link and trigger it
         const link = document.createElement('a');
         link.href = pdfUrl;
         link.download = `contrato_${contract.title.replace(/\s+/g, '_')}.pdf`;
@@ -106,17 +114,16 @@ export const ContractDetail = () => {
         link.click();
         document.body.removeChild(link);
       } else {
-        // For storage URLs, open in a new tab
         window.open(pdfUrl, '_blank');
       }
       
-      toast({
+      uiToast({
         title: "PDF generado con éxito",
         description: "El contrato se ha descargado correctamente",
       });
     } catch (error) {
       console.error("Error downloading contract:", error);
-      toast({
+      uiToast({
         title: "Error",
         description: "No se pudo generar el PDF del contrato",
         variant: "destructive",
@@ -136,19 +143,40 @@ export const ContractDetail = () => {
       
       setContract(updatedContract);
       
-      toast({
+      uiToast({
         title: "Contrato firmado",
         description: `El contrato ha sido firmado como ${signedBy === 'client' ? 'cliente' : 'profesional'}`,
       });
     } catch (error) {
       console.error("Error signing contract:", error);
-      toast({
+      uiToast({
         title: "Error",
         description: "No se pudo firmar el contrato",
         variant: "destructive",
       });
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleDeleteContract = async () => {
+    if (!contract?.id) return;
+    
+    setIsDeleting(true);
+    
+    try {
+      const success = await deleteContract(contract.id);
+      
+      if (success) {
+        uiToast.success("Contrato eliminado correctamente");
+        navigate("/contracts");
+      } else {
+        throw new Error("Error al eliminar el contrato");
+      }
+    } catch (error) {
+      console.error("Error deleting contract:", error);
+      uiToast.error("No se pudo eliminar el contrato");
+      setIsDeleting(false);
     }
   };
 
@@ -208,7 +236,6 @@ export const ContractDetail = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* General information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">Fechas</h3>
@@ -254,7 +281,6 @@ export const ContractDetail = () => {
             
             <Separator />
             
-            {/* Signatures */}
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-3">Firmas</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -285,7 +311,6 @@ export const ContractDetail = () => {
             
             <Separator />
             
-            {/* Contract sections */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-muted-foreground">Contenido del Contrato</h3>
               
@@ -314,6 +339,40 @@ export const ContractDetail = () => {
                 <Edit className="h-4 w-4" />
                 Editar
               </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="destructive" 
+                    className="flex items-center gap-1"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    Eliminar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción no se puede deshacer. El contrato será eliminado permanentemente.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeleteContract}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Eliminar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
             
             <div className="flex flex-wrap gap-2">

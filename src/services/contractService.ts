@@ -1,9 +1,6 @@
-import { SeoContract, ContractSection } from "@/types/client";
-import { supabase } from "@/integrations/supabase/client";
-import { getCompanySettings } from "./settingsService";
-import { getClient } from "./clientService";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
+import { supabase } from '@/integrations/supabase/client';
+import { SeoContract } from '@/types/client';
+import { v4 as uuidv4 } from 'uuid';
 
 // Helper functions to map Supabase data to app types and vice versa
 const mapContractFromDB = (contract: any): SeoContract => ({
@@ -133,16 +130,23 @@ export const updateContract = async (contract: SeoContract): Promise<SeoContract
   return mapContractFromDB(data);
 };
 
-// Delete a contract
-export const deleteContract = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('seo_contracts')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
-    console.error("Error deleting contract:", error);
-    throw error;
+// Function to delete a contract
+export const deleteContract = async (contractId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('seo_contracts')
+      .delete()
+      .eq('id', contractId);
+    
+    if (error) {
+      console.error("Error deleting contract:", error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in deleteContract:", error);
+    return false;
   }
 };
 

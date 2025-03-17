@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -188,58 +189,47 @@ export const InvoiceForm = () => {
       
       if (isNewInvoice) {
         const invoiceData = {
-          ...data,
-          number: data.invoiceNumber || '',
-          clientName: client?.name || 'Unknown Client',
+          clientId: data.clientId,
+          packId: data.packId,
+          proposalId: data.proposalId,
           baseAmount: baseAmountValue,
-          subtotal: baseAmountValue,
-          tax: taxRateValue,
           taxRate: taxRateValue,
           taxAmount,
           totalAmount,
-          total: totalAmount,
-          date: data.issueDate,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          paymentDate: null,
-          paidAt: null
+          status: data.status,
+          issueDate: data.issueDate,
+          dueDate: data.dueDate || null,
+          notes: data.notes || null,
+          invoiceNumber: data.invoiceNumber || ''
         };
         
-        result = await createInvoice(invoiceData as any);
+        result = await createInvoice(invoiceData);
       } else {
         if (!id) {
           throw new Error("Missing invoice ID for update");
         }
         
         const updateData = {
-          ...(invoice || {}),
           id,
           clientId: data.clientId,
-          clientName: client?.name || 'Unknown Client',
           packId: data.packId,
           proposalId: data.proposalId,
           baseAmount: baseAmountValue,
-          subtotal: baseAmountValue,
-          tax: taxRateValue,
           taxRate: taxRateValue,
           taxAmount,
           totalAmount,
-          total: totalAmount,
           status: data.status,
           issueDate: data.issueDate,
-          date: data.issueDate,
           dueDate: data.dueDate || '',
           notes: data.notes || '',
           invoiceNumber: data.invoiceNumber || invoice?.invoiceNumber || "",
-          number: data.invoiceNumber || invoice?.invoiceNumber || "",
-          paymentDate: invoice?.paymentDate || null,
-          paidAt: invoice?.paymentDate || null,
           pdfUrl: invoice?.pdfUrl || null,
+          paymentDate: invoice?.paymentDate || null,
           createdAt: invoice?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
         
-        result = await updateInvoice(updateData as any);
+        result = await updateInvoice(updateData);
       }
       
       if (result) {

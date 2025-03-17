@@ -55,6 +55,11 @@ export default function ClientDetail() {
     setSearchParams(searchParams);
   };
 
+  const handleSaveClient = (updatedClient: Client) => {
+    setClient(updatedClient);
+    toast.success("Datos del cliente actualizados correctamente");
+  };
+
   useEffect(() => {
     if (!id) {
       console.error("Client ID is missing from URL params");
@@ -169,11 +174,11 @@ export default function ClientDetail() {
         </TabsList>
         
         <TabsContent value="profile">
-          <ClientProfileTab client={client} />
+          <ClientProfileTab client={client} onSave={handleSaveClient} />
         </TabsContent>
         
         <TabsContent value="metrics">
-          <ClientMetricsTab clientId={client.id} />
+          <ClientMetricsTab clientId={client.id} clientName={client.name} />
         </TabsContent>
         
         <TabsContent value="reports">
@@ -183,8 +188,7 @@ export default function ClientDetail() {
         <TabsContent value="proposals">
           <ClientProposalsList 
             proposals={proposals} 
-            clientId={client.id} 
-            clientName={client.name}
+            clientId={client.id}
           />
         </TabsContent>
         
@@ -204,8 +208,7 @@ export default function ClientDetail() {
         
         <TabsContent value="documents">
           <PdfUploadTab 
-            clientId={client.id} 
-            clientName={client.name} 
+            clientId={client.id}
           />
         </TabsContent>
       </Tabs>

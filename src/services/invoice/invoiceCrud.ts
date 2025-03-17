@@ -1,3 +1,4 @@
+
 import { Invoice } from "@/types/invoice";
 import { supabase } from "@/integrations/supabase/client";
 import { mapInvoiceFromDB, mapInvoiceToDB } from "./invoiceMappers";
@@ -56,25 +57,24 @@ export const createInvoice = async (invoice: Omit<Invoice, "id" | "createdAt" | 
     console.log("Creating invoice with data:", invoice);
     
     // Generate invoice number if one is not provided
-    let invoiceNumber = (invoice as any).invoiceNumber;
-    if (!invoiceNumber) {
-      invoiceNumber = await generateInvoiceNumber();
-      console.log("Generated invoice number:", invoiceNumber);
-    }
+    let invoiceNumber = invoice.invoiceNumber || await generateInvoiceNumber();
+    console.log("Generated invoice number:", invoiceNumber);
     
     const now = new Date().toISOString();
     
-    // Create a new invoice object with a generated UUID
+    // Create a new invoice object with processed data
     const newInvoiceData = {
       ...invoice,
-      id: undefined, // Remove any ID that might have been passed
       invoiceNumber,
       createdAt: now,
       updatedAt: now
     };
     
+    // Remove clientName if it exists since it's not a column in the table
+    const { clientName, ...invoiceDataWithoutClientName } = newInvoiceData as any;
+    
     // Map the invoice data for DB, which will include the generated UUID
-    const newInvoice = mapInvoiceToDB(newInvoiceData);
+    const newInvoice = mapInvoiceToDB(invoiceDataWithoutClientName);
     
     console.log("Mapped invoice data for DB:", newInvoice);
     
@@ -109,9 +109,12 @@ export const updateInvoice = async (invoice: Invoice): Promise<Invoice | undefin
     console.log("Updating invoice with ID:", invoice.id);
     console.log("Invoice data for update:", invoice);
     
+    // Remove clientName if it exists since it's not a column in the table
+    const { clientName, ...invoiceDataWithoutClientName } = invoice as any;
+    
     // Create updated invoice with current timestamp
     const dbInvoice = mapInvoiceToDB({
-      ...invoice,
+      ...invoiceDataWithoutClientName,
       updatedAt: new Date().toISOString()
     });
     

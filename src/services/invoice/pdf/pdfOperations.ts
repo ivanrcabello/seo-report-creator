@@ -9,6 +9,7 @@ import { generateInvoicePdf } from "./pdfGenerator";
  */
 export const downloadInvoicePdf = async (id: string): Promise<boolean> => {
   try {
+    console.log("Downloading invoice PDF for:", id);
     const invoice = await getInvoice(id);
     if (!invoice) {
       toast.error("Factura no encontrada");
@@ -50,6 +51,7 @@ export const downloadInvoicePdf = async (id: string): Promise<boolean> => {
  */
 export const sendInvoiceByEmail = async (id: string): Promise<boolean> => {
   try {
+    console.log("Sending invoice by email:", id);
     const invoice = await getInvoice(id);
     if (!invoice) {
       toast.error("Factura no encontrada");

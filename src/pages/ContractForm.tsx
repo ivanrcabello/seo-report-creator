@@ -4,7 +4,14 @@ import { ContractFormComponent } from "@/components/contracts/ContractForm";
 
 const ContractForm = () => {
   const { clientId } = useParams<{ clientId: string }>();
-  return <ContractFormComponent clientId={clientId} />;
+  
+  console.log("ContractForm page loaded with clientId:", clientId);
+  
+  return (
+    <div className="container mx-auto py-6">
+      <ContractFormComponent clientId={clientId} />
+    </div>
+  );
 };
 
 export default ContractForm;

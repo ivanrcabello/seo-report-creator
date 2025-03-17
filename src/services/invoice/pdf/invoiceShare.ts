@@ -14,7 +14,7 @@ export const shareInvoice = async (invoiceId: string): Promise<{ url: string } |
     // Generate a unique share token
     const shareToken = uuidv4();
     
-    // Using a direct query instead of RPC since we don't have the RPC function registered in TypeScript
+    // Insert the share record
     const { error } = await supabase
       .from('invoice_shares')
       .insert({
@@ -48,7 +48,7 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{
   company: CompanySettings | null;
 }> => {
   try {
-    // Using a direct query instead of RPC since we don't have the RPC function registered in TypeScript
+    // Get the invoice_id from the share token
     const { data: shareData, error: shareError } = await supabase
       .from('invoice_shares')
       .select('invoice_id')

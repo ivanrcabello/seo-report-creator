@@ -2,12 +2,11 @@
 /**
  * PDF Generation for invoices
  */
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Invoice } from '@/types/invoice';
 import { getClient } from '@/services/clientService';
 import { getCompanySettings } from '@/services/settingsService';
-import { mapInvoiceFromDB } from '../invoiceMappers';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
@@ -23,6 +22,9 @@ import {
 
 // Import styles from pdfStyles.ts
 import { textStyles, tableStyles, getStatusColor, getStatusText } from './pdfStyles';
+
+// Add autoTable to jsPDF prototype
+jsPDF.prototype.autoTable = autoTable;
 
 /**
  * Generates an invoice PDF

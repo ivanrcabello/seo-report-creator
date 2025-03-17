@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Invoice, CompanySettings } from "@/types/invoice";
 import { Client } from "@/types/client";
-import { getInvoice, markInvoiceAsPaid, deleteInvoice, downloadInvoicePdf, sendInvoiceByEmail } from "@/services/invoiceService";
+import { getInvoice, markInvoiceAsPaid, deleteInvoice, downloadInvoicePdf, sendInvoiceByEmail, generateInvoicePdf } from "@/services/invoiceService";
 import { getClient } from "@/services/clientService";
 import { getCompanySettings } from "@/services/settingsService";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ export default function InvoiceDetail() {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -145,6 +146,25 @@ export default function InvoiceDetail() {
     
     setIsPdfDownloading(true);
     try {
+      // First check if the invoice has a PDF URL
+      if (!invoice?.pdfUrl) {
+        // Generate the PDF first if it doesn't exist
+        toast.info("Generando PDF...");
+        const generated = await generateInvoicePdf(id);
+        if (!generated) {
+          toast.error("Error al generar el PDF");
+          setIsPdfDownloading(false);
+          return;
+        }
+        
+        // Refresh the invoice to get the PDF URL
+        const updatedInvoice = await getInvoice(id);
+        if (updatedInvoice) {
+          setInvoice(updatedInvoice);
+        }
+      }
+      
+      // Now download the PDF
       const success = await downloadInvoicePdf(id);
       
       if (!success) {
@@ -163,6 +183,24 @@ export default function InvoiceDetail() {
     
     setIsSendingEmail(true);
     try {
+      // First check if the invoice has a PDF URL
+      if (!invoice?.pdfUrl) {
+        // Generate the PDF first if it doesn't exist
+        toast.info("Generando PDF para enviar por email...");
+        const generated = await generateInvoicePdf(id);
+        if (!generated) {
+          toast.error("Error al generar el PDF para el email");
+          setIsSendingEmail(false);
+          return;
+        }
+        
+        // Refresh the invoice to get the PDF URL
+        const updatedInvoice = await getInvoice(id);
+        if (updatedInvoice) {
+          setInvoice(updatedInvoice);
+        }
+      }
+      
       const success = await sendInvoiceByEmail(id);
       
       if (success) {
@@ -187,6 +225,7 @@ export default function InvoiceDetail() {
       if (result && result.url) {
         setShareUrl(result.url);
         setIsShareDialogOpen(true);
+        toast.success("Enlace de factura generado correctamente");
       } else {
         toast.error("Error al compartir la factura");
       }

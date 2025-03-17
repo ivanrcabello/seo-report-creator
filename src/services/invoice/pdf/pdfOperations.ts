@@ -111,16 +111,18 @@ export const sendInvoiceByEmail = async (invoiceId: string): Promise<boolean> =>
 export const shareInvoice = async (invoiceId: string): Promise<{ url: string } | null> => {
   try {
     const shareToken = uuidv4();
+    
+    // Update invoice with share token and timestamp
+    // Use type assertion to bypass TypeScript checking for fields not in the type
     const { data, error } = await supabase
       .from('invoices')
       .update({
         shared_at: new Date().toISOString(),
         share_token: shareToken
-      } as any) // Cast as any to bypass TypeScript checking for this field
+      } as any)
       .eq('id', invoiceId)
-      .select()
-      .single();
-
+      .select();
+    
     if (error) {
       console.error('Error sharing invoice:', error);
       return null;
@@ -204,13 +206,13 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{ invo
       phone: companyResponse.data.phone || undefined,
       email: companyResponse.data.email || undefined,
       logoUrl: companyResponse.data.logo_url || undefined,
-      // Only include fields that exist in database, others will be undefined
-      primaryColor: undefined,
-      secondaryColor: undefined,
-      accentColor: undefined,
-      bankAccount: undefined,
+      bankAccount: companyResponse.data.bank_account || undefined,
       createdAt: companyResponse.data.created_at,
       updatedAt: companyResponse.data.updated_at,
+      // Fields that might not exist in the database
+      primaryColor: undefined,
+      secondaryColor: undefined,
+      accentColor: undefined
     };
 
     return { invoice, client, company };

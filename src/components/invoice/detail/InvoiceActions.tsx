@@ -7,7 +7,8 @@ import {
   Check, 
   Mail,
   Share2,
-  Printer
+  Printer,
+  Trash
 } from "lucide-react";
 import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
 import { Invoice } from "@/types/invoice";

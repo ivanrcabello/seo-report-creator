@@ -8,7 +8,7 @@ import {
   sendInvoiceByEmail, 
   generateInvoicePdf 
 } from "@/services/invoiceService";
-import { shareInvoice } from "@/services/invoice/pdf/pdfOperations";
+import { shareInvoice } from "@/services/invoice/pdf/invoiceShare";
 import { toast } from "sonner";
 import { getInvoice } from "@/services/invoiceService";
 import { Invoice } from "@/types/invoice";

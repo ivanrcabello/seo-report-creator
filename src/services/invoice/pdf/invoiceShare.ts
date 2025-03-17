@@ -14,11 +14,13 @@ export const shareInvoice = async (invoiceId: string): Promise<{ url: string } |
     // Generate a unique share token
     const shareToken = uuidv4();
     
-    // Create a custom SQL query to insert into invoice_shares
-    const { error } = await supabase.rpc('create_invoice_share', {
-      p_invoice_id: invoiceId,
-      p_share_token: shareToken
-    });
+    // Using a direct query instead of RPC since we don't have the RPC function registered in TypeScript
+    const { error } = await supabase
+      .from('invoice_shares')
+      .insert({
+        invoice_id: invoiceId,
+        share_token: shareToken
+      });
     
     if (error) {
       console.error("Error sharing invoice:", error);
@@ -46,12 +48,14 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{
   company: CompanySettings | null;
 }> => {
   try {
-    // Get the invoice_id from the share token using a stored procedure
-    const { data: shareData, error: shareError } = await supabase.rpc('get_invoice_by_share_token', {
-      p_share_token: shareToken
-    });
+    // Using a direct query instead of RPC since we don't have the RPC function registered in TypeScript
+    const { data: shareData, error: shareError } = await supabase
+      .from('invoice_shares')
+      .select('invoice_id')
+      .eq('share_token', shareToken)
+      .single();
     
-    if (shareError || !shareData || !shareData.invoice_id) {
+    if (shareError || !shareData) {
       console.error("Error getting shared invoice:", shareError);
       return { invoice: null, client: null, company: null };
     }
@@ -86,11 +90,10 @@ export const getInvoiceByShareToken = async (shareToken: string): Promise<{
           company: clientData.company,
           email: clientData.email,
           phone: clientData.phone,
-          taxId: clientData.tax_id,
           website: clientData.website,
           isActive: clientData.is_active,
           createdAt: clientData.created_at,
-          notes: clientData.notes
+          notes: clientData.notes || []
         };
       }
     }

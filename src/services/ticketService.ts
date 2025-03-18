@@ -1,20 +1,15 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import logger from "@/services/advancedLogService";
 
-// Logger específico para el servicio de tickets
-const ticketLogger = logger.getLogger('ticketService');
-
-// Definición de tipos
 export interface Ticket {
   id: string;
   subject: string;
   message: string;
   status: 'open' | 'in_progress' | 'resolved';
   priority: 'low' | 'medium' | 'high';
+  client_id: string;
   created_at: string;
   updated_at: string;
-  client_id: string;
   resolved_at: string | null;
 }
 
@@ -24,42 +19,35 @@ export interface TicketMessage {
   sender_id: string;
   message: string;
   created_at: string;
+  sender_name?: string; // Optional field for UI display
+  sender_role?: string; // Optional field for UI display
 }
 
-// Obtener tickets (para admin: todos, para cliente: solo los suyos)
-export const getTickets = async (clientId?: string): Promise<Ticket[]> => {
-  ticketLogger.info("getTickets called with clientId:", { clientId });
-  
+export const getTickets = async (clientId?: string) => {
   try {
-    let query = supabase
-      .from('support_tickets')
-      .select('*')
-      .order('created_at', { ascending: false });
+    console.log("getTickets called with clientId:", clientId);
+    let query = supabase.from('support_tickets').select('*');
     
-    // Si se proporciona un ID de cliente, filtrar por ese cliente
     if (clientId) {
       query = query.eq('client_id', clientId);
     }
     
-    const { data, error } = await query;
+    const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
-      ticketLogger.error("Error fetching tickets:", { error });
+      console.error("Error in getTickets:", error);
       throw error;
     }
     
-    ticketLogger.info("Tickets fetched:", { count: data?.length || 0 });
+    console.log("Tickets fetched:", data?.length || 0, data);
     return data as Ticket[];
   } catch (error) {
-    ticketLogger.error("Exception in getTickets:", { error });
+    console.error("Exception in getTickets:", error);
     throw error;
   }
 };
 
-// Obtener un ticket específico por ID
-export const getTicketById = async (ticketId: string): Promise<Ticket> => {
-  ticketLogger.info("getTicketById called for ticket:", { ticketId });
-  
+export const getTicketById = async (ticketId: string) => {
   try {
     const { data, error } = await supabase
       .from('support_tickets')
@@ -68,22 +56,18 @@ export const getTicketById = async (ticketId: string): Promise<Ticket> => {
       .single();
     
     if (error) {
-      ticketLogger.error("Error fetching ticket:", { error });
+      console.error("Error fetching ticket:", error);
       throw error;
     }
     
-    ticketLogger.info("Ticket fetched successfully");
     return data as Ticket;
   } catch (error) {
-    ticketLogger.error("Exception in getTicketById:", { error });
+    console.error("Error in getTicketById:", error);
     throw error;
   }
 };
 
-// Obtener mensajes de un ticket
-export const getTicketMessages = async (ticketId: string): Promise<TicketMessage[]> => {
-  ticketLogger.info("getTicketMessages called for ticket:", { ticketId });
-  
+export const getTicketMessages = async (ticketId: string) => {
   try {
     const { data, error } = await supabase
       .from('ticket_messages')
@@ -92,32 +76,57 @@ export const getTicketMessages = async (ticketId: string): Promise<TicketMessage
       .order('created_at', { ascending: true });
     
     if (error) {
-      ticketLogger.error("Error fetching ticket messages:", { error });
+      console.error("Error fetching ticket messages:", error);
       throw error;
     }
     
-    ticketLogger.info("Ticket messages fetched:", { count: data?.length || 0 });
-    return data as TicketMessage[];
+    // Add sender information to messages
+    const messagesWithSenderInfo = await Promise.all(
+      (data || []).map(async (message) => {
+        try {
+          // Check if sender is a client or admin
+          const { data: senderData } = await supabase
+            .from('profiles')
+            .select('name, role')
+            .eq('id', message.sender_id)
+            .single();
+            
+          return {
+            ...message,
+            sender_name: senderData?.name || 'Unknown',
+            sender_role: senderData?.role || 'unknown'
+          };
+        } catch (error) {
+          console.error("Error fetching sender info:", error);
+          return {
+            ...message,
+            sender_name: 'Unknown',
+            sender_role: 'unknown'
+          };
+        }
+      })
+    );
+    
+    console.log("Messages with sender info:", messagesWithSenderInfo);
+    return messagesWithSenderInfo as TicketMessage[];
   } catch (error) {
-    ticketLogger.error("Exception in getTicketMessages:", { error });
+    console.error("Error in getTicketMessages:", error);
     throw error;
   }
 };
 
-// Crear un nuevo ticket
 export const createTicket = async (
-  clientId: string, 
-  subject: string, 
-  message: string, 
-  priority: 'low' | 'medium' | 'high' = 'medium'
-): Promise<Ticket> => {
-  ticketLogger.info("createTicket called for client:", { clientId });
-  
+  clientId: string,
+  subject: string,
+  message: string,
+  priority: Ticket['priority'] = 'medium'
+) => {
   try {
+    console.log("Creating ticket for client:", clientId, "with subject:", subject);
     const { data, error } = await supabase
       .from('support_tickets')
       .insert([
-        { 
+        {
           client_id: clientId,
           subject,
           message,
@@ -125,100 +134,91 @@ export const createTicket = async (
           status: 'open'
         }
       ])
-      .select()
-      .single();
+      .select();
     
     if (error) {
-      ticketLogger.error("Error creating ticket:", { error });
+      console.error("Error in createTicket:", error);
       throw error;
     }
     
-    ticketLogger.info("Ticket created successfully:", { ticketId: data.id });
-    return data as Ticket;
+    console.log("Ticket created:", data);
+    
+    // Also create the first message in the ticket_messages table
+    if (data && data.length > 0) {
+      const ticketId = data[0].id;
+      await supabase
+        .from('ticket_messages')
+        .insert([
+          {
+            ticket_id: ticketId,
+            sender_id: clientId,
+            message
+          }
+        ]);
+    }
+    
+    return data[0] as Ticket;
   } catch (error) {
-    ticketLogger.error("Exception in createTicket:", { error });
+    console.error("Exception in createTicket:", error);
     throw error;
   }
 };
 
-// Responder a un ticket
-export const replyToTicket = async (
-  ticketId: string, 
-  senderId: string, 
-  message: string
-): Promise<TicketMessage> => {
-  ticketLogger.info("replyToTicket called for ticket:", { ticketId });
-  
+export const replyToTicket = async (ticketId: string, senderId: string, message: string) => {
   try {
-    // Insertar el mensaje
     const { data, error } = await supabase
       .from('ticket_messages')
       .insert([
-        { 
+        {
           ticket_id: ticketId,
           sender_id: senderId,
           message
         }
       ])
-      .select()
-      .single();
+      .select();
     
     if (error) {
-      ticketLogger.error("Error replying to ticket:", { error });
+      console.error("Error replying to ticket:", error);
       throw error;
     }
     
-    // Actualizar la fecha de actualización del ticket
+    // Also update the ticket's updated_at timestamp
     await supabase
       .from('support_tickets')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', ticketId);
-    
-    ticketLogger.info("Reply sent successfully");
-    return data as TicketMessage;
+      
+    return data[0] as TicketMessage;
   } catch (error) {
-    ticketLogger.error("Exception in replyToTicket:", { error });
+    console.error("Error in replyToTicket:", error);
     throw error;
   }
 };
 
-// Actualizar el estado de un ticket
 export const updateTicketStatus = async (
   ticketId: string, 
-  status: 'open' | 'in_progress' | 'resolved'
-): Promise<Ticket> => {
-  ticketLogger.info("updateTicketStatus called for ticket:", { ticketId, status });
-  
+  status: Ticket['status']
+) => {
   try {
-    const updates: any = { 
+    const updates: Partial<Ticket> = {
       status,
-      updated_at: new Date().toISOString()
+      resolved_at: status === 'resolved' ? new Date().toISOString() : null
     };
-    
-    // Si se marca como resuelto, establecer la fecha de resolución
-    if (status === 'resolved') {
-      updates.resolved_at = new Date().toISOString();
-    } else {
-      // Si se reabre, eliminar la fecha de resolución
-      updates.resolved_at = null;
-    }
     
     const { data, error } = await supabase
       .from('support_tickets')
       .update(updates)
       .eq('id', ticketId)
-      .select()
-      .single();
+      .select();
     
     if (error) {
-      ticketLogger.error("Error updating ticket status:", { error });
+      console.error("Error updating ticket status:", error);
       throw error;
     }
     
-    ticketLogger.info("Ticket status updated successfully");
-    return data as Ticket;
+    return data[0] as Ticket;
   } catch (error) {
-    ticketLogger.error("Exception in updateTicketStatus:", { error });
+    console.error("Error in updateTicketStatus:", error);
     throw error;
   }
 };

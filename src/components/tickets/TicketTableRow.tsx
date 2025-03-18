@@ -1,87 +1,116 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Ticket } from '@/services/ticketService';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { TableRow, TableCell } from "@/components/ui/table";
+import { StatusBadge, PriorityBadge } from "./TicketBadges";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+interface Ticket {
+  id: string;
+  subject: string;
+  status: string;
+  priority: string;
+  client_id: string;
+  created_at: string;
+}
 
 interface TicketTableRowProps {
   ticket: Ticket;
 }
 
-export const TicketTableRow = ({ ticket }: TicketTableRowProps) => {
-  // Formatear la fecha
-  const formattedDate = format(new Date(ticket.created_at), 'dd MMM yyyy, HH:mm', { locale: es });
-  
-  // Mapeo de estados a colores
-  const statusColors = {
-    open: 'bg-blue-100 text-blue-800',
-    in_progress: 'bg-yellow-100 text-yellow-800',
-    resolved: 'bg-green-100 text-green-800'
-  };
-  
-  // Mapeo de prioridades a colores
-  const priorityColors = {
-    low: 'bg-gray-100 text-gray-800',
-    medium: 'bg-orange-100 text-orange-800',
-    high: 'bg-red-100 text-red-800'
-  };
-  
-  // Traducción de estados
-  const statusText = {
-    open: 'Abierto',
-    in_progress: 'En progreso',
-    resolved: 'Resuelto'
-  };
-  
-  // Traducción de prioridades
-  const priorityText = {
-    low: 'Baja',
-    medium: 'Media',
-    high: 'Alta'
+export function TicketTableRow({ ticket }: TicketTableRowProps) {
+  const { userRole } = useAuth();
+  const [clientName, setClientName] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
+
+  // Fetch client name if admin
+  useEffect(() => {
+    const fetchClientName = async () => {
+      if (userRole === 'admin' && ticket.client_id) {
+        setIsLoading(true);
+        try {
+          // First check in clients table
+          let { data: clientData, error: clientError } = await supabase
+            .from('clients')
+            .select('name')
+            .eq('id', ticket.client_id)
+            .maybeSingle();
+          
+          if (clientData && !clientError) {
+            setClientName(clientData.name);
+          } else {
+            // Fallback to profiles table if not found in clients
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('name, email')
+              .eq('id', ticket.client_id)
+              .maybeSingle();
+            
+            if (profileData && !profileError) {
+              setClientName(profileData.name || profileData.email || 'Usuario sin nombre');
+            } else {
+              // If all else fails, just show the ID
+              setClientName(ticket.client_id.substring(0, 8) + '...');
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching client name:", error);
+          setClientName(ticket.client_id.substring(0, 8) + '...');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchClientName();
+  }, [ticket.client_id, userRole]);
+
+  const handleViewTicket = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    console.log("Navigating to ticket detail:", ticket.id);
+    navigate(`/tickets/${ticket.id}`);
   };
 
   return (
-    <tr className="hover:bg-gray-50">
-      <td className="px-4 py-4 whitespace-nowrap">
-        <div className="truncate max-w-xs">
-          <Link 
-            to={`/tickets/${ticket.id}`} 
-            className="text-sm font-medium text-gray-900 hover:text-purple-600"
-          >
-            {ticket.subject}
-          </Link>
-        </div>
-      </td>
-      <td className="px-4 py-4 whitespace-nowrap">
-        <Badge className={statusColors[ticket.status as keyof typeof statusColors]}>
-          {statusText[ticket.status as keyof typeof statusText]}
-        </Badge>
-      </td>
-      <td className="px-4 py-4 whitespace-nowrap">
-        <Badge className={priorityColors[ticket.priority as keyof typeof priorityColors]}>
-          {priorityText[ticket.priority as keyof typeof priorityText]}
-        </Badge>
-      </td>
-      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-        {formattedDate}
-      </td>
-      <td className="px-4 py-4 whitespace-nowrap text-right">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          asChild
-          className="hover:bg-purple-50 hover:text-purple-700"
-        >
-          <Link to={`/tickets/${ticket.id}`}>
+    <TableRow 
+      key={ticket.id}
+      className="cursor-pointer hover:bg-gray-50 transition-colors"
+      onClick={handleViewTicket}
+    >
+      {userRole === 'admin' && (
+        <TableCell>
+          {isLoading ? (
+            <span className="text-gray-400">Cargando...</span>
+          ) : (
+            clientName || 'Usuario desconocido'
+          )}
+        </TableCell>
+      )}
+      <TableCell>{ticket.subject}</TableCell>
+      <TableCell><StatusBadge status={ticket.status} /></TableCell>
+      <TableCell><PriorityBadge priority={ticket.priority} /></TableCell>
+      <TableCell>
+        {new Date(ticket.created_at).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })}
+      </TableCell>
+      <TableCell>
+        <div className="flex space-x-2">
+          <Button size="sm" variant="ghost" onClick={(e) => {
+            e.stopPropagation();
+            handleViewTicket();
+          }}>
             <Eye className="h-4 w-4 mr-1" />
             Ver
-          </Link>
-        </Button>
-      </td>
-    </tr>
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
   );
-};
+}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AIReport, generateAIReport } from "@/services/aiReportService";
 import { AuditResult } from "@/services/pdfAnalyzer";
@@ -29,15 +30,13 @@ import { saveReportWithAIData } from "@/services/reportService";
 import { ClientReport } from "@/types/client";
 import { generateSEOReport } from "@/services/openai/seoReportService";
 import { toast } from "sonner";
-import { Dispatch, SetStateAction } from "react";
 
 interface AIReportGeneratorProps {
   auditResult: AuditResult;
   currentReport?: ClientReport | null;
-  onContentGenerated?: Dispatch<SetStateAction<string>>;
 }
 
-export const AIReportGenerator = ({ auditResult, currentReport, onContentGenerated }: AIReportGeneratorProps) => {
+export const AIReportGenerator = ({ auditResult, currentReport }: AIReportGeneratorProps) => {
   const [report, setReport] = useState<AIReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,6 +44,7 @@ export const AIReportGenerator = ({ auditResult, currentReport, onContentGenerat
   const [isGeneratingOpenAI, setIsGeneratingOpenAI] = useState(false);
   const { toast } = useToast();
 
+  // Load report data from currentReport if it exists
   useEffect(() => {
     if (currentReport?.analyticsData?.aiReport) {
       setReport(currentReport.analyticsData.aiReport);
@@ -56,9 +56,6 @@ export const AIReportGenerator = ({ auditResult, currentReport, onContentGenerat
     try {
       const data = await generateAIReport(auditResult);
       setReport(data);
-      if (onContentGenerated && data.content) {
-        onContentGenerated(data.content);
-      }
     } catch (error) {
       console.error("Error generando el informe:", error);
       toast({
@@ -81,12 +78,14 @@ export const AIReportGenerator = ({ auditResult, currentReport, onContentGenerat
     try {
       const content = await generateSEOReport(auditResult);
       if (content && report) {
+        // Update the report content
         const updatedReport = {
           ...report,
           content: content
         };
         setReport(updatedReport);
         
+        // If we have a current report, save the content to it
         if (currentReport) {
           await saveReportWithAIData(currentReport, updatedReport);
         }
@@ -119,6 +118,7 @@ export const AIReportGenerator = ({ auditResult, currentReport, onContentGenerat
     
     setIsSaving(true);
     try {
+      // Convert AIReport to a format compatible with ClientReport
       const reportData = {
         id: currentReport.id,
         clientId: currentReport.clientId,

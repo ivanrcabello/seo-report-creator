@@ -1,50 +1,90 @@
 
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Spinner } from "@/components/ui/spinner";
-import logger from "@/services/advancedLogService";
+import { useState, useEffect } from "react";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Logger específico para ProtectedRoute
-const routeLogger = logger.getLogger('ProtectedRoute');
+interface ProtectedRouteProps {
+  allowedRoles?: ("admin" | "client")[];
+}
 
-export function ProtectedRoute() {
-  const { user, isLoading } = useAuth();
+export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+  const { user, userRole, isLoading } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  routeLogger.debug("ProtectedRoute evaluando", { 
-    isLoading, 
-    isAuthenticated: !!user,
-    userId: user?.id,
-    pathname: window.location.pathname
-  });
+  useEffect(() => {
+    // Reset auth error if user is loaded successfully
+    if (user && userRole) {
+      setAuthError(null);
+    }
+  }, [user, userRole]);
 
-  // Si el usuario está todavía cargando, mostrar spinner, pero con un tiempo límite
+  // If still loading, show loading indicator
   if (isLoading) {
-    routeLogger.debug("Autenticación en progreso, mostrando spinner", {
-      pathname: window.location.pathname
-    });
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <Spinner className="mx-auto mb-4" />
-          <p className="text-gray-500">Verificando autenticación...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Cargando...</p>
         </div>
       </div>
     );
   }
 
-  // Si no hay usuario después de cargar, redirigir a login
+  // If not authenticated, redirect to login
   if (!user) {
-    routeLogger.warn("Usuario no autenticado, redirigiendo a login", {
-      pathname: window.location.pathname,
-      redirectTo: "/login"
-    });
     return <Navigate to="/login" replace />;
   }
 
-  // Si hay usuario, permitir acceso
-  routeLogger.debug("Usuario autenticado, permitiendo acceso", { 
-    userId: user.id,
-    pathname: window.location.pathname
-  });
+  // If role restrictions are specified and user doesn't have an allowed role
+  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Acceso denegado</AlertTitle>
+          <AlertDescription>
+            No tienes permisos para acceder a esta sección.
+            <div className="mt-4">
+              <Button variant="outline" onClick={() => window.location.href = "/dashboard"}>
+                Volver al dashboard
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // If there's an auth error, show the error
+  if (authError) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error de autenticación</AlertTitle>
+          <AlertDescription>
+            {authError}
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setRetryCount(retryCount + 1);
+                  setAuthError(null);
+                }}
+              >
+                Reintentar
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // User is authenticated and has proper role, render the children
   return <Outlet />;
-}
+};

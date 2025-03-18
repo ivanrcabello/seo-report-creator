@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect } from "react";
 import { ClientReport } from "@/types/client";
 import { getAllReports, getClientReports } from "@/services/reportService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,41 +17,37 @@ interface ClientReportsProps {
   clientName?: string;
 }
 
-export const ClientReports = memo(({ clientId, clientName }: ClientReportsProps) => {
+export function ClientReports({ clientId, clientName }: ClientReportsProps) {
   const [reports, setReports] = useState<ClientReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
 
-  const fetchReports = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      let data: ClientReport[] = [];
-      
-      // Only fetch reports for the specific client
-      data = await getClientReports(clientId);
-      
-      setReports(data);
-    } catch (error) {
-      console.error("Error fetching reports:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [clientId]);
-
   useEffect(() => {
+    const fetchReports = async () => {
+      setIsLoading(true);
+      try {
+        let data: ClientReport[] = [];
+        
+        // Only fetch reports for the specific client
+        data = await getClientReports(clientId);
+        
+        setReports(data);
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     if (clientId) {
       fetchReports();
     }
-  }, [clientId, fetchReports]);
+  }, [clientId, isAdmin]);
 
-  const handleViewReport = useCallback((reportId: string) => {
+  const handleViewReport = (reportId: string) => {
     navigate(`/reports/${reportId}`);
-  }, [navigate]);
-
-  const handleNewReport = useCallback(() => {
-    navigate(`/reports/new/${clientId}`);
-  }, [navigate, clientId]);
+  };
 
   return (
     <Card>
@@ -61,7 +57,7 @@ export const ClientReports = memo(({ clientId, clientName }: ClientReportsProps)
           {clientName ? `Informes de ${clientName}` : 'Informes'}
         </CardTitle>
         {isAdmin && (
-          <Button onClick={handleNewReport} className="gap-1">
+          <Button onClick={() => navigate(`/reports/new/${clientId}`)} className="gap-1">
             <Plus className="h-4 w-4" />
             Nuevo Informe
           </Button>
@@ -78,7 +74,7 @@ export const ClientReports = memo(({ clientId, clientName }: ClientReportsProps)
           <div className="text-center py-10">
             <p className="text-gray-500 mb-4">No hay informes disponibles</p>
             {isAdmin && (
-              <Button onClick={handleNewReport} variant="outline" className="gap-1">
+              <Button onClick={() => navigate(`/reports/new/${clientId}`)} variant="outline" className="gap-1">
                 <Plus className="h-4 w-4" />
                 Crear Primer Informe
               </Button>
@@ -127,7 +123,4 @@ export const ClientReports = memo(({ clientId, clientName }: ClientReportsProps)
       </CardContent>
     </Card>
   );
-});
-
-// Add display name for debugging purposes
-ClientReports.displayName = 'ClientReports';
+}

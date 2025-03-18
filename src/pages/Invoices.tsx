@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Invoice } from "@/types/client";
 import { getInvoices } from "@/services/invoiceService";
@@ -26,15 +26,11 @@ import {
   XCircle,
   Search,
   User,
-  Download,
-  ChevronLeft,
-  ChevronRight
+  Download
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
-
-const PAGE_SIZE = 10;
 
 const Invoices = () => {
   const navigate = useNavigate();
@@ -42,29 +38,20 @@ const Invoices = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [clientNames, setClientNames] = useState<Record<string, string>>({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalInvoices, setTotalInvoices] = useState(0);
 
-  const loadInvoices = useCallback(async (page: number) => {
-    setIsLoading(true);
-    try {
-      // Modify this to handle pagination in your getInvoices method
-      // This assumes there's a getInvoices method that accepts pagination params
-      const data = await getInvoices((page - 1) * PAGE_SIZE, PAGE_SIZE);
-      setInvoices(data.invoices);
-      setTotalInvoices(data.total || data.invoices.length);
-      
-      // Cache client names to avoid redundant fetches
-      const clientIds = Array.from(new Set(data.invoices.map(invoice => invoice.clientId)));
-      
-      // Only fetch clients we don't already have
-      const newClientIds = clientIds.filter(id => !clientNames[id]);
-      
-      if (newClientIds.length > 0) {
-        const clientData: Record<string, string> = {...clientNames};
+  useEffect(() => {
+    const loadInvoices = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getInvoices();
+        setInvoices(data);
+        
+        // Cargar nombres de clientes
+        const clientIds = Array.from(new Set(data.map(invoice => invoice.clientId)));
+        const clientData: Record<string, string> = {};
         
         await Promise.all(
-          newClientIds.map(async (clientId) => {
+          clientIds.map(async (clientId) => {
             const client = await getClient(clientId);
             if (client) {
               clientData[clientId] = client.name;
@@ -73,18 +60,16 @@ const Invoices = () => {
         );
         
         setClientNames(clientData);
+      } catch (error) {
+        console.error("Error loading invoices:", error);
+        toast.error("Error al cargar las facturas");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading invoices:", error);
-      toast.error("Error al cargar las facturas");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [clientNames]);
-  
-  useEffect(() => {
-    loadInvoices(currentPage);
-  }, [currentPage, loadInvoices]);
+    };
+    
+    loadInvoices();
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(amount);
@@ -125,13 +110,6 @@ const Invoices = () => {
       clientName.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
-  
-  const totalPages = Math.ceil(totalInvoices / PAGE_SIZE);
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page on new search
-  };
 
   return (
     <div className="container py-8">
@@ -148,7 +126,7 @@ const Invoices = () => {
                 placeholder="Buscar facturas..."
                 className="pl-9"
                 value={searchTerm}
-                onChange={handleSearch}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button onClick={() => navigate("/invoices/new")} className="gap-1">
@@ -171,91 +149,65 @@ const Invoices = () => {
               </Button>
             </div>
           ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nº Factura</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Vencimiento</TableHead>
-                    <TableHead>Importe</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acción</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredInvoices.map((invoice) => (
-                    <TableRow key={invoice.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5 text-gray-500" />
-                          <span>{clientNames[invoice.clientId] || "Cliente desconocido"}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-gray-500" />
-                        <span className="text-sm">{format(new Date(invoice.issueDate), "d MMM yyyy", { locale: es })}</span>
-                      </TableCell>
-                      <TableCell>
-                        {invoice.dueDate ? (
-                          <span className="text-sm">{format(new Date(invoice.dueDate), "d MMM yyyy", { locale: es })}</span>
-                        ) : (
-                          <span className="text-gray-500 text-sm">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-1.5">
-                          <Euro className="h-3.5 w-3.5 text-gray-500" />
-                          {formatCurrency(invoice.totalAmount)}
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Link to={`/invoices/${invoice.id}`}>
-                          <Button variant="outline" size="sm">
-                            Ver Detalles
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nº Factura</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Vencimiento</TableHead>
+                  <TableHead>Importe</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acción</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInvoices.map((invoice) => (
+                  <TableRow key={invoice.id} className="hover:bg-gray-50">
+                    <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <User className="h-3.5 w-3.5 text-gray-500" />
+                        <span>{clientNames[invoice.clientId] || "Cliente desconocido"}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                      <span className="text-sm">{format(new Date(invoice.issueDate), "d MMM yyyy", { locale: es })}</span>
+                    </TableCell>
+                    <TableCell>
+                      {invoice.dueDate ? (
+                        <span className="text-sm">{format(new Date(invoice.dueDate), "d MMM yyyy", { locale: es })}</span>
+                      ) : (
+                        <span className="text-gray-500 text-sm">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-1.5">
+                        <Euro className="h-3.5 w-3.5 text-gray-500" />
+                        {formatCurrency(invoice.totalAmount)}
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Link to={`/invoices/${invoice.id}`}>
+                        <Button variant="outline" size="sm">
+                          Ver Detalles
+                        </Button>
+                      </Link>
+                      {invoice.pdfUrl && (
+                        <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer">
+                          <Button variant="outline" size="sm" className="gap-1">
+                            <Download className="h-3.5 w-3.5" />
+                            PDF
                           </Button>
-                        </Link>
-                        {invoice.pdfUrl && (
-                          <a href={invoice.pdfUrl} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="sm" className="gap-1">
-                              <Download className="h-3.5 w-3.5" />
-                              PDF
-                            </Button>
-                          </a>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center mt-6 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm">
-                    Página {currentPage} de {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </>
+                        </a>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

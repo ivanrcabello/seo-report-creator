@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getClients } from "@/services/clientService";
@@ -7,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import logger from "@/services/advancedLogService";
 
 // Import our component files
 import { OverviewTab } from './tabs/OverviewTab';
@@ -18,14 +16,9 @@ import { DashboardSkeleton } from './DashboardSkeleton';
 import { DashboardError } from './DashboardError';
 import { TicketsTab } from './tabs/TicketsTab';
 
-// Logger específico para AdminDashboard
-const adminLogger = logger.getLogger('AdminDashboard');
-
 const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
-  adminLogger.debug("Mapeando clientes a resumen", { clientsCount: clients?.length });
-  
   if (!Array.isArray(clients)) {
-    adminLogger.error("Se esperaba que clients fuera un array:", clients);
+    console.error("Expected clients to be an array, got:", clients);
     return [];
   }
 
@@ -40,29 +33,9 @@ const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
 };
 
 export function AdminDashboard() {
-  adminLogger.info("Inicializando AdminDashboard");
-  
   const [clientSummaries, setClientSummaries] = useState<ClientSummary[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
-  
-  // Usar un try-catch para capturar errores potenciales en useQuery
-  let queryResult;
-  try {
-    queryResult = useQuery({
-      queryKey: ['clients'],
-      queryFn: getClients,
-    });
-  } catch (error) {
-    adminLogger.error("Error al ejecutar useQuery:", error);
-    queryResult = {
-      data: undefined,
-      isLoading: false,
-      isError: true,
-      error: error,
-      refetch: () => Promise.resolve()
-    };
-  }
   
   const { 
     data: clients, 
@@ -70,29 +43,20 @@ export function AdminDashboard() {
     isError, 
     error,
     refetch 
-  } = queryResult;
+  } = useQuery({
+    queryKey: ['clients'],
+    queryFn: getClients,
+  });
 
   useEffect(() => {
-    adminLogger.debug("useEffect AdminDashboard - datos de clientes recibidos", { 
-      hasData: !!clients, 
-      isLoading, 
-      isError 
-    });
-    
     if (clients) {
       try {
-        adminLogger.debug("Procesando datos de clientes", { 
-          rawData: clients, 
-          isArray: Array.isArray(clients) 
-        });
-        
         const summaries = mapClientsToSummary(clients);
-        adminLogger.debug("Resúmenes de clientes mapeados:", summaries);
-        
+        console.log("Mapped client summaries:", summaries);
         setClientSummaries(summaries);
         setErrorMessage(null);
       } catch (error) {
-        adminLogger.error("Error al mapear clientes:", error);
+        console.error("Error mapping clients:", error);
         setErrorMessage("Error al procesar los datos de clientes");
         toast.error("Error al procesar los datos de clientes");
       }
@@ -100,13 +64,14 @@ export function AdminDashboard() {
   }, [clients]);
 
   const handleRefetch = () => {
-    adminLogger.info("Solicitando actualización de datos");
     toast.info("Actualizando datos de clientes...");
     refetch();
   };
 
-  // Calcular estadísticas
+  // Calculate active clients count
   const activeClientsCount = clientSummaries.filter(client => client.isActive).length;
+  
+  // Calculate total clients count
   const totalClientsCount = clientSummaries.length;
   
   // Datos para estadísticas (reemplazar con datos reales más adelante)
@@ -125,19 +90,13 @@ export function AdminDashboard() {
   };
 
   if (isLoading) {
-    adminLogger.debug("Renderizando estado de carga");
     return <DashboardSkeleton />;
   }
 
   if (isError || errorMessage) {
-    adminLogger.error("Renderizando estado de error:", { 
-      errorMessage, 
-      queryError: error 
-    });
     return <DashboardError errorMessage={errorMessage} error={error} onRetry={handleRefetch} />;
   }
 
-  adminLogger.debug("Renderizando dashboard de administrador");
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8 flex items-center justify-between">

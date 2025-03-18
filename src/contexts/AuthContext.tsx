@@ -1,314 +1,239 @@
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { createTestUser, signInUser } from "@/services/authService";
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Session, User } from '@supabase/supabase-js';
-import logger from '@/services/advancedLogService';
-import { createTestUser as authServiceCreateTestUser } from '@/services/authService';
-import { Spinner } from '@/components/ui/spinner';
-
-// Logger específico para el contexto de autenticación
-const authLogger = logger.getLogger('AuthContext');
+type UserRole = "admin" | "client" | null;
 
 interface AuthContextType {
-  user: User | null;
   session: Session | null;
+  user: User | null;
+  userRole: UserRole;
   isLoading: boolean;
-  isAdmin: boolean;
-  userRole: string | null;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any, data: any }>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
-  createTestUser: (email: string, password: string, name: string, role?: "admin" | "client") => Promise<any>;
-  signInWithGoogle: () => Promise<{ error: any }>;
+  isAdmin: boolean;
+  createTestUser: (email: string, password: string, name: string, role?: UserRole) => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [authInitialized, setAuthInitialized] = useState(false);
-
-  // Función para configurar usuario y obtener rol
-  const setupUser = async (userId: string) => {
-    authLogger.info(`Configurando usuario`, { userId });
-    try {
-      const { data: roleData, error: roleError } = await supabase.rpc('get_user_role');
-      
-      if (roleError) {
-        authLogger.error('Error al obtener el rol del usuario', { 
-          userId,
-          error: roleError
-        });
-        return;
-      }
-      
-      authLogger.info(`Rol de usuario obtenido`, { 
-        userId,
-        role: roleData 
-      });
-      
-      setUserRole(roleData);
-      setIsAdmin(roleData === 'admin');
-    } catch (error) {
-      authLogger.error('Error en setupUser', { userId, error });
-    }
-  };
+  const navigate = useNavigate();
 
   useEffect(() => {
-    authLogger.info('Inicializando contexto de autenticación');
-    let authSubscription: { data: { subscription: { unsubscribe: () => void } } };
-    
-    // Obtener sesión inicial
-    const initializeAuth = async () => {
-      authLogger.info('Iniciando inicialización de autenticación');
-      setIsLoading(true);
-      
+    const fetchUserRole = async (userId: string) => {
       try {
-        // Obtener la sesión actual
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase
+          .rpc('get_user_role')
+          .single();
         
         if (error) {
-          authLogger.error('Error al obtener sesión inicial', { error });
-          setIsLoading(false);
-          setAuthInitialized(true);
-          return;
+          console.error("Error fetching user role:", error);
+          return null;
         }
         
-        authLogger.info('Sesión inicial obtenida', { 
-          hasSession: !!initialSession,
-          userId: initialSession?.user?.id 
-        });
-        
-        setSession(initialSession);
-        setUser(initialSession?.user || null);
-        
-        if (initialSession?.user) {
-          authLogger.info('Usuario encontrado en sesión inicial, configurando', { 
-            userId: initialSession.user.id 
-          });
-          await setupUser(initialSession.user.id);
-        }
-        
-        // Configurar el listener para cambios de autenticación
-        authSubscription = supabase.auth.onAuthStateChange(async (event, newSession) => {
-          authLogger.info(`Cambio en estado de autenticación`, { 
-            event,
-            userId: newSession?.user?.id 
-          });
-          
-          setSession(newSession);
-          setUser(newSession?.user || null);
-          
-          if (newSession?.user) {
-            authLogger.info('Configurando usuario después de cambio en autenticación', { 
-              userId: newSession.user.id 
-            });
-            await setupUser(newSession.user.id);
-          } else if (event === 'SIGNED_OUT') {
-            setIsAdmin(false);
-            setUserRole(null);
-            authLogger.info('Usuario desconectado, reiniciando estado');
-          }
-          
-          // Asegurar que isLoading sea false después de cualquier cambio de auth
-          setIsLoading(false);
-        });
-
-        // Garantizar que isLoading sea false después de inicialización
-        setIsLoading(false);
-        setAuthInitialized(true);
+        console.log("User role fetched:", data);
+        return data as UserRole;
       } catch (error) {
-        authLogger.error('Error durante la inicialización de autenticación', { error });
-        // Garantizar que isLoading sea false incluso si hay errores
-        setIsLoading(false);
-        setAuthInitialized(true);
+        console.error("Exception fetching user role:", error);
+        return null;
       }
     };
 
-    initializeAuth();
-    
-    // Configurar un temporizador de seguridad para asegurar que isLoading no quede atascado
-    const loadingTimeout = setTimeout(() => {
-      if (isLoading) {
-        authLogger.warn('Temporizador de seguridad activado para estado de carga');
-        setIsLoading(false);
-        setAuthInitialized(true);
+    const setupUser = async (currentSession: Session | null) => {
+      if (currentSession?.user) {
+        setUser(currentSession.user);
+        console.log("Setting up user:", currentSession.user.id);
+        const role = await fetchUserRole(currentSession.user.id);
+        console.log("Setting user role:", role);
+        setUserRole(role);
+      } else {
+        setUser(null);
+        setUserRole(null);
       }
-    }, 5000); // 5 segundos máximo de carga
-    
-    // Limpieza al desmontar
+      setIsLoading(false);
+    };
+
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      console.log("Initial session:", initialSession);
+      setSession(initialSession);
+      setupUser(initialSession);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        console.log("Auth state changed:", _event, newSession?.user?.id);
+        setSession(newSession);
+        setupUser(newSession);
+      }
+    );
+
     return () => {
-      authLogger.debug('Limpiando suscripción a cambios de autenticación');
-      clearTimeout(loadingTimeout);
-      if (authSubscription) {
-        authSubscription.data.subscription.unsubscribe();
-      }
+      subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    authLogger.info(`Intentando iniciar sesión`, { email });
-    setIsLoading(true);
-    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        authLogger.error('Error en inicio de sesión', { 
-          email, 
-          error: error.message 
-        });
-        setIsLoading(false);
-        return { error };
-      }
-      
-      authLogger.info('Inicio de sesión exitoso', { 
-        email, 
-        userId: data.user?.id 
-      });
-      return { error: null };
-    } catch (error) {
-      authLogger.error('Excepción en signIn', { email, error });
-      setIsLoading(false);
-      return { error };
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    authLogger.info('Intentando iniciar sesión con Google');
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-      
-      if (error) {
-        authLogger.error('Error en inicio de sesión con Google', { error });
-        setIsLoading(false);
-        return { error };
-      }
-      
-      authLogger.info('Inicio de sesión con Google iniciado correctamente', {
-        provider: 'google',
-        url: data?.url
-      });
-      return { error: null };
-    } catch (error) {
-      authLogger.error('Excepción en signInWithGoogle', { error });
-      setIsLoading(false);
-      return { error };
-    }
-  };
-
-  const signUp = async (email: string, password: string, name: string) => {
-    authLogger.info(`Intentando registrar nuevo usuario`, { email });
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-        },
-      });
-      
-      if (error) {
-        authLogger.error('Error en registro', { 
-          email, 
-          error: error.message 
-        });
-      } else {
-        authLogger.info('Registro exitoso', { 
-          email, 
-          userId: data.user?.id 
-        });
-      }
-      
-      setIsLoading(false);
-      return { data, error };
-    } catch (error) {
-      authLogger.error('Excepción en signUp', { email, error });
-      setIsLoading(false);
-      return { data: null, error };
-    }
-  };
-
-  const signOut = async () => {
-    authLogger.info('Cerrando sesión', { userId: user?.id });
-    setIsLoading(true);
-    
-    try {
-      await supabase.auth.signOut();
-      authLogger.info('Sesión cerrada exitosamente', { userId: user?.id });
-    } catch (error) {
-      authLogger.error('Error al cerrar sesión', { userId: user?.id, error });
+      setIsLoading(true);
+      console.log("Attempting to sign in with:", email);
+      await signInUser(email, password);
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Sign in exception:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Función para crear usuarios de prueba
-  const createTestUser = async (email: string, password: string, name: string, role: "admin" | "client" = "client") => {
-    authLogger.info(`Creando usuario de prueba`, { 
-      email, 
-      role 
-    });
-    
+  const signInWithGoogle = async () => {
     try {
-      const result = await authServiceCreateTestUser(email, password, name, role);
-      authLogger.info(`Usuario de prueba creado exitosamente`, { 
-        email, 
-        userId: result?.user?.id 
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/dashboard'
+        }
       });
-      return result;
-    } catch (error) {
-      authLogger.error(`Error al crear usuario de prueba`, { 
-        email, 
-        error 
-      });
-      throw error;
+      
+      if (error) {
+        console.error("Google sign in error:", error);
+        throw error;
+      }
+      
+      console.log("Google sign in initiated:", data);
+    } catch (error: any) {
+      console.error("Google sign in exception:", error);
+      toast.error(error.message || "Error al iniciar sesión con Google");
+      setIsLoading(false);
     }
   };
 
-  const value = {
-    user,
-    session,
-    isLoading,
-    isAdmin,
-    userRole,
-    signIn,
-    signInWithGoogle,
-    signUp,
-    signOut,
-    createTestUser,
+  const signUp = async (email: string, password: string, name: string) => {
+    try {
+      setIsLoading(true);
+      console.log("Attempting to sign up:", email);
+      
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('email', email)
+        .maybeSingle();
+      
+      if (checkError && !checkError.message.includes('No rows found')) {
+        console.error("Error checking existing user:", checkError);
+      }
+      
+      const adminEmails = ['ivan@soyseolocal.com', 'admin@example.com'];
+      const role = adminEmails.includes(email.toLowerCase()) ? 'admin' : 'client';
+      console.log(`Setting role for ${email} to ${role}`);
+      
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: { 
+            name,
+            role
+          }
+        }
+      });
+      
+      if (error) {
+        console.error("Sign up error:", error);
+        throw error;
+      }
+      
+      if (existingUser) {
+        if (existingUser.role !== role) {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ role })
+            .eq('email', email);
+            
+          if (updateError) {
+            console.error("Error updating existing user role:", updateError);
+          }
+        }
+      }
+      
+      console.log("Sign up successful:", data);
+      toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
+      
+      if (data.user) {
+        try {
+          await signIn(email, password);
+        } catch (signInError) {
+          console.error("Auto sign in failed after registration:", signInError);
+        }
+      }
+    } catch (error: any) {
+      console.error("Sign up exception:", error);
+      toast.error(error.message || "Error al registrarse");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // No renderizar nada hasta que la autenticación esté inicializada
-  if (!authInitialized) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-center">
-          <Spinner className="mx-auto mb-4" />
-          <p className="text-gray-500">Inicializando autenticación...</p>
-        </div>
-      </div>
-    );
-  }
+  const signOut = async () => {
+    try {
+      setIsLoading(true);
+      await supabase.auth.signOut();
+      navigate("/login");
+      toast.success("Has cerrado sesión correctamente");
+    } catch (error: any) {
+      console.error("Sign out error:", error);
+      toast.error(error.message || "Error al cerrar sesión");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createTestUserAccount = async (email: string, password: string, name: string, role: UserRole = "client") => {
+    try {
+      setIsLoading(true);
+      await createTestUser(email, password, name, role);
+      toast.success("Usuario de prueba creado con éxito");
+    } catch (error) {
+      console.error("Error creating test user:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const isAdmin = userRole === "admin";
+
+  const value = {
+    session,
+    user,
+    userRole,
+    isLoading,
+    signIn,
+    signUp,
+    signInWithGoogle,
+    signOut,
+    isAdmin,
+    createTestUser: createTestUserAccount
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}

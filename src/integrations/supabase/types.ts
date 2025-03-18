@@ -30,45 +30,6 @@ export type Database = {
         }
         Relationships: []
       }
-      application_logs: {
-        Row: {
-          client_id: string | null
-          component: string | null
-          context: Json | null
-          id: string
-          level: string
-          message: string
-          path: string | null
-          session_id: string | null
-          timestamp: string | null
-          user_id: string | null
-        }
-        Insert: {
-          client_id?: string | null
-          component?: string | null
-          context?: Json | null
-          id?: string
-          level: string
-          message: string
-          path?: string | null
-          session_id?: string | null
-          timestamp?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          client_id?: string | null
-          component?: string | null
-          context?: Json | null
-          id?: string
-          level?: string
-          message?: string
-          path?: string | null
-          session_id?: string | null
-          timestamp?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       client_documents: {
         Row: {
           analyzed_status: string | null
@@ -1163,10 +1124,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_old_logs: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       get_client_keywords: {
         Args: {
           client_id_param: string

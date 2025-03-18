@@ -1,78 +1,101 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLogger } from "@/hooks/useLogger";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReportsHeader } from "@/components/reports/ReportsHeader";
-import { ReportsList } from "@/components/reports/ReportsList";
+import { ClientReport } from "@/types/client";
+import { getFilteredReports } from "@/services/reportService";
+import { toast } from "sonner";
+import { ReportFilters, ReportsHeader, ReportsCard } from "@/components/reports";
+import { useAuth } from "@/contexts/AuthContext";
 
-const AllReports = () => {
-  const logger = useLogger("ReportsPage");
+export const AllReports = () => {
   const navigate = useNavigate();
+  const [reports, setReports] = useState<ClientReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [reports, setReports] = useState([]);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedType, setSelectedType] = useState("all");
-
-  useEffect(() => {
-    logger.info("Reports page loaded");
-    
-    // Simulamos la carga de datos
-    const timer = setTimeout(() => {
+  const [reportTypes, setReportTypes] = useState<string[]>([]);
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [error, setError] = useState<string | null>(null);
+  const { user, isAdmin } = useAuth();
+  
+  const loadReports = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log("Loading reports for user:", user?.id, "isAdmin:", isAdmin);
+      const allReports = await getFilteredReports(user?.id, isAdmin);
+      console.log("Reports loaded:", allReports);
+      setReports(allReports);
+      
+      // Filter out null, undefined, or empty string values before creating the set
+      const types = Array.from(
+        new Set(
+          allReports
+            .map(report => report.type)
+            .filter(type => type && type.trim() !== "")
+        )
+      ) as string[];
+      
+      console.log("Report types extracted:", types);
+      setReportTypes(types);
+    } catch (err) {
+      console.error("Error loading reports:", err);
+      setError("No se pudieron cargar los informes. Por favor, inténtalo de nuevo más tarde.");
+      toast.error("No se pudieron cargar los informes.");
+    } finally {
       setIsLoading(false);
-      // Aquí se cargarían los informes reales
-      setReports([]);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [logger]);
-
-  const handleGoBack = () => {
-    navigate('/dashboard');
+    }
   };
+  
+  useEffect(() => {
+    loadReports();
+  }, [user, isAdmin]);
+  
+  const filteredReports = reports.filter(report => {
+    const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = selectedType === "all" || report.type === selectedType;
+    return matchesSearch && matchesType;
+  });
 
   const handleRetry = () => {
-    setIsLoading(true);
-    // Simulamos recarga
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    loadReports();
+  };
+
+  const handleGoBack = () => {
+    navigate("/dashboard");
   };
 
   return (
     <div className="container mx-auto py-8">
       <ReportsHeader 
-        isAdmin={true} 
+        isAdmin={isAdmin} 
         handleGoBack={handleGoBack} 
-        handleRetry={handleRetry} 
-        isLoading={isLoading} 
+        handleRetry={handleRetry}
+        isLoading={isLoading}
       />
       
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Informes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700"></div>
-            </div>
-          ) : (
-            <ReportsList 
-              reports={reports}
-              isLoading={isLoading}
-              error={error}
-              handleRetry={handleRetry}
-              searchTerm={searchTerm}
-              selectedType={selectedType}
-              setSearchTerm={setSearchTerm}
-              setSelectedType={setSelectedType}
-              isAdmin={true}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <ReportFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
+        reportTypes={reportTypes}
+      />
+      
+      <ReportsCard
+        title="Informes"
+        description="Lista completa de informes generados"
+        reports={reports}
+        filteredCount={filteredReports.length}
+        isLoading={isLoading}
+        error={error}
+        handleRetry={handleRetry}
+        searchTerm={searchTerm}
+        selectedType={selectedType}
+        setSearchTerm={setSearchTerm}
+        setSelectedType={setSelectedType}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 };

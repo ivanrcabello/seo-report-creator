@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { ClientKeyword } from "@/services/clientKeywordsService";
 import { useClientKeywords } from "./useClientKeywords";
@@ -42,7 +43,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Pagination } from "@/components/ui/pagination";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -175,6 +184,7 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
     setCurrentPage(page);
   };
 
+  // Add the missing handleClearFilters function
   const handleClearFilters = () => {
     setPositionFilter("all");
     setIsFilterActive(false);
@@ -573,13 +583,52 @@ export const KeywordsSection = ({ clientId }: KeywordsSectionProps) => {
         )}
         
         {filteredKeywords.length > 0 && totalPages > 1 && (
-          <div className="flex justify-center mt-4">
-            <Pagination 
-              current={currentPage} 
-              total={totalPages} 
-              onChange={handlePageChange} 
-            />
-          </div>
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) handlePageChange(currentPage - 1);
+                  }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              
+              {getPageNumbers().map((page, index) => (
+                page === 'ellipsis1' || page === 'ellipsis2' ? (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={`page-${page}`}>
+                    <PaginationLink 
+                      href="#" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(page as number);
+                      }}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              ))}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                  }}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         )}
         
         <Dialog open={isEditDialogOpen && !!editingKeyword} onOpenChange={setIsEditDialogOpen}>

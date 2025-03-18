@@ -1,60 +1,47 @@
-
-import { supabase } from "@/integrations/supabase/client";
-import logger from "@/services/logService";
 import { Client } from "@/types/client";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-// Logger específico para clientService
-const clientLogger = logger.getLogger('clientService');
+// Función para convertir datos de Supabase al formato de la aplicación
+const mapClientFromDB = (client: any): Client => ({
+  id: client.id,
+  name: client.name,
+  email: client.email,
+  phone: client.phone,
+  company: client.company,
+  createdAt: client.created_at,
+  lastReport: client.last_report,
+  notes: client.notes,
+  documents: [],
+  analyticsConnected: client.analytics_connected,
+  searchConsoleConnected: client.search_console_connected,
+  isActive: client.is_active,
+  website: client.website,
+  sector: client.sector,
+  hostingDetails: client.hosting_details,
+  wordpressAccess: client.wordpress_access,
+  projectPasswords: client.project_passwords
+});
 
-// Función para mapear cliente desde formato DB a formato de la aplicación
-const mapClientFromDB = (dbClient: any): Client => {
-  return {
-    id: dbClient.id,
-    name: dbClient.name,
-    email: dbClient.email,
-    company: dbClient.company,
-    phone: dbClient.phone,
-    createdAt: dbClient.created_at,
-    lastReport: dbClient.last_report,
-    isActive: dbClient.is_active,
-    notes: dbClient.notes,
-    analyticsConnected: dbClient.analytics_connected,
-    searchConsoleConnected: dbClient.search_console_connected,
-    website: dbClient.website,
-    sector: dbClient.sector,
-    hostingDetails: dbClient.hosting_details,
-    wordpressAccess: dbClient.wordpress_access,
-    projectPasswords: dbClient.project_passwords
-  };
-};
+// Función para convertir datos de la aplicación al formato de Supabase
+const mapClientToDB = (client: Partial<Client>) => ({
+  name: client.name,
+  email: client.email,
+  phone: client.phone,
+  company: client.company,
+  notes: client.notes,
+  analytics_connected: client.analyticsConnected,
+  search_console_connected: client.searchConsoleConnected,
+  is_active: client.isActive,
+  website: client.website,
+  sector: client.sector,
+  hosting_details: client.hostingDetails,
+  wordpress_access: client.wordpressAccess,
+  project_passwords: client.projectPasswords
+});
 
-// Función para mapear cliente desde formato aplicación a formato DB
-const mapClientToDB = (client: Partial<Client>): any => {
-  const result: any = {};
-  
-  if (client.id !== undefined) result.id = client.id;
-  if (client.name !== undefined) result.name = client.name;
-  if (client.email !== undefined) result.email = client.email;
-  if (client.company !== undefined) result.company = client.company;
-  if (client.phone !== undefined) result.phone = client.phone;
-  if (client.createdAt !== undefined) result.created_at = client.createdAt;
-  if (client.lastReport !== undefined) result.last_report = client.lastReport;
-  if (client.isActive !== undefined) result.is_active = client.isActive;
-  if (client.notes !== undefined) result.notes = client.notes;
-  if (client.analyticsConnected !== undefined) result.analytics_connected = client.analyticsConnected;
-  if (client.searchConsoleConnected !== undefined) result.search_console_connected = client.searchConsoleConnected;
-  if (client.website !== undefined) result.website = client.website;
-  if (client.sector !== undefined) result.sector = client.sector;
-  if (client.hostingDetails !== undefined) result.hosting_details = client.hostingDetails;
-  if (client.wordpressAccess !== undefined) result.wordpress_access = client.wordpressAccess;
-  if (client.projectPasswords !== undefined) result.project_passwords = client.projectPasswords;
-  
-  return result;
-};
-
-export const getClients = async () => {
-  clientLogger.info("Solicitando lista de clientes");
-  
+// Client CRUD operations
+export const getClients = async (): Promise<Client[]> => {
   try {
     const { data, error } = await supabase
       .from('clients')
@@ -62,131 +49,214 @@ export const getClients = async () => {
       .order('created_at', { ascending: false });
     
     if (error) {
-      clientLogger.error("Error al obtener clientes:", error);
-      throw error;
+      console.error("Error fetching clients:", error);
+      toast.error("Error al cargar los clientes");
+      return [];
     }
     
-    clientLogger.info(`Obtenidos ${data?.length || 0} clientes`);
-    // Mapear los datos de la DB al formato de la aplicación
-    return data?.map(client => mapClientFromDB(client)) || [];
+    return (data || []).map(mapClientFromDB);
   } catch (error) {
-    clientLogger.error("Excepción al obtener clientes:", error);
-    throw error;
+    console.error("Exception fetching clients:", error);
+    toast.error("Error al cargar los clientes");
+    return [];
   }
 };
 
-// Función para obtener un cliente específico por ID
-export const getClient = async (clientId: string) => {
-  clientLogger.info(`Solicitando cliente con ID: ${clientId}`);
-  
+export const getClient = async (id: string): Promise<Client | undefined> => {
   try {
     const { data, error } = await supabase
       .from('clients')
       .select('*')
-      .eq('id', clientId)
-      .single();
+      .eq('id', id)
+      .maybeSingle();
     
     if (error) {
-      clientLogger.error(`Error al obtener cliente ${clientId}:`, error);
-      throw error;
+      console.error("Error fetching client:", error);
+      toast.error("Error al cargar el cliente");
+      return undefined;
     }
     
-    clientLogger.info(`Cliente ${clientId} obtenido correctamente`);
-    // Mapear el cliente de la DB al formato de la aplicación
-    return mapClientFromDB(data);
+    return data ? mapClientFromDB(data) : undefined;
   } catch (error) {
-    clientLogger.error(`Excepción al obtener cliente ${clientId}:`, error);
-    throw error;
+    console.error("Exception fetching client:", error);
+    toast.error("Error al cargar el cliente");
+    return undefined;
   }
 };
 
-// Función para añadir un nuevo cliente
-export const addClient = async (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
-  clientLogger.info("Añadiendo nuevo cliente");
-  
+export const addClient = async (client: Omit<Client, "id" | "createdAt">): Promise<Client> => {
   try {
-    // Convertir datos del cliente al formato de la DB
-    const dbClientData = mapClientToDB(clientData);
-    
     const { data, error } = await supabase
       .from('clients')
-      .insert([dbClientData])
+      .insert([mapClientToDB(client)])
       .select()
       .single();
     
     if (error) {
-      clientLogger.error("Error al añadir cliente:", error);
+      console.error("Error adding client:", error);
+      toast.error("Error al crear el cliente");
       throw error;
     }
     
-    clientLogger.info(`Cliente añadido correctamente, ID: ${data.id}`);
-    // Devolver el cliente en formato de aplicación
     return mapClientFromDB(data);
   } catch (error) {
-    clientLogger.error("Excepción al añadir cliente:", error);
+    console.error("Exception adding client:", error);
+    toast.error("Error al crear el cliente");
     throw error;
   }
 };
 
-// Función para actualizar un cliente existente
-export const updateClient = async (clientData: Client) => {
-  clientLogger.info(`Actualizando cliente con ID: ${clientData.id}`);
-  
+export const updateClient = async (client: Client): Promise<Client> => {
   try {
-    // Convertir datos del cliente al formato de la DB
-    const dbClientData = mapClientToDB(clientData);
-    
     const { data, error } = await supabase
       .from('clients')
-      .update(dbClientData)
-      .eq('id', clientData.id)
+      .update(mapClientToDB(client))
+      .eq('id', client.id)
       .select()
       .single();
     
     if (error) {
-      clientLogger.error(`Error al actualizar cliente ${clientData.id}:`, error);
+      console.error("Error updating client:", error);
+      toast.error("Error al actualizar el cliente");
       throw error;
     }
     
-    clientLogger.info(`Cliente ${clientData.id} actualizado correctamente`);
-    // Devolver el cliente en formato de aplicación
     return mapClientFromDB(data);
   } catch (error) {
-    clientLogger.error(`Excepción al actualizar cliente ${clientData.id}:`, error);
+    console.error("Exception updating client:", error);
+    toast.error("Error al actualizar el cliente");
     throw error;
   }
 };
 
-// Función para eliminar un cliente
-export const deleteClient = async (clientId: string) => {
-  clientLogger.info(`Eliminando cliente con ID: ${clientId}`);
-  
+export const deleteClient = async (id: string): Promise<{ success: boolean; error?: string }> => {
   try {
+    // Primero verificamos si el cliente tiene facturas asociadas
+    const { data: invoices, error: invoicesError } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('client_id', id);
+    
+    if (invoicesError) {
+      console.error("Error checking client invoices:", invoicesError);
+      return { 
+        success: false, 
+        error: "Error al verificar las facturas del cliente" 
+      };
+    }
+    
+    if (invoices && invoices.length > 0) {
+      return { 
+        success: false, 
+        error: "No se puede eliminar el cliente porque tiene facturas asociadas. Elimine primero las facturas." 
+      };
+    }
+    
+    // Si no hay facturas, procedemos a eliminar el cliente
     const { error } = await supabase
       .from('clients')
       .delete()
-      .eq('id', clientId);
+      .eq('id', id);
     
     if (error) {
-      clientLogger.error(`Error al eliminar cliente ${clientId}:`, error);
-      return { success: false, error: error.message };
+      console.error("Error deleting client:", error);
+      return { 
+        success: false, 
+        error: `Error al eliminar el cliente: ${error.message}` 
+      };
     }
     
-    clientLogger.info(`Cliente ${clientId} eliminado correctamente`);
     return { success: true };
-  } catch (error) {
-    clientLogger.error(`Excepción al eliminar cliente ${clientId}:`, error);
+  } catch (error: any) {
+    console.error("Exception deleting client:", error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : "Error desconocido" 
+      error: `Error al eliminar el cliente: ${error.message}` 
     };
   }
 };
 
-// Función para actualizar el estado activo de un cliente
-export const updateClientActiveStatus = async (clientId: string, isActive: boolean) => {
-  clientLogger.info(`Actualizando estado de cliente ${clientId} a: ${isActive ? 'activo' : 'inactivo'}`);
-  
+// Client Notes operations
+export const addClientNote = async (clientId: string, note: string): Promise<Client | undefined> => {
+  try {
+    // Primero obtenemos el cliente actual para obtener notas existentes
+    const { data: client } = await supabase
+      .from('clients')
+      .select('notes')
+      .eq('id', clientId)
+      .maybeSingle();
+    
+    if (!client) return undefined;
+    
+    // Preparamos el array de notas
+    const notes = client.notes || [];
+    notes.push(note);
+    
+    // Actualizamos el cliente
+    const { data, error } = await supabase
+      .from('clients')
+      .update({ notes })
+      .eq('id', clientId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error adding client note:", error);
+      toast.error("Error al añadir la nota");
+      throw error;
+    }
+    
+    toast.success("Nota añadida correctamente");
+    return mapClientFromDB(data);
+  } catch (error) {
+    console.error("Exception adding client note:", error);
+    toast.error("Error al añadir la nota");
+    throw error;
+  }
+};
+
+export const removeClientNote = async (clientId: string, index: number): Promise<Client | undefined> => {
+  try {
+    // Primero obtenemos el cliente actual para obtener notas existentes
+    const { data: client } = await supabase
+      .from('clients')
+      .select('notes')
+      .eq('id', clientId)
+      .maybeSingle();
+    
+    if (!client || !client.notes || index < 0 || index >= client.notes.length) {
+      return undefined;
+    }
+    
+    // Eliminamos la nota específica
+    const notes = [...client.notes];
+    notes.splice(index, 1);
+    
+    // Actualizamos el cliente
+    const { data, error } = await supabase
+      .from('clients')
+      .update({ notes })
+      .eq('id', clientId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error removing client note:", error);
+      toast.error("Error al eliminar la nota");
+      throw error;
+    }
+    
+    toast.success("Nota eliminada correctamente");
+    return mapClientFromDB(data);
+  } catch (error) {
+    console.error("Exception removing client note:", error);
+    toast.error("Error al eliminar la nota");
+    throw error;
+  }
+};
+
+// Update client active status
+export const updateClientActiveStatus = async (clientId: string, isActive: boolean): Promise<Client> => {
   try {
     const { data, error } = await supabase
       .from('clients')
@@ -196,15 +266,16 @@ export const updateClientActiveStatus = async (clientId: string, isActive: boole
       .single();
     
     if (error) {
-      clientLogger.error(`Error al actualizar estado de cliente ${clientId}:`, error);
+      console.error("Error updating client active status:", error);
+      toast.error(`Error al ${isActive ? 'activar' : 'desactivar'} el cliente`);
       throw error;
     }
     
-    clientLogger.info(`Estado de cliente ${clientId} actualizado correctamente`);
-    // Devolver el cliente en formato de aplicación
+    toast.success(`Cliente ${isActive ? 'activado' : 'desactivado'} correctamente`);
     return mapClientFromDB(data);
   } catch (error) {
-    clientLogger.error(`Excepción al actualizar estado de cliente ${clientId}:`, error);
+    console.error("Exception updating client active status:", error);
+    toast.error(`Error al ${isActive ? 'activar' : 'desactivar'} el cliente`);
     throw error;
   }
 };

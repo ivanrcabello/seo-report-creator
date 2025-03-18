@@ -7,166 +7,55 @@ import Dashboard from "@/pages/Dashboard";
 import Clients from "@/pages/Clients";
 import Invoices from "@/pages/Invoices";
 import NotFound from "@/pages/NotFound";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
 import ClientDetail from "@/pages/ClientDetail";
 import ReportDetail from "@/pages/ReportDetail";
+import { SupportTickets } from "@/components/dashboard/SupportTickets";
+import TicketDetail from "@/pages/TicketDetail";
 import { AppLayout } from "@/components/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "@/pages/Index";
-import logger from "@/services/advancedLogService";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Spinner } from "@/components/ui/spinner";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import TicketDetail from "@/pages/TicketDetail";
-import Contracts from "@/pages/Contracts";
-import ApiSettings from "@/pages/ApiSettings";
-import TemplateSettings from "@/pages/TemplateSettings";
-import CompanySettings from "@/pages/CompanySettings";
-import AllReports from "@/pages/AllReports";
-import Packages from "@/pages/Packages";
-import Proposals from "@/pages/Proposals";
-import ClientEdit from "@/pages/ClientEdit";
-import ReportNew from "@/pages/ReportNew";
-import ProposalNew from "@/pages/ProposalNew";
-import ContractForm from "@/pages/ContractForm";
-import ReportShare from "@/pages/ReportShare";
-import ProposalForm from "@/pages/ProposalForm";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-const appLogger = logger.getLogger('App');
-
-function AuthCallback() {
-  const { isLoading } = useAuth();
-  
-  useEffect(() => {
-    appLogger.info("Processing authentication callback");
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-center">
-          <Spinner className="mx-auto mb-4" />
-          <p className="text-gray-500">Procesando autenticación...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return <Navigate to="/dashboard" replace />;
-}
-
-function AppRoutes() {
+function App() {
   const { user, isLoading } = useAuth();
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
 
   useEffect(() => {
-    appLogger.info("AppRoutes rendered", { 
-      isAuthenticated: !!user, 
-      isLoading, 
-      userId: user?.id 
-    });
-    
     if (user) {
-      appLogger.debug("User authenticated, setting welcome timer");
       const timer = setTimeout(() => {
         setShowWelcomeMessage(false);
       }, 3000);
 
       return () => clearTimeout(timer);
     }
-  }, [user, isLoading]);
+  }, [user]);
   
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
-      <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
-      
-      {/* Rutas compartidas (públicas) */}
-      <Route path="/share/report/:token" element={<ReportShare />} />
-      <Route path="/proposal-share/:token" element={<Outlet />} />
-      
-      <Route element={<ProtectedRoute />}>
-        <Route element={<AppLayout>
-          <Outlet />
-        </AppLayout>}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          
-          {/* Rutas de clientes */}
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/clients/new" element={<ClientEdit />} />
-          <Route path="/clients/edit/:id" element={<ClientEdit />} />
-          <Route path="/clients/:clientId" element={<ClientDetail />} />
-          
-          {/* Rutas de informes */}
-          <Route path="/reports" element={<AllReports />} />
-          <Route path="/reports/new/:clientId" element={<ReportNew />} />
-          <Route path="/reports/:reportId" element={<ReportDetail />} />
-          
-          {/* Rutas de facturas */}
-          <Route path="/invoices" element={<Invoices />} />
-          
-          {/* Rutas de paquetes */}
-          <Route path="/packages" element={<Packages />} />
-          
-          {/* Rutas de propuestas */}
-          <Route path="/proposals" element={<Proposals />} />
-          <Route path="/proposals/new" element={<ProposalNew />} />
-          <Route path="/proposals/form" element={<ProposalForm />} />
-          <Route path="/proposals/:proposalId" element={<Outlet />} />
-          
-          {/* Rutas de contratos */}
-          <Route path="/contracts" element={<Contracts />} />
-          <Route path="/contracts/new" element={<ContractForm />} />
-          <Route path="/contracts/:id" element={<Outlet />} />
-          
-          {/* Rutas de configuración */}
-          <Route path="/settings" element={<CompanySettings />} />
-          <Route path="/settings/templates" element={<TemplateSettings />} />
-          <Route path="/settings/api" element={<ApiSettings />} />
-          
-          {/* Rutas de tickets */}
-          <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />
-          <Route path="/tickets/:ticketId" element={<TicketDetail />} />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
+        <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+        
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout>
+            <Outlet />
+          </AppLayout>}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/clients/:clientId" element={<ClientDetail />} />
+            <Route path="/reports/:reportId" element={<ReportDetail />} />
+            <Route path="/invoices" element={<Invoices />} />
+            
+            {/* Ticket routes */}
+            <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />
+            <Route path="/tickets/:ticketId" element={<TicketDetail />} />
+          </Route>
         </Route>
-      </Route>
-      
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
-}
-
-function App() {
-  useEffect(() => {
-    appLogger.info("Application initialized", {
-      version: import.meta.env.VITE_APP_VERSION || '1.0.0',
-      environment: import.meta.env.MODE,
-      buildDate: import.meta.env.VITE_APP_BUILD_DATE || new Date().toISOString()
-    });
-  }, []);
-  
-  return (
-    <ErrorBoundary>
-      <BrowserRouter>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <AppRoutes />
-            <Toaster />
-          </AuthProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
-    </ErrorBoundary>
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Toaster />
+    </BrowserRouter>
   );
 }
 

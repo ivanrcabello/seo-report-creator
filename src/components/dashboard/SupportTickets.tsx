@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TicketCard } from "../tickets/TicketCard";
 import { TicketListItem } from "../tickets/TicketListItem";
 import { NewTicketDialogContent } from "../tickets/NewTicketDialogContent";
-import { TicketDetailsContent } from "../tickets/details/TicketDetailsContent";
+import { TicketDetailsContent } from "../tickets/TicketDetailsContent";
 import { useSupportTickets } from "@/hooks/useSupportTickets";
 
 export function SupportTickets() {

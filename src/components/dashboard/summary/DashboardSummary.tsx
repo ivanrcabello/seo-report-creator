@@ -3,7 +3,7 @@ import { ClientMetric } from "@/services/clientMetricsService";
 import { DashboardMetrics } from "../metrics/DashboardMetrics";
 import { ProjectTimeline } from "../ProjectTimeline";
 import { ClientInvoicesWidget } from "../ClientInvoicesWidget";
-import { SeoPerformanceCharts } from "../SeoPerformanceCharts";
+import { SeoPerformanceCharts } from "../charts";
 import { DocumentCenter } from "../DocumentCenter";
 
 interface DashboardSummaryProps {

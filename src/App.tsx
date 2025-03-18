@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Register from "@/pages/Register";
@@ -18,6 +17,7 @@ import logger from "@/services/advancedLogService";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Spinner } from "@/components/ui/spinner";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import TicketDetail from "@/pages/TicketDetail";
 
 // Crear una instancia de QueryClient para toda la aplicación
 const queryClient = new QueryClient({

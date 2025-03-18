@@ -40,6 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Obtener sesión inicial
     const getInitialSession = async () => {
       try {
+        setIsLoading(true);
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         authLogger.info('Sesión inicial:', initialSession ? 'Activa' : 'No hay sesión');
         
@@ -74,6 +75,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserRole(null);
         authLogger.info('Usuario desconectado, reiniciando estado');
       }
+      
+      // Asegurarse de que isLoading se establece en false después de cualquier cambio de auth
+      setIsLoading(false);
     });
 
     return () => {
@@ -103,11 +107,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     authLogger.info(`Intentando iniciar sesión con: ${email}`);
+    setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         authLogger.error('Error en inicio de sesión:', error);
+        setIsLoading(false);
         return { error };
       }
       
@@ -115,12 +121,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: null };
     } catch (error) {
       authLogger.error('Excepción en signIn:', error);
+      setIsLoading(false);
       return { error };
     }
   };
 
   const signInWithGoogle = async () => {
     authLogger.info('Intentando iniciar sesión con Google');
+    setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -131,6 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         authLogger.error('Error en inicio de sesión con Google:', error);
+        setIsLoading(false);
         return { error };
       }
       
@@ -138,12 +147,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: null };
     } catch (error) {
       authLogger.error('Excepción en signInWithGoogle:', error);
+      setIsLoading(false);
       return { error };
     }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
     authLogger.info(`Intentando registrar nuevo usuario: ${email}`);
+    setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -161,20 +172,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authLogger.info('Registro exitoso:', data.user?.id);
       }
       
+      setIsLoading(false);
       return { data, error };
     } catch (error) {
       authLogger.error('Excepción en signUp:', error);
+      setIsLoading(false);
       return { data: null, error };
     }
   };
 
   const signOut = async () => {
     authLogger.info('Cerrando sesión');
+    setIsLoading(true);
     try {
       await supabase.auth.signOut();
       authLogger.info('Sesión cerrada exitosamente');
     } catch (error) {
       authLogger.error('Error al cerrar sesión:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

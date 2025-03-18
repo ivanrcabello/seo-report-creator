@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -12,8 +13,12 @@ import {
   FileSpreadsheet,
   Settings
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import logger from "@/services/advancedLogService";
+
+// Logger para MainNavigation
+const navLogger = logger.getLogger('MainNavigation');
 
 const MainNavigation = () => {
   const location = useLocation();
@@ -63,6 +68,14 @@ const MainNavigation = () => {
       active: location.pathname.startsWith("/settings")
     },
   ];
+
+  // Log de navegación para detectar problemas
+  useEffect(() => {
+    navLogger.debug("Navegación actual", { 
+      pathname: location.pathname,
+      availableRoutes: links.map(link => link.href).join(', ')
+    });
+  }, [location.pathname]);
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b">

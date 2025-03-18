@@ -95,6 +95,12 @@ function AppRoutes() {
           <Route path="/reports/:reportId" element={<ReportDetail />} />
           <Route path="/invoices" element={<Invoices />} />
           
+          {/* Rutas faltantes que están en el menú de navegación */}
+          <Route path="/reports" element={<Dashboard activeTab="reports" />} />
+          <Route path="/packages" element={<Dashboard activeTab="packages" />} />
+          <Route path="/proposals" element={<Dashboard activeTab="proposals" />} />
+          <Route path="/settings" element={<Dashboard activeTab="settings" />} />
+          
           {/* Ticket routes */}
           <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />
           <Route path="/tickets/:ticketId" element={<TicketDetail />} />

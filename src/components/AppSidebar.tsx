@@ -1,3 +1,4 @@
+
 import { useLocation, Link } from "react-router-dom";
 import {
   Sidebar,
@@ -26,6 +27,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import logger from "@/services/advancedLogService";
+
+// Logger para AppSidebar
+const sidebarLogger = logger.getLogger('AppSidebar');
 
 export function AppSidebar() {
   const location = useLocation();
@@ -104,6 +110,15 @@ export function AppSidebar() {
   ];
 
   const links = userRole === "admin" ? adminLinks : clientLinks;
+
+  // Log de navegación de la barra lateral
+  useEffect(() => {
+    sidebarLogger.debug("Navegación de sidebar", { 
+      pathname: location.pathname,
+      userRole,
+      availableRoutes: links.map(link => link.href).join(', ')
+    });
+  }, [location.pathname, userRole, links]);
 
   return (
     <Sidebar className="border-r">

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import logger from '@/services/logService';
 import { createTestUser as authServiceCreateTestUser } from '@/services/authService';
+import { Spinner } from '@/components/ui/spinner';
 
 // Logger específico para el contexto de autenticación
 const authLogger = logger.getLogger('AuthContext');

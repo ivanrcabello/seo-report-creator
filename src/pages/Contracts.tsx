@@ -1,74 +1,46 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { SeoContract } from "@/types/client";
-import { getContracts } from "@/services/contract";
-import { ContractsList } from "@/components/contracts/ContractsList";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { FilePlus, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLogger } from "@/hooks/useLogger";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Contracts = () => {
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [contracts, setContracts] = useState<SeoContract[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchContracts = async () => {
-    setLoading(true);
-    try {
-      const contractsData = await getContracts();
-      setContracts(contractsData);
-    } catch (error) {
-      console.error("Error fetching contracts:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los contratos",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const logger = useLogger("ContractsPage");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchContracts();
-  }, [toast]);
-
-  const handleCreateContract = () => {
-    navigate("/contracts/new");
-  };
+    logger.info("Contracts page loaded");
+    
+    // Simulamos la carga de datos
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [logger]);
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Contratos</h1>
-        <Button 
-          onClick={handleCreateContract}
-          className="flex items-center gap-1"
-        >
-          <FilePlus className="h-4 w-4" />
-          Nuevo Contrato
-        </Button>
-      </div>
+      <h1 className="text-2xl font-bold mb-6">Gestión de Contratos</h1>
       
-      <Separator className="mb-6" />
-      
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="flex items-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />
-            <span className="text-lg">Cargando contratos...</span>
-          </div>
-        </div>
-      ) : (
-        <ContractsList 
-          contracts={contracts} 
-          onContractDeleted={fetchContracts}
-          emptyMessage="No hay contratos disponibles. Crea tu primer contrato para empezar."
-        />
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Contratos activos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700"></div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-gray-500 mb-4">No hay contratos activos en este momento.</p>
+              <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
+                Crear nuevo contrato
+              </button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

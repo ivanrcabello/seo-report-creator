@@ -1,20 +1,26 @@
 
-import { TableHeader, TableRow, TableHead } from "@/components/ui/table";
-import { useAuth } from "@/contexts/AuthContext";
+import React from 'react';
 
-export function TicketTableHeader() {
-  const { userRole } = useAuth();
-
+export const TicketTableHeader = () => {
   return (
-    <TableHeader>
-      <TableRow>
-        {userRole === 'admin' && <TableHead>Cliente</TableHead>}
-        <TableHead>Asunto</TableHead>
-        <TableHead>Estado</TableHead>
-        <TableHead>Prioridad</TableHead>
-        <TableHead>Fecha</TableHead>
-        <TableHead>Acciones</TableHead>
-      </TableRow>
-    </TableHeader>
+    <thead className="bg-gray-50">
+      <tr>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Asunto
+        </th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Estado
+        </th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Prioridad
+        </th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Fecha
+        </th>
+        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Acciones
+        </th>
+      </tr>
+    </thead>
   );
-}
+};

@@ -19,6 +19,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Spinner } from "@/components/ui/spinner";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import TicketDetail from "@/pages/TicketDetail";
+import Contracts from "@/pages/Contracts";
+import { ApiSettings } from "@/pages/ApiSettings";
+import { TemplateSettings } from "@/pages/TemplateSettings";
+import { CompanySettings } from "@/pages/CompanySettings";
+import AllReports from "@/pages/AllReports";
+import Packages from "@/pages/Packages";
+import Proposals from "@/pages/Proposals";
 
 // Create a QueryClient instance for the entire application
 const queryClient = new QueryClient({
@@ -95,11 +102,18 @@ function AppRoutes() {
           <Route path="/reports/:reportId" element={<ReportDetail />} />
           <Route path="/invoices" element={<Invoices />} />
           
-          {/* Rutas faltantes que están en el menú de navegación */}
-          <Route path="/reports" element={<Dashboard activeTab="reports" />} />
-          <Route path="/packages" element={<Dashboard activeTab="packages" />} />
-          <Route path="/proposals" element={<Dashboard activeTab="proposals" />} />
-          <Route path="/settings" element={<Dashboard activeTab="settings" />} />
+          {/* Rutas que antes estaban definidas como activeTab */}
+          <Route path="/reports" element={<AllReports />} />
+          <Route path="/packages" element={<Packages />} />
+          <Route path="/proposals" element={<Proposals />} />
+          
+          {/* Settings routes */}
+          <Route path="/settings" element={<CompanySettings />} />
+          <Route path="/settings/templates" element={<TemplateSettings />} />
+          <Route path="/settings/api" element={<ApiSettings />} />
+          
+          {/* Contracts routes */}
+          <Route path="/contracts" element={<Contracts />} />
           
           {/* Ticket routes */}
           <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />

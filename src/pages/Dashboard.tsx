@@ -15,6 +15,15 @@ interface DashboardProps {
   activeTab?: string;
 }
 
+// Definir datos predeterminados para usar en los componentes
+const defaultClientSummaries = [];
+const defaultInvoiceStats = {
+  pendingCount: 0,
+  totalAmount: '0 €',
+  paidAmount: '0 €',
+  pendingAmount: '0 €'
+};
+
 const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
   const { user, isLoading, userRole } = useAuth();
   const logger = useLogger("Dashboard");
@@ -100,9 +109,9 @@ const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
   if (activeTab === "tickets") {
     return <TicketsTab />;
   } else if (activeTab === "clients") {
-    return <ClientsTab />;
+    return <ClientsTab clientSummaries={defaultClientSummaries} />;
   } else if (activeTab === "invoices") {
-    return <InvoicesTab />;
+    return <InvoicesTab invoiceStats={defaultInvoiceStats} />;
   }
 
   // Dashboard estándar basado en rol

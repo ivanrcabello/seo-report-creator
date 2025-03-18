@@ -14,14 +14,19 @@ const Contracts = () => {
   const navigate = useNavigate();
   const [contracts, setContracts] = useState<SeoContract[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchContracts = async () => {
     setLoading(true);
+    setError(null);
     try {
+      console.log("Fetching contracts from service");
       const contractsData = await getContracts();
+      console.log("Contracts data received:", contractsData);
       setContracts(contractsData);
     } catch (error) {
       console.error("Error fetching contracts:", error);
+      setError("No se pudieron cargar los contratos");
       toast({
         title: "Error",
         description: "No se pudieron cargar los contratos",
@@ -61,6 +66,13 @@ const Contracts = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />
             <span className="text-lg">Cargando contratos...</span>
           </div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-10 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchContracts} variant="outline">
+            Reintentar
+          </Button>
         </div>
       ) : (
         <ContractsList 

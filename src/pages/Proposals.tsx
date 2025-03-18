@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { FilePlus, Loader2 } from "lucide-react";
+import { FilePlus, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,11 +14,15 @@ export default function Proposals() {
   const { user, isAdmin } = useAuth();
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProposals = async () => {
       try {
         setLoading(true);
+        setError(null);
+        console.log("Fetching proposals for user:", user?.id, "isAdmin:", isAdmin);
+        
         let query = supabase.from('proposals').select('*');
         
         // If not admin, only fetch user's proposals
@@ -26,12 +30,18 @@ export default function Proposals() {
           query = query.eq('client_id', user.id);
         }
         
-        const { data, error } = await query.order('created_at', { ascending: false });
+        const { data, error: supabaseError } = await query.order('created_at', { ascending: false });
         
-        if (error) throw error;
+        if (supabaseError) {
+          console.error("Supabase error:", supabaseError);
+          throw supabaseError;
+        }
+        
+        console.log("Proposals data received:", data?.length);
         setProposals(data || []);
       } catch (error) {
         console.error("Error fetching proposals:", error);
+        setError("No se pudieron cargar las propuestas");
         toast.error("No se pudieron cargar las propuestas");
       } finally {
         setLoading(false);
@@ -68,6 +78,14 @@ export default function Proposals() {
             <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />
             <span className="text-lg">Cargando propuestas...</span>
           </div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-10 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-2" />
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Reintentar
+          </Button>
         </div>
       ) : proposals.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

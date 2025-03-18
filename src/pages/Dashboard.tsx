@@ -4,7 +4,7 @@ import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
 import { Suspense, useEffect } from "react";
 import { TicketsTab } from "@/components/dashboard/tabs/TicketsTab";
-import logger from "@/services/logService";
+import logger from "@/services/advancedLogService";
 
 // Logger específico para el Dashboard
 const dashLogger = logger.getLogger('Dashboard');
@@ -52,12 +52,10 @@ export default function Dashboard({ activeTab }: DashboardProps) {
         }>
           {isAdmin ? (
             <>
-              {dashLogger.debug("Renderizando AdminDashboard")}
               <AdminDashboard />
             </>
           ) : (
             <>
-              {dashLogger.debug("Renderizando ClientDashboard")}
               <ClientDashboard />
             </>
           )}

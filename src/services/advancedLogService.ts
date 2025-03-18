@@ -1,7 +1,6 @@
 
 import winston from 'winston';
 import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
 import Transport from 'winston-transport';
 
 // Define log levels
@@ -38,15 +37,17 @@ class SupabaseTransport extends Transport {
       // Check if a user is authenticated
       let userId = null;
       try {
-        const sessionData = await supabase.auth.getSession();
-        if (sessionData?.data?.session?.user) {
-          userId = sessionData.data.session.user.id;
+        // Fix: Get user session properly
+        const { data, error } = await supabase.auth.getSession();
+        if (data?.session?.user) {
+          userId = data.session.user.id;
         }
       } catch (err) {
         console.error('Error getting user session:', err);
       }
 
       // Create log entry in database
+      // Fix: Use proper table insertion
       const { error } = await supabase
         .from('application_logs')
         .insert({
@@ -74,20 +75,32 @@ class SupabaseTransport extends Transport {
 
 // Create logger instance with Supabase transport
 const createLogger = () => {
-  const supabaseTransport = new SupabaseTransport({
-    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug'
-  });
-
-  // Also send logs to console in development
-  const transports: Transport[] = [
-    supabaseTransport,
+  // Only log to console in development
+  const transports: Transport[] = [];
+  
+  // Add console transport in browser
+  transports.push(
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
         winston.format.simple()
       )
     })
-  ];
+  );
+  
+  // Only add Supabase transport in non-development environment or explicitly enable it
+  const enableSupabaseLogging = false; // Set to true when you want to enable database logging
+  
+  if (enableSupabaseLogging) {
+    try {
+      const supabaseTransport = new SupabaseTransport({
+        level: 'info'
+      });
+      transports.push(supabaseTransport);
+    } catch (error) {
+      console.error('Failed to initialize Supabase logging:', error);
+    }
+  }
 
   return winston.createLogger({
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',

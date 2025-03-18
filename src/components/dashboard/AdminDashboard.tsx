@@ -52,6 +52,7 @@ export function AdminDashboard() {
   useEffect(() => {
     if (clients) {
       try {
+        console.log("Received clients data:", clients);
         const summaries = mapClientsToSummary(clients);
         console.log("Mapped client summaries:", summaries);
         setClientSummaries(summaries);

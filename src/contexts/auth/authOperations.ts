@@ -1,156 +1,114 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { createTestUser as createTestUserService, signInUser } from "@/services/authService";
-import { UserRole } from "./types";
 
-export async function fetchUserRole(userId: string) {
+export const signIn = async (email: string, password: string) => {
   try {
-    const { data, error } = await supabase
-      .rpc('get_user_role')
-      .single();
-    
-    if (error) {
-      console.error("Error fetching user role:", error);
-      return null;
-    }
-    
-    console.log("User role fetched:", data);
-    return data as UserRole;
-  } catch (error) {
-    console.error("Exception fetching user role:", error);
-    return null;
-  }
-}
-
-export async function handleSignIn(email: string, password: string, navigate: (path: string) => void) {
-  try {
-    console.log("Attempting to sign in with:", email);
-    await signInUser(email, password);
-    navigate("/dashboard");
-  } catch (error: any) {
-    console.error("Sign in exception:", error);
-    throw error;
-  }
-}
-
-export async function handleSignInWithGoogle() {
-  try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/dashboard'
-      }
+    console.log("Attempting to sign in with email:", email);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
-    
+
     if (error) {
-      console.error("Google sign in error:", error);
+      console.error("Sign in error:", error);
       throw error;
     }
-    
-    console.log("Google sign in initiated:", data);
+
+    console.log("Successfully signed in:", data);
     return data;
   } catch (error: any) {
-    console.error("Google sign in exception:", error);
-    toast.error(error.message || "Error al iniciar sesión con Google");
+    console.error("Exception in signIn:", error);
+
+    // Mensajes de error más amigables
+    if (error.message.includes("Invalid login credentials")) {
+      toast.error("Credenciales incorrectas. Verifica tu email y contraseña.");
+    } else {
+      toast.error("Error al iniciar sesión: " + error.message);
+    }
     throw error;
   }
-}
+};
 
-export async function handleSignUp(
-  email: string, 
-  password: string, 
-  name: string,
-  signInFn: (email: string, password: string) => Promise<void>
-) {
+export const signUp = async (email: string, password: string, name: string, role?: string) => {
   try {
-    console.log("Attempting to sign up:", email);
-    
-    const { data: existingUser, error: checkError } = await supabase
-      .from('profiles')
-      .select('id, role')
-      .eq('email', email)
-      .maybeSingle();
-    
-    if (checkError && !checkError.message.includes('No rows found')) {
-      console.error("Error checking existing user:", checkError);
-    }
-    
-    const adminEmails = ['ivan@soyseolocal.com', 'admin@example.com'];
-    const role = adminEmails.includes(email.toLowerCase()) ? 'admin' : 'client';
-    console.log(`Setting role for ${email} to ${role}`);
-    
-    const { data, error } = await supabase.auth.signUp({ 
-      email, 
+    console.log("Attempting to sign up with email:", email);
+    const { data, error } = await supabase.auth.signUp({
+      email,
       password,
       options: {
-        data: { 
+        data: {
           name,
-          role
-        }
-      }
+          role: role || "client"
+        },
+      },
     });
-    
+
     if (error) {
       console.error("Sign up error:", error);
       throw error;
     }
-    
-    if (existingUser) {
-      if (existingUser.role !== role) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ role })
-          .eq('email', email);
-          
-        if (updateError) {
-          console.error("Error updating existing user role:", updateError);
-        }
-      }
-    }
-    
-    console.log("Sign up successful:", data);
-    toast.success("Registro exitoso. Por favor verifica tu correo electrónico.");
-    
-    if (data.user) {
-      try {
-        await signInFn(email, password);
-      } catch (signInError) {
-        console.error("Auto sign in failed after registration:", signInError);
-      }
-    }
-    
+
+    console.log("Successfully signed up:", data);
     return data;
   } catch (error: any) {
-    console.error("Sign up exception:", error);
-    toast.error(error.message || "Error al registrarse");
+    console.error("Exception in signUp:", error);
+    
+    // Mensajes de error más amigables
+    if (error.message.includes("already registered")) {
+      toast.error("Este email ya está registrado. Prueba con otro o inicia sesión.");
+    } else {
+      toast.error("Error al crear la cuenta: " + error.message);
+    }
     throw error;
   }
-}
+};
 
-export async function handleSignOut(navigate: (path: string) => void) {
+export const signOut = async () => {
   try {
-    await supabase.auth.signOut();
-    navigate("/login");
-    toast.success("Has cerrado sesión correctamente");
+    console.log("Attempting to sign out");
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Sign out error:", error);
+      throw error;
+    }
+
+    console.log("Successfully signed out");
   } catch (error: any) {
-    console.error("Sign out error:", error);
-    toast.error(error.message || "Error al cerrar sesión");
+    console.error("Exception in signOut:", error);
+    toast.error("Error al cerrar sesión: " + error.message);
     throw error;
   }
-}
+};
 
-export async function handleCreateTestUser(
-  email: string, 
-  password: string, 
-  name: string, 
-  role: UserRole = "client"
-) {
+export const getUserRole = async () => {
   try {
-    await createTestUserService(email, password, name, role);
-    toast.success("Usuario de prueba creado con éxito");
-  } catch (error) {
-    console.error("Error creating test user:", error);
-    throw error;
+    console.log("Fetching user role from database");
+    const { data, error } = await supabase.rpc('get_user_role');
+
+    if (error) {
+      console.error("Get user role error:", error);
+      throw error;
+    }
+
+    console.log("User role:", data);
+    return data;
+  } catch (error: any) {
+    console.error("Exception in getUserRole:", error);
+    return null;
   }
-}
+};
+
+export const isUserAdmin = async () => {
+  try {
+    console.log("Checking if user is admin");
+    const role = await getUserRole();
+    const isAdmin = role === 'admin';
+    console.log("Is user admin:", isAdmin);
+    return isAdmin;
+  } catch (error) {
+    console.error("Exception in isUserAdmin:", error);
+    return false;
+  }
+};

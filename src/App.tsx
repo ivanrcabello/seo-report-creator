@@ -16,6 +16,7 @@ const Invoices = lazy(() => import("@/pages/Invoices"));
 const ReportDetail = lazy(() => import("@/pages/ReportDetail"));
 const TicketDetail = lazy(() => import("@/pages/TicketDetail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const Settings = lazy(() => import("@/pages/Settings"));
 
 // Loading component for suspense fallback
 const PageLoader = () => (
@@ -62,6 +63,7 @@ function App() {
               <Route path="/reports/:reportId" element={<ReportDetail />} />
               <Route path="/invoices" element={<Invoices />} />
               <Route path="/invoices/:id" element={<ClientDetail />} />
+              <Route path="/settings" element={<Settings />} />
               
               {/* Ticket routes */}
               <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />

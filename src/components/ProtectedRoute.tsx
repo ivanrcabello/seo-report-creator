@@ -23,6 +23,11 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     }
   }, [user, userRole]);
 
+  // Log route accesses for debugging
+  useEffect(() => {
+    console.log(`Route accessed: ${location.pathname}${location.search} by user role: ${userRole}`);
+  }, [location.pathname, location.search, userRole]);
+
   // If still loading, show loading indicator
   if (isLoading) {
     return (
@@ -40,11 +45,32 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // Check for client-only routes and admin-only paths
+  // Check for client-specific paths that clients shouldn't access
   if (userRole === "client") {
-    // Check if the path is admin-only
-    const adminOnlyPaths = ["/clients", "/clients/new", "/clients/edit"];
-    if (adminOnlyPaths.some(path => location.pathname.startsWith(path))) {
+    // Create new resources paths (clients can view but not create)
+    const createResourcePaths = [
+      "/invoices/new",
+      "/contracts/new",
+      "/proposals/new",
+      "/reports/new"
+    ];
+    
+    // Admin-only paths
+    const adminOnlyPaths = [
+      "/clients", 
+      "/clients/new", 
+      "/clients/edit",
+      "/packages/edit",
+      "/packages/new"
+    ];
+    
+    // Check all restricted paths
+    const isRestrictedPath = [
+      ...adminOnlyPaths.map(path => location.pathname.startsWith(path)),
+      ...createResourcePaths.map(path => location.pathname === path)
+    ].some(result => result === true);
+    
+    if (isRestrictedPath) {
       return (
         <div className="flex h-screen items-center justify-center">
           <Alert variant="destructive" className="max-w-md">

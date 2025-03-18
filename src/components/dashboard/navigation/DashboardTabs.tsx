@@ -1,7 +1,7 @@
 
 import { ReactNode } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { 
   BarChart2, 
   TrendingUp, 
@@ -18,8 +18,9 @@ export interface DashboardTab {
   value: string;
   label: string;
   icon: ReactNode;
-  path: string; // Add path for correct navigation
+  path: string;
   adminOnly?: boolean;
+  clientWriteAccess?: boolean; // Whether clients can create/edit in this section
 }
 
 export const dashboardTabs: DashboardTab[] = [
@@ -40,25 +41,29 @@ export const dashboardTabs: DashboardTab[] = [
     value: "reports",
     label: "Informes",
     icon: <FileText className="h-4 w-4" />,
-    path: "/reports"
+    path: "/reports",
+    clientWriteAccess: false
   },
   {
     value: "proposals",
     label: "Propuestas",
     icon: <MailOpen className="h-4 w-4" />,
-    path: "/proposals"
+    path: "/proposals",
+    clientWriteAccess: false
   },
   {
     value: "contracts",
     label: "Contratos",
     icon: <FileSignature className="h-4 w-4" />,
-    path: "/contracts"
+    path: "/contracts",
+    clientWriteAccess: false
   },
   {
     value: "invoices",
     label: "Facturas",
     icon: <FileSpreadsheet className="h-4 w-4" />,
-    path: "/invoices"
+    path: "/invoices",
+    clientWriteAccess: false
   },
   {
     value: "documents",
@@ -67,7 +72,7 @@ export const dashboardTabs: DashboardTab[] = [
     path: "/documents"
   },
   {
-    value: "support",
+    value: "tickets",
     label: "Soporte",
     icon: <MessageSquare className="h-4 w-4" />,
     path: "/tickets"
@@ -86,18 +91,43 @@ interface DashboardTabsProps {
 }
 
 export function DashboardTabs({ defaultValue = "dashboard", onValueChange }: DashboardTabsProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, userRole } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Determine the active tab from the URL
+  const getActiveTabFromUrl = () => {
+    const pathname = location.pathname;
+    const queryParams = new URLSearchParams(location.search);
+    const tabFromUrl = queryParams.get("tab");
+    
+    if (tabFromUrl) {
+      return tabFromUrl;
+    }
+    
+    // If no tab parameter, try to determine from path
+    for (const tab of dashboardTabs) {
+      if (pathname === tab.path || pathname.startsWith(`${tab.path}/`)) {
+        return tab.value;
+      }
+    }
+    
+    return defaultValue;
+  };
 
   // Filter tabs based on user role
   const filteredTabs = dashboardTabs.filter(tab => 
     !tab.adminOnly || (tab.adminOnly && isAdmin)
   );
 
+  const activeTab = getActiveTabFromUrl();
+
   const handleTabClick = (tab: DashboardTab) => {
     if (onValueChange) {
       onValueChange(tab.value);
     }
+    
+    console.log(`Navigation to tab: ${tab.value}, path: ${tab.path}`);
     
     // For tab navigation, use query parameters
     if (tab.path === "/dashboard") {
@@ -116,6 +146,7 @@ export function DashboardTabs({ defaultValue = "dashboard", onValueChange }: Das
           key={tab.value}
           value={tab.value} 
           className="flex items-center gap-1"
+          data-active={activeTab === tab.value ? "true" : "false"}
           onClick={() => handleTabClick(tab)}
         >
           {tab.icon}

@@ -27,17 +27,17 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
       try {
         console.log("Fetching invoices for client:", clientId);
         
-        // SECURITY FIX: Only fetch invoices that belong to the current user unless admin
+        // SECURITY CHECK: Only fetch invoices that belong to the current user unless admin
         // Admin can see specific client invoices, but regular user can only see their own
         if (!isAdmin && user?.id !== clientId) {
-          console.log("Security check: Non-admin trying to access another user's invoices");
+          console.error("Security check: Non-admin trying to access another user's invoices");
           setInvoices([]);
           toast.error("No tienes permiso para ver estas facturas");
+          navigate("/dashboard");
           return;
         }
         
         const data = await getClientInvoices(clientId);
-        
         console.log("Invoices data:", data);
         setInvoices(data);
       } catch (error) {
@@ -49,9 +49,14 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
     };
 
     fetchInvoices();
-  }, [clientId, isAdmin, user]);
+  }, [clientId, isAdmin, user, navigate]);
 
   const handleAddInvoice = () => {
+    // ONLY admins can create new invoices
+    if (!isAdmin) {
+      toast.error("No tienes permiso para crear facturas");
+      return;
+    }
     navigate(`/invoices/new?clientId=${clientId}`);
   };
 
@@ -65,7 +70,7 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
       // If client, navigate to their dashboard with invoices tab selected
       navigate(`/dashboard?tab=invoices`);
     } else {
-      // If admin, use the standard path
+      // If admin, navigate to client detail
       navigate(`/clients/${clientId}?tab=invoices`);
     }
   };

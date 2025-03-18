@@ -4,6 +4,7 @@ import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
 import { Suspense, lazy, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 // Use lazy loading for the TicketsTab to improve performance
 const TicketsTab = lazy(() => import("@/components/dashboard/tabs/TicketsTab"));
@@ -13,11 +14,11 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ activeTab }: DashboardProps) {
-  const { isAdmin, userRole } = useAuth();
+  const { isAdmin, userRole, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  console.log("Dashboard - Is admin:", isAdmin, "Active tab:", activeTab, "UserRole:", userRole);
+  console.log("Dashboard - Is admin:", isAdmin, "Active tab:", activeTab, "UserRole:", userRole, "User ID:", user?.id);
   
   // Parse the tab from URL query parameters
   const queryParams = new URLSearchParams(location.search);
@@ -28,11 +29,34 @@ export default function Dashboard({ activeTab }: DashboardProps) {
   
   // Enforce permissions for specific tabs
   useEffect(() => {
-    if (userRole === "client" && tabFromUrl === "clients") {
-      // Clients can't access the clients tab, redirect to dashboard
-      navigate("/dashboard");
+    // If no user or role, redirect to login
+    if (!user || !userRole) {
+      navigate("/login");
+      return;
     }
-  }, [tabFromUrl, userRole, navigate]);
+
+    if (userRole === "client") {
+      // Clients can't access admin-only tabs
+      const adminOnlyTabs = ["clients", "packages"];
+      if (adminOnlyTabs.includes(tabFromUrl || '')) {
+        toast.error("No tienes permiso para acceder a esta sección");
+        navigate("/dashboard");
+      }
+      
+      // Check if we're trying to access creation paths
+      const creationPaths = [
+        "/invoices/new",
+        "/contracts/new",
+        "/proposals/new",
+        "/reports/new"
+      ];
+      
+      if (creationPaths.some(path => location.pathname === path)) {
+        toast.error("No tienes permiso para crear este recurso");
+        navigate("/dashboard");
+      }
+    }
+  }, [tabFromUrl, userRole, navigate, user, location.pathname]);
 
   // If activeTab is "tickets", render the TicketsTab component directly
   if (currentTab === "tickets") {

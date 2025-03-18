@@ -1,11 +1,12 @@
 
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { Toaster } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { verifyRoutes } from "@/utils/routesChecker";
 
 // Lazy loaded components for better performance
 const Register = lazy(() => import("@/pages/Register"));
@@ -36,17 +37,13 @@ const PageLoader = () => (
 
 function App() {
   const { user, isLoading, userRole } = useAuth();
-  const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
-
+  
   useEffect(() => {
-    if (user) {
-      const timer = setTimeout(() => {
-        setShowWelcomeMessage(false);
-      }, 3000);
-
-      return () => clearTimeout(timer);
+    // Verify routes on app initialization (only in development mode)
+    if (process.env.NODE_ENV === 'development') {
+      verifyRoutes();
     }
-  }, [user]);
+  }, []);
   
   if (isLoading) {
     return <PageLoader />;
@@ -59,7 +56,7 @@ function App() {
           <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
           <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
           
-          {/* Protected routes - both admin and client can access but see different views */}
+          {/* Protected routes for both admin and client with different views based on role */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout><Outlet /></AppLayout>}>
               {/* Dashboard routes */}
@@ -71,6 +68,9 @@ function App() {
               
               {/* Invoice routes */}
               <Route path="/invoices" element={<Invoices />} />
+              <Route path="/invoices/new" element={
+                userRole === "admin" ? <Invoices /> : <Navigate to="/dashboard" replace />
+              } />
               <Route path="/invoices/:id" element={<Invoices />} />
               
               {/* Settings route */}
@@ -86,10 +86,13 @@ function App() {
               {/* Proposal routes */}
               <Route path="/proposals" element={<Dashboard activeTab="proposals" />} />
               
+              {/* Documents routes */}
+              <Route path="/documents" element={<Dashboard activeTab="documents" />} />
+              
               {/* Packages route */}
               <Route path="/packages" element={<Packages />} />
               
-              {/* Admin only routes */}
+              {/* Admin only routes with explicit checks */}
               <Route path="/clients" element={
                 userRole === "admin" ? <Clients /> : <Navigate to="/dashboard" replace />
               } />

@@ -1,9 +1,8 @@
 
-import winston from 'winston';
+// Importamos solo las utilidades básicas que necesitamos
 import { supabase } from '@/integrations/supabase/client';
-import Transport from 'winston-transport';
 
-// Define log levels
+// Definir niveles de log
 const levels = {
   error: 0,
   warn: 1,
@@ -12,31 +11,51 @@ const levels = {
   trace: 4
 };
 
-// Custom JSON formatter for structured logs
-const jsonFormatter = winston.format.combine(
-  winston.format.timestamp(),
-  winston.format.json()
-);
+// Clase básica para transporte de logs
+class BrowserTransport {
+  constructor() {}
 
-// Custom Supabase transport for Winston
-class SupabaseTransport extends Transport {
-  constructor(opts?: any) {
-    super(opts);
+  log(level, message, meta = {}) {
+    return new Promise((resolve) => {
+      // Estrategia básica de logging en consola del navegador
+      switch (level) {
+        case 'error':
+          console.error(`[${meta.component || 'App'}]`, message, meta);
+          break;
+        case 'warn':
+          console.warn(`[${meta.component || 'App'}]`, message, meta);
+          break;
+        case 'info':
+          console.info(`[${meta.component || 'App'}]`, message, meta);
+          break;
+        case 'debug':
+        case 'trace':
+        default:
+          console.log(`[${meta.component || 'App'}][${level}]`, message, meta);
+          break;
+      }
+      resolve();
+    });
+  }
+}
+
+// Clase para enviar logs a Supabase
+class SupabaseTransport extends BrowserTransport {
+  constructor() {
+    super();
   }
 
-  // This method is called for each log
-  async log(info: any, callback: Function) {
-    setImmediate(() => {
-      this.emit('logged', info);
-    });
+  async log(level, message, meta = {}) {
+    // Primero logamos en consola para tener un respaldo
+    await super.log(level, message, meta);
 
     try {
-      // Extract data to store in the database
-      const { level, message, component, ...rest } = info;
+      // Extraer datos para almacenar en la base de datos
+      const { component, ...rest } = meta;
       
       let userId = null;
       
-      // Try to get the user session safely
+      // Intentar obtener la sesión del usuario de forma segura
       try {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
@@ -46,126 +65,70 @@ class SupabaseTransport extends Transport {
         console.error('Failed to get user session for logging:', err);
       }
 
-      // Only attempt to insert log if we believe we're authenticated and able to use Supabase
-      try {
-        const { error } = await supabase
-          .from('application_logs')
-          .insert({
-            level,
-            message,
-            component,
-            user_id: userId,
-            path: rest.path || null,
-            client_id: rest.clientId || null,
-            context: rest
-          });
+      // Solo intentar insertar el log si creemos que hay conexión a Supabase
+      const { error } = await supabase
+        .from('application_logs')
+        .insert({
+          level,
+          message,
+          component,
+          user_id: userId,
+          path: rest.path || null,
+          client_id: rest.clientId || null,
+          context: rest
+        });
 
-        if (error) {
-          // Log to console but don't throw - this shouldn't break the app
-          console.error('Error saving log to Supabase:', error);
-        }
-      } catch (insertError) {
-        console.error('Exception in Supabase log insert:', insertError);
+      if (error) {
+        // Logar en consola pero no lanzar error - esto no debería romper la app
+        console.error('Error saving log to Supabase:', error);
       }
-    } catch (error) {
-      console.error('Error in SupabaseTransport:', error);
-    } finally {
-      // Always call callback to prevent blocking
-      callback();
+    } catch (insertError) {
+      console.error('Exception in Supabase log insert:', insertError);
     }
   }
 }
 
-// Create a fallback console-only logger for extreme cases
-const createFallbackLogger = () => {
-  return winston.createLogger({
-    level: 'info',
-    format: winston.format.simple(),
-    transports: [
-      new winston.transports.Console({
-        format: winston.format.combine(
-          winston.format.colorize(),
-          winston.format.simple()
-        )
-      })
-    ]
-  });
-};
-
-// Create logger instance with configurable transports
-const createLogger = () => {
-  try {
-    // Start with base transports array
-    const transports: Transport[] = [];
+// Crear una clase Logger para la aplicación
+class Logger {
+  constructor(component) {
+    this.component = component;
+    this.transport = new BrowserTransport();
     
-    // Always add console transport
-    transports.push(
-      new winston.transports.Console({
-        format: winston.format.combine(
-          winston.format.colorize(),
-          winston.format.simple()
-        )
-      })
-    );
-    
-    // Disable Supabase logging during initial application load to prevent startup failures
-    // TEMPORARY CHANGE: Only enable console logging until we confirm the app loads properly
+    // Deshabilitar el logging a Supabase durante la carga inicial
     const enableSupabaseLogging = false;
     
     if (enableSupabaseLogging) {
       try {
-        const supabaseTransport = new SupabaseTransport({
-          level: 'info'
-        });
-        transports.push(supabaseTransport);
+        this.supabaseTransport = new SupabaseTransport();
       } catch (error) {
         console.error('Failed to initialize Supabase logging:', error);
       }
     }
-
-    return winston.createLogger({
-      level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-      levels,
-      format: jsonFormatter,
-      transports
-    });
-  } catch (e) {
-    console.error('Failed to create logger, using fallback:', e);
-    return createFallbackLogger();
-  }
-};
-
-// Main logger instance with try-catch for safety
-let rootLogger: winston.Logger;
-try {
-  rootLogger = createLogger();
-} catch (e) {
-  console.error('Critical error creating root logger:', e);
-  rootLogger = createFallbackLogger();
-}
-
-// Logger class for specific components
-class Logger {
-  private logger: winston.Logger;
-  private component: string;
-
-  constructor(component: string) {
-    this.logger = rootLogger;
-    this.component = component;
   }
 
-  // Safe logging method that catches errors
-  private safeLog(level: string, message: string, context: any = {}) {
+  // Método seguro de logging que captura errores
+  async _safeLog(level, message, context = {}) {
     try {
-      this.logger.log({
-        level,
-        message,
+      // Siempre usar el transporte básico
+      await this.transport.log(level, message, {
         component: this.component,
         ...context
       });
+      
+      // Si existe el transporte de Supabase, intentar usarlo
+      if (this.supabaseTransport) {
+        try {
+          await this.supabaseTransport.log(level, message, {
+            component: this.component,
+            ...context
+          });
+        } catch (e) {
+          console.error(`Failed to log to Supabase: ${e.message}`);
+        }
+      }
     } catch (e) {
-      // If winston logging fails, fall back to console
-      console.error(`Failed to log ${level} message:`, message, e);
+      // Si el registro falla, usar console como fallback
+      console.error(`Logging error: ${e.message}`);
       const consoleMethod = level === 'error' ? console.error : 
                             level === 'warn' ? console.warn : 
                             level === 'info' ? console.info : console.debug;
@@ -173,35 +136,35 @@ class Logger {
     }
   }
 
-  // Methods for different log levels
-  error(message: string, context: any = {}) {
-    this.safeLog('error', message, context);
+  // Métodos para diferentes niveles de log
+  error(message, context = {}) {
+    this._safeLog('error', message, context);
   }
 
-  warn(message: string, context: any = {}) {
-    this.safeLog('warn', message, context);
+  warn(message, context = {}) {
+    this._safeLog('warn', message, context);
   }
 
-  info(message: string, context: any = {}) {
-    this.safeLog('info', message, context);
+  info(message, context = {}) {
+    this._safeLog('info', message, context);
   }
 
-  debug(message: string, context: any = {}) {
-    this.safeLog('debug', message, context);
+  debug(message, context = {}) {
+    this._safeLog('debug', message, context);
   }
 
-  trace(message: string, context: any = {}) {
-    this.safeLog('trace', message, context);
+  trace(message, context = {}) {
+    this._safeLog('trace', message, context);
   }
 }
 
-// Factory for creating component-specific loggers
+// Factory para crear loggers específicos de componentes
 class LoggerFactory {
-  getLogger(component: string): Logger {
+  getLogger(component) {
     return new Logger(component);
   }
 }
 
-// Export singleton LoggerFactory instance
+// Exportar singleton LoggerFactory
 const logger = new LoggerFactory();
 export default logger;

@@ -4,11 +4,11 @@ import App from './App.tsx'
 import './index.css'
 import logger from './services/advancedLogService'
 
-// Setup global error handling
+// Configurar logger global
 const globalLogger = logger.getLogger('GlobalErrorHandler');
 
 // Definir una función para renderizar un error UI
-function renderErrorUI(message: string) {
+function renderErrorUI(message) {
   document.body.innerHTML = `
     <div style="padding: 20px; text-align: center; margin-top: 50px; font-family: sans-serif;">
       <h1 style="color: #e53e3e;">Error al iniciar la aplicación</h1>
@@ -27,7 +27,7 @@ function renderErrorUI(message: string) {
   `;
 }
 
-// Si la aplicación ya ha intentado renderizarse y ha fallado, mostrar un mensaje
+// Variable para controlar si la aplicación ya ha intentado renderizarse
 let hasRenderAttempted = false;
 
 // Capturar errores no controlados

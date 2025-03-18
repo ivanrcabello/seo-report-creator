@@ -18,6 +18,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "@/pages/Index";
 import logger from "@/services/logService";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Spinner } from "@/components/ui/spinner";
 
 // Crear una instancia de QueryClient para toda la aplicación
 const queryClient = new QueryClient({
@@ -31,6 +32,28 @@ const queryClient = new QueryClient({
 
 // Logger específico para App
 const appLogger = logger.getLogger('App');
+
+// Componente para manejar la redirección de autenticación
+function AuthCallback() {
+  const { isLoading } = useAuth();
+  
+  useEffect(() => {
+    appLogger.info("Procesando callback de autenticación");
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <Spinner className="mx-auto mb-4" />
+          <p className="text-gray-500">Procesando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <Navigate to="/dashboard" replace />;
+}
 
 // Componente interno para manejar la lógica de la aplicación después del AuthProvider
 function AppRoutes() {
@@ -65,7 +88,7 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-      <Route path="/auth/callback" element={<div className="flex justify-center items-center h-screen">Procesando autenticación...</div>} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout>

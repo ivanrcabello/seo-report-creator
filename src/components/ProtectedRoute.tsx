@@ -16,7 +16,7 @@ export function ProtectedRoute() {
     userId: user?.id
   });
 
-  // Agregamos más logs para depuración
+  // Si el usuario está todavía cargando, mostrar spinner, pero con un tiempo límite
   if (isLoading) {
     routeLogger.debug("Autenticación en progreso, mostrando spinner");
     return (
@@ -29,11 +29,13 @@ export function ProtectedRoute() {
     );
   }
 
+  // Si no hay usuario después de cargar, redirigir a login
   if (!user) {
     routeLogger.warn("Usuario no autenticado, redirigiendo a login");
     return <Navigate to="/login" replace />;
   }
 
-  routeLogger.debug("Usuario autenticado, permitiendo acceso");
+  // Si hay usuario, permitir acceso
+  routeLogger.debug("Usuario autenticado, permitiendo acceso", { userId: user.id });
   return <Outlet />;
 }

@@ -33,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   // Función para configurar usuario y obtener rol
   const setupUser = async (userId: string) => {
@@ -64,7 +65,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       try {
         // Obtener la sesión actual
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          authLogger.error('Error al obtener sesión inicial:', error);
+          setIsLoading(false);
+          setAuthInitialized(true);
+          return;
+        }
+        
         authLogger.info('Sesión inicial obtenida:', initialSession ? 'Activa' : 'No hay sesión');
         
         setSession(initialSession);
@@ -94,19 +103,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Asegurar que isLoading sea false después de cualquier cambio de auth
           setIsLoading(false);
         });
+
+        // Garantizar que isLoading sea false después de inicialización
+        setIsLoading(false);
+        setAuthInitialized(true);
       } catch (error) {
         authLogger.error('Error durante la inicialización de autenticación:', error);
-      } finally {
-        // Asegurar que isLoading sea false incluso si hay errores
+        // Garantizar que isLoading sea false incluso si hay errores
         setIsLoading(false);
+        setAuthInitialized(true);
       }
     };
 
     initializeAuth();
     
+    // Configurar un temporizador de seguridad para asegurar que isLoading no quede atascado
+    const loadingTimeout = setTimeout(() => {
+      if (isLoading) {
+        authLogger.warn('Temporizador de seguridad activado para estado de carga');
+        setIsLoading(false);
+        setAuthInitialized(true);
+      }
+    }, 5000); // 5 segundos máximo de carga
+    
     // Limpieza al desmontar
     return () => {
       authLogger.debug('Limpiando suscripción a cambios de autenticación');
+      clearTimeout(loadingTimeout);
       if (authSubscription) {
         authSubscription.data.subscription.unsubscribe();
       }
@@ -231,6 +254,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     createTestUser,
   };
+
+  // No renderizar nada hasta que la autenticación esté inicializada
+  if (!authInitialized) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <Spinner className="mx-auto mb-4" />
+          <p className="text-gray-500">Inicializando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

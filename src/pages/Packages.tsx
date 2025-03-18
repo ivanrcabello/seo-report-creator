@@ -23,12 +23,12 @@ const Packages = () => {
     return () => clearTimeout(timer);
   }, [logger]);
 
-  const handleEdit = (id: string) => {
-    console.log("Edit package:", id);
+  const handleEdit = (pack: Pack) => {
+    console.log("Edit package:", pack.id);
   };
 
-  const handleDelete = (id: string) => {
-    console.log("Delete package:", id);
+  const handleDelete = (pack: Pack) => {
+    console.log("Delete package:", pack.id);
   };
 
   const handleCreate = () => {

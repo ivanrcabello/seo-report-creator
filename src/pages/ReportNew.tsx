@@ -67,7 +67,12 @@ const ReportNew = () => {
         url,
         content,
         type: "seo",
-        status: "draft"
+        status: "draft",
+        date: new Date().toISOString(),
+        documentIds: [],
+        analyticsData: {},
+        searchConsoleData: {},
+        auditResult: {}
       });
       
       toast.success("Informe creado correctamente");
@@ -159,9 +164,14 @@ const ReportNew = () => {
           </CardHeader>
           <CardContent>
             <AIReportGenerator 
-              clientId={clientId!} 
+              auditResult={{
+                url: url,
+                companyName: clientName,
+                seoScore: 50,
+                performance: 50
+              }}
+              currentReport={null}
               onContentGenerated={setContent}
-              url={url}
             />
           </CardContent>
         </Card>

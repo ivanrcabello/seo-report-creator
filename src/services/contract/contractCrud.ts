@@ -3,17 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { SeoContract, ContractSection } from "@/types/client";
 import { mapContractFromDB } from "./contractMappers";
 
-// Export contract CRUD operations
-export {
-  createContract,
-  updateContract,
-  getClientContracts
-};
-
 // Create a new contract
 export async function createContract(contractData: Omit<SeoContract, "id" | "createdAt" | "updatedAt">): Promise<SeoContract> {
   try {
-    // Map SeoContract to DB schema
+    // Map SeoContract to DB schema and convert content to JSON string
     const dbData = {
       client_id: contractData.clientId,
       title: contractData.title,

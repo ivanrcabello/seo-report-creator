@@ -7,17 +7,11 @@ import { ContractContent } from "./ContractContent";
 import { ContractHeader } from "./ContractHeader";
 import { generateContractPDF, saveContractPDF } from "@/services/contract";
 import { toast } from "sonner";
+import { useState } from "react";
 
 interface ContractDetailLayoutProps {
   contract: SeoContract;
   client: Client;
-  onRefresh?: () => void;
-}
-
-// Update ContractActionsProps to include onRefresh
-interface ContractActionsProps {
-  contractId: string;
-  onGeneratePdf: () => Promise<void>;
   onRefresh?: () => void;
 }
 
@@ -26,7 +20,10 @@ export const ContractDetailLayout = ({
   client,
   onRefresh 
 }: ContractDetailLayoutProps) => {
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  
   const handleGeneratePDF = async () => {
+    setIsGeneratingPdf(true);
     try {
       const pdfBlob = await generateContractPDF(contract);
       const url = await saveContractPDF(contract.id, pdfBlob);
@@ -38,7 +35,18 @@ export const ContractDetailLayout = ({
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast.error("Error al generar el PDF");
+    } finally {
+      setIsGeneratingPdf(false);
     }
+  };
+
+  // Dummy handlers for other actions to satisfy ContractActions props
+  const handleShare = async () => {
+    toast.info("Compartir contrato - Funcionalidad en desarrollo");
+  };
+
+  const handleSignOpen = () => {
+    toast.info("Firmar contrato - Funcionalidad en desarrollo");
   };
 
   return (
@@ -59,7 +67,13 @@ export const ContractDetailLayout = ({
         <CardContent>
           <ContractActions 
             contractId={contract.id}
+            pdfUrl={contract.pdfUrl}
+            signedByProfessional={contract.signedByProfessional}
             onGeneratePdf={handleGeneratePDF}
+            onShare={handleShare}
+            onSignOpen={handleSignOpen}
+            isLoading={false}
+            isPdfGenerating={isGeneratingPdf}
             onRefresh={onRefresh}
           />
         </CardContent>

@@ -13,6 +13,7 @@ interface ContractActionsProps {
   onSignOpen: () => void;
   isLoading: boolean;
   isPdfGenerating: boolean;
+  onRefresh?: () => void; // Added missing onRefresh prop
 }
 
 export const ContractActions = ({
@@ -23,7 +24,8 @@ export const ContractActions = ({
   onGeneratePdf,
   onSignOpen,
   isLoading,
-  isPdfGenerating
+  isPdfGenerating,
+  onRefresh
 }: ContractActionsProps) => {
   return (
     <div className="flex justify-between mb-6">

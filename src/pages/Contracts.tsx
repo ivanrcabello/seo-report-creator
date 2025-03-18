@@ -45,31 +45,9 @@ const Contracts = () => {
     navigate("/contracts/new");
   };
 
-  // Fix: Update the signature to match what ContractsList expects
-  const handleContractDeleted = async (contractId: string) => {
-    try {
-      const success = await deleteContract(contractId);
-      if (success) {
-        toast({
-          title: "Contrato eliminado",
-          description: "El contrato ha sido eliminado correctamente",
-        });
-        fetchContracts();
-      } else {
-        toast({
-          title: "Error",
-          description: "No se pudo eliminar el contrato",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error deleting contract:", error);
-      toast({
-        title: "Error",
-        description: "Ocurrió un error al eliminar el contrato",
-        variant: "destructive",
-      });
-    }
+  // Fixed type signature to match what ContractsList expects
+  const handleContractDeleted = async () => {
+    fetchContracts();
   };
 
   return (
@@ -103,7 +81,7 @@ const Contracts = () => {
         </div>
       ) : (
         <ContractsList 
-          contracts={contracts} 
+          contracts={contracts}
           onContractDeleted={handleContractDeleted}
           emptyMessage="No hay contratos disponibles. Crea tu primer contrato para empezar."
         />

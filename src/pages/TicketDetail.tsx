@@ -1,11 +1,14 @@
 
-import { useEffect } from "react";
-import { TicketDetailView } from "@/components/tickets/detail";
+import { TicketDetailView } from "@/components/tickets/detail/TicketDetailView";
+import logger from "@/services/advancedLogService";
 
-export default function TicketDetail() {
-  useEffect(() => {
-    console.log("[TicketDetail] Page rendered");
-  }, []);
+// Logger específico para TicketDetail
+const ticketDetailLogger = logger.getLogger('TicketDetail');
+
+const TicketDetail = () => {
+  ticketDetailLogger.info("Rendering ticket detail page");
   
   return <TicketDetailView />;
-}
+};
+
+export default TicketDetail;

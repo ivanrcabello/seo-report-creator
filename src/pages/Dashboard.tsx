@@ -1,7 +1,6 @@
-
 import { useEffect } from "react";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
-import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
+import { ClientDashboard } from "@/components/dashboard/client/ClientDashboard";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { useLogger } from "@/hooks/useLogger";
@@ -15,7 +14,6 @@ interface DashboardProps {
   activeTab?: string;
 }
 
-// Definir datos predeterminados para usar en los componentes
 const defaultClientSummaries = [];
 const defaultInvoiceStats = {
   pendingCount: 0,
@@ -36,7 +34,6 @@ const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
     return <DashboardSkeleton />;
   }
 
-  // Si la pestaña activa es 'settings', mostramos la navegación de configuración
   if (activeTab === "settings") {
     return (
       <div className="container mx-auto py-6">
@@ -51,7 +48,6 @@ const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
     );
   }
 
-  // Si la pestaña activa es 'packages'
   if (activeTab === "packages") {
     return (
       <div className="container mx-auto py-6">
@@ -60,7 +56,6 @@ const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
           <p className="text-gray-600 mb-4">
             Gestiona los paquetes de servicio disponibles para tus clientes.
           </p>
-          {/* Aquí iría el contenido de la página de paquetes */}
           <div className="p-8 text-center">
             <p className="text-gray-500">La gestión de paquetes estará disponible próximamente.</p>
           </div>
@@ -69,7 +64,6 @@ const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
     );
   }
 
-  // Si la pestaña activa es 'proposals'
   if (activeTab === "proposals") {
     return (
       <div className="container mx-auto py-6">
@@ -78,7 +72,6 @@ const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
           <p className="text-gray-600 mb-4">
             Gestiona las propuestas enviadas a tus clientes.
           </p>
-          {/* Aquí iría el contenido de la página de propuestas */}
           <div className="p-8 text-center">
             <p className="text-gray-500">La gestión de propuestas estará disponible próximamente.</p>
           </div>
@@ -87,7 +80,6 @@ const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
     );
   }
 
-  // Si la pestaña activa es 'reports'
   if (activeTab === "reports") {
     return (
       <div className="container mx-auto py-6">
@@ -96,7 +88,6 @@ const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
           <p className="text-gray-600 mb-4">
             Accede a todos los informes generados para tus clientes.
           </p>
-          {/* Aquí iría el contenido de la página de informes */}
           <div className="p-8 text-center">
             <p className="text-gray-500">La gestión de informes estará disponible próximamente.</p>
           </div>
@@ -105,16 +96,19 @@ const Dashboard = ({ activeTab = "overview" }: DashboardProps) => {
     );
   }
 
-  // Para las pestañas específicas del dashboard
   if (activeTab === "tickets") {
     return <TicketsTab />;
   } else if (activeTab === "clients") {
-    return <ClientsTab clientSummaries={defaultClientSummaries} />;
+    return <ClientsTab clientSummaries={[]} />;
   } else if (activeTab === "invoices") {
-    return <InvoicesTab invoiceStats={defaultInvoiceStats} />;
+    return <InvoicesTab invoiceStats={{
+      pendingCount: 0,
+      totalAmount: '0 €',
+      paidAmount: '0 €',
+      pendingAmount: '0 €'
+    }} />;
   }
 
-  // Dashboard estándar basado en rol
   return userRole === "admin" ? (
     <AdminDashboard />
   ) : (

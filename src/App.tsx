@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Register from "@/pages/Register";
@@ -27,7 +26,6 @@ import AllReports from "@/pages/AllReports";
 import Packages from "@/pages/Packages";
 import Proposals from "@/pages/Proposals";
 
-// Create a QueryClient instance for the entire application
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -37,10 +35,8 @@ const queryClient = new QueryClient({
   },
 });
 
-// Logger for App
 const appLogger = logger.getLogger('App');
 
-// Component to handle authentication redirect
 function AuthCallback() {
   const { isLoading } = useAuth();
   
@@ -62,13 +58,11 @@ function AuthCallback() {
   return <Navigate to="/dashboard" replace />;
 }
 
-// Internal component to handle application logic after AuthProvider
 function AppRoutes() {
   const { user, isLoading } = useAuth();
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
 
   useEffect(() => {
-    // Log initial render and authentication state
     appLogger.info("AppRoutes rendered", { 
       isAuthenticated: !!user, 
       isLoading, 
@@ -102,20 +96,16 @@ function AppRoutes() {
           <Route path="/reports/:reportId" element={<ReportDetail />} />
           <Route path="/invoices" element={<Invoices />} />
           
-          {/* Rutas que antes estaban definidas como activeTab */}
           <Route path="/reports" element={<AllReports />} />
           <Route path="/packages" element={<Packages />} />
           <Route path="/proposals" element={<Proposals />} />
           
-          {/* Settings routes */}
           <Route path="/settings" element={<CompanySettings />} />
           <Route path="/settings/templates" element={<TemplateSettings />} />
           <Route path="/settings/api" element={<ApiSettings />} />
           
-          {/* Contracts routes */}
           <Route path="/contracts" element={<Contracts />} />
           
-          {/* Ticket routes */}
           <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />
           <Route path="/tickets/:ticketId" element={<TicketDetail />} />
         </Route>

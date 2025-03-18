@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import { useLogger } from "@/hooks/useLogger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackageList } from "@/components/packages/PackageList";
+import { Pack } from "@/types/client";
 
 const Packages = () => {
   const logger = useLogger("PackagesPage");
   const [isLoading, setIsLoading] = useState(true);
-  const [packages, setPackages] = useState([]);
+  const [packages, setPackages] = useState<Pack[]>([]);
 
   useEffect(() => {
     logger.info("Packages page loaded");
@@ -22,12 +23,12 @@ const Packages = () => {
     return () => clearTimeout(timer);
   }, [logger]);
 
-  const handleEdit = (id: string) => {
-    console.log("Edit package:", id);
+  const handleEdit = (pack: Pack) => {
+    console.log("Edit package:", pack.id);
   };
 
-  const handleDelete = (id: string) => {
-    console.log("Delete package:", id);
+  const handleDelete = (pack: Pack) => {
+    console.log("Delete package:", pack.id);
   };
 
   const handleCreate = () => {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,11 @@ import { TicketsList } from "@/components/tickets/TicketsList";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export function TicketsTab() {
+interface TicketsTabProps {
+  clientId?: string;
+}
+
+export function TicketsTab({ clientId }: TicketsTabProps) {
   const navigate = useNavigate();
   const { isAdmin, user } = useAuth();
   const [tickets, setTickets] = useState<any[]>([]);
@@ -32,8 +35,13 @@ export function TicketsTab() {
           clients(name)
         `);
       
-      // If not admin, only fetch tickets for the current user
-      if (!isAdmin && user?.id) {
+      // If clientId is provided, filter by that specific client
+      if (clientId) {
+        console.log("Filtering tickets by clientId:", clientId);
+        query = query.eq('client_id', clientId);
+      }
+      // Otherwise, if not admin, only fetch tickets for the current user
+      else if (!isAdmin && user?.id) {
         query = query.eq('client_id', user.id);
       }
       
@@ -56,15 +64,16 @@ export function TicketsTab() {
     } finally {
       setIsLoading(false);
     }
-  }, [isAdmin, user, sortField, sortOrder]);
+  }, [isAdmin, user, sortField, sortOrder, clientId]);
 
   useEffect(() => {
     fetchTickets();
   }, [fetchTickets]);
 
   const handleCreateTicket = useCallback(() => {
-    navigate("/tickets/new");
-  }, [navigate]);
+    const path = clientId ? `/tickets/new?clientId=${clientId}` : "/tickets/new";
+    navigate(path);
+  }, [navigate, clientId]);
 
   const handleToggleSort = useCallback(() => {
     setSortOrder(prev => prev === "asc" ? "desc" : "asc");

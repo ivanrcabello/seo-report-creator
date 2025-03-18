@@ -24,24 +24,35 @@ export const useInvoiceDetail = () => {
   
   const actions = useInvoiceActions(id, setInvoice);
 
-  // Custom navigation handling
+  // Fixed navigation handling to respect user context
   const handleGoBack = () => {
-    if (invoice) {
-      if (!isAdmin && user?.id) {
-        // If a client is viewing their own invoice, navigate to their dashboard's invoices tab
-        navigate(`/clients/${user.id}?tab=invoices`);
-      } else if (isAdmin) {
-        // If an admin is viewing an invoice, navigate based on the context
-        navigate(
-          invoice.clientId 
-            ? `/clients/${invoice.clientId}?tab=invoices` 
-            : '/invoices'
-        );
+    // If the invoice doesn't exist yet, just go to general invoices list
+    if (!invoice) {
+      navigate('/invoices');
+      return;
+    }
+
+    console.log("Back navigation - user context:", { 
+      isAdmin, 
+      userId: user?.id, 
+      invoiceClientId: invoice.clientId 
+    });
+
+    if (isAdmin) {
+      // Admin users can navigate based on invoice context 
+      if (invoice.clientId) {
+        // Go to the specific client's invoices
+        navigate(`/clients/${invoice.clientId}?tab=invoices`);
       } else {
-        // Fallback
+        // Fallback to all invoices
         navigate('/invoices');
       }
+    } else if (user?.id) {
+      // Regular users can only go to their own invoices
+      // Ensure we're navigating to the current user's invoices, not someone else's
+      navigate(`/clients/${user.id}?tab=invoices`);
     } else {
+      // Fallback
       navigate('/invoices');
     }
   };

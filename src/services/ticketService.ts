@@ -28,7 +28,7 @@ export interface TicketMessage {
 
 // Obtener tickets (para admin: todos, para cliente: solo los suyos)
 export const getTickets = async (clientId?: string): Promise<Ticket[]> => {
-  ticketLogger.info("getTickets called with clientId:", clientId);
+  ticketLogger.info("getTickets called with clientId:", { clientId });
   
   try {
     let query = supabase
@@ -44,21 +44,21 @@ export const getTickets = async (clientId?: string): Promise<Ticket[]> => {
     const { data, error } = await query;
     
     if (error) {
-      ticketLogger.error("Error fetching tickets:", error);
+      ticketLogger.error("Error fetching tickets:", { error });
       throw error;
     }
     
-    ticketLogger.info("Tickets fetched:", data?.length || 0);
+    ticketLogger.info("Tickets fetched:", { count: data?.length || 0 });
     return data as Ticket[];
   } catch (error) {
-    ticketLogger.error("Exception in getTickets:", error);
+    ticketLogger.error("Exception in getTickets:", { error });
     throw error;
   }
 };
 
 // Obtener un ticket específico por ID
 export const getTicketById = async (ticketId: string): Promise<Ticket> => {
-  ticketLogger.info("getTicketById called for ticket:", ticketId);
+  ticketLogger.info("getTicketById called for ticket:", { ticketId });
   
   try {
     const { data, error } = await supabase
@@ -68,21 +68,21 @@ export const getTicketById = async (ticketId: string): Promise<Ticket> => {
       .single();
     
     if (error) {
-      ticketLogger.error("Error fetching ticket:", error);
+      ticketLogger.error("Error fetching ticket:", { error });
       throw error;
     }
     
     ticketLogger.info("Ticket fetched successfully");
     return data as Ticket;
   } catch (error) {
-    ticketLogger.error("Exception in getTicketById:", error);
+    ticketLogger.error("Exception in getTicketById:", { error });
     throw error;
   }
 };
 
 // Obtener mensajes de un ticket
 export const getTicketMessages = async (ticketId: string): Promise<TicketMessage[]> => {
-  ticketLogger.info("getTicketMessages called for ticket:", ticketId);
+  ticketLogger.info("getTicketMessages called for ticket:", { ticketId });
   
   try {
     const { data, error } = await supabase
@@ -92,14 +92,14 @@ export const getTicketMessages = async (ticketId: string): Promise<TicketMessage
       .order('created_at', { ascending: true });
     
     if (error) {
-      ticketLogger.error("Error fetching ticket messages:", error);
+      ticketLogger.error("Error fetching ticket messages:", { error });
       throw error;
     }
     
-    ticketLogger.info("Ticket messages fetched:", data?.length || 0);
+    ticketLogger.info("Ticket messages fetched:", { count: data?.length || 0 });
     return data as TicketMessage[];
   } catch (error) {
-    ticketLogger.error("Exception in getTicketMessages:", error);
+    ticketLogger.error("Exception in getTicketMessages:", { error });
     throw error;
   }
 };
@@ -111,7 +111,7 @@ export const createTicket = async (
   message: string, 
   priority: 'low' | 'medium' | 'high' = 'medium'
 ): Promise<Ticket> => {
-  ticketLogger.info("createTicket called for client:", clientId);
+  ticketLogger.info("createTicket called for client:", { clientId });
   
   try {
     const { data, error } = await supabase
@@ -129,14 +129,14 @@ export const createTicket = async (
       .single();
     
     if (error) {
-      ticketLogger.error("Error creating ticket:", error);
+      ticketLogger.error("Error creating ticket:", { error });
       throw error;
     }
     
-    ticketLogger.info("Ticket created successfully:", data.id);
+    ticketLogger.info("Ticket created successfully:", { ticketId: data.id });
     return data as Ticket;
   } catch (error) {
-    ticketLogger.error("Exception in createTicket:", error);
+    ticketLogger.error("Exception in createTicket:", { error });
     throw error;
   }
 };
@@ -147,7 +147,7 @@ export const replyToTicket = async (
   senderId: string, 
   message: string
 ): Promise<TicketMessage> => {
-  ticketLogger.info("replyToTicket called for ticket:", ticketId);
+  ticketLogger.info("replyToTicket called for ticket:", { ticketId });
   
   try {
     // Insertar el mensaje
@@ -164,7 +164,7 @@ export const replyToTicket = async (
       .single();
     
     if (error) {
-      ticketLogger.error("Error replying to ticket:", error);
+      ticketLogger.error("Error replying to ticket:", { error });
       throw error;
     }
     
@@ -177,7 +177,7 @@ export const replyToTicket = async (
     ticketLogger.info("Reply sent successfully");
     return data as TicketMessage;
   } catch (error) {
-    ticketLogger.error("Exception in replyToTicket:", error);
+    ticketLogger.error("Exception in replyToTicket:", { error });
     throw error;
   }
 };
@@ -187,7 +187,7 @@ export const updateTicketStatus = async (
   ticketId: string, 
   status: 'open' | 'in_progress' | 'resolved'
 ): Promise<Ticket> => {
-  ticketLogger.info("updateTicketStatus called for ticket:", ticketId, "new status:", status);
+  ticketLogger.info("updateTicketStatus called for ticket:", { ticketId, status });
   
   try {
     const updates: any = { 
@@ -211,14 +211,14 @@ export const updateTicketStatus = async (
       .single();
     
     if (error) {
-      ticketLogger.error("Error updating ticket status:", error);
+      ticketLogger.error("Error updating ticket status:", { error });
       throw error;
     }
     
     ticketLogger.info("Ticket status updated successfully");
     return data as Ticket;
   } catch (error) {
-    ticketLogger.error("Exception in updateTicketStatus:", error);
+    ticketLogger.error("Exception in updateTicketStatus:", { error });
     throw error;
   }
 };

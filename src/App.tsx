@@ -1,6 +1,6 @@
 
 import { lazy, Suspense, useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
@@ -46,7 +46,7 @@ function App() {
   }
   
   return (
-    <BrowserRouter>
+    <>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
@@ -74,7 +74,7 @@ function App() {
         </Routes>
       </Suspense>
       <Toaster />
-    </BrowserRouter>
+    </>
   );
 }
 

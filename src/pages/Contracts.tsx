@@ -45,6 +45,7 @@ const Contracts = () => {
     navigate("/contracts/new");
   };
 
+  // Fix: Update the signature to match what ContractsList expects
   const handleContractDeleted = async (contractId: string) => {
     try {
       const success = await deleteContract(contractId);

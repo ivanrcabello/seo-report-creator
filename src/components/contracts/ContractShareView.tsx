@@ -49,7 +49,8 @@ export const ContractShareView = ({ contract, client }: ContractShareViewProps) 
   const handleSignContract = async () => {
     setIsSigning(true);
     try {
-      const success = await signContractByClient(contract.id);
+      // Fix: Pass the client name as the second argument
+      const success = await signContractByClient(contract.id, client?.name || "Cliente");
       if (success) {
         setSignSuccess(true);
         toast.success("Contrato firmado correctamente");

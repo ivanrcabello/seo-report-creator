@@ -14,6 +14,7 @@ interface ContractDetailLayoutProps {
   onRefresh?: () => void;
 }
 
+// Update ContractActionsProps to include onRefresh
 interface ContractActionsProps {
   contractId: string;
   onGeneratePdf: () => Promise<void>;

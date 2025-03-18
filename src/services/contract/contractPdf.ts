@@ -1,88 +1,82 @@
 
 import { SeoContract } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 
-// Generate a PDF from a contract
+// Generate PDF from contract data
 export async function generateContractPDF(contract: SeoContract): Promise<Blob> {
   try {
+    // This is a placeholder implementation
+    // In a real application, you would use a PDF generation library
+    // like jsPDF or pdfmake to create the PDF content
+    
     console.log("Generating PDF for contract:", contract.id);
-
-    // This is a placeholder implementation - in a real app, you would
-    // use a PDF generation library like jsPDF or pdfmake
-    // For now, we're just creating a simple text blob
-    const contractText = `
-    CONTRATO DE SERVICIOS SEO
     
-    Título: ${contract.title}
-    Cliente: ${contract.content.clientInfo.name || 'Cliente'}
-    Profesional: ${contract.content.professionalInfo.name || 'Profesional'}
-    
-    Fecha de inicio: ${new Date(contract.startDate).toLocaleDateString()}
-    ${contract.endDate ? `Fecha de finalización: ${new Date(contract.endDate).toLocaleDateString()}` : ''}
-    
-    Secciones:
-    ${contract.content.sections.map(section => `
-    ${section.title}
-    ${section.content}
-    `).join('\n')}
-    
-    Honorarios:
-    - Fase inicial: ${contract.phase1Fee}€
-    - Cuota mensual: ${contract.monthlyFee}€
-    
-    Firmado por el cliente: ${contract.signedByClient ? 'Sí' : 'No'}
-    Firmado por el profesional: ${contract.signedByProfessional ? 'Sí' : 'No'}
+    // Create a simple text blob for demonstration
+    const content = `
+      CONTRATO DE SERVICIOS SEO
+      
+      Título: ${contract.title}
+      Fecha Inicio: ${contract.startDate}
+      ${contract.endDate ? `Fecha Fin: ${contract.endDate}` : ''}
+      
+      PARTES:
+      
+      Cliente: ${contract.content.clientInfo.name}
+      ${contract.content.clientInfo.company ? `Empresa: ${contract.content.clientInfo.company}` : ''}
+      ${contract.content.clientInfo.address ? `Dirección: ${contract.content.clientInfo.address}` : ''}
+      ${contract.content.clientInfo.taxId ? `NIF/CIF: ${contract.content.clientInfo.taxId}` : ''}
+      
+      Profesional: ${contract.content.professionalInfo.name}
+      Empresa: ${contract.content.professionalInfo.company}
+      Dirección: ${contract.content.professionalInfo.address}
+      NIF/CIF: ${contract.content.professionalInfo.taxId}
+      
+      CONDICIONES ECONÓMICAS:
+      
+      Pago inicial: ${contract.phase1Fee.toFixed(2)} €
+      Cuota mensual: ${contract.monthlyFee.toFixed(2)} €
+      
+      SECCIONES DEL CONTRATO:
+      
+      ${contract.content.sections.map((section, index) => `
+      ${index + 1}. ${section.title}
+      ${section.content}
+      `).join('\n')}
     `;
     
-    // Create a blob from the text
-    const pdfBlob = new Blob([contractText], { type: 'application/pdf' });
-    
-    return pdfBlob;
+    // Convert text to blob
+    const blob = new Blob([content], { type: 'application/pdf' });
+    return blob;
   } catch (error) {
     console.error("Error generating contract PDF:", error);
     throw new Error("Failed to generate contract PDF");
   }
 }
 
-// Save the PDF to Supabase storage and update the contract record
+// Save contract PDF to storage
 export async function saveContractPDF(contractId: string, pdfBlob: Blob): Promise<string | null> {
   try {
-    // Generate a unique filename
-    const filename = `contract_${contractId}_${uuidv4()}.pdf`;
-    const filePath = `contracts/${filename}`;
+    const fileName = `contract_${contractId}_${Date.now()}.pdf`;
     
-    // For this implementation, we'll skip the actual file upload since 
-    // we don't have real PDF generation and storage set up
-    // In a real implementation, you would upload to Supabase Storage:
-    /*
-    const { data, error } = await supabase.storage
-      .from('contracts')
-      .upload(filePath, pdfBlob);
-      
-    if (error) throw error;
+    // In a real application, you would upload the file to Supabase Storage
+    // For demonstration purposes, we'll create a dummy URL
     
-    // Get the public URL
-    const { publicURL } = supabase.storage
-      .from('contracts')
-      .getPublicUrl(filePath);
-    */
-    
-    // Simulate a public URL for now
-    const simulatedPublicUrl = `https://example.com/contracts/${filename}`;
+    console.log("Saving PDF for contract:", contractId);
     
     // Update the contract record with the PDF URL
+    const pdfUrl = `https://example.com/contracts/${fileName}`;
+    
     const { error } = await supabase
-      .from('seo_contracts')
-      .update({ pdf_url: simulatedPublicUrl })
-      .eq('id', contractId);
+      .from("seo_contracts")
+      .update({ pdf_url: pdfUrl })
+      .eq("id", contractId);
     
     if (error) {
       console.error("Error updating contract with PDF URL:", error);
       return null;
     }
     
-    return simulatedPublicUrl;
+    return pdfUrl;
   } catch (error) {
     console.error("Error saving contract PDF:", error);
     return null;

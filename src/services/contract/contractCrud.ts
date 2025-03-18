@@ -22,7 +22,7 @@ export async function createContract(contractData: Omit<SeoContract, "id" | "cre
       phase1_fee: contractData.phase1Fee,
       monthly_fee: contractData.monthlyFee,
       status: contractData.status || 'draft',
-      content: contractData.content,
+      content: JSON.stringify(contractData.content), // Convert to JSON string for Supabase
       signed_by_client: contractData.signedByClient || false,
       signed_by_professional: contractData.signedByProfessional || false
     };
@@ -61,7 +61,7 @@ export async function updateContract(contract: SeoContract): Promise<SeoContract
       phase1_fee: contract.phase1Fee,
       monthly_fee: contract.monthlyFee,
       status: contract.status,
-      content: contract.content,
+      content: JSON.stringify(contract.content), // Convert to JSON string for Supabase
       signed_by_client: contract.signedByClient,
       signed_by_professional: contract.signedByProfessional,
       pdf_url: contract.pdfUrl,

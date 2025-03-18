@@ -1,121 +1,36 @@
 
-import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useTicket } from "@/hooks/useTickets";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent } from "@/components/ui/card";
-import { TicketHeader } from "./TicketHeader";
-import { TicketMessageThread } from "./TicketMessageThread";
-import { TicketReplyForm } from "./TicketReplyForm";
-import { TicketLoadingState } from "./TicketLoadingState";
-import { TicketErrorState } from "./TicketErrorState";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useParams } from 'react-router-dom';
+import logger from "@/services/advancedLogService";
 
-export function TicketDetailView() {
-  console.log("[TicketDetailView] Component rendered");
+// Logger específico para TicketDetailView
+const ticketDetailViewLogger = logger.getLogger('TicketDetailView');
+
+export const TicketDetailView = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
-  console.log("[TicketDetailView] Ticket ID from params:", ticketId);
-  
-  const { user } = useAuth();
-  console.log("[TicketDetailView] Current user:", user?.id, user?.role);
-  
-  const [newMessage, setNewMessage] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  const {
-    ticket,
-    messages,
-    isLoading,
-    error,
-    reply,
-    updateStatus,
-    isReplying,
-    isUpdatingStatus,
-    refetch
-  } = useTicket(ticketId || "");
 
-  // Scroll to bottom of messages when new ones arrive
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
-
-  // Refetch data every 30 seconds to check for new messages
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [refetch]);
-
-  const handleSendMessage = async () => {
-    if (!user?.id || !newMessage.trim()) return;
-    
-    console.log("[TicketDetailView] Sending message from user:", user.id);
-    try {
-      await reply({
-        senderId: user.id,
-        message: newMessage.trim()
-      });
-      setNewMessage("");
-    } catch (error) {
-      console.error("[TicketDetailView] Error sending message:", error);
-    }
-  };
-
-  // Create a wrapper function that returns a Promise
-  const handleStatusChange = async (status: 'open' | 'in_progress' | 'resolved') => {
-    console.log("[TicketDetailView] Changing status to:", status);
-    return new Promise<void>((resolve, reject) => {
-      try {
-        updateStatus(status);
-        resolve();
-      } catch (error) {
-        console.error("[TicketDetailView] Error changing status:", error);
-        reject(error);
-      }
-    });
-  };
-
-  if (isLoading) {
-    console.log("[TicketDetailView] Loading state");
-    return <TicketLoadingState />;
-  }
-
-  if (error || !ticket) {
-    console.error("[TicketDetailView] Error or no ticket:", error);
-    return <TicketErrorState error={error} />;
-  }
-
-  console.log("[TicketDetailView] Rendering ticket:", ticket.id, ticket.subject);
-  console.log("[TicketDetailView] Messages count:", messages.length);
+  // Log that we're rendering this component
+  ticketDetailViewLogger.info("Rendering ticket detail view", { ticketId });
 
   return (
-    <Card className="max-w-4xl mx-auto mt-8">
-      <TicketHeader 
-        ticket={ticket} 
-        userRole={user?.role} 
-        onStatusChange={handleStatusChange}
-        isUpdatingStatus={isUpdatingStatus}
-      />
-      <CardContent>
-        <TicketMessageThread 
-          ticket={ticket} 
-          messages={messages} 
-          currentUserId={user?.id}
-          messagesEndRef={messagesEndRef}
-        />
-        
-        <TicketReplyForm
-          ticketStatus={ticket.status}
-          newMessage={newMessage}
-          setNewMessage={setNewMessage}
-          onSendMessage={handleSendMessage}
-          isReplying={isReplying}
-          userRole={user?.role}
-        />
-      </CardContent>
-    </Card>
+    <div className="container mx-auto py-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Detalle del Ticket #{ticketId}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Mostrando información del ticket {ticketId}
+          </p>
+          {/* Placeholder para contenido real del ticket */}
+          <div className="mt-4 p-4 bg-gray-100 rounded-md">
+            <p>Los detalles completos del ticket se implementarán próximamente.</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};
+
+export default TicketDetailView;

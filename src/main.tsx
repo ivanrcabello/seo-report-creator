@@ -27,27 +27,42 @@ function renderErrorUI(message: string) {
   `;
 }
 
+// Si la aplicación ya ha intentado renderizarse y ha fallado, mostrar un mensaje
+let hasRenderAttempted = false;
+
 // Capturar errores no controlados
 window.addEventListener('error', (event) => {
   const errorMessage = `Uncaught global error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`;
-  globalLogger.error(errorMessage, {
-    error: event.error
-  });
+  console.error(errorMessage, event.error);
   
-  // Si la aplicación aún no se ha renderizado, mostrar UI de error
-  if (!document.getElementById('root')?.hasChildNodes()) {
+  try {
+    globalLogger.error(errorMessage, {
+      error: event.error
+    });
+  } catch (e) {
+    console.error("Error logging to globalLogger:", e);
+  }
+  
+  // Si la aplicación aún no se ha renderizado o ha fallado, mostrar UI de error
+  if (!document.getElementById('root')?.hasChildNodes() || hasRenderAttempted) {
     renderErrorUI(errorMessage);
   }
 });
 
 window.addEventListener('unhandledrejection', (event) => {
   const errorMessage = `Unhandled promise rejection: ${event.reason}`;
-  globalLogger.error(errorMessage, {
-    reason: event.reason
-  });
+  console.error(errorMessage, event.reason);
   
-  // Si la aplicación aún no se ha renderizado, mostrar UI de error
-  if (!document.getElementById('root')?.hasChildNodes()) {
+  try {
+    globalLogger.error(errorMessage, {
+      reason: event.reason
+    });
+  } catch (e) {
+    console.error("Error logging to globalLogger:", e);
+  }
+  
+  // Si la aplicación aún no se ha renderizado o ha fallado, mostrar UI de error
+  if (!document.getElementById('root')?.hasChildNodes() || hasRenderAttempted) {
     renderErrorUI(errorMessage);
   }
 });
@@ -58,18 +73,40 @@ try {
     throw new Error("Root element not found");
   }
 
-  globalLogger.info("Application starting");
+  console.info("Application starting");
+  try {
+    globalLogger.info("Application starting");
+  } catch (logError) {
+    console.error("Failed to log application start:", logError);
+  }
   
   // Asegurar que cualquier error aquí sea capturado
   try {
+    hasRenderAttempted = true;
     createRoot(rootElement).render(<App />);
-    globalLogger.info("Application rendered successfully");
+    console.info("Application rendered successfully");
+    try {
+      globalLogger.info("Application rendered successfully");
+    } catch (logError) {
+      console.error("Failed to log successful render:", logError);
+    }
   } catch (renderError) {
-    globalLogger.error("React render failed", { error: renderError });
+    console.error("React render failed", renderError);
+    try {
+      globalLogger.error("React render failed", { error: renderError });
+    } catch (logError) {
+      console.error("Failed to log render error:", logError);
+    }
     renderErrorUI(`Error al renderizar la aplicación: ${renderError instanceof Error ? renderError.message : String(renderError)}`);
   }
 } catch (error) {
-  globalLogger.error("Failed to initialize application", { error });
+  console.error("Failed to initialize application", error);
+  
+  try {
+    globalLogger.error("Failed to initialize application", { error });
+  } catch (logError) {
+    console.error("Failed to log initialization error:", logError);
+  }
   
   // Añadir fallback UI para errores críticos
   renderErrorUI(`Error crítico de inicialización: ${error instanceof Error ? error.message : String(error)}`);

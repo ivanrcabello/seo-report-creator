@@ -46,20 +46,8 @@ class SupabaseTransport extends Transport {
         console.error('Failed to get user session for logging:', err);
       }
 
-      // Only attempt to insert log if the application_logs table exists
+      // Only attempt to insert log if we believe we're authenticated and able to use Supabase
       try {
-        // Try to verify if the table exists first
-        const { error: tableCheckError } = await supabase
-          .from('application_logs')
-          .select('id')
-          .limit(1);
-        
-        // If table doesn't exist or we can't access it, log to console only
-        if (tableCheckError) {
-          console.warn('Unable to access application_logs table, logging to console only:', tableCheckError.message);
-          return callback();
-        }
-        
         const { error } = await supabase
           .from('application_logs')
           .insert({
@@ -73,15 +61,16 @@ class SupabaseTransport extends Transport {
           });
 
         if (error) {
+          // Log to console but don't throw - this shouldn't break the app
           console.error('Error saving log to Supabase:', error);
         }
       } catch (insertError) {
         console.error('Exception in Supabase log insert:', insertError);
       }
-
-      callback();
     } catch (error) {
       console.error('Error in SupabaseTransport:', error);
+    } finally {
+      // Always call callback to prevent blocking
       callback();
     }
   }
@@ -119,8 +108,9 @@ const createLogger = () => {
       })
     );
     
-    // Enable Supabase logging - now with additional safety
-    const enableSupabaseLogging = true;
+    // Disable Supabase logging during initial application load to prevent startup failures
+    // TEMPORARY CHANGE: Only enable console logging until we confirm the app loads properly
+    const enableSupabaseLogging = false;
     
     if (enableSupabaseLogging) {
       try {
@@ -174,7 +164,12 @@ class Logger {
         ...context
       });
     } catch (e) {
+      // If winston logging fails, fall back to console
       console.error(`Failed to log ${level} message:`, message, e);
+      const consoleMethod = level === 'error' ? console.error : 
+                            level === 'warn' ? console.warn : 
+                            level === 'info' ? console.info : console.debug;
+      consoleMethod(`[${this.component}] ${message}`, context);
     }
   }
 

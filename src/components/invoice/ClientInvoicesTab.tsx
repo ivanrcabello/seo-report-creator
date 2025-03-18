@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Invoice } from "@/types/invoice";
 import { ClientInvoices } from "@/components/ClientInvoices";
-import { getClientInvoices } from "@/services/invoiceCrud";
+import { getClientInvoices } from "@/services/invoice/invoiceCrud";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth";

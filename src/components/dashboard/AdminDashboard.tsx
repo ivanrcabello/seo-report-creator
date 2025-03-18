@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLocation } from "react-router-dom";
 
 // Import our component files
 import { OverviewTab } from './tabs/OverviewTab';
@@ -16,6 +17,10 @@ import { ContractsTab } from './tabs/ContractsTab';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { DashboardError } from './DashboardError';
 import { TicketsTab } from './tabs/TicketsTab';
+
+interface AdminDashboardProps {
+  activeTab?: string;
+}
 
 const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
   if (!Array.isArray(clients)) {
@@ -33,10 +38,24 @@ const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
   }));
 };
 
-export function AdminDashboard() {
+export function AdminDashboard({ activeTab }: AdminDashboardProps) {
+  const location = useLocation();
   const [clientSummaries, setClientSummaries] = useState<ClientSummary[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  
+  // Determine the active tab from props or URL
+  const queryParams = new URLSearchParams(location.search);
+  const tabFromUrl = queryParams.get("tab");
+  const [currentTab, setCurrentTab] = useState(activeTab || tabFromUrl || "overview");
+  
+  useEffect(() => {
+    // Update tab when URL params or activeTab prop changes
+    if (tabFromUrl) {
+      setCurrentTab(tabFromUrl);
+    } else if (activeTab) {
+      setCurrentTab(activeTab);
+    }
+  }, [tabFromUrl, activeTab]);
   
   const { 
     data: clients, 
@@ -68,6 +87,10 @@ export function AdminDashboard() {
   const handleRefetch = () => {
     toast.info("Actualizando datos de clientes...");
     refetch();
+  };
+
+  const handleTabChange = (value: string) => {
+    setCurrentTab(value);
   };
 
   // Calculate active clients count
@@ -121,7 +144,7 @@ export function AdminDashboard() {
         </div>
       </div>
       
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="grid grid-cols-5 w-[600px]">
           <TabsTrigger value="overview">Visión General</TabsTrigger>
           <TabsTrigger value="clients">Clientes</TabsTrigger>

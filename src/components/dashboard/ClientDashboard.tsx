@@ -11,10 +11,35 @@ import { DocumentCenter } from "./DocumentCenter";
 import { SupportTickets } from "./SupportTickets";
 import { UserProfile } from "./UserProfile";
 import { useAuth } from "@/contexts/auth";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
-export function ClientDashboard() {
+interface ClientDashboardProps {
+  activeTab?: string;
+}
+
+export function ClientDashboard({ activeTab }: ClientDashboardProps) {
   const { user } = useAuth();
   const { metrics, isLoading, companyName } = useDashboardData();
+  const location = useLocation();
+  const [currentTab, setCurrentTab] = useState(activeTab || "dashboard");
+  
+  // Parse the tab from URL query parameters
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const tabFromUrl = queryParams.get("tab");
+    if (tabFromUrl) {
+      setCurrentTab(tabFromUrl);
+    } else if (activeTab) {
+      setCurrentTab(activeTab);
+    } else {
+      setCurrentTab("dashboard");
+    }
+  }, [location.search, activeTab]);
+
+  const handleTabChange = (tab: string) => {
+    setCurrentTab(tab);
+  };
 
   if (isLoading) {
     return <div className="py-8 text-center">Cargando dashboard...</div>;
@@ -27,8 +52,8 @@ export function ClientDashboard() {
         <p className="text-gray-500">Resumen de rendimiento SEO y actividades</p>
       </div>
 
-      <Tabs defaultValue="dashboard">
-        <DashboardTabs />
+      <Tabs value={currentTab} onValueChange={handleTabChange}>
+        <DashboardTabs defaultValue={currentTab} onValueChange={handleTabChange} />
 
         <TabsContent value="dashboard">
           <DashboardSummary metrics={metrics} />

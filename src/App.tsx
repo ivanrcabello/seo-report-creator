@@ -19,6 +19,7 @@ const ReportDetail = lazy(() => import("@/pages/ReportDetail"));
 const TicketDetail = lazy(() => import("@/pages/TicketDetail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Settings = lazy(() => import("@/pages/Settings"));
+const Packages = lazy(() => import("@/pages/Packages"));
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -34,7 +35,7 @@ const PageLoader = () => (
 );
 
 function App() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, userRole } = useAuth();
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
 
   useEffect(() => {
@@ -58,19 +59,13 @@ function App() {
           <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
           <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
           
+          {/* Protected routes - both admin and client can access but see different views */}
           <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout>
-              <Outlet />
-            </AppLayout>}>
+            <Route element={<AppLayout><Outlet /></AppLayout>}>
+              {/* Dashboard routes */}
               <Route path="/dashboard" element={<Dashboard />} />
               
-              {/* Client routes */}
-              <Route path="/clients" element={<Clients />} />
-              <Route path="/clients/new" element={<Clients />} />
-              <Route path="/clients/edit/:id" element={<Clients />} />
-              <Route path="/clients/:clientId" element={<ClientDetail />} />
-              
-              {/* Report routes */}
+              {/* Reports routes */}
               <Route path="/reports" element={<Dashboard activeTab="reports" />} />
               <Route path="/reports/:reportId" element={<ReportDetail />} />
               
@@ -81,7 +76,7 @@ function App() {
               {/* Settings route */}
               <Route path="/settings" element={<Settings />} />
               
-              {/* Ticket routes */}
+              {/* Support tickets routes */}
               <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />
               <Route path="/tickets/:ticketId" element={<TicketDetail />} />
               
@@ -90,6 +85,23 @@ function App() {
               
               {/* Proposal routes */}
               <Route path="/proposals" element={<Dashboard activeTab="proposals" />} />
+              
+              {/* Packages route */}
+              <Route path="/packages" element={<Packages />} />
+              
+              {/* Admin only routes */}
+              <Route path="/clients" element={
+                userRole === "admin" ? <Clients /> : <Navigate to="/dashboard" replace />
+              } />
+              <Route path="/clients/new" element={
+                userRole === "admin" ? <ClientForm /> : <Navigate to="/dashboard" replace />
+              } />
+              <Route path="/clients/edit/:id" element={
+                userRole === "admin" ? <ClientForm /> : <Navigate to="/dashboard" replace />
+              } />
+              <Route path="/clients/:clientId" element={
+                userRole === "admin" ? <ClientDetail /> : <Navigate to="/dashboard" replace />
+              } />
             </Route>
           </Route>
           

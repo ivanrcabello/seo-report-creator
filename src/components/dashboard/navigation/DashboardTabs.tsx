@@ -1,7 +1,7 @@
 
 import { ReactNode } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   BarChart2, 
   TrendingUp, 
@@ -12,12 +12,14 @@ import {
   FileSignature, 
   MailOpen 
 } from "lucide-react";
+import { useAuth } from "@/contexts/auth";
 
 export interface DashboardTab {
   value: string;
   label: string;
   icon: ReactNode;
   path: string; // Add path for correct navigation
+  adminOnly?: boolean;
 }
 
 export const dashboardTabs: DashboardTab[] = [
@@ -26,6 +28,13 @@ export const dashboardTabs: DashboardTab[] = [
     label: "Dashboard",
     icon: <BarChart2 className="h-4 w-4" />,
     path: "/dashboard"
+  },
+  {
+    value: "clients",
+    label: "Clientes",
+    icon: <User className="h-4 w-4" />,
+    path: "/clients",
+    adminOnly: true
   },
   {
     value: "reports",
@@ -77,19 +86,41 @@ interface DashboardTabsProps {
 }
 
 export function DashboardTabs({ defaultValue = "dashboard", onValueChange }: DashboardTabsProps) {
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  // Filter tabs based on user role
+  const filteredTabs = dashboardTabs.filter(tab => 
+    !tab.adminOnly || (tab.adminOnly && isAdmin)
+  );
+
+  const handleTabClick = (tab: DashboardTab) => {
+    if (onValueChange) {
+      onValueChange(tab.value);
+    }
+    
+    // For tab navigation, use query parameters
+    if (tab.path === "/dashboard") {
+      // Special case for dashboard itself
+      navigate(tab.path);
+    } else {
+      // For other tabs, navigate to dashboard with tab query param
+      navigate(`/dashboard?tab=${tab.value}`);
+    }
+  };
+
   return (
     <TabsList className="mb-8">
-      {dashboardTabs.map((tab) => (
-        <Link to={tab.path} key={tab.value}>
-          <TabsTrigger 
-            value={tab.value} 
-            className="flex items-center gap-1"
-            onClick={() => onValueChange && onValueChange(tab.value)}
-          >
-            {tab.icon}
-            {tab.label}
-          </TabsTrigger>
-        </Link>
+      {filteredTabs.map((tab) => (
+        <TabsTrigger 
+          key={tab.value}
+          value={tab.value} 
+          className="flex items-center gap-1"
+          onClick={() => handleTabClick(tab)}
+        >
+          {tab.icon}
+          {tab.label}
+        </TabsTrigger>
       ))}
     </TabsList>
   );

@@ -32,7 +32,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log("Setting up user:", currentSession.user.id);
         const role = await getUserRole();
         console.log("Setting user role:", role);
-        // Fix TypeScript error by properly converting string to UserRole
+        // Fix: Convert string to UserRole type properly
         setUserRole(role as UserRole);
       } else {
         setUser(null);

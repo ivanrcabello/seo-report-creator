@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Invoice } from "@/types/invoice";
 import { ClientInvoices } from "@/components/ClientInvoices";
-import { getClientInvoices } from "@/services/invoiceService";
+import { getClientInvoices } from "@/services/invoiceCrud";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 interface ClientInvoicesTabProps {
   clientId: string;
@@ -55,12 +55,15 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
     navigate(`/invoices/new?clientId=${clientId}`);
   };
 
+  // Only show add invoice button for admins
+  const onAddInvoice = isAdmin ? handleAddInvoice : undefined;
+
   // Custom back navigation for client view
   const handleViewAllInvoices = () => {
     // SECURITY FIX: Always navigate to the correct user's invoices
     if (!isAdmin && user?.id) {
       // If client, navigate to their dashboard with invoices tab selected
-      navigate(`/clients/${user.id}?tab=invoices`);
+      navigate(`/dashboard?tab=invoices`);
     } else {
       // If admin, use the standard path
       navigate(`/clients/${clientId}?tab=invoices`);
@@ -81,7 +84,7 @@ export const ClientInvoicesTab = ({ clientId, clientName }: ClientInvoicesTabPro
       invoices={invoices} 
       clientName={clientName}
       clientId={clientId} 
-      onAddInvoice={isAdmin ? handleAddInvoice : undefined}
+      onAddInvoice={onAddInvoice}
       onViewAll={handleViewAllInvoices}
     />
   );

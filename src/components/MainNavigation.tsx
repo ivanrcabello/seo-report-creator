@@ -17,23 +17,20 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth";
 
 const MainNavigation = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAdmin } = useAuth();
 
-  const links = [
+  // Common links for both admin and client
+  const commonLinks = [
     { 
       href: "/dashboard", 
       label: "Dashboard", 
       icon: <Home className="h-5 w-5" />,
       active: location.pathname === "/dashboard"
-    },
-    { 
-      href: "/clients", 
-      label: "Clientes", 
-      icon: <Users className="h-5 w-5" />,
-      active: location.pathname.startsWith("/clients")
     },
     { 
       href: "/reports", 
@@ -46,12 +43,6 @@ const MainNavigation = () => {
       label: "Contratos", 
       icon: <FileSignature className="h-5 w-5" />,
       active: location.pathname.startsWith("/contracts")
-    },
-    { 
-      href: "/packages", 
-      label: "Paquetes", 
-      icon: <Package className="h-5 w-5" />,
-      active: location.pathname.startsWith("/packages")
     },
     { 
       href: "/proposals", 
@@ -78,6 +69,27 @@ const MainNavigation = () => {
       active: location.pathname.startsWith("/settings")
     },
   ];
+
+  // Admin-only links
+  const adminLinks = [
+    { 
+      href: "/clients", 
+      label: "Clientes", 
+      icon: <Users className="h-5 w-5" />,
+      active: location.pathname.startsWith("/clients")
+    },
+    { 
+      href: "/packages", 
+      label: "Paquetes", 
+      icon: <Package className="h-5 w-5" />,
+      active: location.pathname.startsWith("/packages")
+    },
+  ];
+
+  // Combine links based on role
+  const links = isAdmin 
+    ? [...commonLinks.slice(0, 1), ...adminLinks, ...commonLinks.slice(1)]
+    : commonLinks;
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b">

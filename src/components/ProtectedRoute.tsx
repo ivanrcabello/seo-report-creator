@@ -1,5 +1,5 @@
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useState, useEffect } from "react";
 import { AlertCircle } from "lucide-react";
@@ -14,6 +14,7 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { user, userRole, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const location = useLocation();
 
   useEffect(() => {
     // Reset auth error if user is loaded successfully
@@ -36,7 +37,31 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
 
   // If not authenticated, redirect to login
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  // Check for client-only routes and admin-only paths
+  if (userRole === "client") {
+    // Check if the path is admin-only
+    const adminOnlyPaths = ["/clients", "/clients/new", "/clients/edit"];
+    if (adminOnlyPaths.some(path => location.pathname.startsWith(path))) {
+      return (
+        <div className="flex h-screen items-center justify-center">
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Acceso denegado</AlertTitle>
+            <AlertDescription>
+              No tienes permisos para acceder a esta sección.
+              <div className="mt-4">
+                <Button variant="outline" onClick={() => window.location.href = "/dashboard"}>
+                  Volver al dashboard
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
+      );
+    }
   }
 
   // If role restrictions are specified and user doesn't have an allowed role

@@ -3,6 +3,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { SeoContract } from "@/types/client";
 import { mapContractFromDB } from "./contractMappers";
 
+// Fetch a shared contract using its token
+export function getContractByShareToken(token: string): Promise<SeoContract | null> {
+  return _getContractByShareToken(token);
+}
+
+// Generate and save a share token for a contract
+export function generateContractShareToken(contractId: string): Promise<string | null> {
+  return _generateContractShareToken(contractId);
+}
+
+// Get the share URL for a contract
+export function getContractShareUrl(token: string): string {
+  return _getContractShareUrl(token);
+}
+
+// Generate and get the share URL for a contract
+export function generateShareableContractUrl(contractId: string): Promise<string | null> {
+  return _generateShareableContractUrl(contractId);
+}
+
+// Share a contract (similar to report sharing)
+export function shareContract(contractId: string): Promise<{ url: string } | null> {
+  return _shareContract(contractId);
+}
+
+// Sign a contract by client
+export function signContractByClient(contractId: string): Promise<boolean> {
+  return _signContractByClient(contractId);
+}
+
 // Export the contractSharing object
 export const contractSharing = {
   getContractByShareToken,
@@ -13,8 +43,10 @@ export const contractSharing = {
   signContractByClient
 };
 
+// Actual implementation functions with different names to avoid redeclaration errors
+
 // Fetch a shared contract using its token
-export const getContractByShareToken = async (token: string): Promise<SeoContract | null> => {
+async function _getContractByShareToken(token: string): Promise<SeoContract | null> {
   try {
     // Query for contracts with the provided share token
     const { data, error } = await supabase
@@ -39,10 +71,10 @@ export const getContractByShareToken = async (token: string): Promise<SeoContrac
     console.error("Error in getContractByShareToken:", error);
     return null;
   }
-};
+}
 
 // Generate and save a share token for a contract
-export const generateContractShareToken = async (contractId: string): Promise<string | null> => {
+async function _generateContractShareToken(contractId: string): Promise<string | null> {
   try {
     // Generate a random token
     const token = Math.random().toString(36).substring(2, 15) + 
@@ -67,41 +99,41 @@ export const generateContractShareToken = async (contractId: string): Promise<st
     console.error("Error in generateContractShareToken:", error);
     return null;
   }
-};
+}
 
 // Get the share URL for a contract
-export const getContractShareUrl = (token: string): string => {
+function _getContractShareUrl(token: string): string {
   const baseUrl = window.location.origin;
   return `${baseUrl}/share/contract/${token}`;
-};
+}
 
 // Generate and get the share URL for a contract
-export const generateShareableContractUrl = async (contractId: string): Promise<string | null> => {
-  const token = await generateContractShareToken(contractId);
+async function _generateShareableContractUrl(contractId: string): Promise<string | null> {
+  const token = await _generateContractShareToken(contractId);
   if (!token) return null;
   
-  return getContractShareUrl(token);
-};
+  return _getContractShareUrl(token);
+}
 
 // Share a contract (similar to report sharing)
-export const shareContract = async (contractId: string): Promise<{ url: string } | null> => {
+async function _shareContract(contractId: string): Promise<{ url: string } | null> {
   try {
-    const token = await generateContractShareToken(contractId);
+    const token = await _generateContractShareToken(contractId);
     
     if (!token) {
       console.error("Failed to generate share token for contract:", contractId);
       return null;
     }
     
-    return { url: getContractShareUrl(token) };
+    return { url: _getContractShareUrl(token) };
   } catch (error) {
     console.error("Error sharing contract:", error);
     return null;
   }
-};
+}
 
 // Sign a contract by client
-export const signContractByClient = async (contractId: string): Promise<boolean> => {
+async function _signContractByClient(contractId: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from("seo_contracts")
@@ -121,4 +153,4 @@ export const signContractByClient = async (contractId: string): Promise<boolean>
     console.error("Error in signContractByClient:", error);
     return false;
   }
-};
+}

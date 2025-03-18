@@ -14,6 +14,17 @@ interface ContractDetailLayoutProps {
   onRefresh?: () => void;
 }
 
+interface ContractContentProps {
+  contract: SeoContract;
+}
+
+interface ContractActionsProps {
+  contractId: string;
+  status?: string;
+  onGeneratePdf: () => Promise<void>;
+  onRefresh?: () => void;
+}
+
 export const ContractDetailLayout = ({ 
   contract, 
   client,
@@ -41,7 +52,7 @@ export const ContractDetailLayout = ({
           <ContractHeader contract={contract} client={client} />
         </CardHeader>
         <CardContent>
-          <ContractContent contract={contract} client={client} />
+          <ContractContent contract={contract} />
         </CardContent>
       </Card>
         
@@ -51,7 +62,8 @@ export const ContractDetailLayout = ({
         </CardHeader>
         <CardContent>
           <ContractActions 
-            contract={contract} 
+            contractId={contract.id}
+            status={contract.status}
             onGeneratePdf={handleGeneratePDF}
             onRefresh={onRefresh}
           />

@@ -1,21 +1,23 @@
 
 // Export the contract CRUD functions
-export { createContract, updateContract, getClientContracts } from "./contractCrud";
+export { 
+  createContract, 
+  updateContract, 
+  getClientContracts,
+  getContract, 
+  deleteContract,
+  getContracts
+} from "./contractCrud";
 
 // Export the contract PDF generation functions
 export { generateContractPDF, saveContractPDF } from "./contractPdf";
 
-// Export the contract sharing functions (to be implemented)
-// export { shareContract, getSharedContractLink } from "./contractSharing";
+// Export the contract sharing functions
+export { 
+  getContractByShareToken, 
+  signContractByClient, 
+  createContractShareToken 
+} from "./contractSharing";
 
-// Add other necessary exports below
-// For compatibility with existing code
-export const getContracts = async () => {
-  console.log("getContracts called - returning empty array for now");
-  return [];
-};
-
-export const deleteContract = async (id: string) => {
-  console.log("Deleting contract with ID:", id);
-  return true;
-};
+// Export contract sections utilities
+export { createDefaultContractSections, createEmptyContractSection } from "./contractSections";

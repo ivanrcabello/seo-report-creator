@@ -1,43 +1,51 @@
 
-// Define the ContractSection type
-export interface ContractSection {
-  title: string;
-  content: string;
-  order: number;
-}
+import { ContractSection } from "@/types/client";
 
-// Get default contract sections
-export const getDefaultContractSections = (): ContractSection[] => {
+/**
+ * Creates default contract sections with template content
+ */
+export function createDefaultContractSections(): ContractSection[] {
   return [
     {
-      title: "Objeto del contrato",
-      content: "El objeto del presente contrato es la prestación de servicios profesionales de SEO.",
-      order: 0
+      id: "intro",
+      title: "Introducción",
+      content: "Este contrato establece los términos y condiciones para la prestación de servicios SEO entre las partes."
     },
     {
-      title: "Duración del contrato",
-      content: "El presente contrato tendrá una duración inicial de 12 meses, renovable automáticamente.",
-      order: 1
+      id: "services",
+      title: "Servicios incluidos",
+      content: "- Optimización on-page\n- Creación de contenido\n- Análisis de palabras clave\n- Informes mensuales de rendimiento"
     },
     {
-      title: "Honorarios",
-      content: "Los honorarios se componen de una tarifa inicial y una cuota mensual.",
-      order: 2
+      id: "terms",
+      title: "Términos de servicio",
+      content: "El servicio se prestará por un periodo inicial especificado en este contrato, con posibilidad de renovación automática salvo notificación por escrito."
     },
     {
+      id: "payment",
       title: "Condiciones de pago",
-      content: "Los pagos se realizarán mediante transferencia bancaria en los primeros 5 días de cada mes.",
-      order: 3
+      content: "Se establece un pago inicial por la fase de implementación, seguido de pagos mensuales por el mantenimiento SEO."
+    },
+    {
+      id: "confidentiality",
+      title: "Confidencialidad",
+      content: "Ambas partes se comprometen a mantener la confidencialidad de toda la información compartida durante la prestación de los servicios."
+    },
+    {
+      id: "termination",
+      title: "Terminación",
+      content: "Cualquiera de las partes podrá rescindir este contrato con un preaviso de 30 días mediante notificación por escrito."
     }
   ];
-};
+}
 
-// Create default contract sections
-export const createDefaultContractSections = (): ContractSection[] => {
-  return getDefaultContractSections();
-};
-
-// Create a placeholder contractPdf service
-export const ContractSection = {
-  getDefaultSections: getDefaultContractSections
-};
+/**
+ * Creates an empty contract section
+ */
+export function createEmptyContractSection(): ContractSection {
+  return {
+    id: `section-${Date.now()}`,
+    title: "",
+    content: ""
+  };
+}

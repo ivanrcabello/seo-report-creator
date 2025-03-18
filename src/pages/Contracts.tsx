@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FilePlus, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Contracts = () => {
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const navigate = useNavigate();
   const [contracts, setContracts] = useState<SeoContract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +28,7 @@ const Contracts = () => {
     } catch (error) {
       console.error("Error fetching contracts:", error);
       setError("No se pudieron cargar los contratos");
-      toast({
+      uiToast({
         title: "Error",
         description: "No se pudieron cargar los contratos",
         variant: "destructive",
@@ -45,9 +46,11 @@ const Contracts = () => {
     navigate("/contracts/new");
   };
 
-  // Fixed type signature to match what ContractsList expects
+  // Fixed function to take a contract ID parameter, but make it optional to satisfy the interface
   const handleContractDeleted = async () => {
+    // Simply refresh the contracts list
     fetchContracts();
+    toast.success("Contrato eliminado correctamente");
   };
 
   return (

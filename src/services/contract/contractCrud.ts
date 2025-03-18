@@ -110,3 +110,43 @@ export async function getClientContracts(clientId: string): Promise<SeoContract[
     return [];
   }
 }
+
+// Get all contracts (for admin dashboard)
+export async function getContracts(): Promise<SeoContract[]> {
+  try {
+    const { data, error } = await supabase
+      .from("seo_contracts")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching contracts:", error);
+      return [];
+    }
+
+    return data.map(contract => mapContractFromDB(contract));
+  } catch (error) {
+    console.error("Error in getContracts:", error);
+    return [];
+  }
+}
+
+// Delete a contract
+export async function deleteContract(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("seo_contracts")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting contract:", error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in deleteContract:", error);
+    return false;
+  }
+}

@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "./context";
 import { UserRole } from "./types";
 import { 
-  fetchUserRole, 
+  getUserRole, 
   handleSignIn, 
   handleSignInWithGoogle, 
   handleSignUp,
@@ -30,9 +30,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (currentSession?.user) {
         setUser(currentSession.user);
         console.log("Setting up user:", currentSession.user.id);
-        const role = await fetchUserRole(currentSession.user.id);
+        const role = await getUserRole();
         console.log("Setting user role:", role);
-        setUserRole(role);
+        // Fix TypeScript error by properly converting string to UserRole
+        setUserRole(role as UserRole);
       } else {
         setUser(null);
         setUserRole(null);

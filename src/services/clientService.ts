@@ -11,7 +11,7 @@ const mapDbToClient = (data: any): Client => {
     email: data.email,
     phone: data.phone || undefined,
     company: data.company || undefined,
-    createdAt: data.created_at,
+    createdAt: data.created_at, // Ensure correct mapping from created_at to createdAt
     lastReport: data.last_report,
     notes: data.notes || [],
     documents: [],

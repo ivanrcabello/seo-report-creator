@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -10,7 +11,9 @@ import {
   Package,
   MailOpen,
   FileSpreadsheet,
-  Settings
+  Settings,
+  Ticket,
+  FileSignature
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -21,10 +24,10 @@ const MainNavigation = () => {
 
   const links = [
     { 
-      href: "/", 
-      label: "Inicio", 
+      href: "/dashboard", 
+      label: "Dashboard", 
       icon: <Home className="h-5 w-5" />,
-      active: location.pathname === "/"
+      active: location.pathname === "/dashboard"
     },
     { 
       href: "/clients", 
@@ -36,7 +39,13 @@ const MainNavigation = () => {
       href: "/reports", 
       label: "Informes", 
       icon: <FileText className="h-5 w-5" />,
-      active: location.pathname.startsWith("/reports") || location.pathname === "/report"
+      active: location.pathname.startsWith("/reports")
+    },
+    { 
+      href: "/contracts", 
+      label: "Contratos", 
+      icon: <FileSignature className="h-5 w-5" />,
+      active: location.pathname.startsWith("/contracts")
     },
     { 
       href: "/packages", 
@@ -57,6 +66,12 @@ const MainNavigation = () => {
       active: location.pathname.startsWith("/invoices")
     },
     { 
+      href: "/tickets", 
+      label: "Tickets", 
+      icon: <Ticket className="h-5 w-5" />,
+      active: location.pathname.startsWith("/tickets")
+    },
+    { 
       href: "/settings", 
       label: "Configuración", 
       icon: <Settings className="h-5 w-5" />,
@@ -69,7 +84,7 @@ const MainNavigation = () => {
       <div className="container mx-auto">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/dashboard" className="flex items-center gap-2">
               <BarChart className="h-6 w-6 text-purple-600" />
               <span className="text-xl font-bold">SEO Manager</span>
             </Link>

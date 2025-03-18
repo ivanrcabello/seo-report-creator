@@ -4,11 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import logger from "@/services/logService";
 
-// Crear un componente Spinner básico si no existe
-export const Spinner = ({ className }: { className?: string }) => (
-  <div className={`animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500 ${className}`} />
-);
-
 // Logger específico para ProtectedRoute
 const routeLogger = logger.getLogger('ProtectedRoute');
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { Client, SeoLocalReport, Proposal } from "@/types/client";
@@ -16,9 +15,9 @@ import { toast } from "sonner";
 import { getLocalSeoReports } from "@/services/localSeoService";
 import { ClientReports } from "@/components/ClientReports";
 import { getClientProposals } from "@/services/proposalService";
+import { TicketsTab } from "@/components/dashboard/tabs/TicketsTab";
 
 export default function ClientDetail() {
-  // Extract the client ID from the URL parameter
   const { clientId } = useParams<{ clientId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const id = clientId || "";
@@ -30,17 +29,14 @@ export default function ClientDetail() {
     return searchParams.get("tab") || "profile";
   });
   
-  // Local SEO states - kept for future references but not used in the main tabs anymore
   const [localSeoReports, setLocalSeoReports] = useState<SeoLocalReport[]>([]);
   const [currentLocalSeoReport, setCurrentLocalSeoReport] = useState<SeoLocalReport | null>(null);
   
-  // Proposals state
   const [proposals, setProposals] = useState<Proposal[]>([]);
   
   console.log("ClientDetail component loaded with id from useParams:", clientId);
   console.log("Using clientId:", id);
 
-  // Effect to handle URL tab parameter
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     if (tabParam) {
@@ -48,7 +44,6 @@ export default function ClientDetail() {
     }
   }, [searchParams]);
 
-  // Update the URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     searchParams.set("tab", value);
@@ -87,7 +82,6 @@ export default function ClientDetail() {
     fetchClient();
   }, [id]);
 
-  // Fetch proposals for the client
   useEffect(() => {
     if (id) {
       const fetchProposals = async () => {
@@ -170,6 +164,7 @@ export default function ClientDetail() {
           <TabsTrigger value="proposals">Propuestas</TabsTrigger>
           <TabsTrigger value="contracts">Contratos</TabsTrigger>
           <TabsTrigger value="invoices">Facturas</TabsTrigger>
+          <TabsTrigger value="tickets">Tickets</TabsTrigger>
           <TabsTrigger value="documents">Documentos</TabsTrigger>
         </TabsList>
         
@@ -210,6 +205,10 @@ export default function ClientDetail() {
           <PdfUploadTab 
             clientId={client.id}
           />
+        </TabsContent>
+        
+        <TabsContent value="tickets">
+          <TicketsTab clientId={id} />
         </TabsContent>
       </Tabs>
     </div>

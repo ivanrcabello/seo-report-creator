@@ -21,7 +21,8 @@ import {
   FileSpreadsheet,
   Settings,
   FileSignature,
-  LogOut
+  LogOut,
+  Ticket
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,6 @@ export function AppSidebar() {
   const location = useLocation();
   const { signOut, userRole, user } = useAuth();
   
-  // Menu items.
   const adminLinks = [
     { 
       href: "/dashboard", 
@@ -80,6 +80,12 @@ export function AppSidebar() {
       icon: <Settings className="h-5 w-5" />,
       active: location.pathname.startsWith("/settings")
     },
+    { 
+      href: "/tickets", 
+      label: "Tickets", 
+      icon: <Ticket className="h-5 w-5" />,
+      active: location.pathname.startsWith("/tickets")
+    },
   ];
   
   const clientLinks = [
@@ -88,10 +94,15 @@ export function AppSidebar() {
       label: "Dashboard", 
       icon: <Home className="h-5 w-5" />,
       active: location.pathname === "/dashboard"
+    },
+    { 
+      href: "/tickets", 
+      label: "Tickets", 
+      icon: <Ticket className="h-5 w-5" />,
+      active: location.pathname.startsWith("/tickets")
     }
   ];
-  
-  // Use appropriate links based on user role
+
   const links = userRole === "admin" ? adminLinks : clientLinks;
 
   return (

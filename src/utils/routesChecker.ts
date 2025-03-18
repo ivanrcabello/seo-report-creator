@@ -34,6 +34,8 @@ const routePatterns = [
   "/documents",
   "/packages",
   "/settings",
+  "/settings/api",
+  "/settings/templates",
   "/profile"
 ];
 
@@ -63,6 +65,8 @@ const routeAccessMap = {
   "/documents": ["admin", "client"],
   "/packages": ["admin"],
   "/settings": ["admin", "client"],
+  "/settings/api": ["admin"],
+  "/settings/templates": ["admin"],
   "/profile": ["admin", "client"]
 };
 

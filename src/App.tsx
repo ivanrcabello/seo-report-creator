@@ -20,8 +20,12 @@ const ReportDetail = lazy(() => import("@/pages/ReportDetail"));
 const TicketDetail = lazy(() => import("@/pages/TicketDetail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Settings = lazy(() => import("@/pages/Settings"));
+const ApiSettings = lazy(() => import("@/pages/ApiSettings"));
+const TemplateSettings = lazy(() => import("@/pages/TemplateSettings"));
 const Packages = lazy(() => import("@/pages/Packages"));
 const NewTicket = lazy(() => import("@/pages/NewTicket"));
+const Contracts = lazy(() => import("@/pages/Contracts"));
+const Proposals = lazy(() => import("@/pages/Proposals"));
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -66,19 +70,21 @@ function App() {
               {/* Reports routes */}
               <Route path="/reports" element={<Dashboard activeTab="reports" />} />
               <Route path="/reports/new" element={
-                userRole === "admin" ? <ReportDetail isNew={true} /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <ReportDetail isNew /> : <Navigate to="/dashboard" replace />
               } />
               <Route path="/reports/:reportId" element={<ReportDetail />} />
               
               {/* Invoice routes */}
               <Route path="/invoices" element={<Invoices />} />
               <Route path="/invoices/new" element={
-                userRole === "admin" ? <Invoices isNew={true} /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <Invoices isNew /> : <Navigate to="/dashboard" replace />
               } />
               <Route path="/invoices/:id" element={<Invoices />} />
               
-              {/* Settings route */}
+              {/* Settings routes */}
               <Route path="/settings" element={<Settings />} />
+              <Route path="/settings/api" element={<ApiSettings />} />
+              <Route path="/settings/templates" element={<TemplateSettings />} />
               
               {/* Support tickets routes */}
               <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />
@@ -88,13 +94,13 @@ function App() {
               {/* Contract routes */}
               <Route path="/contracts" element={<Dashboard activeTab="contracts" />} />
               <Route path="/contracts/new" element={
-                userRole === "admin" ? <Dashboard activeTab="contracts" newContract={true} /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <Dashboard activeTab="contracts" newContract /> : <Navigate to="/dashboard" replace />
               } />
               
               {/* Proposal routes */}
               <Route path="/proposals" element={<Dashboard activeTab="proposals" />} />
               <Route path="/proposals/new" element={
-                userRole === "admin" ? <Dashboard activeTab="proposals" newProposal={true} /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <Dashboard activeTab="proposals" newProposal /> : <Navigate to="/dashboard" replace />
               } />
               
               {/* Documents routes */}

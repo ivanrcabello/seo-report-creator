@@ -34,7 +34,7 @@ const Contracts = () => {
 
   useEffect(() => {
     fetchContracts();
-  }, [toast]);
+  }, []);
 
   const handleCreateContract = () => {
     navigate("/contracts/new");

@@ -9,11 +9,14 @@ import { toast } from "sonner";
 // Use lazy loading for the TicketsTab to improve performance
 const TicketsTab = lazy(() => import("@/components/dashboard/tabs/TicketsTab"));
 
-interface DashboardProps {
+export interface DashboardProps {
   activeTab?: string;
+  isNew?: boolean;
+  newContract?: boolean;
+  newProposal?: boolean;
 }
 
-export default function Dashboard({ activeTab }: DashboardProps) {
+export default function Dashboard({ activeTab, isNew, newContract, newProposal }: DashboardProps) {
   const { isAdmin, userRole, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -73,7 +76,7 @@ export default function Dashboard({ activeTab }: DashboardProps) {
     <div className="container mx-auto py-6">
       <Suspense fallback={<div>Cargando dashboard...</div>}>
         {isAdmin ? 
-          <AdminDashboard activeTab={currentTab} /> : 
+          <AdminDashboard activeTab={currentTab} newContract={newContract} newProposal={newProposal} /> : 
           <ClientDashboard activeTab={currentTab} />
         }
       </Suspense>

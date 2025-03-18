@@ -81,6 +81,7 @@ export default function Dashboard({ activeTab, isNew, newContract, newProposal }
             activeTab={currentTab} 
             newContract={newContract} 
             newProposal={newProposal} 
+            isNew={isNew}
           /> : 
           <ClientDashboard activeTab={currentTab} />
         }

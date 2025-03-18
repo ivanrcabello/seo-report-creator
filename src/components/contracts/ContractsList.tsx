@@ -1,316 +1,199 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { SeoContract } from "@/types/client";
-import { 
-  deleteContract, 
-  generateAndSaveContractPDF, 
-  signContract 
-} from "@/services/contract";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  FilePlus, 
-  MoreVertical, 
-  FileEdit, 
-  Trash2, 
-  FileText, 
-  Download,
-  CheckCircle
-} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileSignature, Calendar, Trash2, Edit, Eye, Plus, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
+import { deleteContract } from "@/services/contract";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ContractsListProps {
   contracts: SeoContract[];
-  clientName?: string;
   onContractDeleted?: () => void;
   emptyMessage?: string;
-  allowNewContract?: boolean;
-  clientId?: string;
 }
 
-export const ContractsList = ({ 
-  contracts, 
-  clientName,
-  onContractDeleted,
-  emptyMessage = "No hay contratos disponibles",
-  allowNewContract = true,
-  clientId
-}: ContractsListProps) => {
-  const navigate = useNavigate();
+export function ContractsList({ contracts, onContractDeleted, emptyMessage = "No hay contratos disponibles" }: ContractsListProps) {
   const { toast } = useToast();
-  const { user, isAdmin } = useAuth();
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Filter contracts to only show the ones for the current user if not admin
-  const filteredContracts = isAdmin ? contracts : contracts.filter(contract => contract.clientId === user?.id);
-
-  const handleCreateContract = () => {
-    if (clientId) {
-      navigate(`/contracts/new/${clientId}`);
-    } else {
-      navigate("/contracts/new");
-    }
-  };
-
-  const handleEditContract = (id: string) => {
-    navigate(`/contracts/edit/${id}`);
-  };
-
-  const handleViewContract = (id: string) => {
-    navigate(`/contracts/${id}`);
-  };
-
-  const handleDownloadContract = async (contract: SeoContract) => {
+  const handleDeleteContract = async (contractId: string) => {
+    setDeletingId(contractId);
     try {
-      setLoading({...loading, [contract.id]: true});
-      
-      let pdfUrl = contract.pdfUrl;
-      
-      if (!pdfUrl) {
-        pdfUrl = await generateAndSaveContractPDF(contract.id);
-      }
-      
-      window.open(pdfUrl, '_blank');
-      
+      await deleteContract(contractId);
       toast({
-        title: "Contrato descargado",
-        description: "El contrato se ha descargado correctamente",
+        title: "Contrato eliminado",
+        description: "El contrato ha sido eliminado correctamente",
       });
-    } catch (error) {
-      console.error("Error downloading contract:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo descargar el contrato",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading({...loading, [contract.id]: false});
-    }
-  };
-
-  const handleSignContract = async (contract: SeoContract, signedBy: 'client' | 'professional') => {
-    try {
-      setLoading({...loading, [contract.id]: true});
-      
-      await signContract(contract.id, signedBy);
-      
-      toast({
-        title: "Contrato firmado",
-        description: `El contrato ha sido firmado como ${signedBy === 'client' ? 'cliente' : 'profesional'}`,
-      });
-      
       if (onContractDeleted) {
         onContractDeleted();
       }
     } catch (error) {
-      console.error("Error signing contract:", error);
+      console.error("Error deleting contract:", error);
       toast({
         title: "Error",
-        description: "No se pudo firmar el contrato",
+        description: "No se pudo eliminar el contrato",
         variant: "destructive",
       });
     } finally {
-      setLoading({...loading, [contract.id]: false});
-    }
-  };
-
-  const handleDeleteContract = async (id: string) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar este contrato? Esta acción no se puede deshacer.")) {
-      try {
-        setLoading({...loading, [id]: true});
-        
-        await deleteContract(id);
-        
-        toast({
-          title: "Contrato eliminado",
-          description: "El contrato ha sido eliminado correctamente",
-        });
-        
-        if (onContractDeleted) {
-          onContractDeleted();
-        }
-      } catch (error) {
-        console.error("Error deleting contract:", error);
-        toast({
-          title: "Error",
-          description: "No se pudo eliminar el contrato",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading({...loading, [id]: false});
-      }
+      setDeletingId(null);
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "draft":
-        return <Badge variant="outline">Borrador</Badge>;
       case "active":
-        return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Activo</Badge>;
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200 font-normal">
+            Activo
+          </Badge>
+        );
+      case "draft":
+        return (
+          <Badge className="bg-gray-100 text-gray-800 border-gray-200 font-normal">
+            Borrador
+          </Badge>
+        );
       case "completed":
-        return <Badge variant="secondary">Completado</Badge>;
+        return (
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200 font-normal">
+            Completado
+          </Badge>
+        );
       case "cancelled":
-        return <Badge variant="destructive">Cancelado</Badge>;
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200 font-normal">
+            Cancelado
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return null;
     }
   };
 
-  const getSignedStatus = (contract: SeoContract) => {
-    if (contract.signedByClient && contract.signedByProfessional) {
-      return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Firmado por ambas partes</Badge>;
-    } else if (contract.signedByClient) {
-      return <Badge variant="outline">Firmado por cliente</Badge>;
-    } else if (contract.signedByProfessional) {
-      return <Badge variant="outline">Firmado por profesional</Badge>;
-    } else {
-      return <Badge variant="secondary">No firmado</Badge>;
-    }
-  };
+  if (contracts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 bg-gray-50 rounded-lg border border-dashed">
+        <FileSignature className="h-12 w-12 text-gray-400 mb-4" />
+        <p className="text-gray-500 mb-4">{emptyMessage}</p>
+        <Button asChild>
+          <Link to="/contracts/new">
+            <Plus className="h-4 w-4 mr-2" />
+            Crear Contrato
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Contratos{clientName ? ` de ${clientName}` : ""}</CardTitle>
-          <CardDescription>
-            Gestiona los contratos de servicios SEO{clientName ? ` para ${clientName}` : ""}
-          </CardDescription>
-        </div>
-        {allowNewContract && isAdmin && (
-          <Button onClick={handleCreateContract} className="flex items-center gap-1">
-            <FilePlus className="h-4 w-4" />
-            Nuevo Contrato
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent>
-        {filteredContracts.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Fecha inicio</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Firmas</TableHead>
-                <TableHead>Cuota mensual</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredContracts.map((contract) => (
-                <TableRow key={contract.id}>
-                  <TableCell className="font-medium">{contract.title}</TableCell>
-                  <TableCell>
-                    {format(new Date(contract.startDate), "d MMM yyyy", { locale: es })}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(contract.status)}</TableCell>
-                  <TableCell>{getSignedStatus(contract)}</TableCell>
-                  <TableCell>{contract.monthlyFee.toLocaleString('es-ES')} €</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={loading[contract.id]}>
-                          {loading[contract.id] ? (
-                            <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-900 mx-auto mb-4"></div>
-                          ) : (
-                            <MoreVertical className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleViewContract(contract.id)}>
-                          <FileText className="mr-2 h-4 w-4" />
-                          Ver contrato
-                        </DropdownMenuItem>
-                        {isAdmin && (
-                          <DropdownMenuItem onClick={() => handleEditContract(contract.id)}>
-                            <FileEdit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={() => handleDownloadContract(contract)}>
-                          <Download className="mr-2 h-4 w-4" />
-                          Descargar PDF
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {!contract.signedByClient && (
-                          <DropdownMenuItem onClick={() => handleSignContract(contract, 'client')}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Firmar como cliente
-                          </DropdownMenuItem>
-                        )}
-                        {isAdmin && !contract.signedByProfessional && (
-                          <DropdownMenuItem onClick={() => handleSignContract(contract, 'professional')}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Firmar como profesional
-                          </DropdownMenuItem>
-                        )}
-                        {isAdmin && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => handleDeleteContract(contract.id)}
-                              className="text-red-600 focus:bg-red-50"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Eliminar
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-            <FileText className="mb-2 h-10 w-10 text-muted-foreground/50" />
-            <p>{emptyMessage}</p>
-            {allowNewContract && isAdmin && (
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={handleCreateContract}
-              >
-                <FilePlus className="mr-2 h-4 w-4" />
-                Crear nuevo contrato
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {contracts.map((contract) => (
+        <Card key={contract.id} className="overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl flex items-center justify-between">
+              <span className="truncate">{contract.title}</span>
+              {getStatusBadge(contract.status)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  Inicio: {format(new Date(contract.startDate), "dd MMM yyyy", { locale: es })}
+                </span>
+              </div>
+              {contract.endDate && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    Fin: {format(new Date(contract.endDate), "dd MMM yyyy", { locale: es })}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <span>Cuota mensual: {contract.monthlyFee} €</span>
+              </div>
+              {contract.phase1Fee > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span>Cuota inicial: {contract.phase1Fee} €</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2 mt-4">
+              <Button asChild variant="outline" size="sm" className="flex-1">
+                <Link to={`/contracts/${contract.id}`}>
+                  <Eye className="h-3.5 w-3.5 mr-1" />
+                  Ver
+                </Link>
               </Button>
+              <Button asChild variant="outline" size="sm" className="flex-1">
+                <Link to={`/contracts/edit/${contract.id}`}>
+                  <Edit className="h-3.5 w-3.5 mr-1" />
+                  Editar
+                </Link>
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex-1 text-red-500 hover:text-red-600">
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    Eliminar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción eliminará permanentemente el contrato "{contract.title}" y no se puede deshacer.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDeleteContract(contract.id)}
+                      className="bg-red-500 hover:bg-red-600"
+                    >
+                      {deletingId === contract.id ? (
+                        <><span className="spinner mr-2"></span>Eliminando...</>
+                      ) : (
+                        <>Eliminar</>
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+
+            {contract.pdfUrl && (
+              <div className="mt-3">
+                <Button asChild variant="ghost" size="sm" className="w-full">
+                  <a href={contract.pdfUrl} target="_blank" rel="noopener noreferrer">
+                    <FileText className="h-3.5 w-3.5 mr-1" />
+                    Descargar PDF
+                  </a>
+                </Button>
+              </div>
             )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

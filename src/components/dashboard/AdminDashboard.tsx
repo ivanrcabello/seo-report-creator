@@ -1,13 +1,23 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getClients } from "@/services/clientService";
 import { ClientSummary } from "@/types/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, FileText, FileSpreadsheet, FileSignature, MessageSquare, Settings, Users } from "lucide-react";
+import { 
+  RefreshCw, 
+  FileText, 
+  FileSpreadsheet, 
+  FileSignature, 
+  MessageSquare, 
+  Settings, 
+  Users,
+  BarChart2,
+  MailOpen,
+  FileEdit
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Import our component files
@@ -19,10 +29,11 @@ import { DashboardSkeleton } from './DashboardSkeleton';
 import { DashboardError } from './DashboardError';
 import { TicketsTab } from './tabs/TicketsTab';
 
-interface AdminDashboardProps {
+export interface AdminDashboardProps {
   activeTab?: string;
   newContract?: boolean;
   newProposal?: boolean;
+  isNew?: boolean;
 }
 
 const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
@@ -41,18 +52,17 @@ const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
   }));
 };
 
-export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDashboardProps) {
+export function AdminDashboard({ activeTab, newContract, newProposal, isNew }: AdminDashboardProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [clientSummaries, setClientSummaries] = useState<ClientSummary[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // Determine the active tab from props or URL
   const queryParams = new URLSearchParams(location.search);
   const tabFromUrl = queryParams.get("tab");
   const [currentTab, setCurrentTab] = useState(activeTab || tabFromUrl || "overview");
   
   useEffect(() => {
-    // Update tab when URL params or activeTab prop changes
     if (tabFromUrl) {
       setCurrentTab(tabFromUrl);
     } else if (activeTab) {
@@ -60,8 +70,7 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
     }
   }, [tabFromUrl, activeTab]);
   
-  // Log the props for debugging
-  console.log("AdminDashboard props:", { activeTab, newContract, newProposal });
+  console.log("AdminDashboard props:", { activeTab, newContract, newProposal, isNew });
   
   const { 
     data: clients, 
@@ -99,13 +108,10 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
     setCurrentTab(value);
   };
 
-  // Calculate active clients count
   const activeClientsCount = clientSummaries.filter(client => client.isActive).length;
   
-  // Calculate total clients count
   const totalClientsCount = clientSummaries.length;
   
-  // Datos para estadísticas (reemplazar con datos reales más adelante)
   const invoiceStats = {
     pendingCount: 5,
     totalAmount: '12.450 €',
@@ -120,7 +126,6 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
     totalCount: 7
   };
 
-  // If we're in overview mode, show the new card-based dashboard
   if (currentTab === "overview") {
     if (isLoading) {
       return <DashboardSkeleton />;
@@ -162,9 +167,8 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-          {/* Clients Card */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <Link to="/dashboard?tab=clients" className="block h-full">
+            <Link to="/clients" className="block h-full">
               <CardHeader className="bg-blue-500 text-white pb-2 rounded-t-lg">
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
@@ -179,9 +183,8 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
             </Link>
           </Card>
           
-          {/* Invoices Card */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <Link to="/dashboard?tab=invoices" className="block h-full">
+            <Link to="/invoices" className="block h-full">
               <CardHeader className="bg-amber-500 text-white pb-2 rounded-t-lg">
                 <CardTitle className="flex items-center gap-2">
                   <FileSpreadsheet className="h-5 w-5" />
@@ -196,9 +199,8 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
             </Link>
           </Card>
           
-          {/* Contracts Card */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <Link to="/dashboard?tab=contracts" className="block h-full">
+            <Link to="/contracts" className="block h-full">
               <CardHeader className="bg-green-500 text-white pb-2 rounded-t-lg">
                 <CardTitle className="flex items-center gap-2">
                   <FileSignature className="h-5 w-5" />
@@ -213,10 +215,57 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
             </Link>
           </Card>
           
-          {/* Tickets Card */}
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <Link to="/dashboard?tab=tickets" className="block h-full">
+            <Link to="/reports" className="block h-full">
               <CardHeader className="bg-purple-500 text-white pb-2 rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart2 className="h-5 w-5" />
+                  Informes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="text-3xl font-bold">12</div>
+                <p className="text-sm text-muted-foreground mt-1">Informes generados</p>
+                <div className="mt-4 text-sm text-purple-500 font-medium">Ver informes →</div>
+              </CardContent>
+            </Link>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <Link to="/proposals" className="block h-full">
+              <CardHeader className="bg-indigo-500 text-white pb-2 rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <MailOpen className="h-5 w-5" />
+                  Propuestas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="text-3xl font-bold">8</div>
+                <p className="text-sm text-muted-foreground mt-1">Propuestas activas</p>
+                <div className="mt-4 text-sm text-indigo-500 font-medium">Ver propuestas →</div>
+              </CardContent>
+            </Link>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <Link to="/settings/templates" className="block h-full">
+              <CardHeader className="bg-teal-500 text-white pb-2 rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <FileEdit className="h-5 w-5" />
+                  Plantillas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="text-3xl font-bold">3</div>
+                <p className="text-sm text-muted-foreground mt-1">Tipos de documentos</p>
+                <div className="mt-4 text-sm text-teal-500 font-medium">Gestionar plantillas →</div>
+              </CardContent>
+            </Link>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <Link to="/tickets" className="block h-full">
+              <CardHeader className="bg-rose-500 text-white pb-2 rounded-t-lg">
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
                   Tickets
@@ -225,20 +274,41 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
               <CardContent className="pt-6">
                 <div className="text-3xl font-bold">3</div>
                 <p className="text-sm text-muted-foreground mt-1">Tickets abiertos</p>
-                <div className="mt-4 text-sm text-purple-500 font-medium">Ver soporte →</div>
+                <div className="mt-4 text-sm text-rose-500 font-medium">Ver soporte →</div>
               </CardContent>
             </Link>
           </Card>
         </div>
         
-        {/* Additional Sections */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="text-xl font-medium">Actividad Reciente</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-500">Aquí se mostrará la actividad reciente cuando esté disponible</p>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md">
+                  <FileSpreadsheet className="h-5 w-5 text-amber-500" />
+                  <div>
+                    <p className="text-sm font-medium">Nueva factura creada</p>
+                    <p className="text-xs text-gray-500">Hace 2 horas</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md">
+                  <MailOpen className="h-5 w-5 text-indigo-500" />
+                  <div>
+                    <p className="text-sm font-medium">Propuesta enviada a cliente</p>
+                    <p className="text-xs text-gray-500">Hace 1 día</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md">
+                  <FileSignature className="h-5 w-5 text-green-500" />
+                  <div>
+                    <p className="text-sm font-medium">Contrato firmado</p>
+                    <p className="text-xs text-gray-500">Hace 3 días</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
           
@@ -261,7 +331,7 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
                 ))}
               </div>
               <Button asChild variant="outline" size="sm" className="mt-4 w-full">
-                <Link to="/dashboard?tab=clients">Ver todos los clientes</Link>
+                <Link to="/clients">Ver todos los clientes</Link>
               </Button>
             </CardContent>
           </Card>
@@ -270,7 +340,6 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
     );
   }
 
-  // For other tabs, use the existing tab system
   if (isLoading) {
     return <DashboardSkeleton />;
   }
@@ -302,11 +371,13 @@ export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDas
       </div>
       
       <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid grid-cols-5 w-[600px]">
+        <TabsList className="grid grid-cols-7 w-full">
           <TabsTrigger value="overview">Visión General</TabsTrigger>
           <TabsTrigger value="clients">Clientes</TabsTrigger>
           <TabsTrigger value="invoices">Facturación</TabsTrigger>
           <TabsTrigger value="contracts">Contratos</TabsTrigger>
+          <TabsTrigger value="proposals">Propuestas</TabsTrigger>
+          <TabsTrigger value="reports">Informes</TabsTrigger>
           <TabsTrigger value="tickets">Tickets</TabsTrigger>
         </TabsList>
         

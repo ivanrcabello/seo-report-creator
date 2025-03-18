@@ -1,13 +1,14 @@
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, FileInvoice, FileContract, HandshakeIcon, FileText, TicketIcon, Settings, ChartBar } from "lucide-react";
+import { Loader2, FileText, MessageSquare, Settings, BarChart2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // Use lazy loading for the TicketsTab to improve performance
@@ -125,7 +126,7 @@ export default function Dashboard({ activeTab, isNew, newContract, newProposal }
             <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
-                  <FileInvoice className="h-5 w-5 text-blue-500" />
+                  <FileText className="h-5 w-5 text-blue-500" />
                   Facturas
                 </CardTitle>
                 <CardDescription>Gestión de facturas y cobros</CardDescription>
@@ -142,7 +143,7 @@ export default function Dashboard({ activeTab, isNew, newContract, newProposal }
             <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
-                  <FileContract className="h-5 w-5 text-green-500" />
+                  <FileText className="h-5 w-5 text-green-500" />
                   Contratos
                 </CardTitle>
                 <CardDescription>Administración de contratos</CardDescription>
@@ -159,7 +160,7 @@ export default function Dashboard({ activeTab, isNew, newContract, newProposal }
             <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
-                  <HandshakeIcon className="h-5 w-5 text-amber-500" />
+                  <FileText className="h-5 w-5 text-amber-500" />
                   Propuestas
                 </CardTitle>
                 <CardDescription>Propuestas comerciales</CardDescription>
@@ -176,7 +177,7 @@ export default function Dashboard({ activeTab, isNew, newContract, newProposal }
             <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
-                  <ChartBar className="h-5 w-5 text-purple-500" />
+                  <BarChart2 className="h-5 w-5 text-purple-500" />
                   Informes
                 </CardTitle>
                 <CardDescription>Análisis y reportes SEO</CardDescription>
@@ -193,7 +194,7 @@ export default function Dashboard({ activeTab, isNew, newContract, newProposal }
             <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2">
-                  <TicketIcon className="h-5 w-5 text-red-500" />
+                  <MessageSquare className="h-5 w-5 text-red-500" />
                   Soporte
                 </CardTitle>
                 <CardDescription>Tickets y asistencia</CardDescription>

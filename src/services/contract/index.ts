@@ -1,13 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { SeoContract } from "@/types/client";
-import { contractCrud } from './contractCrud';
-import { contractMappers } from './contractMappers';
-import { contractPdf } from './contractPdf';
-import { contractSections } from './contractSections';
-import { contractSharing } from './contractSharing';
 
-// Export all modules to use them individually
+// Export all modules individually
 export * from './contractCrud';
 export * from './contractMappers';
 export * from './contractPdf';
@@ -33,13 +28,27 @@ export const getContracts = async (): Promise<SeoContract[]> => {
     return data?.map(contract => ({
       id: contract.id,
       title: contract.title,
-      status: contract.status,
+      status: contract.status as "draft" | "active" | "completed" | "cancelled",
       clientId: contract.client_id,
       startDate: contract.start_date,
       endDate: contract.end_date,
       monthlyFee: contract.monthly_fee,
       phase1Fee: contract.phase1_fee,
-      content: contract.content || {},
+      content: contract.content || {
+        sections: [],
+        clientInfo: {
+          name: "",
+          company: "",
+          address: "",
+          taxId: ""
+        },
+        professionalInfo: {
+          name: "",
+          company: "",
+          address: "",
+          taxId: ""
+        }
+      },
       pdfUrl: contract.pdf_url,
       shareToken: contract.share_token,
       sharedAt: contract.shared_at,
@@ -73,13 +82,27 @@ export const getContract = async (id: string): Promise<SeoContract | null> => {
     return {
       id: data.id,
       title: data.title,
-      status: data.status,
+      status: data.status as "draft" | "active" | "completed" | "cancelled",
       clientId: data.client_id,
       startDate: data.start_date,
       endDate: data.end_date,
       monthlyFee: data.monthly_fee,
       phase1Fee: data.phase1_fee,
-      content: data.content || {},
+      content: data.content || {
+        sections: [],
+        clientInfo: {
+          name: "",
+          company: "",
+          address: "",
+          taxId: ""
+        },
+        professionalInfo: {
+          name: "",
+          company: "",
+          address: "",
+          taxId: ""
+        }
+      },
       pdfUrl: data.pdf_url,
       shareToken: data.share_token,
       sharedAt: data.shared_at,

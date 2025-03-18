@@ -72,14 +72,14 @@ function App() {
               {/* Reports routes */}
               <Route path="/reports" element={<Dashboard activeTab="reports" />} />
               <Route path="/reports/new" element={
-                userRole === "admin" ? <ReportDetail isNew /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <ReportDetail isNew={true} /> : <Navigate to="/dashboard" replace />
               } />
               <Route path="/reports/:reportId" element={<ReportDetail />} />
               
               {/* Invoice routes */}
               <Route path="/invoices" element={<Invoices />} />
               <Route path="/invoices/new" element={
-                userRole === "admin" ? <InvoiceForm isNew /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <InvoiceForm isNew={true} /> : <Navigate to="/dashboard" replace />
               } />
               <Route path="/invoices/:id" element={<Invoices />} />
               
@@ -94,13 +94,13 @@ function App() {
               <Route path="/tickets/:ticketId" element={<TicketDetail />} />
               
               {/* Contract routes */}
-              <Route path="/contracts" element={<Dashboard activeTab="contracts" />} />
+              <Route path="/contracts" element={<Contracts />} />
               <Route path="/contracts/new" element={
-                userRole === "admin" ? <ContractForm isNew /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <ContractForm isNew={true} /> : <Navigate to="/dashboard" replace />
               } />
               
               {/* Proposal routes */}
-              <Route path="/proposals" element={<Dashboard activeTab="proposals" />} />
+              <Route path="/proposals" element={<Proposals />} />
               <Route path="/proposals/new" element={
                 userRole === "admin" ? <Dashboard activeTab="proposals" newProposal={true} /> : <Navigate to="/dashboard" replace />
               } />

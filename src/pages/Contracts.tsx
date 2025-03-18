@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { SeoContract } from "@/types/client";
-import { getContracts } from "@/services/contract";
+import { getContracts, deleteContract } from "@/services/contract";
 import { ContractsList } from "@/components/contracts/ContractsList";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -45,6 +45,32 @@ const Contracts = () => {
     navigate("/contracts/new");
   };
 
+  const handleContractDeleted = async (contractId: string) => {
+    try {
+      const success = await deleteContract(contractId);
+      if (success) {
+        toast({
+          title: "Contrato eliminado",
+          description: "El contrato ha sido eliminado correctamente",
+        });
+        fetchContracts();
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar el contrato",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting contract:", error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al eliminar el contrato",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
@@ -77,7 +103,7 @@ const Contracts = () => {
       ) : (
         <ContractsList 
           contracts={contracts} 
-          onContractDeleted={fetchContracts}
+          onContractDeleted={handleContractDeleted}
           emptyMessage="No hay contratos disponibles. Crea tu primer contrato para empezar."
         />
       )}

@@ -1,29 +1,21 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { SeoContract } from '@/types/client';
-import { v4 as uuidv4 } from 'uuid';
+import { mapContractFromDB } from './contractMappers';
 
-// Helper functions to map Supabase data to app types and vice versa
-const mapContractFromDB = (contract: any): SeoContract => ({
-  id: contract.id,
-  clientId: contract.client_id,
-  title: contract.title,
-  startDate: contract.start_date,
-  endDate: contract.end_date,
-  phase1Fee: contract.phase1_fee,
-  monthlyFee: contract.monthly_fee,
-  status: contract.status,
-  content: contract.content,
-  createdAt: contract.created_at,
-  updatedAt: contract.updated_at,
-  signedAt: contract.signed_at,
-  signedByClient: contract.signed_by_client,
-  signedByProfessional: contract.signed_by_professional,
-  pdfUrl: contract.pdf_url
-});
+// Export the contractCrud object with all functions
+export const contractCrud = {
+  getContracts,
+  getClientContracts,
+  getContract,
+  createContract,
+  updateContract,
+  deleteContract,
+  signContract
+};
 
 // Get all contracts
-export const getContracts = async (): Promise<SeoContract[]> => {
+async function getContracts(): Promise<SeoContract[]> {
   try {
     const { data, error } = await supabase
       .from('seo_contracts')
@@ -40,10 +32,10 @@ export const getContracts = async (): Promise<SeoContract[]> => {
     console.error("Unexpected error in getContracts:", error);
     return [];
   }
-};
+}
 
 // Get contracts for a specific client
-export const getClientContracts = async (clientId: string): Promise<SeoContract[]> => {
+async function getClientContracts(clientId: string): Promise<SeoContract[]> {
   try {
     if (!clientId) {
       console.error("Invalid clientId provided to getClientContracts:", clientId);
@@ -68,10 +60,10 @@ export const getClientContracts = async (clientId: string): Promise<SeoContract[
     console.error("Unexpected error in getClientContracts:", error);
     return [];
   }
-};
+}
 
 // Get a single contract by ID
-export const getContract = async (id: string): Promise<SeoContract | undefined> => {
+async function getContract(id: string): Promise<SeoContract | undefined> {
   try {
     if (!id) {
       console.error("Invalid contract ID provided to getContract:", id);
@@ -101,10 +93,10 @@ export const getContract = async (id: string): Promise<SeoContract | undefined> 
     console.error("Unexpected error in getContract:", error);
     return undefined;
   }
-};
+}
 
 // Create a new contract
-export const createContract = async (contract: Omit<SeoContract, "id" | "createdAt" | "updatedAt">): Promise<SeoContract> => {
+async function createContract(contract: Omit<SeoContract, "id" | "createdAt" | "updatedAt">): Promise<SeoContract> {
   try {
     if (!contract.clientId) {
       throw new Error("Client ID is required for contract creation");
@@ -142,10 +134,10 @@ export const createContract = async (contract: Omit<SeoContract, "id" | "created
     console.error("Unexpected error in createContract:", error);
     throw error;
   }
-};
+}
 
 // Update an existing contract
-export const updateContract = async (contract: SeoContract): Promise<SeoContract> => {
+async function updateContract(contract: SeoContract): Promise<SeoContract> {
   try {
     if (!contract.id) {
       throw new Error("Contract ID is required for update");
@@ -185,10 +177,10 @@ export const updateContract = async (contract: SeoContract): Promise<SeoContract
     console.error("Unexpected error in updateContract:", error);
     throw error;
   }
-};
+}
 
 // Function to delete a contract
-export const deleteContract = async (contractId: string): Promise<boolean> => {
+async function deleteContract(contractId: string): Promise<boolean> {
   try {
     if (!contractId) {
       throw new Error("Contract ID is required for deletion");
@@ -212,13 +204,13 @@ export const deleteContract = async (contractId: string): Promise<boolean> => {
     console.error("Error in deleteContract:", error);
     return false;
   }
-};
+}
 
 // Sign a contract (client or professional)
-export const signContract = async (
+async function signContract(
   contractId: string, 
   signedBy: 'client' | 'professional'
-): Promise<SeoContract> => {
+): Promise<SeoContract> {
   const now = new Date().toISOString();
   
   const updates: Record<string, any> = {
@@ -244,4 +236,4 @@ export const signContract = async (
   }
   
   return mapContractFromDB(data);
-};
+}

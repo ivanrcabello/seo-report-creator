@@ -3,6 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { SeoContract } from "@/types/client";
 import { mapContractFromDB } from "./contractMappers";
 
+// Export the contractSharing object
+export const contractSharing = {
+  getContractByShareToken,
+  generateContractShareToken,
+  getContractShareUrl,
+  generateShareableContractUrl,
+  shareContract,
+  signContractByClient
+};
+
 // Fetch a shared contract using its token
 export const getContractByShareToken = async (token: string): Promise<SeoContract | null> => {
   try {

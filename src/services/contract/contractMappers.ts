@@ -1,6 +1,11 @@
 
 import { SeoContract } from '@/types/client';
 
+// Export the contractMappers object
+export const contractMappers = {
+  mapContractFromDB
+};
+
 // Map contract from database format to application format
 export const mapContractFromDB = (contract: any): SeoContract => ({
   id: contract.id,
@@ -10,8 +15,22 @@ export const mapContractFromDB = (contract: any): SeoContract => ({
   endDate: contract.end_date,
   phase1Fee: contract.phase1_fee,
   monthlyFee: contract.monthly_fee,
-  status: contract.status,
-  content: contract.content,
+  status: contract.status as "draft" | "active" | "completed" | "cancelled",
+  content: contract.content || {
+    sections: [],
+    clientInfo: {
+      name: "",
+      company: "",
+      address: "",
+      taxId: ""
+    },
+    professionalInfo: {
+      name: "",
+      company: "",
+      address: "",
+      taxId: ""
+    }
+  },
   createdAt: contract.created_at,
   updatedAt: contract.updated_at,
   signedAt: contract.signed_at,

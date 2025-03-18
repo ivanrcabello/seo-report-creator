@@ -32,6 +32,11 @@ export const getDefaultContractSections = (): ContractSection[] => {
   ];
 };
 
+// Create default contract sections
+export const createDefaultContractSections = (): ContractSection[] => {
+  return getDefaultContractSections();
+};
+
 // Create a placeholder contractPdf service
 export const ContractSection = {
   getDefaultSections: getDefaultContractSections

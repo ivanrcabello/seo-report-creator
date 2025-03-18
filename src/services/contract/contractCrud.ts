@@ -1,101 +1,100 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SeoContract } from "@/types/client";
+import { SeoContract, ContractSection } from "@/types/client";
 import { mapContractFromDB } from "./contractMappers";
 
-export const contractCrud = {
+// Export contract CRUD operations
+export {
   createContract,
   updateContract,
   getClientContracts
 };
 
 // Create a new contract
-export const createContract = async (contractData: Partial<SeoContract>): Promise<SeoContract | null> => {
+export async function createContract(contractData: Omit<SeoContract, "id" | "createdAt" | "updatedAt">): Promise<SeoContract> {
   try {
+    // Map SeoContract to DB schema
+    const dbData = {
+      client_id: contractData.clientId,
+      title: contractData.title,
+      start_date: contractData.startDate,
+      end_date: contractData.endDate,
+      phase1_fee: contractData.phase1Fee,
+      monthly_fee: contractData.monthlyFee,
+      status: contractData.status || 'draft',
+      content: contractData.content,
+      signed_by_client: contractData.signedByClient || false,
+      signed_by_professional: contractData.signedByProfessional || false
+    };
+
     const { data, error } = await supabase
       .from("seo_contracts")
-      .insert([
-        {
-          client_id: contractData.clientId,
-          title: contractData.title,
-          start_date: contractData.startDate,
-          end_date: contractData.endDate,
-          phase1_fee: contractData.phase1Fee,
-          monthly_fee: contractData.monthlyFee,
-          status: contractData.status || 'draft',
-          content: contractData.content || { 
-            sections: [],
-            clientInfo: { name: "", company: "", address: "", taxId: "" },
-            professionalInfo: { 
-              name: "", 
-              company: "", 
-              address: "", 
-              taxId: "" 
-            }
-          }
-        }
-      ])
+      .insert(dbData)
       .select()
       .single();
 
     if (error) {
       console.error("Error creating contract:", error);
-      return null;
+      throw new Error(`Failed to create contract: ${error.message}`);
     }
 
     if (!data) {
-      console.log("No data returned after contract creation");
-      return null;
+      throw new Error("No data returned after contract creation");
     }
 
     return mapContractFromDB(data);
   } catch (error) {
     console.error("Error in createContract:", error);
-    return null;
+    throw error;
   }
-};
+}
 
 // Update an existing contract
-export const updateContract = async (contractId: string, updates: Partial<SeoContract>): Promise<SeoContract | null> => {
+export async function updateContract(contract: SeoContract): Promise<SeoContract> {
   try {
-    const updateData: any = {};
-    
-    // Map fields from application format to DB format
-    if (updates.title !== undefined) updateData.title = updates.title;
-    if (updates.clientId !== undefined) updateData.client_id = updates.clientId;
-    if (updates.startDate !== undefined) updateData.start_date = updates.startDate;
-    if (updates.endDate !== undefined) updateData.end_date = updates.endDate;
-    if (updates.phase1Fee !== undefined) updateData.phase1_fee = updates.phase1Fee;
-    if (updates.monthlyFee !== undefined) updateData.monthly_fee = updates.monthlyFee;
-    if (updates.status !== undefined) updateData.status = updates.status;
-    if (updates.content !== undefined) updateData.content = updates.content;
-    
+    // Map SeoContract to DB schema
+    const dbData = {
+      client_id: contract.clientId,
+      title: contract.title,
+      start_date: contract.startDate,
+      end_date: contract.endDate,
+      phase1_fee: contract.phase1Fee,
+      monthly_fee: contract.monthlyFee,
+      status: contract.status,
+      content: contract.content,
+      signed_by_client: contract.signedByClient,
+      signed_by_professional: contract.signedByProfessional,
+      pdf_url: contract.pdfUrl,
+      share_token: contract.shareToken,
+      shared_at: contract.sharedAt,
+      signed_at: contract.signedAt
+    };
+
     const { data, error } = await supabase
       .from("seo_contracts")
-      .update(updateData)
-      .eq("id", contractId)
+      .update(dbData)
+      .eq("id", contract.id)
       .select()
       .single();
 
     if (error) {
       console.error("Error updating contract:", error);
-      return null;
+      throw new Error(`Failed to update contract: ${error.message}`);
     }
 
     if (!data) {
-      console.log("No data returned after contract update");
-      return null;
+      throw new Error("No data returned after contract update");
     }
 
     return mapContractFromDB(data);
   } catch (error) {
     console.error("Error in updateContract:", error);
-    return null;
+    throw error;
   }
-};
+}
 
 // Get all contracts for a specific client
-export const getClientContracts = async (clientId: string): Promise<SeoContract[]> => {
+export async function getClientContracts(clientId: string): Promise<SeoContract[]> {
   try {
     const { data, error } = await supabase
       .from("seo_contracts")
@@ -117,4 +116,4 @@ export const getClientContracts = async (clientId: string): Promise<SeoContract[
     console.error("Error in getClientContracts:", error);
     return [];
   }
-};
+}

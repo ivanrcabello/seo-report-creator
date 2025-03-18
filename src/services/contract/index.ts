@@ -3,7 +3,7 @@ import { SeoContract } from "@/types/client";
 import { supabase } from "@/integrations/supabase/client";
 import { mapContractFromDB } from "./contractMappers";
 
-// Export all contract service functions
+// Export contract service functions
 export { 
   getContracts,
   getContract,
@@ -12,9 +12,20 @@ export {
 
 // Re-export from separate modules
 export { generateContractPDF, saveContractPDF } from "./contractPdf";
+export { 
+  createContract, 
+  updateContract, 
+  getClientContracts 
+} from "./contractCrud";
+export { 
+  signContractByClient, 
+  getContractByShareToken,
+  shareContract 
+} from "./contractSharing";
+export { createDefaultContractSections } from "./contractSections";
 
 // Get all contracts from database
-export const getContracts = async (): Promise<SeoContract[]> => {
+async function getContracts(): Promise<SeoContract[]> {
   try {
     const { data, error } = await supabase
       .from("seo_contracts")
@@ -36,10 +47,10 @@ export const getContracts = async (): Promise<SeoContract[]> => {
     console.error("Error in getContracts:", error);
     return [];
   }
-};
+}
 
 // Get a single contract by ID
-export const getContract = async (contractId: string): Promise<SeoContract | null> => {
+async function getContract(contractId: string): Promise<SeoContract | null> {
   try {
     const { data, error } = await supabase
       .from("seo_contracts")
@@ -64,10 +75,10 @@ export const getContract = async (contractId: string): Promise<SeoContract | nul
     console.error("Error in getContract:", error);
     return null;
   }
-};
+}
 
 // Delete a contract by ID
-export const deleteContract = async (contractId: string): Promise<boolean> => {
+async function deleteContract(contractId: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from("seo_contracts")
@@ -84,4 +95,4 @@ export const deleteContract = async (contractId: string): Promise<boolean> => {
     console.error("Error in deleteContract:", error);
     return false;
   }
-};
+}

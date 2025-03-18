@@ -22,3 +22,11 @@ export interface DashboardTabProps {
   contractStats: ContractStats;
   clientSummaries: ClientSummary[];
 }
+
+// Add these properties to fix the build error
+export interface DashboardProps {
+  activeTab?: string;
+  isNew?: boolean;
+  newContract?: boolean;
+  newProposal?: boolean;
+}

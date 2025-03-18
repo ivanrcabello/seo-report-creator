@@ -14,13 +14,8 @@ interface ContractDetailLayoutProps {
   onRefresh?: () => void;
 }
 
-interface ContractContentProps {
-  contract: SeoContract;
-}
-
 interface ContractActionsProps {
   contractId: string;
-  status?: string;
   onGeneratePdf: () => Promise<void>;
   onRefresh?: () => void;
 }
@@ -63,7 +58,6 @@ export const ContractDetailLayout = ({
         <CardContent>
           <ContractActions 
             contractId={contract.id}
-            status={contract.status}
             onGeneratePdf={handleGeneratePDF}
             onRefresh={onRefresh}
           />

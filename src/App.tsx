@@ -16,14 +16,36 @@ import TicketDetail from "@/pages/TicketDetail";
 import { AppLayout } from "@/components/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "@/pages/Index";
+import logger from "@/services/logService";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Crear una instancia de QueryClient para toda la aplicación
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Logger específico para App
+const appLogger = logger.getLogger('App');
 
 // Componente interno para manejar la lógica de la aplicación después del AuthProvider
 function AppRoutes() {
   const { user, isLoading } = useAuth();
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
 
+  appLogger.info("AppRoutes renderizado", { 
+    isAuthenticated: !!user, 
+    isLoading, 
+    userId: user?.id 
+  });
+
   useEffect(() => {
     if (user) {
+      appLogger.debug("Usuario autenticado, configurando temporizador de bienvenida");
       const timer = setTimeout(() => {
         setShowWelcomeMessage(false);
       }, 3000);
@@ -60,12 +82,16 @@ function AppRoutes() {
 }
 
 function App() {
+  appLogger.info("Inicializando aplicación");
+  
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-        <Toaster />
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AppRoutes />
+          <Toaster />
+        </AuthProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   );
 }

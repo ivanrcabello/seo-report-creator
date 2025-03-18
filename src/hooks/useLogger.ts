@@ -5,8 +5,8 @@ import { useLocation } from 'react-router-dom';
 import logger from '@/services/advancedLogService';
 
 /**
- * Hook personalizado para obtener un logger con contexto de componente
- * y automáticamente incluir información del usuario y la ruta actual
+ * Custom hook to get a component-specific logger that
+ * automatically includes user and route information
  */
 export function useLogger(componentName: string) {
   const { user } = useAuth();
@@ -16,22 +16,22 @@ export function useLogger(componentName: string) {
     return logger.getLogger(componentName);
   }, [componentName]);
   
-  // Registrar montaje y desmontaje del componente
+  // Log component mount and unmount
   useEffect(() => {
-    componentLogger.debug(`Componente montado`, {
+    componentLogger.debug(`Component mounted`, {
       path: location.pathname,
       userId: user?.id
     });
     
     return () => {
-      componentLogger.debug(`Componente desmontado`, {
+      componentLogger.debug(`Component unmounted`, {
         path: location.pathname,
         userId: user?.id
       });
     };
   }, [componentLogger, location.pathname, user?.id]);
   
-  // Retornar funciones de logging con contexto pre-configurado
+  // Return logging functions with pre-configured context
   return {
     debug: (message: string, context: any = {}) => 
       componentLogger.debug(message, {

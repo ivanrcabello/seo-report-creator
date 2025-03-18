@@ -2,8 +2,9 @@
 import winston from 'winston';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
+import Transport from 'winston-transport';
 
-// Definir los niveles de log
+// Define log levels
 const levels = {
   error: 0,
   warn: 1,
@@ -12,38 +13,40 @@ const levels = {
   trace: 4
 };
 
-// Formateador personalizado para logs estructurados en JSON
+// Custom JSON formatter for structured logs
 const jsonFormatter = winston.format.combine(
   winston.format.timestamp(),
   winston.format.json()
 );
 
-// Creamos un transporte personalizado para Supabase
-class SupabaseTransport extends winston.Transport {
+// Custom Supabase transport for Winston
+class SupabaseTransport extends Transport {
   constructor(opts?: any) {
     super(opts);
-    this.name = 'supabase';
-    this.level = opts?.level || 'info';
   }
 
-  // Este método se llama cada vez que se genera un log
+  // This method is called for each log
   async log(info: any, callback: Function) {
     setImmediate(() => {
       this.emit('logged', info);
     });
 
     try {
-      // Extraer datos para almacenar en la base de datos
+      // Extract data to store in the database
       const { level, message, component, ...rest } = info;
       
-      // Verificar si hay un usuario autenticado
+      // Check if a user is authenticated
       let userId = null;
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData?.session?.user) {
-        userId = sessionData.session.user.id;
+      try {
+        const sessionData = await supabase.auth.getSession();
+        if (sessionData?.data?.session?.user) {
+          userId = sessionData.data.session.user.id;
+        }
+      } catch (err) {
+        console.error('Error getting user session:', err);
       }
 
-      // Crear entrada de log en la base de datos
+      // Create log entry in database
       const { error } = await supabase
         .from('application_logs')
         .insert({
@@ -57,26 +60,26 @@ class SupabaseTransport extends winston.Transport {
         });
 
       if (error) {
-        // Si hay error al guardar en Supabase, registrarlo en consola
-        console.error('Error al guardar log en Supabase:', error);
+        // If error saving to Supabase, log to console
+        console.error('Error saving log to Supabase:', error);
       }
 
       callback();
     } catch (error) {
-      console.error('Error en SupabaseTransport:', error);
+      console.error('Error in SupabaseTransport:', error);
       callback();
     }
   }
 }
 
-// Crear una instancia del logger con el transporte de Supabase
+// Create logger instance with Supabase transport
 const createLogger = () => {
   const supabaseTransport = new SupabaseTransport({
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug'
   });
 
-  // También enviamos los logs a la consola en desarrollo
-  const transports = [
+  // Also send logs to console in development
+  const transports: Transport[] = [
     supabaseTransport,
     new winston.transports.Console({
       format: winston.format.combine(
@@ -94,10 +97,10 @@ const createLogger = () => {
   });
 };
 
-// Instancia del logger principal
+// Main logger instance
 const rootLogger = createLogger();
 
-// Clase Logger que permite crear loggers específicos para componentes
+// Logger class for specific components
 class Logger {
   private logger: winston.Logger;
   private component: string;
@@ -107,7 +110,7 @@ class Logger {
     this.component = component;
   }
 
-  // Métodos para los diferentes niveles de log
+  // Methods for different log levels
   error(message: string, context: any = {}) {
     this.logger.log({
       level: 'error',
@@ -154,13 +157,13 @@ class Logger {
   }
 }
 
-// Factory para crear loggers específicos para componentes
+// Factory for creating component-specific loggers
 class LoggerFactory {
   getLogger(component: string): Logger {
     return new Logger(component);
   }
 }
 
-// Exportar una instancia única de LoggerFactory
+// Export singleton LoggerFactory instance
 const logger = new LoggerFactory();
 export default logger;

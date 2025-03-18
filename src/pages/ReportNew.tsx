@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { AIReportGenerator } from "@/components/AIReportGenerator";
+import { ClientReport } from "@/types/client";
 
 const ReportNew = () => {
   const { clientId } = useParams<{ clientId: string }>();

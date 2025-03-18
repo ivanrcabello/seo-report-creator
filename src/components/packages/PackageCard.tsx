@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { SeoPack } from "@/types/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,25 @@ interface PackageCardProps {
   onDelete: () => void;
 }
 
-export const PackageCard = ({ pack, onEdit, onDelete }: PackageCardProps) => {
+export const PackageCard = React.memo(({ pack, onEdit, onDelete }: PackageCardProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
-  const formatCurrency = (price: number) => {
+  const formatCurrency = useCallback((price: number) => {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(price);
-  };
+  }, []);
+  
+  const handleOpenDeleteDialog = useCallback(() => {
+    setDeleteDialogOpen(true);
+  }, []);
+  
+  const handleCloseDeleteDialog = useCallback(() => {
+    setDeleteDialogOpen(false);
+  }, []);
+  
+  const handleConfirmDelete = useCallback(() => {
+    onDelete();
+    setDeleteDialogOpen(false);
+  }, [onDelete]);
   
   return (
     <>
@@ -61,7 +74,7 @@ export const PackageCard = ({ pack, onEdit, onDelete }: PackageCardProps) => {
               variant="outline" 
               size="sm" 
               className="gap-1 border-red-200 text-red-600 hover:bg-red-50" 
-              onClick={() => setDeleteDialogOpen(true)}
+              onClick={handleOpenDeleteDialog}
             >
               <Trash2 className="h-3.5 w-3.5" />
               Eliminar
@@ -79,12 +92,9 @@ export const PackageCard = ({ pack, onEdit, onDelete }: PackageCardProps) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCloseDeleteDialog}>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => {
-                onDelete();
-                setDeleteDialogOpen(false);
-              }}
+              onClick={handleConfirmDelete}
               className="bg-red-600 hover:bg-red-700"
             >
               Eliminar
@@ -94,4 +104,6 @@ export const PackageCard = ({ pack, onEdit, onDelete }: PackageCardProps) => {
       </AlertDialog>
     </>
   );
-};
+});
+
+PackageCard.displayName = 'PackageCard';

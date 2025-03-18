@@ -45,9 +45,11 @@ export const getInvoices = async (offset = 0, limit = 10): Promise<{ invoices: I
       taxAmount: item.tax_amount,
       totalAmount: item.total_amount,
       paymentDate: item.payment_date,
-      status: item.status,
+      status: item.status as "draft" | "pending" | "paid" | "cancelled",
       notes: item.notes,
-      pdfUrl: item.pdf_url
+      pdfUrl: item.pdf_url,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
     }));
     
     console.log(`Fetched ${invoices.length} invoices out of ${count} total`);
@@ -101,9 +103,11 @@ export const getInvoice = async (id: string): Promise<Invoice | null> => {
       taxAmount: data.tax_amount,
       totalAmount: data.total_amount,
       paymentDate: data.payment_date,
-      status: data.status,
+      status: data.status as "draft" | "pending" | "paid" | "cancelled",
       notes: data.notes,
-      pdfUrl: data.pdf_url
+      pdfUrl: data.pdf_url,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
     };
   } catch (error) {
     console.error("Error getting invoice:", error);
@@ -154,9 +158,11 @@ export const getClientInvoices = async (clientId: string): Promise<Invoice[]> =>
       taxAmount: item.tax_amount,
       totalAmount: item.total_amount,
       paymentDate: item.payment_date,
-      status: item.status,
+      status: item.status as "draft" | "pending" | "paid" | "cancelled",
       notes: item.notes,
-      pdfUrl: item.pdf_url
+      pdfUrl: item.pdf_url,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
     }));
   } catch (error) {
     console.error("Error in getClientInvoices:", error);

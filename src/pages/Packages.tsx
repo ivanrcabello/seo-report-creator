@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLogger } from "@/hooks/useLogger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackageList } from "@/components/packages/PackageList";
@@ -12,28 +12,27 @@ const Packages = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [packages, setPackages] = useState<Pack[]>([]);
 
+  const fetchPackages = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const packs = await getAllSeoPacks();
+      setPackages(packs);
+    } catch (error) {
+      console.error("Error loading packages:", error);
+      toast.error("No se pudieron cargar los paquetes");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  
   useEffect(() => {
     logger.info("Packages page loaded");
-    
-    const fetchPackages = async () => {
-      try {
-        setIsLoading(true);
-        const packs = await getAllSeoPacks();
-        setPackages(packs);
-      } catch (error) {
-        console.error("Error loading packages:", error);
-        toast.error("No se pudieron cargar los paquetes");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchPackages();
     
     return () => {
       // Cleanup if needed
     };
-  }, [logger]);
+  }, [logger, fetchPackages]);
 
   const handleEdit = (pack: Pack) => {
     console.log("Edit package:", pack.id);

@@ -25,7 +25,7 @@ export interface TicketMessage {
 
 export const getTickets = async (clientId?: string) => {
   try {
-    console.log("getTickets called with clientId:", clientId);
+    console.log("[ticketService] getTickets called with clientId:", clientId);
     let query = supabase.from('support_tickets').select('*');
     
     if (clientId) {
@@ -35,20 +35,21 @@ export const getTickets = async (clientId?: string) => {
     const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
-      console.error("Error in getTickets:", error);
+      console.error("[ticketService] Error in getTickets:", error);
       throw error;
     }
     
-    console.log("Tickets fetched:", data?.length || 0, data);
+    console.log("[ticketService] Tickets fetched:", data?.length || 0);
     return data as Ticket[];
   } catch (error) {
-    console.error("Exception in getTickets:", error);
+    console.error("[ticketService] Exception in getTickets:", error);
     throw error;
   }
 };
 
 export const getTicketById = async (ticketId: string) => {
   try {
+    console.log("[ticketService] getTicketById called with ticketId:", ticketId);
     const { data, error } = await supabase
       .from('support_tickets')
       .select('*')
@@ -56,19 +57,21 @@ export const getTicketById = async (ticketId: string) => {
       .single();
     
     if (error) {
-      console.error("Error fetching ticket:", error);
+      console.error("[ticketService] Error fetching ticket:", error);
       throw error;
     }
     
+    console.log("[ticketService] Ticket fetched:", data?.id, data?.subject);
     return data as Ticket;
   } catch (error) {
-    console.error("Error in getTicketById:", error);
+    console.error("[ticketService] Error in getTicketById:", error);
     throw error;
   }
 };
 
 export const getTicketMessages = async (ticketId: string) => {
   try {
+    console.log("[ticketService] getTicketMessages called with ticketId:", ticketId);
     const { data, error } = await supabase
       .from('ticket_messages')
       .select('*')
@@ -76,7 +79,7 @@ export const getTicketMessages = async (ticketId: string) => {
       .order('created_at', { ascending: true });
     
     if (error) {
-      console.error("Error fetching ticket messages:", error);
+      console.error("[ticketService] Error fetching ticket messages:", error);
       throw error;
     }
     
@@ -97,7 +100,7 @@ export const getTicketMessages = async (ticketId: string) => {
             sender_role: senderData?.role || 'unknown'
           };
         } catch (error) {
-          console.error("Error fetching sender info:", error);
+          console.error("[ticketService] Error fetching sender info:", error);
           return {
             ...message,
             sender_name: 'Unknown',
@@ -107,10 +110,10 @@ export const getTicketMessages = async (ticketId: string) => {
       })
     );
     
-    console.log("Messages with sender info:", messagesWithSenderInfo);
+    console.log("[ticketService] Messages with sender info:", messagesWithSenderInfo?.length);
     return messagesWithSenderInfo as TicketMessage[];
   } catch (error) {
-    console.error("Error in getTicketMessages:", error);
+    console.error("[ticketService] Error in getTicketMessages:", error);
     throw error;
   }
 };
@@ -122,7 +125,7 @@ export const createTicket = async (
   priority: Ticket['priority'] = 'medium'
 ) => {
   try {
-    console.log("Creating ticket for client:", clientId, "with subject:", subject);
+    console.log("[ticketService] Creating ticket for client:", clientId, "with subject:", subject);
     const { data, error } = await supabase
       .from('support_tickets')
       .insert([
@@ -137,11 +140,11 @@ export const createTicket = async (
       .select();
     
     if (error) {
-      console.error("Error in createTicket:", error);
+      console.error("[ticketService] Error in createTicket:", error);
       throw error;
     }
     
-    console.log("Ticket created:", data);
+    console.log("[ticketService] Ticket created:", data?.[0]?.id);
     
     // Also create the first message in the ticket_messages table
     if (data && data.length > 0) {
@@ -157,15 +160,16 @@ export const createTicket = async (
         ]);
     }
     
-    return data[0] as Ticket;
+    return data?.[0] as Ticket;
   } catch (error) {
-    console.error("Exception in createTicket:", error);
+    console.error("[ticketService] Exception in createTicket:", error);
     throw error;
   }
 };
 
 export const replyToTicket = async (ticketId: string, senderId: string, message: string) => {
   try {
+    console.log("[ticketService] Replying to ticket:", ticketId, "from sender:", senderId);
     const { data, error } = await supabase
       .from('ticket_messages')
       .insert([
@@ -178,9 +182,11 @@ export const replyToTicket = async (ticketId: string, senderId: string, message:
       .select();
     
     if (error) {
-      console.error("Error replying to ticket:", error);
+      console.error("[ticketService] Error replying to ticket:", error);
       throw error;
     }
+    
+    console.log("[ticketService] Reply created:", data?.[0]?.id);
     
     // Also update the ticket's updated_at timestamp
     await supabase
@@ -188,9 +194,9 @@ export const replyToTicket = async (ticketId: string, senderId: string, message:
       .update({ updated_at: new Date().toISOString() })
       .eq('id', ticketId);
       
-    return data[0] as TicketMessage;
+    return data?.[0] as TicketMessage;
   } catch (error) {
-    console.error("Error in replyToTicket:", error);
+    console.error("[ticketService] Error in replyToTicket:", error);
     throw error;
   }
 };
@@ -200,6 +206,7 @@ export const updateTicketStatus = async (
   status: Ticket['status']
 ) => {
   try {
+    console.log("[ticketService] Updating ticket status:", ticketId, "to", status);
     const updates: Partial<Ticket> = {
       status,
       resolved_at: status === 'resolved' ? new Date().toISOString() : null
@@ -212,13 +219,14 @@ export const updateTicketStatus = async (
       .select();
     
     if (error) {
-      console.error("Error updating ticket status:", error);
+      console.error("[ticketService] Error updating ticket status:", error);
       throw error;
     }
     
-    return data[0] as Ticket;
+    console.log("[ticketService] Ticket status updated:", data?.[0]?.id, data?.[0]?.status);
+    return data?.[0] as Ticket;
   } catch (error) {
-    console.error("Error in updateTicketStatus:", error);
+    console.error("[ticketService] Error in updateTicketStatus:", error);
     throw error;
   }
 };

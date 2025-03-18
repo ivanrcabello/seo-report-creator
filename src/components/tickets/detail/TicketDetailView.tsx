@@ -11,8 +11,13 @@ import { TicketLoadingState } from "./TicketLoadingState";
 import { TicketErrorState } from "./TicketErrorState";
 
 export function TicketDetailView() {
+  console.log("[TicketDetailView] Component rendered");
   const { ticketId } = useParams<{ ticketId: string }>();
+  console.log("[TicketDetailView] Ticket ID from params:", ticketId);
+  
   const { user } = useAuth();
+  console.log("[TicketDetailView] Current user:", user?.id, user?.role);
+  
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -47,6 +52,7 @@ export function TicketDetailView() {
   const handleSendMessage = async () => {
     if (!user?.id || !newMessage.trim()) return;
     
+    console.log("[TicketDetailView] Sending message from user:", user.id);
     try {
       await reply({
         senderId: user.id,
@@ -54,29 +60,36 @@ export function TicketDetailView() {
       });
       setNewMessage("");
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("[TicketDetailView] Error sending message:", error);
     }
   };
 
   // Create a wrapper function that returns a Promise
   const handleStatusChange = async (status: 'open' | 'in_progress' | 'resolved') => {
+    console.log("[TicketDetailView] Changing status to:", status);
     return new Promise<void>((resolve, reject) => {
       try {
         updateStatus(status);
         resolve();
       } catch (error) {
+        console.error("[TicketDetailView] Error changing status:", error);
         reject(error);
       }
     });
   };
 
   if (isLoading) {
+    console.log("[TicketDetailView] Loading state");
     return <TicketLoadingState />;
   }
 
   if (error || !ticket) {
+    console.error("[TicketDetailView] Error or no ticket:", error);
     return <TicketErrorState error={error} />;
   }
+
+  console.log("[TicketDetailView] Rendering ticket:", ticket.id, ticket.subject);
+  console.log("[TicketDetailView] Messages count:", messages.length);
 
   return (
     <Card className="max-w-4xl mx-auto mt-8">

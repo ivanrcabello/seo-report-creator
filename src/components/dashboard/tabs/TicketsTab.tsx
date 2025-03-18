@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { useTickets } from "@/hooks/useTickets";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +7,7 @@ import { Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NewTicketDialog } from "@/components/tickets/NewTicketDialog";
 import { TicketsList } from "@/components/tickets/TicketsList";
+import { useTicketDialog } from "@/hooks/useTicketDialog";
 
 interface TicketsTabProps {
   clientId?: string;
@@ -16,28 +16,22 @@ interface TicketsTabProps {
 export function TicketsTab({ clientId }: TicketsTabProps) {
   const { userRole } = useAuth();
   const { tickets, isLoading, error, createTicket } = useTickets(clientId);
-  const [showNewTicketDialog, setShowNewTicketDialog] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleCreateTicket = async ({ subject, message, priority }: { 
-    subject: string; 
-    message: string; 
-    priority: string;
-  }) => {
-    try {
-      setIsSubmitting(true);
+  
+  const { 
+    showDialog, 
+    isSubmitting, 
+    openDialog, 
+    closeDialog, 
+    handleCreateTicket 
+  } = useTicketDialog({
+    onCreateTicket: async ({ subject, message, priority }) => {
       await createTicket({
         subject,
         message,
         priority: priority as 'low' | 'medium' | 'high'
       });
-      setShowNewTicketDialog(false);
-    } catch (error) {
-      console.error("Error creating ticket:", error);
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+  });
 
   if (isLoading) {
     return (
@@ -65,7 +59,7 @@ export function TicketsTab({ clientId }: TicketsTabProps) {
             {userRole === 'admin' ? 'Gestiona los tickets de soporte' : 'Gestiona tus tickets de soporte'}
           </p>
         </div>
-        <Button onClick={() => setShowNewTicketDialog(true)}>
+        <Button onClick={openDialog}>
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Ticket
         </Button>
@@ -74,8 +68,8 @@ export function TicketsTab({ clientId }: TicketsTabProps) {
       <TicketsList tickets={tickets} />
 
       <NewTicketDialog
-        open={showNewTicketDialog}
-        onOpenChange={setShowNewTicketDialog}
+        open={showDialog}
+        onOpenChange={closeDialog}
         onSubmit={handleCreateTicket}
         isSubmitting={isSubmitting}
       />

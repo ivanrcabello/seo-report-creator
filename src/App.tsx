@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Register from "@/pages/Register";
@@ -25,6 +26,12 @@ import CompanySettings from "@/pages/CompanySettings";
 import AllReports from "@/pages/AllReports";
 import Packages from "@/pages/Packages";
 import Proposals from "@/pages/Proposals";
+import ClientEdit from "@/pages/ClientEdit";
+import ReportNew from "@/pages/ReportNew";
+import ProposalNew from "@/pages/ProposalNew";
+import ContractForm from "@/pages/ContractForm";
+import ReportShare from "@/pages/ReportShare";
+import ProposalForm from "@/pages/ProposalForm";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,26 +93,50 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       
+      {/* Rutas compartidas (públicas) */}
+      <Route path="/share/report/:token" element={<ReportShare />} />
+      <Route path="/proposal-share/:token" element={<Outlet />} />
+      
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout>
           <Outlet />
         </AppLayout>}>
           <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Rutas de clientes */}
           <Route path="/clients" element={<Clients />} />
+          <Route path="/clients/new" element={<ClientEdit />} />
+          <Route path="/clients/edit/:id" element={<ClientEdit />} />
           <Route path="/clients/:clientId" element={<ClientDetail />} />
+          
+          {/* Rutas de informes */}
+          <Route path="/reports" element={<AllReports />} />
+          <Route path="/reports/new/:clientId" element={<ReportNew />} />
           <Route path="/reports/:reportId" element={<ReportDetail />} />
+          
+          {/* Rutas de facturas */}
           <Route path="/invoices" element={<Invoices />} />
           
-          <Route path="/reports" element={<AllReports />} />
+          {/* Rutas de paquetes */}
           <Route path="/packages" element={<Packages />} />
-          <Route path="/proposals" element={<Proposals />} />
           
+          {/* Rutas de propuestas */}
+          <Route path="/proposals" element={<Proposals />} />
+          <Route path="/proposals/new" element={<ProposalNew />} />
+          <Route path="/proposals/form" element={<ProposalForm />} />
+          <Route path="/proposals/:proposalId" element={<Outlet />} />
+          
+          {/* Rutas de contratos */}
+          <Route path="/contracts" element={<Contracts />} />
+          <Route path="/contracts/new" element={<ContractForm />} />
+          <Route path="/contracts/:id" element={<Outlet />} />
+          
+          {/* Rutas de configuración */}
           <Route path="/settings" element={<CompanySettings />} />
           <Route path="/settings/templates" element={<TemplateSettings />} />
           <Route path="/settings/api" element={<ApiSettings />} />
           
-          <Route path="/contracts" element={<Contracts />} />
-          
+          {/* Rutas de tickets */}
           <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />
           <Route path="/tickets/:ticketId" element={<TicketDetail />} />
         </Route>

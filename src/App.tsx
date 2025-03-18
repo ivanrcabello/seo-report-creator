@@ -44,6 +44,12 @@ function AppRoutes() {
   });
 
   useEffect(() => {
+    // Agregamos logs adicionales para depuración
+    appLogger.debug("Estado de autenticación cambiado:", { 
+      isAuthenticated: !!user, 
+      isLoading
+    });
+    
     if (user) {
       appLogger.debug("Usuario autenticado, configurando temporizador de bienvenida");
       const timer = setTimeout(() => {
@@ -52,13 +58,14 @@ function AppRoutes() {
 
       return () => clearTimeout(timer);
     }
-  }, [user]);
+  }, [user, isLoading]);
   
   return (
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+      <Route path="/auth/callback" element={<div className="flex justify-center items-center h-screen">Procesando autenticación...</div>} />
       
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout>

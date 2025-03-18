@@ -16,6 +16,7 @@ export function ProtectedRoute() {
     userId: user?.id
   });
 
+  // Agregamos más logs para depuración
   if (isLoading) {
     routeLogger.debug("Autenticación en progreso, mostrando spinner");
     return (

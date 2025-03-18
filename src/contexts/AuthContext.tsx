@@ -34,58 +34,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  useEffect(() => {
-    authLogger.info('Inicializando contexto de autenticación');
-    
-    // Obtener sesión inicial
-    const getInitialSession = async () => {
-      try {
-        setIsLoading(true);
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        authLogger.info('Sesión inicial:', initialSession ? 'Activa' : 'No hay sesión');
-        
-        setSession(initialSession);
-        setUser(initialSession?.user || null);
-        
-        if (initialSession?.user) {
-          authLogger.info('Usuario encontrado en sesión inicial, configurando usuario:', initialSession.user.id);
-          await setupUser(initialSession.user.id);
-        }
-      } catch (error) {
-        authLogger.error('Error al obtener la sesión inicial:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    // Configurar listeners para cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      authLogger.info(`Cambio en estado de autenticación: ${event}`, newSession?.user?.id);
-      
-      setSession(newSession);
-      setUser(newSession?.user || null);
-      
-      if (newSession?.user) {
-        authLogger.info('Configurando usuario después de cambio en autenticación:', newSession.user.id);
-        await setupUser(newSession.user.id);
-      } else if (event === 'SIGNED_OUT') {
-        setIsAdmin(false);
-        setUserRole(null);
-        authLogger.info('Usuario desconectado, reiniciando estado');
-      }
-      
-      // Asegurarse de que isLoading se establece en false después de cualquier cambio de auth
-      setIsLoading(false);
-    });
-
-    return () => {
-      authLogger.debug('Limpiando suscripción a cambios de autenticación');
-      subscription.unsubscribe();
-    };
-  }, []);
-
   // Función para configurar usuario y obtener rol
   const setupUser = async (userId: string) => {
     authLogger.info(`Configurando usuario: ${userId}`);
@@ -105,9 +53,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  useEffect(() => {
+    authLogger.info('Inicializando contexto de autenticación');
+    let authSubscription: { data: { subscription: { unsubscribe: () => void } } };
+    
+    // Obtener sesión inicial
+    const initializeAuth = async () => {
+      authLogger.info('Iniciando inicialización de autenticación');
+      setIsLoading(true);
+      
+      try {
+        // Obtener la sesión actual
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        authLogger.info('Sesión inicial obtenida:', initialSession ? 'Activa' : 'No hay sesión');
+        
+        setSession(initialSession);
+        setUser(initialSession?.user || null);
+        
+        if (initialSession?.user) {
+          authLogger.info('Usuario encontrado en sesión inicial, configurando:', initialSession.user.id);
+          await setupUser(initialSession.user.id);
+        }
+        
+        // Configurar el listener para cambios de autenticación
+        authSubscription = supabase.auth.onAuthStateChange(async (event, newSession) => {
+          authLogger.info(`Cambio en estado de autenticación: ${event}`, newSession?.user?.id);
+          
+          setSession(newSession);
+          setUser(newSession?.user || null);
+          
+          if (newSession?.user) {
+            authLogger.info('Configurando usuario después de cambio en autenticación:', newSession.user.id);
+            await setupUser(newSession.user.id);
+          } else if (event === 'SIGNED_OUT') {
+            setIsAdmin(false);
+            setUserRole(null);
+            authLogger.info('Usuario desconectado, reiniciando estado');
+          }
+          
+          // Asegurar que isLoading sea false después de cualquier cambio de auth
+          setIsLoading(false);
+        });
+      } catch (error) {
+        authLogger.error('Error durante la inicialización de autenticación:', error);
+      } finally {
+        // Asegurar que isLoading sea false incluso si hay errores
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+    
+    // Limpieza al desmontar
+    return () => {
+      authLogger.debug('Limpiando suscripción a cambios de autenticación');
+      if (authSubscription) {
+        authSubscription.data.subscription.unsubscribe();
+      }
+    };
+  }, []);
+
   const signIn = async (email: string, password: string) => {
     authLogger.info(`Intentando iniciar sesión con: ${email}`);
     setIsLoading(true);
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
@@ -129,6 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     authLogger.info('Intentando iniciar sesión con Google');
     setIsLoading(true);
+    
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -155,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, name: string) => {
     authLogger.info(`Intentando registrar nuevo usuario: ${email}`);
     setIsLoading(true);
+    
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -184,6 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     authLogger.info('Cerrando sesión');
     setIsLoading(true);
+    
     try {
       await supabase.auth.signOut();
       authLogger.info('Sesión cerrada exitosamente');

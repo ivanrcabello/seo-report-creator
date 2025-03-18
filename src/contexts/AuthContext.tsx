@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import logger from '@/services/logService';
+import { createTestUser as authServiceCreateTestUser } from '@/services/authService';
 
 // Logger específico para el contexto de autenticación
 const authLogger = logger.getLogger('AuthContext');
@@ -16,6 +17,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: any, data: any }>;
   signOut: () => Promise<void>;
+  createTestUser: (email: string, password: string, name: string, role?: "admin" | "client") => Promise<any>;
 }
 
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -152,6 +154,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Función para crear usuarios de prueba
+  const createTestUser = async (email: string, password: string, name: string, role: "admin" | "client" = "client") => {
+    authLogger.info(`Creando usuario de prueba: ${email} con rol: ${role}`);
+    try {
+      const result = await authServiceCreateTestUser(email, password, name, role);
+      authLogger.info(`Usuario de prueba creado exitosamente: ${email}`);
+      return result;
+    } catch (error) {
+      authLogger.error(`Error al crear usuario de prueba ${email}:`, error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     session,
@@ -161,6 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signUp,
     signOut,
+    createTestUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

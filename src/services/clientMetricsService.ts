@@ -105,3 +105,45 @@ export const updateClientMetric = async (
     throw error;
   }
 };
+
+// Función para actualizar métricas (facilita el uso desde componentes)
+export const updateClientMetrics = async (clientId: string, metric: ClientMetric): Promise<ClientMetric> => {
+  metricsLogger.info(`Actualizando métricas para cliente: ${clientId}`);
+  
+  try {
+    let result;
+    
+    if (metric.id) {
+      // Si tiene ID, actualizar métrica existente
+      await updateClientMetric(
+        metric.id,
+        clientId,
+        metric.month,
+        metric.web_visits,
+        metric.keywords_top10,
+        metric.conversions,
+        metric.conversion_goal
+      );
+      
+      result = { ...metric };
+    } else {
+      // Si no tiene ID, crear nueva métrica
+      const newId = await addClientMetric(
+        clientId,
+        metric.month,
+        metric.web_visits,
+        metric.keywords_top10,
+        metric.conversions,
+        metric.conversion_goal
+      );
+      
+      result = { ...metric, id: newId };
+    }
+    
+    metricsLogger.info(`Métricas actualizadas correctamente para cliente: ${clientId}`);
+    return result;
+  } catch (error) {
+    metricsLogger.error(`Error al actualizar métricas para cliente ${clientId}:`, error);
+    throw error;
+  }
+};

@@ -16,14 +16,20 @@ interface TicketsTabProps {
 
 export function TicketsTab({ clientId }: TicketsTabProps) {
   const { userRole, user } = useAuth();
-  const { tickets, isLoading, error, createTicket } = useTickets(clientId);
+  const { tickets, isLoading, error, createTicket, refetch } = useTickets(clientId);
 
   // Debug logs
   useEffect(() => {
     console.log("TicketsTab rendered with clientId:", clientId);
     console.log("Current user role:", userRole);
+    console.log("Current user:", user);
     console.log("Tickets loaded:", tickets);
-  }, [clientId, userRole, tickets]);
+  }, [clientId, userRole, user, tickets]);
+  
+  // Refetch tickets on mount
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
   
   const { 
     showDialog, 
@@ -33,7 +39,7 @@ export function TicketsTab({ clientId }: TicketsTabProps) {
     handleCreateTicket 
   } = useTicketDialog({
     onCreateTicket: async ({ subject, message, priority }) => {
-      if (!clientId && userRole !== 'admin') {
+      if (!clientId && userRole !== 'admin' && userRole !== 'client') {
         console.error("No client ID available for ticket creation");
         return;
       }
@@ -66,7 +72,7 @@ export function TicketsTab({ clientId }: TicketsTabProps) {
   if (error) {
     return (
       <div className="text-center py-8 text-red-500">
-        Error al cargar los tickets
+        Error al cargar los tickets: {(error as Error).message || 'Error desconocido'}
       </div>
     );
   }

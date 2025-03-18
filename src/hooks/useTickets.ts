@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getTickets, createTicket, replyToTicket, updateTicketStatus, getTicketMessages } from "@/services/ticketService";
 import { toast } from "sonner";
@@ -5,14 +6,15 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export const useTickets = (clientId?: string) => {
   const queryClient = useQueryClient();
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
 
   const shouldFetchAllTickets = userRole === 'admin' && !clientId;
   
   const { 
     data: tickets = [], 
     isLoading,
-    error 
+    error,
+    refetch
   } = useQuery({
     queryKey: ['tickets', clientId, shouldFetchAllTickets],
     queryFn: () => {
@@ -32,8 +34,14 @@ export const useTickets = (clientId?: string) => {
       message: string;
       priority?: 'low' | 'medium' | 'high';
     }) => {
-      if (!clientId) throw new Error("Client ID is required");
-      return createTicket(clientId, subject, message, priority);
+      if (!clientId && userRole === 'client' && user?.id) {
+        // If no clientId provided but user is a client, use their ID
+        return createTicket(user.id, subject, message, priority);
+      } else if (!clientId && !user?.id) {
+        throw new Error("Client ID is required");
+      }
+      
+      return createTicket(clientId!, subject, message, priority);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
@@ -64,6 +72,7 @@ export const useTickets = (clientId?: string) => {
     tickets,
     isLoading,
     error,
+    refetch,
     createTicket: createTicketMutation.mutate,
     updateTicketStatus: updateStatusMutation.mutate
   };

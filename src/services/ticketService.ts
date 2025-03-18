@@ -23,6 +23,7 @@ export interface TicketMessage {
 
 export const getTickets = async (clientId?: string) => {
   try {
+    console.log("getTickets called with clientId:", clientId);
     let query = supabase.from('support_tickets').select('*');
     
     if (clientId) {
@@ -31,10 +32,15 @@ export const getTickets = async (clientId?: string) => {
     
     const { data, error } = await query.order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error in getTickets:", error);
+      throw error;
+    }
+    
+    console.log("Tickets fetched:", data?.length || 0);
     return data as Ticket[];
   } catch (error) {
-    console.error("Error fetching tickets:", error);
+    console.error("Exception in getTickets:", error);
     throw error;
   }
 };
@@ -62,6 +68,7 @@ export const createTicket = async (
   priority: Ticket['priority'] = 'medium'
 ) => {
   try {
+    console.log("Creating ticket for client:", clientId);
     const { data, error } = await supabase
       .from('support_tickets')
       .insert([
@@ -73,13 +80,17 @@ export const createTicket = async (
           status: 'open'
         }
       ])
-      .select()
-      .single();
+      .select();
     
-    if (error) throw error;
-    return data as Ticket;
+    if (error) {
+      console.error("Error in createTicket:", error);
+      throw error;
+    }
+    
+    console.log("Ticket created:", data);
+    return data[0] as Ticket;
   } catch (error) {
-    console.error("Error creating ticket:", error);
+    console.error("Exception in createTicket:", error);
     throw error;
   }
 };
@@ -95,11 +106,17 @@ export const replyToTicket = async (ticketId: string, senderId: string, message:
           message
         }
       ])
-      .select()
-      .single();
+      .select();
     
     if (error) throw error;
-    return data as TicketMessage;
+    
+    // Also update the ticket's updated_at timestamp
+    await supabase
+      .from('support_tickets')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', ticketId);
+      
+    return data[0] as TicketMessage;
   } catch (error) {
     console.error("Error replying to ticket:", error);
     throw error;
@@ -120,11 +137,10 @@ export const updateTicketStatus = async (
       .from('support_tickets')
       .update(updates)
       .eq('id', ticketId)
-      .select()
-      .single();
+      .select();
     
     if (error) throw error;
-    return data as Ticket;
+    return data[0] as Ticket;
   } catch (error) {
     console.error("Error updating ticket status:", error);
     throw error;

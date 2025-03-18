@@ -3,6 +3,7 @@ import { Table, TableBody } from "@/components/ui/table";
 import { TicketTableHeader } from "./TicketTableHeader";
 import { TicketTableRow } from "./TicketTableRow";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 interface Ticket {
   id: string;
@@ -21,7 +22,9 @@ export function TicketsList({ tickets }: TicketsListProps) {
   const { userRole } = useAuth();
   
   // Log the tickets to debug
-  console.log("Tickets in TicketsList:", tickets);
+  useEffect(() => {
+    console.log("Tickets in TicketsList:", tickets);
+  }, [tickets]);
   
   return (
     <div className="overflow-auto">
@@ -30,7 +33,7 @@ export function TicketsList({ tickets }: TicketsListProps) {
         <TableBody>
           {tickets.length === 0 ? (
             <tr>
-              <td colSpan={userRole === 'admin' ? 5 : 4} className="py-6 text-center text-gray-500">
+              <td colSpan={userRole === 'admin' ? 6 : 5} className="py-6 text-center text-gray-500">
                 No hay tickets disponibles
               </td>
             </tr>

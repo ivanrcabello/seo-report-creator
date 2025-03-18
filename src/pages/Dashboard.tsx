@@ -22,6 +22,7 @@ export default function Dashboard({ activeTab, isNew, newContract, newProposal }
   const navigate = useNavigate();
 
   console.log("Dashboard - Is admin:", isAdmin, "Active tab:", activeTab, "UserRole:", userRole, "User ID:", user?.id);
+  console.log("Dashboard props:", { isNew, newContract, newProposal });
   
   // Parse the tab from URL query parameters
   const queryParams = new URLSearchParams(location.search);
@@ -76,7 +77,11 @@ export default function Dashboard({ activeTab, isNew, newContract, newProposal }
     <div className="container mx-auto py-6">
       <Suspense fallback={<div>Cargando dashboard...</div>}>
         {isAdmin ? 
-          <AdminDashboard activeTab={currentTab} newContract={newContract} newProposal={newProposal} /> : 
+          <AdminDashboard 
+            activeTab={currentTab} 
+            newContract={newContract} 
+            newProposal={newProposal} 
+          /> : 
           <ClientDashboard activeTab={currentTab} />
         }
       </Suspense>

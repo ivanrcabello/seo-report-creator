@@ -20,6 +20,8 @@ import { TicketsTab } from './tabs/TicketsTab';
 
 interface AdminDashboardProps {
   activeTab?: string;
+  newContract?: boolean;
+  newProposal?: boolean;
 }
 
 const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
@@ -31,14 +33,14 @@ const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
   return clients.map(client => ({
     id: client.id || '',
     name: client.name || 'Cliente sin nombre',
-    email: client.email || 'Sin email',
+    email: client.email || '',
     company: client.company || '',
     createdAt: client.created_at || new Date().toISOString(),
     isActive: client.is_active !== undefined ? client.is_active : true
   }));
 };
 
-export function AdminDashboard({ activeTab }: AdminDashboardProps) {
+export function AdminDashboard({ activeTab, newContract, newProposal }: AdminDashboardProps) {
   const location = useLocation();
   const [clientSummaries, setClientSummaries] = useState<ClientSummary[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -56,6 +58,9 @@ export function AdminDashboard({ activeTab }: AdminDashboardProps) {
       setCurrentTab(activeTab);
     }
   }, [tabFromUrl, activeTab]);
+  
+  // Log the props for debugging
+  console.log("AdminDashboard props:", { activeTab, newContract, newProposal });
   
   const { 
     data: clients, 

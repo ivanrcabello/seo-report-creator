@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SettingsNavigation } from "@/components/settings/SettingsNavigation";
-import { CompanySettingsForm } from "@/components/settings/CompanySettingsForm";
-import { ApiKeysSettingsForm } from "@/components/settings/ApiKeysSettingsForm";
+import CompanySettingsForm from "@/components/settings/CompanySettingsForm";
+import ApiKeysSettingsForm from "@/components/settings/ApiKeysSettingsForm";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("company");

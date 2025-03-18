@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { ClientsList } from "@/components/ClientsList";
 import { ClientForm } from "@/components/ClientForm";
-import { getClients, addClient, getClient, updateClient, deleteClient, updateClientActiveStatus } from "@/services/clientService";
+import { getClients, getClient, updateClient, deleteClient, updateClientActiveStatus, createClient } from "@/services/clientService";
 import { Client } from "@/types/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -108,13 +108,13 @@ const Clients = () => {
       setIsDeleting(true);
       const result = await deleteClient(clientToDelete.id);
       
-      if (result.success) {
+      if (result) {
         setClients(clients.filter(c => c.id !== clientToDelete.id));
         toast.success(`Cliente ${clientToDelete.name} eliminado correctamente`);
         setShowDeleteDialog(false);
         setClientToDelete(null);
       } else {
-        setDeleteError(result.error || "No se pudo eliminar el cliente");
+        setDeleteError("No se pudo eliminar el cliente");
       }
     } catch (error) {
       console.error("Error deleting client:", error);
@@ -143,20 +143,23 @@ const Clients = () => {
   const handleClientSubmit = async (clientData: Omit<Client, "id" | "createdAt" | "lastReport">) => {
     try {
       if (isEditMode && currentClient) {
-        const updatedClientData = {
-          ...currentClient,
+        const updatedClient = await updateClient(currentClient.id, {
           name: clientData.name,
           email: clientData.email,
-          phone: clientData.phone,
           company: clientData.company,
           isActive: currentClient.isActive
-        };
+        });
         
-        const updatedClient = await updateClient(updatedClientData);
         setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
         toast.success(`Cliente ${updatedClient.name} actualizado correctamente`);
       } else {
-        const newClient = await addClient(clientData);
+        const newClient = await createClient({
+          name: clientData.name,
+          email: clientData.email,
+          company: clientData.company,
+          isActive: true
+        });
+        
         setClients([...clients, newClient]);
         toast.success(`Cliente ${newClient.name} creado correctamente`);
       }

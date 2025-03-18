@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { routeAccessMap } from "@/utils/routesChecker";
 
 interface ProtectedRouteProps {
   allowedRoles?: ("admin" | "client")[];
@@ -15,6 +16,48 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const location = useLocation();
+
+  // Helper function to check if a path matches a pattern with params
+  const matchesPattern = (path: string, pattern: string): boolean => {
+    const pathParts = path.split('/').filter(Boolean);
+    const patternParts = pattern.split('/').filter(Boolean);
+    
+    if (pathParts.length !== patternParts.length) return false;
+    
+    return patternParts.every((part, i) => {
+      if (part.startsWith(':')) return true; // This is a parameter, always matches
+      return part === pathParts[i];
+    });
+  };
+
+  // Check if the current route is allowed for the user's role
+  const isRouteAllowed = (): boolean => {
+    if (!userRole) return false;
+    
+    const path = location.pathname;
+    
+    // Find matching pattern in routeAccessMap
+    for (const [pattern, roles] of Object.entries(routeAccessMap)) {
+      if (matchesPattern(path, pattern) && roles.includes(userRole)) {
+        return true;
+      }
+    }
+    
+    // Special case for dashboard with tabs
+    if (path === '/dashboard' && location.search.includes('tab=')) {
+      const tabParam = new URLSearchParams(location.search).get('tab');
+      if (tabParam) {
+        const tabRoute = `/${tabParam}`;
+        for (const [pattern, roles] of Object.entries(routeAccessMap)) {
+          if (matchesPattern(tabRoute, pattern) && roles.includes(userRole)) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
+  };
 
   useEffect(() => {
     // Reset auth error if user is loaded successfully

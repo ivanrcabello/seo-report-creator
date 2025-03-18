@@ -18,6 +18,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<{ error: any, data: any }>;
   signOut: () => Promise<void>;
   createTestUser: (email: string, password: string, name: string, role?: "admin" | "client") => Promise<any>;
+  signInWithGoogle: () => Promise<{ error: any }>;
 }
 
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -118,6 +119,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithGoogle = async () => {
+    authLogger.info('Intentando iniciar sesión con Google');
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      
+      if (error) {
+        authLogger.error('Error en inicio de sesión con Google:', error);
+        return { error };
+      }
+      
+      authLogger.info('Inicio de sesión con Google exitoso:', data);
+      return { error: null };
+    } catch (error) {
+      authLogger.error('Excepción en signInWithGoogle:', error);
+      return { error };
+    }
+  };
+
   const signUp = async (email: string, password: string, name: string) => {
     authLogger.info(`Intentando registrar nuevo usuario: ${email}`);
     try {
@@ -174,6 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAdmin,
     userRole,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     createTestUser,

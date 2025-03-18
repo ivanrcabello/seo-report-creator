@@ -14,6 +14,20 @@ export interface ClientMetric {
   conversion_goal: number;
 }
 
+// Mapear métrica desde el formato de la aplicación al formato de la DB
+const mapMetricToDB = (metric: Partial<ClientMetric>): any => {
+  const result: any = {};
+  
+  if (metric.id !== undefined) result.id = metric.id;
+  if (metric.month !== undefined) result.month = metric.month;
+  if (metric.web_visits !== undefined) result.web_visits = metric.web_visits;
+  if (metric.keywords_top10 !== undefined) result.keywords_top10 = metric.keywords_top10;
+  if (metric.conversions !== undefined) result.conversions = metric.conversions;
+  if (metric.conversion_goal !== undefined) result.conversion_goal = metric.conversion_goal;
+  
+  return result;
+};
+
 export const getClientMetrics = async (clientId: string): Promise<ClientMetric[]> => {
   metricsLogger.info(`Solicitando métricas para cliente: ${clientId}`);
   

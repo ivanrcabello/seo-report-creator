@@ -3,17 +3,26 @@
 import log from 'loglevel';
 import { supabase } from '@/integrations/supabase/client';
 
+// Define interface for log context
+interface LogContext {
+  component?: string;
+  path?: string;
+  clientId?: string;
+  error?: any;
+  [key: string]: any; // Allow additional dynamic properties
+}
+
 // Configure the default logger
 log.setLevel(log.levels.INFO);
 
 // Optional prefix for log messages
-const createPrefixer = (component) => {
-  return (message) => `[${component}] ${message}`;
+const createPrefixer = (component: string) => {
+  return (message: string) => `[${component}] ${message}`;
 };
 
 // Class for sending logs to Supabase
 class SupabaseLogger {
-  static async logToSupabase(level, message, meta = {}) {
+  static async logToSupabase(level: string, message: string, meta: LogContext = {}) {
     try {
       // Extract data for storage
       const { component, ...rest } = meta;
@@ -61,7 +70,7 @@ export const configureLogging = {
     enableSupabaseLogging = enable;
     return enableSupabaseLogging;
   },
-  setLogLevel: (level) => {
+  setLogLevel: (level: log.LogLevelDesc) => {
     log.setLevel(level);
   }
 };
@@ -76,7 +85,7 @@ class Logger {
     this.prefix = createPrefixer(component);
   }
 
-  private async _logToSupabase(level: string, message: string, context: Record<string, any> = {}) {
+  private async _logToSupabase(level: string, message: string, context: LogContext = {}) {
     if (!enableSupabaseLogging) return;
     
     try {
@@ -84,32 +93,32 @@ class Logger {
         component: this.component,
         ...context
       });
-    } catch (e) {
+    } catch (e: any) {
       console.error(`Failed to log to Supabase: ${e.message}`);
     }
   }
 
-  error(message: string, context: Record<string, any> = {}) {
+  error(message: string, context: LogContext = {}) {
     log.error(this.prefix(message), context);
     this._logToSupabase('error', message, context);
   }
 
-  warn(message: string, context: Record<string, any> = {}) {
+  warn(message: string, context: LogContext = {}) {
     log.warn(this.prefix(message), context);
     this._logToSupabase('warn', message, context);
   }
 
-  info(message: string, context: Record<string, any> = {}) {
+  info(message: string, context: LogContext = {}) {
     log.info(this.prefix(message), context);
     this._logToSupabase('info', message, context);
   }
 
-  debug(message: string, context: Record<string, any> = {}) {
+  debug(message: string, context: LogContext = {}) {
     log.debug(this.prefix(message), context);
     this._logToSupabase('debug', message, context);
   }
 
-  trace(message: string, context: Record<string, any> = {}) {
+  trace(message: string, context: LogContext = {}) {
     log.trace(this.prefix(message), context);
     this._logToSupabase('trace', message, context);
   }

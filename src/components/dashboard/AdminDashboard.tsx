@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getClients } from "@/services/clientService";
@@ -15,6 +14,7 @@ import { InvoicesTab } from './tabs/InvoicesTab';
 import { ContractsTab } from './tabs/ContractsTab';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { DashboardError } from './DashboardError';
+import { TicketsTab } from './tabs/TicketsTab';
 
 const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
   if (!Array.isArray(clients)) {
@@ -32,7 +32,7 @@ const mapClientsToSummary = (clients: any[]): ClientSummary[] => {
   }));
 };
 
-const AdminDashboard = () => {
+export function AdminDashboard() {
   const [clientSummaries, setClientSummaries] = useState<ClientSummary[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
@@ -120,11 +120,12 @@ const AdminDashboard = () => {
       </div>
       
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-4 w-[500px]">
+        <TabsList className="grid grid-cols-5 w-[600px]">
           <TabsTrigger value="overview">Visión General</TabsTrigger>
           <TabsTrigger value="clients">Clientes</TabsTrigger>
           <TabsTrigger value="invoices">Facturación</TabsTrigger>
           <TabsTrigger value="contracts">Contratos</TabsTrigger>
+          <TabsTrigger value="tickets">Tickets</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -148,9 +149,13 @@ const AdminDashboard = () => {
         <TabsContent value="contracts">
           <ContractsTab contractStats={contractStats} />
         </TabsContent>
+        
+        <TabsContent value="tickets">
+          <TicketsTab />
+        </TabsContent>
       </Tabs>
     </div>
   );
-};
+}
 
 export default AdminDashboard;

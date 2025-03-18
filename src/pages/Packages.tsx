@@ -4,6 +4,8 @@ import { useLogger } from "@/hooks/useLogger";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackageList } from "@/components/packages/PackageList";
 import { Pack } from "@/types/client";
+import { getAllSeoPacks } from "@/services/packService";
+import { toast } from "sonner";
 
 const Packages = () => {
   const logger = useLogger("PackagesPage");
@@ -13,14 +15,24 @@ const Packages = () => {
   useEffect(() => {
     logger.info("Packages page loaded");
     
-    // Simulamos la carga de datos
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      // Aquí se cargarían los paquetes reales
-      setPackages([]);
-    }, 1000);
+    const fetchPackages = async () => {
+      try {
+        setIsLoading(true);
+        const packs = await getAllSeoPacks();
+        setPackages(packs);
+      } catch (error) {
+        console.error("Error loading packages:", error);
+        toast.error("No se pudieron cargar los paquetes");
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
+    fetchPackages();
+    
+    return () => {
+      // Cleanup if needed
+    };
   }, [logger]);
 
   const handleEdit = (pack: Pack) => {

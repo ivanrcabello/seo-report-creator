@@ -168,7 +168,19 @@ const ReportNew = () => {
                 url: url,
                 companyName: clientName,
                 seoScore: 50,
-                performance: 50
+                performance: 50,
+                companyType: "local business",
+                location: "Spain",
+                webVisibility: "medium",
+                keywordsCount: 10,
+                domain: url,
+                competitors: [],
+                technicalIssues: [],
+                recommendationsByCategory: {},
+                pageSpeed: {
+                  desktop: 50,
+                  mobile: 50
+                }
               }}
               currentReport={null}
               onContentGenerated={setContent}

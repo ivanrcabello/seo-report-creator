@@ -1,76 +1,97 @@
 
+import { useState } from "react";
 import { SeoPack } from "@/types/client";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, CheckCircle2 } from "lucide-react";
 import {
-  Edit,
-  Trash,
-  CheckCircle,
-  Euro
-} from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PackageCardProps {
   pack: SeoPack;
-  onEdit: (pack: SeoPack) => void;
-  onDelete: (id: string) => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
 export const PackageCard = ({ pack, onEdit, onDelete }: PackageCardProps) => {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  
+  const formatCurrency = (price: number) => {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(price);
+  };
+  
   return (
-    <Card key={pack.id} className={`border-2 ${!pack.isActive ? 'opacity-70 border-gray-200' : 'border-seo-purple/20'} shadow-sm hover:shadow-md transition-shadow`}>
-      <CardHeader className="pb-4 bg-gradient-to-r from-white via-white to-seo-purple/5">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-bold text-seo-blue">{pack.name}</CardTitle>
-          {!pack.isActive && (
-            <Badge variant="outline" className="bg-gray-100 text-gray-600">Inactivo</Badge>
-          )}
-        </div>
-        <CardDescription className="text-base">{pack.description}</CardDescription>
-        <div className="mt-2 text-2xl font-bold text-seo-purple flex items-center">
-          <Euro className="h-5 w-5 mr-1" />
-          {pack.price.toFixed(2)}
-          <span className="text-sm font-normal text-gray-500 ml-1">(IVA incluido)</span>
-        </div>
-      </CardHeader>
-      <CardContent className="pb-4">
-        <h4 className="font-semibold mb-2 text-seo-blue">Características:</h4>
-        <ul className="space-y-2">
-          {pack.features.map((feature, index) => (
-            <li key={index} className="flex items-start gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-      <CardFooter className="flex justify-end gap-2 pt-2 bg-gray-50">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onEdit(pack)}
-          className="gap-1 text-seo-blue hover:text-seo-blue/80 hover:bg-seo-blue/10"
-        >
-          <Edit className="h-4 w-4" />
-          Editar
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onDelete(pack.id)}
-          className="gap-1 text-destructive border-destructive hover:bg-destructive/10"
-        >
-          <Trash className="h-4 w-4" />
-          Eliminar
-        </Button>
-      </CardFooter>
-    </Card>
+    <>
+      <Card className="h-full flex flex-col">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <CardTitle>{pack.name}</CardTitle>
+            <div className="text-xl font-bold text-blue-600">{formatCurrency(pack.price)}</div>
+          </div>
+        </CardHeader>
+        <CardContent className="flex-grow flex flex-col">
+          <p className="text-gray-600 mb-4">{pack.description}</p>
+          
+          <div className="flex-grow">
+            <h4 className="font-medium text-sm mb-2">Características:</h4>
+            <ul className="space-y-1">
+              {pack.features.map((feature, index) => (
+                <li key={index} className="flex items-start">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" size="sm" className="gap-1" onClick={onEdit}>
+              <Edit className="h-3.5 w-3.5" />
+              Editar
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-1 border-red-200 text-red-600 hover:bg-red-50" 
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Eliminar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará el paquete "{pack.name}" permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                onDelete();
+                setDeleteDialogOpen(false);
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

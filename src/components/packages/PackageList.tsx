@@ -9,7 +9,7 @@ interface PackageListProps {
   packages: SeoPack[];
   isLoading: boolean;
   onEdit: (pack: SeoPack) => void;
-  onDelete: (id: string) => void;
+  onDelete: (pack: SeoPack) => void;
   onCreate: () => void;
 }
 
@@ -50,8 +50,8 @@ export const PackageList = ({ packages, isLoading, onEdit, onDelete, onCreate }:
         <PackageCard 
           key={pack.id}
           pack={pack} 
-          onEdit={onEdit} 
-          onDelete={onDelete} 
+          onEdit={() => onEdit(pack)} 
+          onDelete={() => onDelete(pack)} 
         />
       ))}
     </div>

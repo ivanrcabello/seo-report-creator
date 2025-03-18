@@ -51,19 +51,15 @@ export default function Dashboard({ activeTab }: DashboardProps) {
           </div>
         }>
           {isAdmin ? (
-            <>
-              <AdminDashboard />
-            </>
+            <AdminDashboard />
           ) : (
-            <>
-              <ClientDashboard />
-            </>
+            <ClientDashboard />
           )}
         </Suspense>
       </div>
     );
   } catch (error) {
-    dashLogger.error("Error al renderizar el Dashboard:", error);
+    dashLogger.error("Error al renderizar el Dashboard:", { error });
     return (
       <div className="container mx-auto py-6 text-center">
         <h2 className="text-xl text-red-600">Error al cargar el dashboard</h2>

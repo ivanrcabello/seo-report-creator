@@ -37,8 +37,8 @@ class SupabaseTransport extends Transport {
       // Check if a user is authenticated
       let userId = null;
       try {
-        // Fix: Get user session properly
-        const { data, error } = await supabase.auth.getSession();
+        // Get user session properly
+        const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
           userId = data.session.user.id;
         }
@@ -46,23 +46,25 @@ class SupabaseTransport extends Transport {
         console.error('Error getting user session:', err);
       }
 
-      // Create log entry in database
-      // Fix: Use proper table insertion
-      const { error } = await supabase
-        .from('application_logs')
-        .insert({
-          level,
-          message,
-          component,
-          user_id: userId,
-          path: rest.path || null,
-          client_id: rest.clientId || null,
-          context: rest
-        });
+      // Create log entry in Supabase
+      try {
+        const { error } = await supabase
+          .from('application_logs')
+          .insert({
+            level,
+            message,
+            component,
+            user_id: userId,
+            path: rest.path || null,
+            client_id: rest.clientId || null,
+            context: rest
+          });
 
-      if (error) {
-        // If error saving to Supabase, log to console
-        console.error('Error saving log to Supabase:', error);
+        if (error) {
+          console.error('Error saving log to Supabase:', error);
+        }
+      } catch (insertError) {
+        console.error('Exception in Supabase log insert:', insertError);
       }
 
       callback();
@@ -73,12 +75,12 @@ class SupabaseTransport extends Transport {
   }
 }
 
-// Create logger instance with Supabase transport
+// Create logger instance with configurable transports
 const createLogger = () => {
-  // Only log to console in development
+  // Start with base transports array
   const transports: Transport[] = [];
   
-  // Add console transport in browser
+  // Always add console transport
   transports.push(
     new winston.transports.Console({
       format: winston.format.combine(
@@ -88,8 +90,8 @@ const createLogger = () => {
     })
   );
   
-  // Only add Supabase transport in non-development environment or explicitly enable it
-  const enableSupabaseLogging = false; // Set to true when you want to enable database logging
+  // Enable Supabase logging - now turned on by default
+  const enableSupabaseLogging = true;
   
   if (enableSupabaseLogging) {
     try {

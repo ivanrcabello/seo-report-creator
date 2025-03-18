@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import logger from "@/services/logService";
+import logger from "@/services/advancedLogService";
 
 // Import our component files
 import { OverviewTab } from './tabs/OverviewTab';

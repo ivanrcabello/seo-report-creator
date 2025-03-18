@@ -11,8 +11,6 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
 import ClientDetail from "@/pages/ClientDetail";
 import ReportDetail from "@/pages/ReportDetail";
-import { SupportTickets } from "@/components/dashboard/SupportTickets";
-import TicketDetail from "@/pages/TicketDetail";
 import { AppLayout } from "@/components/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "@/pages/Index";
@@ -61,17 +59,12 @@ function AppRoutes() {
   const { user, isLoading } = useAuth();
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
 
-  appLogger.info("AppRoutes renderizado", { 
-    isAuthenticated: !!user, 
-    isLoading, 
-    userId: user?.id 
-  });
-
   useEffect(() => {
-    // Agregamos logs adicionales para depuración
-    appLogger.debug("Estado de autenticación cambiado:", { 
+    // Registramos el renderizado inicial y el estado de autenticación
+    appLogger.info("AppRoutes renderizado", { 
       isAuthenticated: !!user, 
-      isLoading
+      isLoading, 
+      userId: user?.id 
     });
     
     if (user) {
@@ -119,37 +112,6 @@ function App() {
       environment: process.env.NODE_ENV,
       buildDate: process.env.REACT_APP_BUILD_DATE || new Date().toISOString()
     });
-    
-    // Registrar errores no controlados a nivel de ventana
-    const handleGlobalError = (event: ErrorEvent) => {
-      appLogger.error('Error global no controlado', {
-        message: event.message,
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        error: event.error
-      });
-      
-      // Evitar que el navegador muestre su propio mensaje de error
-      event.preventDefault();
-      return true;
-    };
-    
-    // Registrar promesas rechazadas no controladas
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      appLogger.error('Promesa rechazada no controlada', {
-        reason: event.reason,
-        promise: event.promise
-      });
-    };
-    
-    window.addEventListener('error', handleGlobalError);
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    
-    return () => {
-      window.removeEventListener('error', handleGlobalError);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-    };
   }, []);
   
   return (

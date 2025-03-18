@@ -58,6 +58,18 @@ export function TicketDetailView() {
     }
   };
 
+  // Create a wrapper function that returns a Promise
+  const handleStatusChange = async (status: 'open' | 'in_progress' | 'resolved') => {
+    return new Promise<void>((resolve, reject) => {
+      try {
+        updateStatus(status);
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
   if (isLoading) {
     return <TicketLoadingState />;
   }
@@ -71,7 +83,7 @@ export function TicketDetailView() {
       <TicketHeader 
         ticket={ticket} 
         userRole={user?.role} 
-        onStatusChange={updateStatus}
+        onStatusChange={handleStatusChange}
         isUpdatingStatus={isUpdatingStatus}
       />
       <CardContent>

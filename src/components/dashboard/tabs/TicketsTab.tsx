@@ -1,9 +1,10 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Ticket, Filter, ArrowDownUp, ArrowUp, ArrowDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { TicketsList } from "@/components/tickets/TicketsList";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

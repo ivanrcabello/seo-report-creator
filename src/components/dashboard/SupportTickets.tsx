@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { TicketCard } from "../tickets/TicketCard";
 import { TicketListItem } from "../tickets/TicketListItem";
 import { NewTicketDialogContent } from "../tickets/NewTicketDialogContent";

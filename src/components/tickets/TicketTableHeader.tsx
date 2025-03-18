@@ -13,6 +13,7 @@ export function TicketTableHeader() {
         <TableHead>Estado</TableHead>
         <TableHead>Prioridad</TableHead>
         <TableHead>Fecha</TableHead>
+        <TableHead>Acciones</TableHead>
       </TableRow>
     </TableHeader>
   );

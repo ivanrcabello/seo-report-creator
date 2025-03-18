@@ -8,14 +8,22 @@ import { useAuth } from "@/contexts/AuthContext";
 import { NewTicketDialog } from "@/components/tickets/NewTicketDialog";
 import { TicketsList } from "@/components/tickets/TicketsList";
 import { useTicketDialog } from "@/hooks/useTicketDialog";
+import { useState, useEffect } from "react";
 
 interface TicketsTabProps {
   clientId?: string;
 }
 
 export function TicketsTab({ clientId }: TicketsTabProps) {
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
   const { tickets, isLoading, error, createTicket } = useTickets(clientId);
+
+  // Debug logs
+  useEffect(() => {
+    console.log("TicketsTab rendered with clientId:", clientId);
+    console.log("Current user role:", userRole);
+    console.log("Tickets loaded:", tickets);
+  }, [clientId, userRole, tickets]);
   
   const { 
     showDialog, 
@@ -25,6 +33,19 @@ export function TicketsTab({ clientId }: TicketsTabProps) {
     handleCreateTicket 
   } = useTicketDialog({
     onCreateTicket: async ({ subject, message, priority }) => {
+      if (!clientId && userRole !== 'admin') {
+        console.error("No client ID available for ticket creation");
+        return;
+      }
+
+      // Use the clientId prop or the user's ID if they're a client
+      const effectiveClientId = clientId || (userRole === 'client' ? user?.id : undefined);
+      
+      if (!effectiveClientId) {
+        console.error("No effective client ID for ticket creation");
+        return;
+      }
+      
       await createTicket({
         subject,
         message,
@@ -56,7 +77,9 @@ export function TicketsTab({ clientId }: TicketsTabProps) {
         <div>
           <h2 className="text-xl font-semibold">Tickets de soporte</h2>
           <p className="text-sm text-gray-500">
-            {userRole === 'admin' ? 'Gestiona los tickets de soporte' : 'Gestiona tus tickets de soporte'}
+            {userRole === 'admin' 
+              ? 'Gestiona los tickets de soporte de todos los clientes' 
+              : 'Gestiona tus tickets de soporte'}
           </p>
         </div>
         <Button onClick={openDialog}>

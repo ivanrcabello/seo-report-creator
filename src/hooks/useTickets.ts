@@ -1,18 +1,29 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getTickets, createTicket, replyToTicket, updateTicketStatus, getTicketMessages } from "@/services/ticketService";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useTickets = (clientId?: string) => {
   const queryClient = useQueryClient();
+  const { userRole } = useAuth();
 
+  const shouldFetchAllTickets = userRole === 'admin' && !clientId;
+  
   const { 
     data: tickets = [], 
     isLoading,
     error 
   } = useQuery({
-    queryKey: ['tickets', clientId],
-    queryFn: () => getTickets(clientId),
+    queryKey: ['tickets', clientId, shouldFetchAllTickets],
+    queryFn: () => {
+      console.log("Fetching tickets with clientId:", clientId, "shouldFetchAllTickets:", shouldFetchAllTickets);
+      
+      if (shouldFetchAllTickets) {
+        return getTickets();
+      }
+      
+      return getTickets(clientId);
+    },
   });
 
   const createTicketMutation = useMutation({

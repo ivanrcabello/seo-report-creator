@@ -54,6 +54,7 @@
     "input-otp": "^1.2.4",
     "jspdf": "^3.0.0",
     "jspdf-autotable": "^5.0.2",
+    "loglevel": "^1.9.2",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
     "openai": "^4.87.3",

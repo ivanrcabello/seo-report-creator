@@ -2,7 +2,7 @@
 import { TicketDetailView } from "@/components/tickets/detail/TicketDetailView";
 import logger from "@/services/advancedLogService";
 
-// Logger específico para TicketDetail
+// Logger for TicketDetail
 const ticketDetailLogger = logger.getLogger('TicketDetail');
 
 const TicketDetail = () => {

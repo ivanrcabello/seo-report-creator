@@ -3,11 +3,19 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import logger from './services/advancedLogService'
+import { configureLogging } from './services/advancedLogService'
 
-// Configurar logger global
+// Set log level based on environment (adjust as needed)
+if (import.meta.env.DEV) {
+  configureLogging.setLogLevel('debug');
+} else {
+  configureLogging.setLogLevel('info');
+}
+
+// Configure global logger
 const globalLogger = logger.getLogger('GlobalErrorHandler');
 
-// Definir una función para renderizar un error UI
+// Define a function to render an error UI
 function renderErrorUI(message) {
   document.body.innerHTML = `
     <div style="padding: 20px; text-align: center; margin-top: 50px; font-family: sans-serif;">
@@ -27,10 +35,10 @@ function renderErrorUI(message) {
   `;
 }
 
-// Variable para controlar si la aplicación ya ha intentado renderizarse
+// Variable to control if the application has already attempted to render
 let hasRenderAttempted = false;
 
-// Capturar errores no controlados
+// Capture uncaught errors
 window.addEventListener('error', (event) => {
   const errorMessage = `Uncaught global error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`;
   console.error(errorMessage, event.error);
@@ -43,7 +51,7 @@ window.addEventListener('error', (event) => {
     console.error("Error logging to globalLogger:", e);
   }
   
-  // Si la aplicación aún no se ha renderizado o ha fallado, mostrar UI de error
+  // If the application hasn't rendered yet or has failed, show error UI
   if (!document.getElementById('root')?.hasChildNodes() || hasRenderAttempted) {
     renderErrorUI(errorMessage);
   }
@@ -61,7 +69,7 @@ window.addEventListener('unhandledrejection', (event) => {
     console.error("Error logging to globalLogger:", e);
   }
   
-  // Si la aplicación aún no se ha renderizado o ha fallado, mostrar UI de error
+  // If the application hasn't rendered yet or has failed, show error UI
   if (!document.getElementById('root')?.hasChildNodes() || hasRenderAttempted) {
     renderErrorUI(errorMessage);
   }
@@ -80,7 +88,7 @@ try {
     console.error("Failed to log application start:", logError);
   }
   
-  // Asegurar que cualquier error aquí sea capturado
+  // Ensure any errors here are caught
   try {
     hasRenderAttempted = true;
     createRoot(rootElement).render(<App />);
@@ -108,6 +116,6 @@ try {
     console.error("Failed to log initialization error:", logError);
   }
   
-  // Añadir fallback UI para errores críticos
+  // Add fallback UI for critical errors
   renderErrorUI(`Error crítico de inicialización: ${error instanceof Error ? error.message : String(error)}`);
 }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Register from "@/pages/Register";
@@ -19,7 +20,7 @@ import { Spinner } from "@/components/ui/spinner";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import TicketDetail from "@/pages/TicketDetail";
 
-// Crear una instancia de QueryClient para toda la aplicación
+// Create a QueryClient instance for the entire application
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -29,15 +30,15 @@ const queryClient = new QueryClient({
   },
 });
 
-// Logger específico para App
+// Logger for App
 const appLogger = logger.getLogger('App');
 
-// Componente para manejar la redirección de autenticación
+// Component to handle authentication redirect
 function AuthCallback() {
   const { isLoading } = useAuth();
   
   useEffect(() => {
-    appLogger.info("Procesando callback de autenticación");
+    appLogger.info("Processing authentication callback");
   }, []);
 
   if (isLoading) {
@@ -54,21 +55,21 @@ function AuthCallback() {
   return <Navigate to="/dashboard" replace />;
 }
 
-// Componente interno para manejar la lógica de la aplicación después del AuthProvider
+// Internal component to handle application logic after AuthProvider
 function AppRoutes() {
   const { user, isLoading } = useAuth();
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
 
   useEffect(() => {
-    // Registramos el renderizado inicial y el estado de autenticación
-    appLogger.info("AppRoutes renderizado", { 
+    // Log initial render and authentication state
+    appLogger.info("AppRoutes rendered", { 
       isAuthenticated: !!user, 
       isLoading, 
       userId: user?.id 
     });
     
     if (user) {
-      appLogger.debug("Usuario autenticado, configurando temporizador de bienvenida");
+      appLogger.debug("User authenticated, setting welcome timer");
       const timer = setTimeout(() => {
         setShowWelcomeMessage(false);
       }, 3000);
@@ -107,10 +108,10 @@ function AppRoutes() {
 
 function App() {
   useEffect(() => {
-    appLogger.info("Aplicación inicializada", {
-      version: process.env.REACT_APP_VERSION || '1.0.0',
-      environment: process.env.NODE_ENV,
-      buildDate: process.env.REACT_APP_BUILD_DATE || new Date().toISOString()
+    appLogger.info("Application initialized", {
+      version: import.meta.env.VITE_APP_VERSION || '1.0.0',
+      environment: import.meta.env.MODE,
+      buildDate: import.meta.env.VITE_APP_BUILD_DATE || new Date().toISOString()
     });
   }, []);
   

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
-// Logger específico para ErrorBoundary
+// Logger for ErrorBoundary
 const errorLogger = logger.getLogger('ErrorBoundary');
 
 interface Props {
@@ -31,7 +31,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Registrar el error con detalles contextuales
+    // Log the error with contextual details
     errorLogger.error('Uncaught React error', {
       error: {
         message: error.message,
@@ -54,7 +54,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
-      // Renderizar UI de error personalizada
+      // Render custom error UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
@@ -73,7 +73,7 @@ class ErrorBoundary extends Component<Props, State> {
                 Lo sentimos, ha ocurrido un error inesperado. Nuestro equipo ha sido notificado.
               </p>
               
-              {process.env.NODE_ENV !== 'production' && this.state.error && (
+              {import.meta.env.DEV && this.state.error && (
                 <div className="bg-gray-100 p-4 rounded overflow-x-auto text-xs">
                   <strong>{this.state.error.toString()}</strong>
                   <pre className="mt-2 text-gray-700">

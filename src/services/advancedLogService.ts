@@ -1,61 +1,26 @@
 
-// Importamos solo las utilidades básicas que necesitamos
+// Import loglevel for browser-compatible logging
+import log from 'loglevel';
 import { supabase } from '@/integrations/supabase/client';
 
-// Definir niveles de log
-const levels = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  debug: 3,
-  trace: 4
+// Configure the default logger
+log.setLevel(log.levels.INFO);
+
+// Optional prefix for log messages
+const createPrefixer = (component) => {
+  return (message) => `[${component}] ${message}`;
 };
 
-// Clase básica para transporte de logs
-class BrowserTransport {
-  constructor() {}
-
-  log(level, message, meta = {}) {
-    return new Promise((resolve) => {
-      // Estrategia básica de logging en consola del navegador
-      switch (level) {
-        case 'error':
-          console.error(`[${meta.component || 'App'}]`, message, meta);
-          break;
-        case 'warn':
-          console.warn(`[${meta.component || 'App'}]`, message, meta);
-          break;
-        case 'info':
-          console.info(`[${meta.component || 'App'}]`, message, meta);
-          break;
-        case 'debug':
-        case 'trace':
-        default:
-          console.log(`[${meta.component || 'App'}][${level}]`, message, meta);
-          break;
-      }
-      resolve();
-    });
-  }
-}
-
-// Clase para enviar logs a Supabase
-class SupabaseTransport extends BrowserTransport {
-  constructor() {
-    super();
-  }
-
-  async log(level, message, meta = {}) {
-    // Primero logamos en consola para tener un respaldo
-    await super.log(level, message, meta);
-
+// Class for sending logs to Supabase
+class SupabaseLogger {
+  static async logToSupabase(level, message, meta = {}) {
     try {
-      // Extraer datos para almacenar en la base de datos
+      // Extract data for storage
       const { component, ...rest } = meta;
       
       let userId = null;
       
-      // Intentar obtener la sesión del usuario de forma segura
+      // Safely try to get user session
       try {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
@@ -65,7 +30,7 @@ class SupabaseTransport extends BrowserTransport {
         console.error('Failed to get user session for logging:', err);
       }
 
-      // Solo intentar insertar el log si creemos que hay conexión a Supabase
+      // Attempt to insert the log
       const { error } = await supabase
         .from('application_logs')
         .insert({
@@ -79,7 +44,6 @@ class SupabaseTransport extends BrowserTransport {
         });
 
       if (error) {
-        // Logar en consola pero no lanzar error - esto no debería romper la app
         console.error('Error saving log to Supabase:', error);
       }
     } catch (insertError) {
@@ -88,83 +52,76 @@ class SupabaseTransport extends BrowserTransport {
   }
 }
 
-// Crear una clase Logger para la aplicación
+// Enable Supabase logging (disabled by default)
+let enableSupabaseLogging = false;
+
+// Public API to control Supabase logging
+export const configureLogging = {
+  enableSupabaseLogging: (enable = true) => {
+    enableSupabaseLogging = enable;
+    return enableSupabaseLogging;
+  },
+  setLogLevel: (level) => {
+    log.setLevel(level);
+  }
+};
+
+// Logger class that wraps loglevel
 class Logger {
-  constructor(component) {
+  private component: string;
+  private prefix: (message: string) => string;
+
+  constructor(component: string) {
     this.component = component;
-    this.transport = new BrowserTransport();
-    
-    // Deshabilitar el logging a Supabase durante la carga inicial
-    const enableSupabaseLogging = false;
-    
-    if (enableSupabaseLogging) {
-      try {
-        this.supabaseTransport = new SupabaseTransport();
-      } catch (error) {
-        console.error('Failed to initialize Supabase logging:', error);
-      }
-    }
+    this.prefix = createPrefixer(component);
   }
 
-  // Método seguro de logging que captura errores
-  async _safeLog(level, message, context = {}) {
+  private async _logToSupabase(level: string, message: string, context: Record<string, any> = {}) {
+    if (!enableSupabaseLogging) return;
+    
     try {
-      // Siempre usar el transporte básico
-      await this.transport.log(level, message, {
+      await SupabaseLogger.logToSupabase(level, message, {
         component: this.component,
         ...context
       });
-      
-      // Si existe el transporte de Supabase, intentar usarlo
-      if (this.supabaseTransport) {
-        try {
-          await this.supabaseTransport.log(level, message, {
-            component: this.component,
-            ...context
-          });
-        } catch (e) {
-          console.error(`Failed to log to Supabase: ${e.message}`);
-        }
-      }
     } catch (e) {
-      // Si el registro falla, usar console como fallback
-      console.error(`Logging error: ${e.message}`);
-      const consoleMethod = level === 'error' ? console.error : 
-                            level === 'warn' ? console.warn : 
-                            level === 'info' ? console.info : console.debug;
-      consoleMethod(`[${this.component}] ${message}`, context);
+      console.error(`Failed to log to Supabase: ${e.message}`);
     }
   }
 
-  // Métodos para diferentes niveles de log
-  error(message, context = {}) {
-    this._safeLog('error', message, context);
+  error(message: string, context: Record<string, any> = {}) {
+    log.error(this.prefix(message), context);
+    this._logToSupabase('error', message, context);
   }
 
-  warn(message, context = {}) {
-    this._safeLog('warn', message, context);
+  warn(message: string, context: Record<string, any> = {}) {
+    log.warn(this.prefix(message), context);
+    this._logToSupabase('warn', message, context);
   }
 
-  info(message, context = {}) {
-    this._safeLog('info', message, context);
+  info(message: string, context: Record<string, any> = {}) {
+    log.info(this.prefix(message), context);
+    this._logToSupabase('info', message, context);
   }
 
-  debug(message, context = {}) {
-    this._safeLog('debug', message, context);
+  debug(message: string, context: Record<string, any> = {}) {
+    log.debug(this.prefix(message), context);
+    this._logToSupabase('debug', message, context);
   }
 
-  trace(message, context = {}) {
-    this._safeLog('trace', message, context);
+  trace(message: string, context: Record<string, any> = {}) {
+    log.trace(this.prefix(message), context);
+    this._logToSupabase('trace', message, context);
   }
 }
 
-// Factory para crear loggers específicos de componentes
+// Factory for creating component-specific loggers
 class LoggerFactory {
-  getLogger(component) {
+  getLogger(component: string) {
     return new Logger(component);
   }
 }
 
-// Exportar singleton LoggerFactory
+// Export singleton LoggerFactory
 const logger = new LoggerFactory();
 export default logger;

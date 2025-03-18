@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useParams } from 'react-router-dom';
 import logger from "@/services/advancedLogService";
 
-// Logger específico para TicketDetailView
+// Logger for TicketDetailView
 const ticketDetailViewLogger = logger.getLogger('TicketDetailView');
 
 export const TicketDetailView = () => {
@@ -23,7 +23,7 @@ export const TicketDetailView = () => {
           <p className="text-muted-foreground">
             Mostrando información del ticket {ticketId}
           </p>
-          {/* Placeholder para contenido real del ticket */}
+          {/* Placeholder for actual ticket content */}
           <div className="mt-4 p-4 bg-gray-100 rounded-md">
             <p>Los detalles completos del ticket se implementarán próximamente.</p>
           </div>

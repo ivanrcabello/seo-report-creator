@@ -2,11 +2,11 @@
 import { useParams } from "react-router-dom";
 import { ContractFormComponent } from "@/components/contracts/ContractForm";
 
-interface ContractFormProps {
+interface ContractFormPageProps {
   isNew?: boolean;
 }
 
-const ContractForm = ({ isNew }: ContractFormProps) => {
+const ContractForm = ({ isNew }: ContractFormPageProps) => {
   // Get client ID and contract ID from the URL parameters
   const { clientId, id } = useParams<{ clientId: string; id: string }>();
   

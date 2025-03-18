@@ -1,7 +1,8 @@
 
 import { ReactNode } from "react";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "./AppSidebar";
+import { Link } from "react-router-dom";
+import { Settings, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -9,19 +10,31 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar />
-        <SidebarInset className="flex flex-col">
-          <div className="flex items-center h-16 px-4 border-b bg-white shadow-sm">
-            <SidebarTrigger />
-            <h1 className="text-xl font-bold ml-4 bg-gradient-to-r from-seo-blue to-seo-purple bg-clip-text text-transparent">SEO Manager</h1>
+    <div className="flex flex-col min-h-screen w-full">
+      <header className="sticky top-0 z-50 w-full border-b bg-white">
+        <div className="container mx-auto flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 flex items-center justify-center text-white">
+                <Home className="h-4 w-4" />
+              </div>
+              <span className="text-xl font-bold">SEO Manager</span>
+            </Link>
           </div>
-          <div className="flex-1 p-6 overflow-auto bg-gray-50">
-            {children}
+          
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/settings" title="Configuración">
+                <Settings className="h-5 w-5" />
+              </Link>
+            </Button>
           </div>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+        </div>
+      </header>
+      
+      <main className="flex-1 p-6 bg-gray-50">
+        {children}
+      </main>
+    </div>
   );
 }

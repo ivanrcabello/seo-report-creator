@@ -8,7 +8,7 @@ import { InvoiceFormError } from "./InvoiceFormError";
 import { InvoiceFormNoClients } from "./InvoiceFormNoClients";
 import { FormContent } from "./FormContent";
 
-interface InvoiceFormProps {
+export interface InvoiceFormProps {
   isNew?: boolean;
 }
 

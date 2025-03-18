@@ -72,14 +72,14 @@ function App() {
               {/* Reports routes */}
               <Route path="/reports" element={<Dashboard activeTab="reports" />} />
               <Route path="/reports/new" element={
-                userRole === "admin" ? <ReportDetail isNew={true} /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <ReportDetail isNew /> : <Navigate to="/dashboard" replace />
               } />
               <Route path="/reports/:reportId" element={<ReportDetail />} />
               
               {/* Invoice routes */}
               <Route path="/invoices" element={<Invoices />} />
               <Route path="/invoices/new" element={
-                userRole === "admin" ? <InvoiceForm isNew={true} /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <InvoiceForm isNew /> : <Navigate to="/dashboard" replace />
               } />
               <Route path="/invoices/:id" element={<Invoices />} />
               
@@ -96,7 +96,7 @@ function App() {
               {/* Contract routes */}
               <Route path="/contracts" element={<Dashboard activeTab="contracts" />} />
               <Route path="/contracts/new" element={
-                userRole === "admin" ? <Dashboard activeTab="contracts" newContract={true} /> : <Navigate to="/dashboard" replace />
+                userRole === "admin" ? <ContractForm isNew /> : <Navigate to="/dashboard" replace />
               } />
               
               {/* Proposal routes */}

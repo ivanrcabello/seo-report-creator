@@ -1,6 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import logger from "@/services/advancedLogService";
+
+// Logger específico para authService
+const authServiceLogger = logger.getLogger('AuthService');
 
 /**
  * Creates a test user account with specified credentials
@@ -16,9 +20,12 @@ export const createTestUser = async (
   name: string,
   role: "admin" | "client" = "client"
 ) => {
+  authServiceLogger.info("Creando usuario de prueba", { 
+    email, 
+    role 
+  });
+  
   try {
-    console.log(`Creating test user with email: ${email} and role: ${role}`);
-    
     // First check if the user already exists to avoid unnecessary API calls
     const { data: existingProfiles, error: profileError } = await supabase
       .from('profiles')
@@ -27,7 +34,7 @@ export const createTestUser = async (
       .maybeSingle();
       
     if (existingProfiles) {
-      console.log("Test user already exists in profiles, skipping creation");
+      authServiceLogger.info("Usuario de prueba ya existe en profiles", { email });
       toast.success(`Usuario de prueba ya existe: ${email}`);
       return { user: existingProfiles };
     }
@@ -40,17 +47,23 @@ export const createTestUser = async (
       .eq('email', email);
     
     if (allProfiles && allProfiles.length > 0) {
-      console.log("Test user already exists in auth, skipping creation");
+      authServiceLogger.info("Usuario de prueba ya existe en auth", { email });
       toast.success(`Usuario de prueba ya existe: ${email}`);
       return { user: allProfiles[0] };
     }
     
     if (profileError && !profileError.message.includes('No rows found')) {
-      console.error("Error checking for existing user in profiles:", profileError);
+      authServiceLogger.error("Error verificando usuario existente en profiles", { 
+        email, 
+        error: profileError 
+      });
     }
     
     if (profilesError) {
-      console.error("Error checking for existing users:", profilesError);
+      authServiceLogger.error("Error verificando usuarios existentes", { 
+        email, 
+        error: profilesError 
+      });
     }
     
     const { data, error } = await supabase.auth.signUp({
@@ -66,21 +79,33 @@ export const createTestUser = async (
 
     if (error) {
       if (error.message.includes("rate limit") || error.status === 429) {
-        console.error("Rate limit hit when creating test user:", error);
+        authServiceLogger.error("Rate limit al crear usuario de prueba", { 
+          email, 
+          error 
+        });
         toast.error(`Límite de peticiones alcanzado. Intenta de nuevo en unos minutos.`);
         throw Object.assign(error, { isRateLimit: true });
       } else {
-        console.error("Error creating test user:", error);
+        authServiceLogger.error("Error al crear usuario de prueba", { 
+          email, 
+          error 
+        });
         toast.error(`Error al crear usuario de prueba: ${error.message}`);
         throw error;
       }
     }
     
-    console.log("Test user created successfully:", data);
+    authServiceLogger.info("Usuario de prueba creado con éxito", { 
+      email, 
+      userId: data.user?.id 
+    });
     toast.success(`Usuario de prueba creado: ${email}`);
     return data;
   } catch (error: any) {
-    console.error("Exception creating test user:", error);
+    authServiceLogger.error("Excepción al crear usuario de prueba", { 
+      email, 
+      error
+    });
     
     // Propagate the rate limit flag
     if (error.isRateLimit) {
@@ -99,24 +124,34 @@ export const createTestUser = async (
  * @returns Promise with the sign in result
  */
 export const signInUser = async (email: string, password: string) => {
+  authServiceLogger.info("Iniciando sesión con email", { email });
+  
   try {
-    console.log(`Signing in user with email: ${email}`);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
     
     if (error) {
-      console.error("Sign in error:", error);
+      authServiceLogger.error("Error en inicio de sesión", { 
+        email, 
+        error 
+      });
       toast.error(`Error al iniciar sesión: ${error.message}`);
       throw error;
     }
     
-    console.log("Sign in successful:", data);
+    authServiceLogger.info("Inicio de sesión exitoso", { 
+      email, 
+      userId: data.user?.id 
+    });
     toast.success("Inicio de sesión exitoso");
     return data;
   } catch (error: any) {
-    console.error("Sign in exception:", error);
+    authServiceLogger.error("Excepción en inicio de sesión", { 
+      email, 
+      error 
+    });
     toast.error(`Error inesperado: ${error.message}`);
     throw error;
   }

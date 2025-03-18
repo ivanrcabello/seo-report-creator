@@ -2,7 +2,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
-import logger from "@/services/logService";
+import logger from "@/services/advancedLogService";
 
 // Logger específico para ProtectedRoute
 const routeLogger = logger.getLogger('ProtectedRoute');
@@ -13,12 +13,15 @@ export function ProtectedRoute() {
   routeLogger.debug("ProtectedRoute evaluando", { 
     isLoading, 
     isAuthenticated: !!user,
-    userId: user?.id
+    userId: user?.id,
+    pathname: window.location.pathname
   });
 
   // Si el usuario está todavía cargando, mostrar spinner, pero con un tiempo límite
   if (isLoading) {
-    routeLogger.debug("Autenticación en progreso, mostrando spinner");
+    routeLogger.debug("Autenticación en progreso, mostrando spinner", {
+      pathname: window.location.pathname
+    });
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center">
@@ -31,11 +34,17 @@ export function ProtectedRoute() {
 
   // Si no hay usuario después de cargar, redirigir a login
   if (!user) {
-    routeLogger.warn("Usuario no autenticado, redirigiendo a login");
+    routeLogger.warn("Usuario no autenticado, redirigiendo a login", {
+      pathname: window.location.pathname,
+      redirectTo: "/login"
+    });
     return <Navigate to="/login" replace />;
   }
 
   // Si hay usuario, permitir acceso
-  routeLogger.debug("Usuario autenticado, permitiendo acceso", { userId: user.id });
+  routeLogger.debug("Usuario autenticado, permitiendo acceso", { 
+    userId: user.id,
+    pathname: window.location.pathname
+  });
   return <Outlet />;
 }

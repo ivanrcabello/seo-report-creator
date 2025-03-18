@@ -2,7 +2,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
-import logger from '@/services/logService';
+import logger from '@/services/advancedLogService';
 import { createTestUser as authServiceCreateTestUser } from '@/services/authService';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -38,20 +38,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Función para configurar usuario y obtener rol
   const setupUser = async (userId: string) => {
-    authLogger.info(`Configurando usuario: ${userId}`);
+    authLogger.info(`Configurando usuario`, { userId });
     try {
       const { data: roleData, error: roleError } = await supabase.rpc('get_user_role');
       
       if (roleError) {
-        authLogger.error('Error al obtener el rol del usuario:', roleError);
+        authLogger.error('Error al obtener el rol del usuario', { 
+          userId,
+          error: roleError
+        });
         return;
       }
       
-      authLogger.info(`Rol de usuario obtenido: ${roleData}`);
+      authLogger.info(`Rol de usuario obtenido`, { 
+        userId,
+        role: roleData 
+      });
+      
       setUserRole(roleData);
       setIsAdmin(roleData === 'admin');
     } catch (error) {
-      authLogger.error('Error en setupUser:', error);
+      authLogger.error('Error en setupUser', { userId, error });
     }
   };
 
@@ -69,31 +76,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
-          authLogger.error('Error al obtener sesión inicial:', error);
+          authLogger.error('Error al obtener sesión inicial', { error });
           setIsLoading(false);
           setAuthInitialized(true);
           return;
         }
         
-        authLogger.info('Sesión inicial obtenida:', initialSession ? 'Activa' : 'No hay sesión');
+        authLogger.info('Sesión inicial obtenida', { 
+          hasSession: !!initialSession,
+          userId: initialSession?.user?.id 
+        });
         
         setSession(initialSession);
         setUser(initialSession?.user || null);
         
         if (initialSession?.user) {
-          authLogger.info('Usuario encontrado en sesión inicial, configurando:', initialSession.user.id);
+          authLogger.info('Usuario encontrado en sesión inicial, configurando', { 
+            userId: initialSession.user.id 
+          });
           await setupUser(initialSession.user.id);
         }
         
         // Configurar el listener para cambios de autenticación
         authSubscription = supabase.auth.onAuthStateChange(async (event, newSession) => {
-          authLogger.info(`Cambio en estado de autenticación: ${event}`, newSession?.user?.id);
+          authLogger.info(`Cambio en estado de autenticación`, { 
+            event,
+            userId: newSession?.user?.id 
+          });
           
           setSession(newSession);
           setUser(newSession?.user || null);
           
           if (newSession?.user) {
-            authLogger.info('Configurando usuario después de cambio en autenticación:', newSession.user.id);
+            authLogger.info('Configurando usuario después de cambio en autenticación', { 
+              userId: newSession.user.id 
+            });
             await setupUser(newSession.user.id);
           } else if (event === 'SIGNED_OUT') {
             setIsAdmin(false);
@@ -109,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
         setAuthInitialized(true);
       } catch (error) {
-        authLogger.error('Error durante la inicialización de autenticación:', error);
+        authLogger.error('Error durante la inicialización de autenticación', { error });
         // Garantizar que isLoading sea false incluso si hay errores
         setIsLoading(false);
         setAuthInitialized(true);
@@ -138,22 +155,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    authLogger.info(`Intentando iniciar sesión con: ${email}`);
+    authLogger.info(`Intentando iniciar sesión`, { email });
     setIsLoading(true);
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
-        authLogger.error('Error en inicio de sesión:', error);
+        authLogger.error('Error en inicio de sesión', { 
+          email, 
+          error: error.message 
+        });
         setIsLoading(false);
         return { error };
       }
       
-      authLogger.info('Inicio de sesión exitoso:', data);
+      authLogger.info('Inicio de sesión exitoso', { 
+        email, 
+        userId: data.user?.id 
+      });
       return { error: null };
     } catch (error) {
-      authLogger.error('Excepción en signIn:', error);
+      authLogger.error('Excepción en signIn', { email, error });
       setIsLoading(false);
       return { error };
     }
@@ -172,22 +195,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
-        authLogger.error('Error en inicio de sesión con Google:', error);
+        authLogger.error('Error en inicio de sesión con Google', { error });
         setIsLoading(false);
         return { error };
       }
       
-      authLogger.info('Inicio de sesión con Google exitoso:', data);
+      authLogger.info('Inicio de sesión con Google iniciado correctamente', {
+        provider: 'google',
+        url: data?.url
+      });
       return { error: null };
     } catch (error) {
-      authLogger.error('Excepción en signInWithGoogle:', error);
+      authLogger.error('Excepción en signInWithGoogle', { error });
       setIsLoading(false);
       return { error };
     }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
-    authLogger.info(`Intentando registrar nuevo usuario: ${email}`);
+    authLogger.info(`Intentando registrar nuevo usuario`, { email });
     setIsLoading(true);
     
     try {
@@ -202,29 +228,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
-        authLogger.error('Error en registro:', error);
+        authLogger.error('Error en registro', { 
+          email, 
+          error: error.message 
+        });
       } else {
-        authLogger.info('Registro exitoso:', data.user?.id);
+        authLogger.info('Registro exitoso', { 
+          email, 
+          userId: data.user?.id 
+        });
       }
       
       setIsLoading(false);
       return { data, error };
     } catch (error) {
-      authLogger.error('Excepción en signUp:', error);
+      authLogger.error('Excepción en signUp', { email, error });
       setIsLoading(false);
       return { data: null, error };
     }
   };
 
   const signOut = async () => {
-    authLogger.info('Cerrando sesión');
+    authLogger.info('Cerrando sesión', { userId: user?.id });
     setIsLoading(true);
     
     try {
       await supabase.auth.signOut();
-      authLogger.info('Sesión cerrada exitosamente');
+      authLogger.info('Sesión cerrada exitosamente', { userId: user?.id });
     } catch (error) {
-      authLogger.error('Error al cerrar sesión:', error);
+      authLogger.error('Error al cerrar sesión', { userId: user?.id, error });
     } finally {
       setIsLoading(false);
     }
@@ -232,13 +264,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Función para crear usuarios de prueba
   const createTestUser = async (email: string, password: string, name: string, role: "admin" | "client" = "client") => {
-    authLogger.info(`Creando usuario de prueba: ${email} con rol: ${role}`);
+    authLogger.info(`Creando usuario de prueba`, { 
+      email, 
+      role 
+    });
+    
     try {
       const result = await authServiceCreateTestUser(email, password, name, role);
-      authLogger.info(`Usuario de prueba creado exitosamente: ${email}`);
+      authLogger.info(`Usuario de prueba creado exitosamente`, { 
+        email, 
+        userId: result?.user?.id 
+      });
       return result;
     } catch (error) {
-      authLogger.error(`Error al crear usuario de prueba ${email}:`, error);
+      authLogger.error(`Error al crear usuario de prueba`, { 
+        email, 
+        error 
+      });
       throw error;
     }
   };

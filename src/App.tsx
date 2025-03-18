@@ -16,9 +16,10 @@ import TicketDetail from "@/pages/TicketDetail";
 import { AppLayout } from "@/components/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "@/pages/Index";
-import logger from "@/services/logService";
+import logger from "@/services/advancedLogService";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Spinner } from "@/components/ui/spinner";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Crear una instancia de QueryClient para toda la aplicación
 const queryClient = new QueryClient({
@@ -112,17 +113,56 @@ function AppRoutes() {
 }
 
 function App() {
-  appLogger.info("Inicializando aplicación");
+  useEffect(() => {
+    appLogger.info("Aplicación inicializada", {
+      version: process.env.REACT_APP_VERSION || '1.0.0',
+      environment: process.env.NODE_ENV,
+      buildDate: process.env.REACT_APP_BUILD_DATE || new Date().toISOString()
+    });
+    
+    // Registrar errores no controlados a nivel de ventana
+    const handleGlobalError = (event: ErrorEvent) => {
+      appLogger.error('Error global no controlado', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error
+      });
+      
+      // Evitar que el navegador muestre su propio mensaje de error
+      event.preventDefault();
+      return true;
+    };
+    
+    // Registrar promesas rechazadas no controladas
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      appLogger.error('Promesa rechazada no controlada', {
+        reason: event.reason,
+        promise: event.promise
+      });
+    };
+    
+    window.addEventListener('error', handleGlobalError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('error', handleGlobalError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
   
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <AppRoutes />
-          <Toaster />
-        </AuthProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <AppRoutes />
+            <Toaster />
+          </AuthProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

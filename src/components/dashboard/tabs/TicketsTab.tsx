@@ -1,107 +1,159 @@
 
-import { useTickets } from "@/hooks/useTickets";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { PlusCircle, Ticket, Filter, ArrowDownUp, ArrowUp, ArrowDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { NewTicketDialog } from "@/components/tickets/NewTicketDialog";
 import { TicketsList } from "@/components/tickets/TicketsList";
-import { useTicketDialog } from "@/hooks/useTicketDialog";
-import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-interface TicketsTabProps {
-  clientId?: string;
-}
+export function TicketsTab() {
+  const navigate = useNavigate();
+  const { isAdmin, user } = useAuth();
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortField, setSortField] = useState<string>("created_at");
 
-export function TicketsTab({ clientId }: TicketsTabProps) {
-  const { userRole, user } = useAuth();
-  const { tickets, isLoading, error, createTicket, refetch } = useTickets(clientId);
-
-  // Debug logs
-  useEffect(() => {
-    console.log("TicketsTab rendered with clientId:", clientId);
-    console.log("Current user role:", userRole);
-    console.log("Current user:", user);
-    console.log("Tickets loaded:", tickets);
-  }, [clientId, userRole, user, tickets]);
-  
-  // Refetch tickets on mount
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-  
-  const { 
-    showDialog, 
-    isSubmitting, 
-    openDialog, 
-    closeDialog, 
-    handleCreateTicket 
-  } = useTicketDialog({
-    onCreateTicket: async ({ subject, message, priority }) => {
-      if (!clientId && userRole !== 'admin' && userRole !== 'client') {
-        console.error("No client ID available for ticket creation");
-        return;
-      }
-
-      // Use the clientId prop or the user's ID if they're a client
-      const effectiveClientId = clientId || (userRole === 'client' ? user?.id : undefined);
+  const fetchTickets = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log("Fetching tickets...");
       
-      if (!effectiveClientId) {
-        console.error("No effective client ID for ticket creation");
+      let query = supabase
+        .from('support_tickets')
+        .select(`
+          *,
+          clients(name)
+        `);
+      
+      // If not admin, only fetch tickets for the current user
+      if (!isAdmin && user?.id) {
+        query = query.eq('client_id', user.id);
+      }
+      
+      // Apply sorting
+      query = query.order(sortField, { ascending: sortOrder === "asc" });
+      
+      const { data, error: fetchError } = await query;
+      
+      if (fetchError) {
+        console.error("Error fetching tickets:", fetchError);
+        setError("Error al cargar los tickets");
         return;
       }
       
-      await createTicket({
-        subject,
-        message,
-        priority: priority as 'low' | 'medium' | 'high'
-      });
+      console.log(`Fetched ${data?.length || 0} tickets`);
+      setTickets(data || []);
+    } catch (err) {
+      console.error("Exception fetching tickets:", err);
+      setError("Error inesperado al cargar los tickets");
+    } finally {
+      setIsLoading(false);
     }
-  });
+  }, [isAdmin, user, sortField, sortOrder]);
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-1/3" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
 
-  if (error) {
-    return (
-      <div className="text-center py-8 text-red-500">
-        Error al cargar los tickets: {(error as Error).message || 'Error desconocido'}
-      </div>
-    );
-  }
+  const handleCreateTicket = useCallback(() => {
+    navigate("/tickets/new");
+  }, [navigate]);
+
+  const handleToggleSort = useCallback(() => {
+    setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+  }, []);
+
+  const handleChangeSortField = useCallback((field: string) => {
+    setSortField(field);
+  }, []);
+
+  // Map tickets to the format expected by TicketsList
+  const mappedTickets = tickets.map(ticket => ({
+    id: ticket.id,
+    subject: ticket.subject,
+    status: ticket.status,
+    priority: ticket.priority,
+    client_id: ticket.client_id,
+    client_name: ticket.clients?.name || "Cliente desconocido",
+    created_at: ticket.created_at
+  }));
 
   return (
     <Card>
-      <div className="flex justify-between items-center p-4 border-b">
-        <div>
-          <h2 className="text-xl font-semibold">Tickets de soporte</h2>
-          <p className="text-sm text-gray-500">
-            {userRole === 'admin' 
-              ? 'Gestiona los tickets de soporte de todos los clientes' 
-              : 'Gestiona tus tickets de soporte'}
-          </p>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-xl font-semibold flex items-center gap-2">
+          <Ticket className="h-5 w-5 text-blue-600" />
+          Tickets de Soporte
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 mr-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 gap-1" 
+              onClick={handleToggleSort}
+            >
+              {sortOrder === "asc" ? (
+                <ArrowUp className="h-4 w-4" />
+              ) : (
+                <ArrowDown className="h-4 w-4" />
+              )}
+              {sortField === "created_at" ? "Fecha" : 
+                sortField === "priority" ? "Prioridad" : 
+                sortField === "status" ? "Estado" : "Ordenar"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => handleChangeSortField("created_at")}
+            >
+              Fecha
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => handleChangeSortField("priority")}
+            >
+              Prioridad
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => handleChangeSortField("status")}
+            >
+              Estado
+            </Button>
+          </div>
+          <Button onClick={handleCreateTicket} className="gap-1">
+            <PlusCircle className="h-4 w-4" />
+            Nuevo Ticket
+          </Button>
         </div>
-        <Button onClick={openDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Ticket
-        </Button>
-      </div>
-
-      <TicketsList tickets={tickets} />
-
-      <NewTicketDialog
-        open={showDialog}
-        onOpenChange={closeDialog}
-        onSubmit={handleCreateTicket}
-        isSubmitting={isSubmitting}
-      />
+      </CardHeader>
+      <CardContent>
+        {error ? (
+          <div className="py-8 text-center">
+            <p className="text-red-500 mb-3">{error}</p>
+            <Button variant="outline" onClick={fetchTickets}>
+              Reintentar
+            </Button>
+          </div>
+        ) : (
+          <TicketsList tickets={mappedTickets} />
+        )}
+      </CardContent>
     </Card>
   );
 }
+
+export default TicketsTab;

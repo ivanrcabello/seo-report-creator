@@ -2,8 +2,10 @@
 import { useAuth } from "@/contexts/AuthContext";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import { ClientDashboard } from "@/components/dashboard/ClientDashboard";
-import { Suspense } from "react";
-import { TicketsTab } from "@/components/dashboard/tabs/TicketsTab";
+import { Suspense, lazy } from "react";
+
+// Use lazy loading for the TicketsTab to improve performance
+const TicketsTab = lazy(() => import("@/components/dashboard/tabs/TicketsTab"));
 
 interface DashboardProps {
   activeTab?: string;
@@ -18,14 +20,16 @@ export default function Dashboard({ activeTab }: DashboardProps) {
   if (activeTab === "tickets") {
     return (
       <div className="container mx-auto py-6">
-        <TicketsTab />
+        <Suspense fallback={<div>Cargando tickets...</div>}>
+          <TicketsTab />
+        </Suspense>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto py-6">
-      <Suspense fallback={<div>Cargando...</div>}>
+      <Suspense fallback={<div>Cargando dashboard...</div>}>
         {isAdmin ? <AdminDashboard /> : <ClientDashboard />}
       </Suspense>
     </div>

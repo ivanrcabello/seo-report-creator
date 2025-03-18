@@ -1,106 +1,93 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AppLayout } from './components/AppLayout';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Clients from './pages/Clients';
-import ClientDetail from './pages/ClientDetail';
-import ClientForm from './pages/ClientForm';
-import AllReports from './pages/AllReports';
-import ReportDetail from './pages/ReportDetail';
-import SeoReport from './pages/SeoReport';
-import ReportShare from './pages/ReportShare';
-import InvoiceShare from './pages/InvoiceShare';
-import Packages from './pages/Packages';
-import Proposals from './pages/Proposals';
-import ProposalForm from './pages/ProposalForm';
-import ProposalDetail from './pages/ProposalDetail';
-import Invoices from './pages/Invoices';
-import InvoiceForm from './pages/InvoiceForm';
-import InvoiceDetail from './pages/InvoiceDetail';
-import CompanySettings from './pages/CompanySettings';
-import TemplateSettings from './pages/TemplateSettings';
-import Contracts from './pages/Contracts';
-import ContractForm from './pages/ContractForm';
-import ContractDetail from './pages/ContractDetail';
-import ContractShare from './pages/ContractShare';
-import ApiSettings from './pages/ApiSettings';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-  const location = useLocation();
-
-  if (!user) {
-    return <Navigate to="/login" replace state={{ path: location.pathname }} />;
-  }
-
-  return <AppLayout>{children}</AppLayout>;
-};
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Register } from "@/pages/Register";
+import { Login } from "@/pages/Login";
+import { Dashboard } from "@/pages/Dashboard";
+import { Clients } from "@/pages/Clients";
+import { Reports } from "@/pages/Reports";
+import { PublicSharing } from "@/pages/PublicSharing";
+import { NotFound } from "@/pages/NotFound";
+import { useAuth } from "@/contexts/AuthContext";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Toaster } from "sonner";
+import { Profile } from "@/pages/Profile";
+import { Settings } from "@/pages/Settings";
+import { PublicShareView } from "@/pages/PublicShareView";
+import { Pricing } from "@/pages/Pricing";
+import { Invoices } from "@/pages/Invoices";
+import { NewClient } from "@/pages/NewClient";
+import { EditClient } from "@/pages/EditClient";
+import { NewReport } from "@/pages/NewReport";
+import { EditReport } from "@/pages/EditReport";
+import { ClientDetail } from "@/pages/ClientDetail";
+import { ReportDetail } from "@/pages/ReportDetail";
+import { SupportTickets } from "@/components/dashboard/SupportTickets";
+import TicketDetail from "@/pages/TicketDetail";
 
 function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/share/report/:token" element={<ReportShare />} />
-            <Route path="/share/contract/:token" element={<ContractShare />} />
-            <Route path="/share/invoice/:token" element={<InvoiceShare />} />
-            <Route path="*" element={<AppRoutes />} />
-          </Routes>
-        </AuthProvider>
-      </Router>
-    </QueryClientProvider>
-  );
-}
+  const { isLoggedIn, loading } = useAuth();
+  const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
 
-function AppRoutes() {
+  useEffect(() => {
+    if (isLoggedIn) {
+      const timer = setTimeout(() => {
+        setShowWelcomeMessage(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedIn]);
+  
   return (
-    <ProtectedRoute>
+    <BrowserRouter>
       <Routes>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/clients/new" element={<ClientForm />} />
-        <Route path="/clients/edit/:clientId" element={<ClientForm />} />
-        <Route path="/clients/:clientId" element={<ClientDetail />} />
-        <Route path="/reports" element={<AllReports />} />
-        <Route path="/reports/:reportId" element={<ReportDetail />} />
-        <Route path="/reports/seo/:id" element={<SeoReport />} />
-        <Route path="/packages" element={<Packages />} />
-        <Route path="/proposals" element={<Proposals />} />
-        <Route path="/proposals/new" element={<ProposalForm />} />
-        <Route path="/proposals/:proposalId" element={<ProposalDetail />} />
-        <Route path="/invoices" element={<Invoices />} />
-        <Route path="/invoices/new" element={<InvoiceForm />} />
-        <Route path="/invoices/:id" element={<InvoiceDetail />} />
-        <Route path="/settings" element={<CompanySettings />} />
-        <Route path="/settings/templates" element={<TemplateSettings />} />
-        <Route path="/contracts" element={<Contracts />} />
-        <Route path="/contracts/new" element={<ContractForm />} />
-        <Route path="/contracts/:id" element={<ContractDetail />} />
-        <Route path="/contracts/client/:clientId/new" element={<ContractForm />} />
-        <Route path="/contracts/client/:clientId/edit/:id" element={<ContractForm />} />
-        <Route path="/settings/api" element={
-          <ProtectedRoute>
-            <ApiSettings />
-          </ProtectedRoute>
-        } />
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/register" element={isLoggedIn ? <Navigate to="/dashboard" /> : <Register />} />
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/dashboard" /> : <Login />} />
+        
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/clients/new" element={<NewClient />} />
+            <Route path="/clients/:clientId" element={<ClientDetail />} />
+            <Route path="/clients/:clientId/edit" element={<EditClient />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/reports/new" element={<NewReport />} />
+            <Route path="/reports/:reportId" element={<ReportDetail />} />
+            <Route path="/reports/:reportId/edit" element={<EditReport />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/invoices" element={<Invoices />} />
+            
+            {/* Ticket routes */}
+            <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />
+            <Route path="/tickets/:ticketId" element={<TicketDetail />} />
+            
+          </Route>
+        </Route>
+        
+        <Route path="/public-sharing" element={<PublicSharing />} />
+        <Route path="/share/:token" element={<PublicShareView />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
-    </ProtectedRoute>
+      <Toaster />
+    </BrowserRouter>
   );
 }
 
 export default App;
+
+const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
+  const { isLoggedIn, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};

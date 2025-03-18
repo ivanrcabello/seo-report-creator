@@ -5,7 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, MoreHorizontal } from "lucide-react";
+import { MessageSquare, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Ticket {
   id: string;
@@ -24,6 +25,7 @@ export function TicketTableRow({ ticket }: TicketTableRowProps) {
   const { userRole } = useAuth();
   const [clientName, setClientName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   // Fetch client name if admin
   useEffect(() => {
@@ -46,10 +48,10 @@ export function TicketTableRow({ ticket }: TicketTableRowProps) {
               .from('profiles')
               .select('name, email')
               .eq('id', ticket.client_id)
-              .single();
+              .maybeSingle();
             
             if (profileData && !profileError) {
-              setClientName(profileData.name || profileData.email);
+              setClientName(profileData.name || profileData.email || 'Usuario sin nombre');
             } else {
               // If all else fails, just show the ID
               setClientName(ticket.client_id.substring(0, 8) + '...');
@@ -67,9 +69,10 @@ export function TicketTableRow({ ticket }: TicketTableRowProps) {
     fetchClientName();
   }, [ticket.client_id, userRole]);
 
-  const handleViewTicket = () => {
-    console.log("View ticket:", ticket.id);
-    // Here we would implement viewing the ticket details
+  const handleViewTicket = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    console.log("Navigating to ticket detail:", ticket.id);
+    navigate(`/tickets/${ticket.id}`);
   };
 
   return (
@@ -83,7 +86,7 @@ export function TicketTableRow({ ticket }: TicketTableRowProps) {
           {isLoading ? (
             <span className="text-gray-400">Cargando...</span>
           ) : (
-            clientName
+            clientName || 'Usuario desconocido'
           )}
         </TableCell>
       )}
@@ -103,7 +106,7 @@ export function TicketTableRow({ ticket }: TicketTableRowProps) {
             e.stopPropagation();
             handleViewTicket();
           }}>
-            <MessageSquare className="h-4 w-4 mr-1" />
+            <Eye className="h-4 w-4 mr-1" />
             Ver
           </Button>
         </div>

@@ -1,6 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getTickets, createTicket, replyToTicket, updateTicketStatus, getTicketMessages } from "@/services/ticketService";
+import { getTickets, createTicket, replyToTicket, updateTicketStatus, getTicketMessages, getTicketById } from "@/services/ticketService";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -8,6 +8,7 @@ export const useTickets = (clientId?: string) => {
   const queryClient = useQueryClient();
   const { userRole, user } = useAuth();
 
+  // For admins without a specific clientId, fetch all tickets
   const shouldFetchAllTickets = userRole === 'admin' && !clientId;
   
   const { 
@@ -19,11 +20,14 @@ export const useTickets = (clientId?: string) => {
     queryKey: ['tickets', clientId, shouldFetchAllTickets],
     queryFn: () => {
       console.log("Fetching tickets with clientId:", clientId, "shouldFetchAllTickets:", shouldFetchAllTickets);
+      console.log("Current user role:", userRole, "User:", user?.id);
       
       if (shouldFetchAllTickets) {
+        // Admin fetching all tickets (no clientId filter)
         return getTickets();
       }
       
+      // Either an admin looking at a specific client, or a client looking at their own tickets
       return getTickets(clientId);
     },
   });
@@ -34,11 +38,14 @@ export const useTickets = (clientId?: string) => {
       message: string;
       priority?: 'low' | 'medium' | 'high';
     }) => {
+      console.log("Creating ticket with subject:", subject);
+      console.log("User role:", userRole, "Client ID:", clientId, "User ID:", user?.id);
+      
       if (!clientId && userRole === 'client' && user?.id) {
         // If no clientId provided but user is a client, use their ID
         return createTicket(user.id, subject, message, priority);
-      } else if (!clientId && !user?.id) {
-        throw new Error("Client ID is required");
+      } else if (!clientId && userRole === 'admin' && !user?.id) {
+        throw new Error("No client ID specified for admin to create ticket");
       }
       
       return createTicket(clientId!, subject, message, priority);
@@ -78,13 +85,25 @@ export const useTickets = (clientId?: string) => {
   };
 };
 
-export const useTicketMessages = (ticketId: string) => {
+export const useTicket = (ticketId: string) => {
   const queryClient = useQueryClient();
 
   const { 
+    data: ticket,
+    isLoading: isTicketLoading,
+    error: ticketError,
+    refetch: refetchTicket
+  } = useQuery({
+    queryKey: ['ticket', ticketId],
+    queryFn: () => getTicketById(ticketId),
+    enabled: !!ticketId
+  });
+
+  const { 
     data: messages = [], 
-    isLoading,
-    error 
+    isLoading: isMessagesLoading,
+    error: messagesError,
+    refetch: refetchMessages
   } = useQuery({
     queryKey: ['ticketMessages', ticketId],
     queryFn: () => getTicketMessages(ticketId),
@@ -96,6 +115,7 @@ export const useTicketMessages = (ticketId: string) => {
       replyToTicket(ticketId, senderId, message),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticketMessages', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
       toast.success("Respuesta enviada correctamente");
     },
     onError: (error) => {
@@ -104,10 +124,32 @@ export const useTicketMessages = (ticketId: string) => {
     }
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: (status: 'open' | 'in_progress' | 'resolved') => 
+      updateTicketStatus(ticketId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+      toast.success("Estado del ticket actualizado");
+    },
+    onError: (error) => {
+      console.error("Error updating ticket status:", error);
+      toast.error("Error al actualizar el estado del ticket");
+    }
+  });
+
   return {
+    ticket,
     messages,
-    isLoading,
-    error,
-    reply: replyMutation.mutate
+    isLoading: isTicketLoading || isMessagesLoading,
+    error: ticketError || messagesError,
+    refetch: () => {
+      refetchTicket();
+      refetchMessages();
+    },
+    reply: replyMutation.mutate,
+    updateStatus: updateStatusMutation.mutate,
+    isReplying: replyMutation.isPending,
+    isUpdatingStatus: updateStatusMutation.isPending
   };
 };

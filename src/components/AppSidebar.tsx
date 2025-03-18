@@ -1,3 +1,4 @@
+
 import { useLocation, Link } from "react-router-dom";
 import {
   Sidebar,
@@ -24,7 +25,7 @@ import {
   LogOut,
   Ticket
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { Button } from "@/components/ui/button";
 
 export function AppSidebar() {

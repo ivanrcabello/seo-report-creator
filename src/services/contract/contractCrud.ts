@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SeoContract, ContractSection } from "@/types/client";
 import { mapContractFromDB } from "./contractMappers";
@@ -6,7 +5,6 @@ import { mapContractFromDB } from "./contractMappers";
 // Create a new contract
 export async function createContract(contractData: Omit<SeoContract, "id" | "createdAt" | "updatedAt">): Promise<SeoContract> {
   try {
-    // Map SeoContract to DB schema and convert content to JSON string
     const dbData = {
       client_id: contractData.clientId,
       title: contractData.title,
@@ -15,7 +13,7 @@ export async function createContract(contractData: Omit<SeoContract, "id" | "cre
       phase1_fee: contractData.phase1Fee,
       monthly_fee: contractData.monthlyFee,
       status: contractData.status || 'draft',
-      content: JSON.stringify(contractData.content), // Convert to JSON string for Supabase
+      content: JSON.stringify(contractData.content),
       signed_by_client: contractData.signedByClient || false,
       signed_by_professional: contractData.signedByProfessional || false
     };
@@ -45,7 +43,6 @@ export async function createContract(contractData: Omit<SeoContract, "id" | "cre
 // Update an existing contract
 export async function updateContract(contract: SeoContract): Promise<SeoContract> {
   try {
-    // Map SeoContract to DB schema
     const dbData = {
       client_id: contract.clientId,
       title: contract.title,
@@ -54,7 +51,7 @@ export async function updateContract(contract: SeoContract): Promise<SeoContract
       phase1_fee: contract.phase1Fee,
       monthly_fee: contract.monthlyFee,
       status: contract.status,
-      content: JSON.stringify(contract.content), // Convert to JSON string for Supabase
+      content: JSON.stringify(contract.content),
       signed_by_client: contract.signedByClient,
       signed_by_professional: contract.signedByProfessional,
       pdf_url: contract.pdfUrl,
@@ -148,5 +145,30 @@ export async function deleteContract(id: string): Promise<boolean> {
   } catch (error) {
     console.error("Error in deleteContract:", error);
     return false;
+  }
+}
+
+// Get a single contract by ID
+export async function getContract(id: string): Promise<SeoContract | null> {
+  try {
+    const { data, error } = await supabase
+      .from("seo_contracts")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching contract:", error);
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return mapContractFromDB(data);
+  } catch (error) {
+    console.error("Error in getContract:", error);
+    return null;
   }
 }

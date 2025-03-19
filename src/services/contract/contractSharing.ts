@@ -85,30 +85,3 @@ export async function createContractShareToken(contractId: string): Promise<stri
     return null;
   }
 }
-
-/**
- * Get a single contract by ID
- */
-export async function getContract(id: string): Promise<SeoContract | null> {
-  try {
-    const { data, error } = await supabase
-      .from("seo_contracts")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching contract:", error);
-      return null;
-    }
-
-    if (!data) {
-      return null;
-    }
-
-    return mapContractFromDB(data);
-  } catch (error) {
-    console.error("Error in getContract:", error);
-    return null;
-  }
-}

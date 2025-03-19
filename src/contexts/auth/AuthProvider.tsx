@@ -2,7 +2,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { supabase, checkSupabaseConnection } from "@/integrations/supabase/client";
+import { supabase, checkSupabaseConnection, isMockAuthEnabled } from "@/integrations/supabase/client";
 import { AuthContext } from "./context";
 import { UserRole } from "./types";
 import { 
@@ -19,6 +19,14 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Mock user for development when Supabase is not configured
+const MOCK_USER = {
+  id: "mock-user-id",
+  email: "dev@example.com",
+  user_metadata: { name: "Developer User" },
+  // Add other required User properties
+} as User;
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -28,7 +36,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check Supabase connection on mount
+    // Check if using mock auth (development mode without Supabase)
+    if (isMockAuthEnabled) {
+      console.log("Using mock authentication for development");
+      setTimeout(() => {
+        setUser(MOCK_USER);
+        setUserRole("admin");
+        setIsLoading(false);
+        setConnectionChecked(true);
+      }, 500); // Simulate some loading time
+      return;
+    }
+    
+    // Normal Supabase auth flow
     checkSupabaseConnection()
       .then(connected => {
         setConnectionChecked(true);
@@ -83,9 +103,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
+  // Update auth methods to support mock auth
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      
+      if (isMockAuthEnabled) {
+        // Mock sign in for development
+        console.log("Mock sign in with:", email);
+        toast.success("Mock sign in successful");
+        setUser(MOCK_USER);
+        setUserRole("admin");
+        navigate("/dashboard");
+        return;
+      }
+      
       await handleSignIn(email, password, navigate);
     } catch (error) {
       console.error("Sign in error in AuthProvider:", error);
@@ -98,9 +130,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signInWithGoogle = async () => {
     try {
       setIsLoading(true);
+      
+      if (isMockAuthEnabled) {
+        // Mock Google sign in
+        console.log("Mock Google sign in");
+        toast.success("Mock Google sign in successful");
+        setUser(MOCK_USER);
+        setUserRole("admin");
+        navigate("/dashboard");
+        return;
+      }
+      
       await handleSignInWithGoogle();
     } catch (error) {
       console.error("Google sign in error in AuthProvider:", error);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -108,6 +152,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signUp = async (email: string, password: string, name: string) => {
     try {
       setIsLoading(true);
+      
+      if (isMockAuthEnabled) {
+        // Mock sign up
+        console.log("Mock sign up for:", email, name);
+        toast.success("Mock sign up successful");
+        setUser(MOCK_USER);
+        setUserRole("client");
+        navigate("/dashboard");
+        return;
+      }
+      
       await handleSignUp(email, password, name, signIn);
     } catch (error) {
       console.error("Sign up error in AuthProvider:", error);
@@ -120,6 +175,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = async () => {
     try {
       setIsLoading(true);
+      
+      if (isMockAuthEnabled) {
+        // Mock sign out
+        console.log("Mock sign out");
+        setUser(null);
+        setUserRole(null);
+        toast.success("Mock sign out successful");
+        navigate("/login");
+        return;
+      }
+      
       await handleSignOut(navigate);
     } catch (error) {
       console.error("Sign out error in AuthProvider:", error);
@@ -131,6 +197,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const createTestUserAccount = async (email: string, password: string, name: string, role: UserRole = "client") => {
     try {
       setIsLoading(true);
+      
+      if (isMockAuthEnabled) {
+        // Mock test user creation
+        console.log("Mock test user creation:", email, name, role);
+        toast.success(`Mock test user created with role: ${role}`);
+        return;
+      }
+      
       await handleCreateTestUser(email, password, name, role);
     } catch (error) {
       console.error("Error creating test user:", error);

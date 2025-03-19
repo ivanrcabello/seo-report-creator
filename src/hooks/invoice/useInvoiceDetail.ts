@@ -1,10 +1,9 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useInvoiceData } from "./useInvoiceData";
 import { useInvoiceActions } from "./useInvoiceActions";
 import { useInvoiceFormatters } from "./useInvoiceFormatters";
 import { useInvoiceState } from "./useInvoiceState";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 export const useInvoiceDetail = () => {
   const { id } = useParams<{ id: string }>();

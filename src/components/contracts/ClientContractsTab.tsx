@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SeoContract } from "@/types/client";
@@ -11,7 +10,7 @@ import { FileText, Plus, Calendar, Pencil, FileSpreadsheet, Download } from "luc
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 interface ClientContractsTabProps {
   clientId: string;

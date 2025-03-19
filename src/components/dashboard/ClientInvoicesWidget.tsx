@@ -5,7 +5,7 @@ import { FileSpreadsheet, Calendar, Euro, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { Invoice } from "@/types/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";

@@ -2,7 +2,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useEffect } from "react";
 import { BarChart3, LogIn, UserPlus, ArrowRight, FileText, Users } from "lucide-react";
 

@@ -1,6 +1,6 @@
 
 import { TableHeader, TableRow, TableHead } from "@/components/ui/table";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 export function TicketTableHeader() {
   const { userRole } = useAuth();

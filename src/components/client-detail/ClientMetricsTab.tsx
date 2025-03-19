@@ -10,7 +10,7 @@ import { PageSpeedSection } from "./metrics/PageSpeedSection";
 import { KeywordsSection } from "./metrics/KeywordsSection";
 import { LocalSeoMetrics } from "./metrics/local-seo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AIReportGenerator } from "@/components/unified-metrics/AIReportGenerator";

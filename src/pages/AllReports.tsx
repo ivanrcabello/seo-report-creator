@@ -1,11 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClientReport } from "@/types/client";
 import { getFilteredReports } from "@/services/reportService";
 import { toast } from "sonner";
 import { ReportFilters, ReportsHeader, ReportsCard } from "@/components/reports";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 export const AllReports = () => {
   const navigate = useNavigate();

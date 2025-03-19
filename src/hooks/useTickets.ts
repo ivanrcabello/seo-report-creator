@@ -1,14 +1,12 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getTickets, createTicket, replyToTicket, updateTicketStatus, getTicketMessages, getTicketById } from "@/services/ticketService";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 export const useTickets = (clientId?: string) => {
   const queryClient = useQueryClient();
   const { userRole, user } = useAuth();
 
-  // For admins without a specific clientId, fetch all tickets
   const shouldFetchAllTickets = userRole === 'admin' && !clientId;
   
   const { 
@@ -23,11 +21,9 @@ export const useTickets = (clientId?: string) => {
       console.log("Current user role:", userRole, "User:", user?.id);
       
       if (shouldFetchAllTickets) {
-        // Admin fetching all tickets (no clientId filter)
         return getTickets();
       }
       
-      // Either an admin looking at a specific client, or a client looking at their own tickets
       return getTickets(clientId);
     },
   });
@@ -42,7 +38,6 @@ export const useTickets = (clientId?: string) => {
       console.log("User role:", userRole, "Client ID:", clientId, "User ID:", user?.id);
       
       if (!clientId && userRole === 'client' && user?.id) {
-        // If no clientId provided but user is a client, use their ID
         return createTicket(user.id, subject, message, priority);
       } else if (!clientId && userRole === 'admin' && !user?.id) {
         throw new Error("No client ID specified for admin to create ticket");

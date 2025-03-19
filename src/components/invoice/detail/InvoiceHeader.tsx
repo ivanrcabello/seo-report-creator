@@ -1,11 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { Invoice } from "@/types/invoice";
 import { HeaderLeftSection } from "./HeaderLeftSection";
 import { useState } from "react";
 import { ShareInvoiceDialog } from "./ShareInvoiceDialog";
 import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 interface InvoiceHeaderProps {
   invoice: Invoice;
@@ -39,9 +38,7 @@ export const InvoiceHeader = ({
 
   const handleShareInvoice = async () => {
     setShowShareDialog(true);
-    // When showing the dialog, prepare the share URL (this could be a mock for now)
     setShareUrl(`https://example.com/invoices/share/${invoice.id}`);
-    // Also trigger the actual sharing functionality
     await onShareInvoice();
   };
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ClientReport } from "@/types/client";
 import { getAllReports, getClientReports } from "@/services/reportService";
@@ -10,7 +9,7 @@ import { es } from "date-fns/locale";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 interface ClientReportsProps {
   clientId: string;

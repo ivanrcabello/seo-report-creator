@@ -2,7 +2,7 @@
 import { Table, TableBody } from "@/components/ui/table";
 import { TicketTableHeader } from "./TicketTableHeader";
 import { TicketTableRow } from "./TicketTableRow";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useEffect } from "react";
 
 interface Ticket {

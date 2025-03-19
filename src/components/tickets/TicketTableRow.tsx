@@ -1,7 +1,7 @@
 
 import { TableRow, TableCell } from "@/components/ui/table";
 import { StatusBadge, PriorityBadge } from "./TicketBadges";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

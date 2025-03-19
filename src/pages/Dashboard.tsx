@@ -55,7 +55,12 @@ const Dashboard = ({ activeTab, isNew, newContract, newProposal }: DashboardProp
   return (
     <div className="container mx-auto">
       {userRole === "admin" ? (
-        <AdminDashboard activeTab={determinedActiveTab} />
+        <AdminDashboard 
+          activeTab={determinedActiveTab} 
+          isNew={isNew || false}
+          newContract={newContract || false}
+          newProposal={newProposal || false}
+        />
       ) : (
         <ClientDashboard activeTab={determinedActiveTab} />
       )}

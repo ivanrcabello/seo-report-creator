@@ -3,15 +3,30 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface ReportErrorStateProps {
-  error: string;
-  isRetrying: boolean;
-  handleRetry: () => void;
+  error: string | Error;
+  isRetrying?: boolean;
+  handleRetry?: () => void;
 }
 
-export const ReportErrorState = ({ error, isRetrying, handleRetry }: ReportErrorStateProps) => {
+export const ReportErrorState = ({ error, isRetrying = false, handleRetry }: ReportErrorStateProps) => {
   const navigate = useNavigate();
+  const [isRetryingLocal, setIsRetryingLocal] = useState(isRetrying);
+  
+  // Convert error to string if it's an Error object
+  const errorMessage = error instanceof Error ? error.message : error;
+  
+  const onRetry = () => {
+    if (handleRetry) {
+      handleRetry();
+    } else {
+      setIsRetryingLocal(true);
+      // If no retry handler is provided, reload the page
+      window.location.reload();
+    }
+  };
   
   return (
     <div className="container mx-auto py-8">
@@ -23,15 +38,15 @@ export const ReportErrorState = ({ error, isRetrying, handleRetry }: ReportError
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center">
-          <p className="mb-4">{error}</p>
+          <p className="mb-4">{errorMessage}</p>
           <div className="flex flex-col gap-4 mt-6">
             <Button 
-              onClick={handleRetry} 
+              onClick={onRetry} 
               variant="outline" 
-              disabled={isRetrying}
+              disabled={isRetryingLocal}
               className="w-full"
             >
-              {isRetrying ? (
+              {isRetryingLocal ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Reintentando...

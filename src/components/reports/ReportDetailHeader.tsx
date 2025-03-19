@@ -1,11 +1,12 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Report } from '@/types/client';
+import { ClientReport } from '@/types/client';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 export interface ReportDetailHeaderProps {
-  report?: Report;
+  report?: ClientReport;
   isNew?: boolean;
 }
 

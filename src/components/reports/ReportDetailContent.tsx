@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getReport } from '@/services/reports';
 import { ReportLoadingState } from './ReportLoadingState';
@@ -15,11 +16,19 @@ export const ReportDetailContent: React.FC<ReportDetailContentProps> = ({
   reportId,
   isNew = false 
 }) => {
-  const { data: report, isLoading, isError, error } = useQuery({
+  const [isRetrying, setIsRetrying] = useState(false);
+  
+  const { data: report, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['report', reportId],
     queryFn: () => getReport(reportId as string),
     enabled: !!reportId,
   });
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    await refetch();
+    setIsRetrying(false);
+  };
 
   if (!reportId) {
     return <ReportNotFoundState />;
@@ -30,7 +39,7 @@ export const ReportDetailContent: React.FC<ReportDetailContentProps> = ({
   }
 
   if (isError) {
-    return <ReportErrorState error={error} />;
+    return <ReportErrorState error={error} isRetrying={isRetrying} handleRetry={handleRetry} />;
   }
 
   if (!report) {

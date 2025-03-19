@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Client } from '@/types/client';
 import { Button } from './ui/button';
@@ -22,7 +23,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
 
-interface ClientsListProps {
+export interface ClientsListProps {
   clients: Client[];
   isLoading: boolean;
   onAddClient: () => void;

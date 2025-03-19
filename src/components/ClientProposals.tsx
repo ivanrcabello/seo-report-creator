@@ -24,9 +24,6 @@ export const ClientProposals: React.FC<ClientProposalsProps> = ({ clientId }) =>
     const fetchProposals = async () => {
       setLoading(true);
       try {
-        // Only request the client's proposals
-        // For admins and viewing a specific client page, we use the clientId from props
-        // For clients looking at their own data, we ensure they only see their own
         const effectiveClientId = !isAdmin && user?.id ? user.id : clientId;
         const data = await getClientProposals(effectiveClientId);
         setProposals(data);

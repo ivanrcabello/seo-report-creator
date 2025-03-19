@@ -4,7 +4,6 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./App.css";
 import ClientDetail from "./pages/ClientDetail";
 import Dashboard from "./pages/Dashboard";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./contexts/auth";
 import Clients from "./pages/Clients";
@@ -12,8 +11,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/AppLayout";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
-// Create a router with only the routes that we have components for
+// Create a router with the correct route structure
 const router = createBrowserRouter([
   {
     path: "/login",
@@ -61,6 +61,8 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  console.log("App component rendering");
+  
   return (
     <AuthProvider>
       <TooltipProvider>

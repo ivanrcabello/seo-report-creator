@@ -2,7 +2,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, checkSupabaseConnection } from "@/integrations/supabase/client";
 import { AuthContext } from "./context";
 import { UserRole } from "./types";
 import { 
@@ -13,6 +13,7 @@ import {
   handleSignOut,
   handleCreateTestUser
 } from "./authOperations";
+import { toast } from "sonner";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -23,39 +24,61 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [connectionChecked, setConnectionChecked] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check Supabase connection on mount
+    checkSupabaseConnection()
+      .then(connected => {
+        setConnectionChecked(true);
+        if (!connected) {
+          console.error("Failed to connect to Supabase - check your environment variables");
+          toast.error("Error connecting to the server");
+        }
+      });
+      
+    console.log("AuthProvider mounted");
+    
     const setupUser = async (currentSession: Session | null) => {
-      if (currentSession?.user) {
-        setUser(currentSession.user);
-        console.log("Setting up user:", currentSession.user.id);
-        const role = await getUserRole();
-        console.log("Setting user role:", role);
-        // Fix: Convert string to UserRole type properly
-        setUserRole(role as UserRole);
-      } else {
-        setUser(null);
-        setUserRole(null);
+      try {
+        if (currentSession?.user) {
+          setUser(currentSession.user);
+          console.log("Setting up user:", currentSession.user.id);
+          const role = await getUserRole();
+          console.log("Setting user role:", role);
+          setUserRole(role as UserRole);
+        } else {
+          console.log("No user session");
+          setUser(null);
+          setUserRole(null);
+        }
+      } catch (err) {
+        console.error("Error in setupUser:", err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      console.log("Initial session:", initialSession);
+      console.log("Initial session check:", initialSession ? "Found session" : "No session");
       setSession(initialSession);
       setupUser(initialSession);
+    }).catch(err => {
+      console.error("Error getting session:", err);
+      setIsLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        console.log("Auth state changed:", _event, newSession?.user?.id);
+      (event, newSession) => {
+        console.log("Auth state changed:", event, newSession?.user?.id);
         setSession(newSession);
         setupUser(newSession);
       }
     );
 
     return () => {
+      console.log("AuthProvider unmounting, unsubscribing from auth changes");
       subscription.unsubscribe();
     };
   }, []);
@@ -65,6 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(true);
       await handleSignIn(email, password, navigate);
     } catch (error) {
+      console.error("Sign in error in AuthProvider:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -76,7 +100,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(true);
       await handleSignInWithGoogle();
     } catch (error) {
-      // Error is already handled in handleSignInWithGoogle
+      console.error("Google sign in error in AuthProvider:", error);
       setIsLoading(false);
     }
   };
@@ -86,6 +110,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(true);
       await handleSignUp(email, password, name, signIn);
     } catch (error) {
+      console.error("Sign up error in AuthProvider:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -97,7 +122,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(true);
       await handleSignOut(navigate);
     } catch (error) {
-      // Error is already handled in handleSignOut
+      console.error("Sign out error in AuthProvider:", error);
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +141,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const isAdmin = userRole === "admin";
 
-  const value = {
+  const contextValue = {
     session,
     user,
     userRole,
@@ -129,5 +154,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     createTestUser: createTestUserAccount
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  // Only render children after connection has been checked
+  return (
+    <AuthContext.Provider value={contextValue}>
+      {!connectionChecked ? (
+        <div className="flex h-screen w-full items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+          <p className="ml-2">Connecting to server...</p>
+        </div>
+      ) : (
+        children
+      )}
+    </AuthContext.Provider>
+  );
 }

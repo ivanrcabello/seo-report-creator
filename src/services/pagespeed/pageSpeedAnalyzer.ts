@@ -75,22 +75,23 @@ export const analyzePageSpeed = async (url: string): Promise<PageSpeedReport | n
     const auditItems: PageSpeedAuditItem[] = [];
     
     // Recorrer todas las auditorías y agregar las relevantes
-    for (const [id, audit] of Object.entries(audits)) {
-      if (audit.score !== null && typeof audit.score !== 'undefined') {
+    for (const [id, audit] of Object.entries(result.audits)) {
+      const typedAudit = audit as any;
+      if (typedAudit.score !== null && typeof typedAudit.score !== 'undefined') {
         // Determinar a qué categoría pertenece cada auditoría
         let category = '';
         
-        if (result.categoryGroups[audit.group]) {
-          category = result.categoryGroups[audit.group].title;
+        if (result.categoryGroups[typedAudit.group]) {
+          category = result.categoryGroups[typedAudit.group].title;
         }
         
         auditItems.push({
           id,
-          title: audit.title,
-          description: audit.description,
-          score: audit.score,
-          scoreDisplayMode: audit.scoreDisplayMode,
-          displayValue: audit.displayValue,
+          title: typedAudit.title,
+          description: typedAudit.description,
+          score: typedAudit.score,
+          scoreDisplayMode: typedAudit.scoreDisplayMode,
+          displayValue: typedAudit.displayValue,
           category
         });
       }

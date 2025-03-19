@@ -43,11 +43,11 @@ export const savePageSpeedResults = async (
       audit_items: report.auditItems // Guardar los elementos de auditoría
     };
     
-    console.log("Guardando datos de PageSpeed en client_pagespeed_metrics");
+    console.log("Guardando datos de PageSpeed en client_pagespeed");
     
-    // Insertar en la tabla client_pagespeed_metrics
+    // Insertar en la tabla client_pagespeed
     const { data, error } = await supabase
-      .from('client_pagespeed_metrics')
+      .from('client_pagespeed')
       .insert([dataToSave])
       .select();
     
@@ -79,7 +79,7 @@ export const savePageSpeedResults = async (
 export const deletePageSpeedMetric = async (metricId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
-      .from('client_pagespeed_metrics')
+      .from('client_pagespeed')
       .delete()
       .eq('id', metricId);
     

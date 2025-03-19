@@ -13,7 +13,7 @@ export const getPageSpeedHistory = async (clientId: string): Promise<PageSpeedMe
     console.log("Obteniendo historial de PageSpeed para cliente:", clientId);
     
     const { data, error } = await supabase
-      .from('client_pagespeed_metrics')
+      .from('client_pagespeed')
       .select('*')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
@@ -61,7 +61,7 @@ export const getPageSpeedHistory = async (clientId: string): Promise<PageSpeedMe
 export const getLatestPageSpeedMetrics = async (clientId: string): Promise<PageSpeedMetrics | null> => {
   try {
     const { data, error } = await supabase
-      .from('client_pagespeed_metrics')
+      .from('client_pagespeed')
       .select('*')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false })

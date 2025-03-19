@@ -28,15 +28,19 @@ export interface PageSpeedAuditItem {
   scoreDisplayMode: string;
   displayValue?: string;
   category: string;
+  importance?: 'high' | 'medium' | 'low';
+  details?: any;
 }
 
 /**
  * Informe completo de PageSpeed
  */
 export interface PageSpeedReport {
+  id?: string;
   metrics: PageSpeedMetrics;
   auditItems: PageSpeedAuditItem[];
-  fullReport: any; // Reporte completo tal como lo devuelve la API
+  fullReport?: any; // Reporte completo tal como lo devuelve la API
+  created_at?: string;
 }
 
 /**
@@ -47,3 +51,6 @@ export interface PageSpeedAnalysisOptions {
   strategy?: 'mobile' | 'desktop';
   locale?: string;
 }
+
+// Alias for backward compatibility
+export type PageSpeedAudit = PageSpeedAuditItem;

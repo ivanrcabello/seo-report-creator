@@ -1,13 +1,14 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getContract, getClientContracts } from "@/services/contract";
+import { getContract } from "@/services/contract";
 import { getClient } from "@/services/clientService";
 import { SeoContract, Client } from "@/types/client";
 import { ContractDetail as ContractDetailComponent } from "@/components/contracts/ContractDetail";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ContractDetail() {
   const { id } = useParams<{ id: string }>();
@@ -39,14 +40,17 @@ export default function ContractDetail() {
             setClient(clientData);
           } else {
             console.error("Client not found for ID:", contractData.clientId);
+            toast.error("No se encontró el cliente asociado al contrato");
           }
         } else {
           setError("No se encontró el contrato");
           console.error("Contract not found for ID:", id);
+          toast.error("No se encontró el contrato solicitado");
         }
       } catch (err: any) {
         console.error("Error fetching contract:", err);
         setError(err.message || "Error al cargar el contrato");
+        toast.error("Error al cargar el contrato");
       } finally {
         setLoading(false);
       }

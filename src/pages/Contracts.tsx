@@ -46,9 +46,8 @@ const Contracts = () => {
     navigate("/contracts/new");
   };
 
-  // Fixed function to take a contract ID parameter, but make it optional to satisfy the interface
-  const handleContractDeleted = async () => {
-    // Simply refresh the contracts list
+  const handleContractDeleted = () => {
+    // Refresh the contracts list
     fetchContracts();
     toast.success("Contrato eliminado correctamente");
   };

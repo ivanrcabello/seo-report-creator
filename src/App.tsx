@@ -1,3 +1,4 @@
+
 import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -26,6 +27,7 @@ const Packages = lazy(() => import("@/pages/Packages"));
 const NewTicket = lazy(() => import("@/pages/NewTicket"));
 const Contracts = lazy(() => import("@/pages/Contracts"));
 const ContractForm = lazy(() => import("@/pages/ContractForm"));
+const ContractDetail = lazy(() => import("@/pages/ContractDetail"));
 const Proposals = lazy(() => import("@/pages/Proposals"));
 
 // Create a client for React Query
@@ -96,6 +98,10 @@ function App() {
               <Route path="/contracts" element={<Contracts />} />
               <Route path="/contracts/new" element={
                 userRole === "admin" ? <ContractForm isNew={true} /> : <Navigate to="/dashboard" replace />
+              } />
+              <Route path="/contracts/:id" element={<ContractDetail />} />
+              <Route path="/contracts/edit/:id" element={
+                userRole === "admin" ? <ContractForm /> : <Navigate to="/dashboard" replace />
               } />
               
               {/* Proposal routes */}

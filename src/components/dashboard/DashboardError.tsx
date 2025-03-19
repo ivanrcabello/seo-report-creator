@@ -1,35 +1,23 @@
 
-import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 
-interface DashboardErrorProps {
-  errorMessage: string | null;
-  error: unknown;
+export interface DashboardErrorProps {
+  errorMessage: string;
+  error: string;
   onRetry: () => void;
 }
 
 export const DashboardError = ({ errorMessage, error, onRetry }: DashboardErrorProps) => {
   return (
-    <div className="container mx-auto py-10">
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
-        <div className="flex items-start">
-          <AlertTriangle className="h-6 w-6 text-red-500 mr-3 mt-0.5" />
-          <div>
-            <h3 className="text-lg font-medium text-red-800">Error al cargar los datos</h3>
-            <p className="text-red-700 mt-1">
-              {errorMessage || String(error) || "No se pudieron cargar los clientes. Por favor, inténtalo de nuevo."}
-            </p>
-            <Button 
-              variant="outline" 
-              className="mt-4 flex items-center gap-2"
-              onClick={onRetry}
-            >
-              <RefreshCw className="h-4 w-4" />
-              Reintentar
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div className="flex flex-col items-center justify-center h-[80vh] bg-gray-50 rounded-lg p-8">
+      <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+      <h2 className="text-xl font-semibold mb-2">Error</h2>
+      <p className="text-gray-600 mb-1">{errorMessage}</p>
+      <p className="text-sm text-gray-500 mb-4 max-w-md text-center">{error}</p>
+      <Button onClick={onRetry} variant="outline">
+        Reintentar
+      </Button>
     </div>
   );
 };

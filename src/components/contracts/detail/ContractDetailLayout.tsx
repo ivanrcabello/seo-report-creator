@@ -40,7 +40,7 @@ export const ContractDetailLayout = ({
     }
   };
 
-  // Dummy handlers for other actions to satisfy ContractActions props
+  // Handlers for other actions
   const handleShare = async () => {
     toast.info("Compartir contrato - Funcionalidad en desarrollo");
   };

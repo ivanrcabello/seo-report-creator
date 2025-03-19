@@ -5,7 +5,8 @@ export {
   updateContract, 
   getClientContracts,
   getContracts, 
-  deleteContract
+  deleteContract,
+  getContract
 } from "./contractCrud";
 
 // Export the contract PDF generation functions
@@ -15,8 +16,7 @@ export { generateContractPDF, saveContractPDF } from "./contractPdf";
 export { 
   getContractByShareToken, 
   signContractByClient, 
-  createContractShareToken,
-  getContract
+  createContractShareToken
 } from "./contractSharing";
 
 // Export contract sections utilities

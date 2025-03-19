@@ -29,7 +29,15 @@ export const PageSpeedTrends = ({ clientId }: PageSpeedTrendsProps) => {
       try {
         setIsLoading(true);
         const data = await getPageSpeedHistory(clientId);
-        setHistory(data);
+        
+        // Convert metrics to reports
+        const reports = data.map(metric => ({
+          metrics: metric,
+          auditItems: [],
+          created_at: metric.timestamp
+        }));
+        
+        setHistory(reports);
       } catch (error) {
         console.error("Error fetching PageSpeed history:", error);
       } finally {

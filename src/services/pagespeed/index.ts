@@ -26,6 +26,9 @@ export {
   analyzeWebsite
 };
 
+// Import supabase
+import { supabase } from "@/integrations/supabase/client";
+
 // Function to match the expected getPageSpeedReport API
 export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedReport | null> => {
   try {
@@ -66,11 +69,27 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
       timestamp: data.created_at
     };
     
+    // Check what property contains the audit items
+    let auditItems: PageSpeedAuditItem[] = [];
+    if (data.audit_items) {
+      auditItems = data.audit_items;
+    } else if (data.audits) {
+      auditItems = data.audits;
+    }
+    
+    // Check what property contains the full report
+    let fullReport = null;
+    if (data.full_report) {
+      fullReport = data.full_report;
+    } else if (data.fullReport) {
+      fullReport = data.fullReport;
+    }
+    
     return {
       id: data.id,
       metrics,
-      auditItems: data.audit_items || [],
-      fullReport: data.full_report,
+      auditItems,
+      fullReport,
       created_at: data.created_at
     };
   } catch (error) {
@@ -83,6 +102,3 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
 export const savePageSpeedReport = async (clientId: string, report: PageSpeedReport): Promise<boolean> => {
   return savePageSpeedResults(clientId, report);
 };
-
-// For importing supabase
-import { supabase } from "@/integrations/supabase/client";

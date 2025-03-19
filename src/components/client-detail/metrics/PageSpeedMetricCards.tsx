@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { MetricCard } from "@/components/MetricCard";
 import { getPageSpeedReport, PageSpeedReport, PageSpeedMetrics } from "@/services/pagespeed";
@@ -33,7 +34,7 @@ export const PageSpeedMetricCards = ({ clientId, metrics }: PageSpeedMetricCards
       fetchReport();
     } else if (metrics) {
       // If metrics are provided directly, use them
-      setReport({ metrics, audits: [] });
+      setReport({ metrics, auditItems: [] });
       setIsLoading(false);
     } else {
       setIsLoading(false);

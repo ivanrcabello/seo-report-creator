@@ -1,8 +1,5 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { ClientsList } from "@/components/ClientsList";
-import { ClientForm } from "@/components/ClientForm";
 import { getClients, getClient, updateClient, deleteClient, updateClientActiveStatus, createClient } from "@/services/clientService";
 import { Client } from "@/types/client";
 import { useParams, useNavigate } from "react-router-dom";
@@ -17,6 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import ClientsList from "@/components/ClientsList";
+import ClientForm from "@/components/ClientForm";
 
 const Clients = () => {
   const { toast: uiToast } = useToast();

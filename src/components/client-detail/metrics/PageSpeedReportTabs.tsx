@@ -33,7 +33,7 @@ export const PageSpeedReportTabs = ({ pageSpeedReport }: PageSpeedReportTabsProp
       </TabsContent>
       
       <TabsContent value="audits">
-        <PageSpeedAuditList audits={pageSpeedReport.audits} />
+        <PageSpeedAuditList audits={pageSpeedReport.auditItems} />
       </TabsContent>
     </Tabs>
   );

@@ -1,9 +1,11 @@
 
-export type UserRole = "admin" | "client" | null;
+import { Session, User } from "@supabase/supabase-js";
+
+export type UserRole = "admin" | "client" | "editor" | null;
 
 export interface AuthContextType {
-  session: import("@supabase/supabase-js").Session | null;
-  user: import("@supabase/supabase-js").User | null;
+  session: Session | null;
+  user: User | null;
   userRole: UserRole;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;

@@ -1,14 +1,10 @@
 
 import { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { Settings, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface AppLayoutProps {
-  children: ReactNode;
-}
-
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout() {
   return (
     <div className="flex flex-col min-h-screen w-full">
       <header className="sticky top-0 z-50 w-full border-b bg-white">
@@ -33,7 +29,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       </header>
       
       <main className="flex-1 p-6 bg-gray-50">
-        {children}
+        <Outlet />
       </main>
     </div>
   );

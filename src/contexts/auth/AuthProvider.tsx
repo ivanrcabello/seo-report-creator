@@ -20,12 +20,20 @@ interface AuthProviderProps {
 }
 
 // Mock user for development when Supabase is not configured
-const MOCK_USER = {
+// Make sure it satisfies the User type from @supabase/supabase-js
+const MOCK_USER: User = {
   id: "mock-user-id",
   email: "dev@example.com",
+  app_metadata: {},
   user_metadata: { name: "Developer User" },
-  // Add other required User properties
-} as User;
+  aud: "authenticated",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  confirmed_at: new Date().toISOString(),
+  last_sign_in_at: new Date().toISOString(),
+  role: "",
+  identities: []
+};
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);

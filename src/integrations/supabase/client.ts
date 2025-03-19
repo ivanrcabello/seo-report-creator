@@ -18,8 +18,11 @@ if (isMockAuthEnabled) {
   if (!supabaseKey) console.error("VITE_SUPABASE_ANON_KEY is missing");
 }
 
-// Always create the client, even with empty values - we'll handle this in auth context
-export const supabase = createClient(supabaseUrl || "https://example.supabase.co", supabaseKey || "demo-key");
+// Create client with fallback values to prevent runtime errors
+export const supabase = createClient(
+  supabaseUrl || "https://example.supabase.co", 
+  supabaseKey || "mock-key"
+);
 
 // Add debug function to check connection
 export const checkSupabaseConnection = async () => {

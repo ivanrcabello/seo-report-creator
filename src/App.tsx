@@ -64,12 +64,10 @@ function App() {
   console.log("App component rendering");
   
   return (
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster position="top-center" />
-        <RouterProvider router={router} />
-      </TooltipProvider>
-    </AuthProvider>
+    <TooltipProvider>
+      <Toaster position="top-center" />
+      <RouterProvider router={router} />
+    </TooltipProvider>
   );
 }
 

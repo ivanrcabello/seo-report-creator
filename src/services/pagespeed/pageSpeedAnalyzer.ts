@@ -43,7 +43,7 @@ export const analyzePageSpeed = async (url: string): Promise<PageSpeedReport | n
     // Obtener puntuaciones de categorías
     const performance_score = categories.performance?.score || 0;
     const accessibility_score = categories.accessibility?.score || 0;
-    const best_practices_score = categories.['best-practices']?.score || 0;
+    const best_practices_score = categories['best-practices']?.score || 0;
     const seo_score = categories.seo?.score || 0;
     
     // Obtener métricas principales

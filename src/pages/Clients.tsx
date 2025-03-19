@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import ClientsList from "@/components/ClientsList";
-import ClientForm from "@/components/ClientForm";
+import { ClientForm } from "@/components/ClientForm";
 
 const Clients = () => {
   const { toast: uiToast } = useToast();

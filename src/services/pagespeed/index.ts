@@ -69,16 +69,18 @@ export const getPageSpeedReport = async (clientId: string): Promise<PageSpeedRep
       timestamp: data.created_at
     };
     
-    // Check what property contains the audit items
+    // Parse audit items from the DB - handle different property naming
     let auditItems: PageSpeedAuditItem[] = [];
-    if (data.audit_items) {
-      auditItems = data.audit_items;
-    } else if (data.audits) {
-      auditItems = data.audits;
+    
+    if (data.audit_items && Array.isArray(data.audit_items)) {
+      auditItems = data.audit_items as PageSpeedAuditItem[];
+    } else if (data.audits && Array.isArray(data.audits)) {
+      auditItems = data.audits as PageSpeedAuditItem[];
     }
     
-    // Check what property contains the full report
+    // Get full report - handle different property naming
     let fullReport = null;
+    
     if (data.full_report) {
       fullReport = data.full_report;
     } else if (data.fullReport) {

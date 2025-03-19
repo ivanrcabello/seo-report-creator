@@ -151,7 +151,7 @@ export const SeoReport = () => {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
                   <p className="text-sm text-gray-500">Cliente</p>
-                  <p className="font-medium">{report.clientName}</p>
+                  <p className="font-medium">{report.client?.name || "Sin cliente"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Estado</p>

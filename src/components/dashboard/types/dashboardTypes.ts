@@ -23,7 +23,6 @@ export interface DashboardTabProps {
   clientSummaries: ClientSummary[];
 }
 
-// Add these properties to fix the build error
 export interface DashboardProps {
   activeTab?: string;
   isNew?: boolean;

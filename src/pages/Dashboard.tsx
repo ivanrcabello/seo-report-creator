@@ -23,7 +23,7 @@ const mapQueryTabToDashboardTab = (tab: string | null): string => {
 };
 
 const Dashboard = ({ activeTab, isNew, newContract, newProposal }: DashboardProps) => {
-  const { user, userRole, loading: authLoading } = useAuth();
+  const { user, userRole, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -38,16 +38,16 @@ const Dashboard = ({ activeTab, isNew, newContract, newProposal }: DashboardProp
     console.info("Dashboard props:", { isNew, newContract, newProposal });
   }, [userRole, activeTab, user?.id, isNew, newContract, newProposal]);
   
-  if (authLoading) {
+  if (isLoading) {
     return <DashboardSkeleton />;
   }
   
   if (error) {
-    return <DashboardError message={error} />;
+    return <DashboardError errorMessage={error} error={error} onRetry={() => setError(null)} />;
   }
   
   if (!user) {
-    return <DashboardError message="No has iniciado sesión" />;
+    return <DashboardError errorMessage="No has iniciado sesión" error="No user session found" onRetry={() => window.location.reload()} />;
   }
   
   console.info("Route accessed: /dashboard by user role:", userRole);

@@ -7,34 +7,34 @@ import { ContractSection } from "@/types/client";
 export function createDefaultContractSections(): ContractSection[] {
   return [
     {
-      id: "intro",
       title: "Introducción",
-      content: "Este contrato establece los términos y condiciones para la prestación de servicios SEO entre las partes."
+      content: "Este contrato establece los términos y condiciones para la prestación de servicios SEO entre las partes.",
+      order: 1
     },
     {
-      id: "services",
       title: "Servicios incluidos",
-      content: "- Optimización on-page\n- Creación de contenido\n- Análisis de palabras clave\n- Informes mensuales de rendimiento"
+      content: "- Optimización on-page\n- Creación de contenido\n- Análisis de palabras clave\n- Informes mensuales de rendimiento",
+      order: 2
     },
     {
-      id: "terms",
       title: "Términos de servicio",
-      content: "El servicio se prestará por un periodo inicial especificado en este contrato, con posibilidad de renovación automática salvo notificación por escrito."
+      content: "El servicio se prestará por un periodo inicial especificado en este contrato, con posibilidad de renovación automática salvo notificación por escrito.",
+      order: 3
     },
     {
-      id: "payment",
       title: "Condiciones de pago",
-      content: "Se establece un pago inicial por la fase de implementación, seguido de pagos mensuales por el mantenimiento SEO."
+      content: "Se establece un pago inicial por la fase de implementación, seguido de pagos mensuales por el mantenimiento SEO.",
+      order: 4
     },
     {
-      id: "confidentiality",
       title: "Confidencialidad",
-      content: "Ambas partes se comprometen a mantener la confidencialidad de toda la información compartida durante la prestación de los servicios."
+      content: "Ambas partes se comprometen a mantener la confidencialidad de toda la información compartida durante la prestación de los servicios.",
+      order: 5
     },
     {
-      id: "termination",
       title: "Terminación",
-      content: "Cualquiera de las partes podrá rescindir este contrato con un preaviso de 30 días mediante notificación por escrito."
+      content: "Cualquiera de las partes podrá rescindir este contrato con un preaviso de 30 días mediante notificación por escrito.",
+      order: 6
     }
   ];
 }
@@ -44,8 +44,8 @@ export function createDefaultContractSections(): ContractSection[] {
  */
 export function createEmptyContractSection(): ContractSection {
   return {
-    id: `section-${Date.now()}`,
     title: "",
-    content: ""
+    content: "",
+    order: Date.now() // Using timestamp as a fallback order value
   };
 }

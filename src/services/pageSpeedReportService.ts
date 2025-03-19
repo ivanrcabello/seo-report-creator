@@ -56,11 +56,14 @@ export const generatePageSpeedReport = async (
     
     // Preparar los datos del informe
     const reportData = {
+      id: uuidv4(),
       client_id: clientId,
       title: reportTitle,
       content: htmlContent,
       type: 'pagespeed',
       status: 'draft',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       analyticsData: {
         auditResult: {
           url: pageSpeedReport.metrics.url,
@@ -95,7 +98,7 @@ export const generatePageSpeedReport = async (
     
     console.log("Guardando informe en client_reports:", reportData);
     
-    // Insertar en la tabla client_reports (no en performance_reports)
+    // Insertar en la tabla client_reports
     const { data, error } = await supabase
       .from('client_reports')
       .insert([reportData])
@@ -107,6 +110,7 @@ export const generatePageSpeedReport = async (
     }
     
     console.log("Informe guardado correctamente:", data);
+    toast.success("Informe de rendimiento web generado con éxito");
     return true;
   } catch (error) {
     console.error("Error generando informe de PageSpeed:", error);
@@ -116,6 +120,6 @@ export const generatePageSpeedReport = async (
     }
     
     toast.error(errorMessage);
-    throw error;
+    return false;
   }
 };

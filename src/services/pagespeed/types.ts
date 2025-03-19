@@ -1,4 +1,7 @@
 
+/**
+ * Métricas principales de rendimiento de PageSpeed
+ */
 export interface PageSpeedMetrics {
   url: string;
   performance_score: number;
@@ -11,23 +14,36 @@ export interface PageSpeedMetrics {
   time_to_interactive: number;
   total_blocking_time: number;
   cumulative_layout_shift: number;
+  timestamp: string;
 }
 
-export interface PageSpeedAudit {
+/**
+ * Elemento de auditoría de PageSpeed
+ */
+export interface PageSpeedAuditItem {
   id: string;
   title: string;
   description: string;
   score: number;
   scoreDisplayMode: string;
   displayValue?: string;
-  category: 'performance' | 'accessibility' | 'best-practices' | 'seo';
-  importance: 'high' | 'medium' | 'low';
-  details?: any;
+  category: string;
 }
 
+/**
+ * Informe completo de PageSpeed
+ */
 export interface PageSpeedReport {
-  id?: string;
   metrics: PageSpeedMetrics;
-  audits: PageSpeedAudit[];
-  created_at?: string;
+  auditItems: PageSpeedAuditItem[];
+  fullReport: any; // Reporte completo tal como lo devuelve la API
+}
+
+/**
+ * Opciones para el análisis de PageSpeed
+ */
+export interface PageSpeedAnalysisOptions {
+  url: string;
+  strategy?: 'mobile' | 'desktop';
+  locale?: string;
 }

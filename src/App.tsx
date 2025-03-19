@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   createBrowserRouter,
@@ -43,6 +44,7 @@ import { UserForm } from "./components/users/UserForm";
 import { Pricing } from "./pages/Pricing";
 import { Upgrade } from "./pages/Upgrade";
 import { GoogleAnalytics } from "./integrations/analytics/GoogleAnalytics";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 function App() {
   return (
@@ -50,8 +52,11 @@ function App() {
       <ModalsProvider>
         <Notifications position="top-center" />
         <GoogleAnalytics />
-        <MainApp />
-      </ModineProvider>
+        <TooltipProvider>
+          <MainApp />
+        </TooltipProvider>
+      </ModalsProvider>
+    </MantineProvider>
   );
 }
 

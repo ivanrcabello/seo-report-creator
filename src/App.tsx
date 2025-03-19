@@ -5,14 +5,13 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import "./App.css";
-import ClientsList from "./components/ClientsList";
-import ClientForm from "./pages/ClientForm";
 import ClientDetail from "./pages/ClientDetail";
 import Dashboard from "./pages/Dashboard";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "sonner";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth";
+import Clients from "./pages/Clients";
 
 function App() {
   return (
@@ -35,15 +34,15 @@ const router = createBrowserRouter([
   },
   {
     path: "/clients",
-    element: <ClientsList />
+    element: <Clients />
   },
   {
     path: "/clients/new",
-    element: <ClientForm />
+    element: <Clients />
   },
   {
-    path: "/clients/edit/:clientId",
-    element: <ClientForm />
+    path: "/clients/edit/:id",
+    element: <Clients />
   },
   {
     path: "/clients/:clientId",

@@ -1,144 +1,219 @@
-
-import { lazy, Suspense, useEffect } from "react";
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "@/contexts/auth";
-import { Toaster } from "sonner";
-import { AppLayout } from "@/components/AppLayout";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { verifyRoutes } from "@/utils/routesChecker";
-
-// Lazy loaded components for better performance
-const Register = lazy(() => import("@/pages/Register"));
-const Login = lazy(() => import("@/pages/Login"));
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const Clients = lazy(() => import("@/pages/Clients"));
-const ClientDetail = lazy(() => import("@/pages/ClientDetail"));
-const ClientForm = lazy(() => import("@/pages/ClientForm"));
-const Invoices = lazy(() => import("@/pages/Invoices"));
-const InvoiceForm = lazy(() => import("@/pages/InvoiceForm"));
-const ReportDetail = lazy(() => import("@/pages/ReportDetail"));
-const TicketDetail = lazy(() => import("@/pages/TicketDetail"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
-const Settings = lazy(() => import("@/pages/Settings"));
-const ApiSettings = lazy(() => import("@/pages/ApiSettings"));
-const TemplateSettings = lazy(() => import("@/pages/TemplateSettings"));
-const Packages = lazy(() => import("@/pages/Packages"));
-const NewTicket = lazy(() => import("@/pages/NewTicket"));
-const Contracts = lazy(() => import("@/pages/Contracts"));
-const ContractForm = lazy(() => import("@/pages/ContractForm"));
-const ContractDetail = lazy(() => import("@/pages/ContractDetail"));
-const Proposals = lazy(() => import("@/pages/Proposals"));
-
-// Create a client for React Query
-const queryClient = new QueryClient();
-
-// Loading component for suspense fallback
-const PageLoader = () => (
-  <div className="flex h-screen w-full items-center justify-center">
-    <div className="flex flex-col items-center space-y-4">
-      <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
-      <p className="text-lg">Cargando...</p>
-    </div>
-  </div>
-);
+import React from "react";
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router-dom";
+import "./App.css";
+import ClientsList from "./components/ClientsList";
+import ClientForm from "./pages/ClientForm";
+import ClientDetail from "./pages/ClientDetail";
+import ReportsList from "./components/ReportsList";
+import ReportDetail from "./pages/ReportDetail";
+import ReportForm from "./pages/ReportForm";
+import ContractsList from "./components/contracts/ContractsList";
+import ContractForm from "./components/contracts/ContractForm";
+import ContractDetail from "./components/contracts/ContractDetail";
+import InvoicesList from "./components/invoice/InvoicesList";
+import InvoiceForm from "./components/invoice/InvoiceForm";
+import InvoiceDetail from "./components/invoice/InvoiceDetail";
+import ProposalsList from "./components/ClientProposalsList";
+import ProposalForm from "./components/ProposalForm";
+import ProposalDetail from "./components/ProposalDetail";
+import { AppLayout } from "./components/layout/AppLayout";
+import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
+import { useAuth } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { PublicRoute } from "./components/auth/PublicRoute";
+import { MantineProvider } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
+import { Notifications } from "@mantine/notifications";
+import { LicenseAgreement } from "./components/legal/LicenseAgreement";
+import { TermsOfService } from "./components/legal/TermsOfService";
+import { PrivacyPolicy } from "./components/legal/PrivacyPolicy";
+import { Support } from "./pages/Support";
+import { Profile } from "./pages/Profile";
+import { ForgotPassword } from "./pages/ForgotPassword";
+import { ResetPassword } from "./pages/ResetPassword";
+import { TicketsList } from "./components/tickets/TicketsList";
+import { TicketDetail } from "./components/tickets/TicketDetail";
+import { Settings } from "./pages/Settings";
+import { UsersList } from "./components/users/UsersList";
+import { UserForm } from "./components/users/UserForm";
+import { Pricing } from "./pages/Pricing";
+import { Upgrade } from "./pages/Upgrade";
+import { GoogleAnalytics } from "./integrations/analytics/GoogleAnalytics";
 
 function App() {
-  const { user, isLoading, userRole } = useAuth();
-  
-  useEffect(() => {
-    // Verify routes on app initialization (only in development mode)
-    if (process.env.NODE_ENV === 'development') {
-      verifyRoutes();
-    }
-  }, []);
-  
-  if (isLoading) {
-    return <PageLoader />;
-  }
-  
   return (
-    <QueryClientProvider client={queryClient}>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
-          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-          
-          {/* Protected routes for both admin and client with different views based on role */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout><Outlet /></AppLayout>}>
-              {/* Dashboard routes */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              
-              {/* Reports routes */}
-              <Route path="/reports" element={<Dashboard activeTab="reports" />} />
-              <Route path="/reports/new" element={
-                userRole === "admin" ? <ReportDetail isNew={true} /> : <Navigate to="/dashboard" replace />
-              } />
-              <Route path="/reports/:reportId" element={<ReportDetail />} />
-              
-              {/* Invoice routes */}
-              <Route path="/invoices" element={<Invoices />} />
-              <Route path="/invoices/new" element={
-                userRole === "admin" ? <InvoiceForm isNew={true} /> : <Navigate to="/dashboard" replace />
-              } />
-              <Route path="/invoices/:id" element={<Invoices />} />
-              
-              {/* Settings routes */}
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/settings/api" element={<ApiSettings />} />
-              <Route path="/settings/templates" element={<TemplateSettings />} />
-              
-              {/* Support tickets routes */}
-              <Route path="/tickets" element={<Dashboard activeTab="tickets" />} />
-              <Route path="/tickets/new" element={<NewTicket />} />
-              <Route path="/tickets/:ticketId" element={<TicketDetail />} />
-              
-              {/* Contract routes */}
-              <Route path="/contracts" element={<Contracts />} />
-              <Route path="/contracts/new" element={
-                userRole === "admin" ? <ContractForm isNew={true} /> : <Navigate to="/dashboard" replace />
-              } />
-              <Route path="/contracts/:id" element={<ContractDetail />} />
-              <Route path="/contracts/edit/:id" element={
-                userRole === "admin" ? <ContractForm /> : <Navigate to="/dashboard" replace />
-              } />
-              
-              {/* Proposal routes */}
-              <Route path="/proposals" element={<Proposals />} />
-              <Route path="/proposals/new" element={
-                userRole === "admin" ? <Dashboard activeTab="proposals" newProposal={true} /> : <Navigate to="/dashboard" replace />
-              } />
-              
-              {/* Documents routes */}
-              <Route path="/documents" element={<Dashboard activeTab="documents" />} />
-              
-              {/* Packages route */}
-              <Route path="/packages" element={<Packages />} />
-              
-              {/* Admin only routes with explicit checks */}
-              <Route path="/clients" element={
-                userRole === "admin" ? <Clients /> : <Navigate to="/dashboard" replace />
-              } />
-              <Route path="/clients/new" element={
-                userRole === "admin" ? <ClientForm /> : <Navigate to="/dashboard" replace />
-              } />
-              <Route path="/clients/edit/:id" element={
-                userRole === "admin" ? <ClientForm /> : <Navigate to="/dashboard" replace />
-              } />
-              <Route path="/clients/:clientId" element={
-                userRole === "admin" ? <ClientDetail /> : <Navigate to="/dashboard" replace />
-              } />
-            </Route>
-          </Route>
-          
-          <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-      <Toaster />
-    </QueryClientProvider>
+    <MantineProvider withGlobalStyles withNormalizeCSS theme={{ colorScheme: 'light' }}>
+      <ModalsProvider>
+        <Notifications position="top-center" />
+        <GoogleAnalytics />
+        <MainApp />
+      </ModineProvider>
   );
+}
+
+function MainApp() {
+  const { isLoggedIn } = useAuth();
+
+  const router = createBrowserRouter([
+    {
+      path: "/login",
+      element: <PublicRoute><Login /></PublicRoute>
+    },
+    {
+      path: "/forgot-password",
+      element: <PublicRoute><ForgotPassword /></PublicRoute>
+    },
+    {
+      path: "/reset-password",
+      element: <PublicRoute><ResetPassword /></PublicRoute>
+    },
+    {
+      path: "/license",
+      element: <LicenseAgreement />
+    },
+    {
+      path: "/terms",
+      element: <TermsOfService />
+    },
+    {
+      path: "/privacy",
+      element: <PrivacyPolicy />
+    },
+    {
+      path: "/",
+      element: <ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/dashboard",
+      element: <ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/clients",
+      element: <ProtectedRoute><AppLayout><ClientsList /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/clients/new",
+      element: <ProtectedRoute><AppLayout><ClientForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/clients/edit/:clientId",
+      element: <ProtectedRoute><AppLayout><ClientForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/clients/:clientId",
+      element: <ProtectedRoute><AppLayout><ClientDetail /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/reports",
+      element: <ProtectedRoute><AppLayout><ReportsList /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/reports/new",
+      element: <ProtectedRoute><AppLayout><ReportForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/reports/edit/:reportId",
+      element: <ProtectedRoute><AppLayout><ReportForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/reports/:reportId",
+      element: <ProtectedRoute><AppLayout><ReportDetail /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/contracts",
+      element: <ProtectedRoute><AppLayout><ContractsList /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/contracts/new",
+      element: <ProtectedRoute><AppLayout><ContractForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/contracts/edit/:contractId",
+      element: <ProtectedRoute><AppLayout><ContractForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/contracts/:contractId",
+      element: <ProtectedRoute><AppLayout><ContractDetail /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/invoices",
+      element: <ProtectedRoute><AppLayout><InvoicesList /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/invoices/new",
+      element: <ProtectedRoute><AppLayout><InvoiceForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/invoices/edit/:invoiceId",
+      element: <ProtectedRoute><AppLayout><InvoiceForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/invoices/:invoiceId",
+      element: <ProtectedRoute><AppLayout><InvoiceDetail /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/proposals",
+      element: <ProtectedRoute><AppLayout><ProposalsList /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/proposals/new",
+      element: <ProtectedRoute><AppLayout><ProposalForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/proposals/edit/:proposalId",
+      element: <ProtectedRoute><AppLayout><ProposalForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/proposals/:proposalId",
+      element: <ProtectedRoute><AppLayout><ProposalDetail /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/support",
+      element: <ProtectedRoute><AppLayout><Support /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/profile",
+      element: <ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/tickets",
+      element: <ProtectedRoute><AppLayout><TicketsList /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/tickets/:ticketId",
+      element: <ProtectedRoute><AppLayout><TicketDetail /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/settings",
+      element: <ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/users",
+      element: <ProtectedRoute><AppLayout><UsersList /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/users/new",
+      element: <ProtectedRoute><AppLayout><UserForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/users/edit/:userId",
+      element: <ProtectedRoute><AppLayout><UserForm /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/pricing",
+      element: <ProtectedRoute><AppLayout><Pricing /></AppLayout></ProtectedRoute>
+    },
+    {
+      path: "/upgrade",
+      element: <ProtectedRoute><AppLayout><Upgrade /></AppLayout></ProtectedRoute>
+    }
+  ]);
+
+  return <RouterProvider router={router} />;
 }
 
 export default App;

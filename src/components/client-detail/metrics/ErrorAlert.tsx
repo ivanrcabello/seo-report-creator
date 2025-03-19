@@ -1,27 +1,43 @@
 
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import React from 'react';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
-export interface ErrorAlertProps {
-  error: Error | any;
-  message?: string;
+interface ErrorAlertProps {
+  error: Error | string | { message: string };
+  retry?: () => void;
 }
 
-export const ErrorAlert = ({ error, message }: ErrorAlertProps) => {
-  // Asegurarnos de que tengamos una cadena de error válida
-  const errorMessage = message || (error?.message ? error.message : "Se produjo un error al cargar los datos");
+export const ErrorAlert = ({ error, retry }: ErrorAlertProps) => {
+  // Manejar diferentes tipos de errores
+  let errorMessage: string;
   
+  if (typeof error === 'string') {
+    errorMessage = error;
+  } else if (error instanceof Error) {
+    errorMessage = error.message;
+  } else if (error && typeof error === 'object' && 'message' in error) {
+    errorMessage = error.message as string;
+  } else {
+    errorMessage = 'Se ha producido un error desconocido';
+  }
+
   return (
-    <Alert variant="destructive">
+    <Alert variant="destructive" className="my-4">
       <AlertCircle className="h-4 w-4" />
       <AlertTitle>Error</AlertTitle>
-      <AlertDescription>
-        {errorMessage}
-        {error && !message && error.stack && process.env.NODE_ENV !== 'production' && (
-          <details className="mt-2 text-xs">
-            <summary>Detalles técnicos</summary>
-            <pre className="mt-2 whitespace-pre-wrap">{error.stack}</pre>
-          </details>
+      <AlertDescription className="flex flex-col gap-4">
+        <p>{errorMessage}</p>
+        {retry && (
+          <Button 
+            onClick={retry} 
+            variant="outline" 
+            size="sm" 
+            className="w-fit self-end"
+          >
+            Reintentar
+          </Button>
         )}
       </AlertDescription>
     </Alert>
